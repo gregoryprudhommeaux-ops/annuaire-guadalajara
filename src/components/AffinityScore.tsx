@@ -31,10 +31,15 @@ function buildMeetMessage(
       ? ' et des besoins professionnels en commun'
       : hasCommonNeeds && lang === 'es'
         ? ' y necesidades profesionales en común'
-        : '';
+        : hasCommonNeeds && lang === 'en'
+          ? ' and shared professional needs'
+          : '';
 
   if (lang === 'es') {
     return `Hola ${fn} 👋\n\nVi tu perfil en el Directorio de Negocios de Guadalajara y veo que tenemos afinidades${passionPart}${needsPart}. Me encantaría tomar un café o una copa para conocernos. ¿Te parece?`;
+  }
+  if (lang === 'en') {
+    return `Hi ${fn} 👋\n\nI saw your profile on the Guadalajara business directory — we have affinities${passionPart}${needsPart}. I’d love to grab a coffee or a drink and connect if you’re open to it!`;
   }
   return `Bonjour ${fn} 👋\n\nJ’ai vu ton profil sur l’Annuaire d’Affaires de Guadalajara — nous avons des affinités${passionPart}${needsPart}. Ce serait un plaisir d’échanger autour d’un café ou d’un verre si tu es partant·e !`;
 }

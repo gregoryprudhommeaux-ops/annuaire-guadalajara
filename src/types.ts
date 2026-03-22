@@ -3,6 +3,14 @@ import { sanitizePassionIds } from './lib/passionConfig';
 
 export type Role = 'user' | 'admin';
 
+/**
+ * Genre à fins statistiques uniquement (non affiché sur la fiche publique).
+ * Formulation proche des enquêtes européennes (Eurostat / RGPD).
+ */
+export type GenderStat = 'male' | 'female' | 'other' | 'prefer_not_say';
+
+export const GENDER_STAT_VALUES: readonly GenderStat[] = ['male', 'female', 'other', 'prefer_not_say'];
+
 /** Fourchettes pour le champ « Nombre d'employés » (liste déroulante) */
 export const EMPLOYEE_COUNT_RANGES = [
   '1-5',
@@ -144,7 +152,7 @@ export interface UrgentPost {
   expiresAt: number;
 }
 
-export type Language = 'fr' | 'es';
+export type Language = 'fr' | 'es' | 'en';
 
 export interface Translations {
   [key: string]: {

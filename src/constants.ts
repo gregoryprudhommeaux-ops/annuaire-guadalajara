@@ -60,24 +60,24 @@ export function employeeCountToSelectDefault(
   return '1000+';
 }
 
-/** Secteurs : la valeur enregistrée en base reste le libellé FR ; l’UI affiche ES si besoin. */
-export const ACTIVITY_CATEGORY_I18N: { fr: string; es: string }[] = [
-  { fr: 'Agriculture & Agroalimentaire', es: 'Agricultura y agroalimentación' },
-  { fr: 'Artisanat & Design', es: 'Artesanía y diseño' },
-  { fr: 'Automobile & Transport', es: 'Automóvil y transporte' },
-  { fr: 'Banque & Finance', es: 'Banca y finanzas' },
-  { fr: 'Bâtiment & Immobilier', es: 'Construcción e inmobiliario' },
-  { fr: 'Commerce & Distribution', es: 'Comercio y distribución' },
-  { fr: 'Conseil & Services aux entreprises', es: 'Consultoría y servicios a empresas' },
-  { fr: 'Culture & Loisirs', es: 'Cultura y ocio' },
-  { fr: 'Éducation & Formation', es: 'Educación y formación' },
-  { fr: 'Énergie & Environnement', es: 'Energía y medio ambiente' },
-  { fr: 'Hôtellerie & Restauration', es: 'Hotelería y restauración' },
-  { fr: 'Industrie & Manufacturier', es: 'Industria y manufactura' },
-  { fr: 'Santé & Bien-être', es: 'Salud y bienestar' },
-  { fr: 'Technologies & Informatique', es: 'Tecnologías e informática' },
-  { fr: 'Tourisme', es: 'Turismo' },
-  { fr: 'Autre', es: 'Otro' },
+/** Secteurs : la valeur enregistrée en base reste le libellé FR ; l’UI affiche ES / EN si besoin. */
+export const ACTIVITY_CATEGORY_I18N: { fr: string; es: string; en: string }[] = [
+  { fr: 'Agriculture & Agroalimentaire', es: 'Agricultura y agroalimentación', en: 'Agriculture & food' },
+  { fr: 'Artisanat & Design', es: 'Artesanía y diseño', en: 'Crafts & design' },
+  { fr: 'Automobile & Transport', es: 'Automóvil y transporte', en: 'Automotive & transport' },
+  { fr: 'Banque & Finance', es: 'Banca y finanzas', en: 'Banking & finance' },
+  { fr: 'Bâtiment & Immobilier', es: 'Construcción e inmobiliario', en: 'Construction & real estate' },
+  { fr: 'Commerce & Distribution', es: 'Comercio y distribución', en: 'Retail & distribution' },
+  { fr: 'Conseil & Services aux entreprises', es: 'Consultoría y servicios a empresas', en: 'Consulting & business services' },
+  { fr: 'Culture & Loisirs', es: 'Cultura y ocio', en: 'Culture & leisure' },
+  { fr: 'Éducation & Formation', es: 'Educación y formación', en: 'Education & training' },
+  { fr: 'Énergie & Environnement', es: 'Energía y medio ambiente', en: 'Energy & environment' },
+  { fr: 'Hôtellerie & Restauration', es: 'Hotelería y restauración', en: 'Hospitality & restaurants' },
+  { fr: 'Industrie & Manufacturier', es: 'Industria y manufactura', en: 'Industry & manufacturing' },
+  { fr: 'Santé & Bien-être', es: 'Salud y bienestar', en: 'Health & wellness' },
+  { fr: 'Technologies & Informatique', es: 'Tecnologías e informática', en: 'Technology & IT' },
+  { fr: 'Tourisme', es: 'Turismo', en: 'Tourism' },
+  { fr: 'Autre', es: 'Otro', en: 'Other' },
 ];
 
 export const ACTIVITY_CATEGORIES = ACTIVITY_CATEGORY_I18N.map((x) => x.fr);
@@ -86,27 +86,30 @@ const activityCategoryByFr = new Map(ACTIVITY_CATEGORY_I18N.map((x) => [x.fr, x]
 
 export function activityCategoryLabel(value: string | undefined | null, lang: Language): string {
   if (value == null || value === '') return '';
-  if (lang === 'fr') return value;
-  return activityCategoryByFr.get(value)?.es ?? value;
+  const row = activityCategoryByFr.get(value);
+  if (!row) return value;
+  if (lang === 'fr') return row.fr;
+  if (lang === 'es') return row.es;
+  return row.en;
 }
 
 /** Fonction dans l’entreprise : valeur stockée = libellé FR. */
-export const WORK_FUNCTION_I18N: { fr: string; es: string }[] = [
-  { fr: 'Direction générale', es: 'Dirección general' },
-  { fr: 'Stratégie / Corporate', es: 'Estrategia / corporativo' },
-  { fr: 'Vente / Business development', es: 'Ventas / desarrollo de negocio' },
-  { fr: 'Marketing / Communication', es: 'Marketing / comunicación' },
-  { fr: 'Service client / Relation clients', es: 'Atención al cliente / relación con clientes' },
-  { fr: 'Développement produits / R&D', es: 'Desarrollo de productos / I+D' },
-  { fr: 'Production / Opérations', es: 'Producción / operaciones' },
-  { fr: 'Qualité / HSE', es: 'Calidad / HSE' },
-  { fr: 'Technique / Maintenance / Ingénierie', es: 'Técnico / mantenimiento / ingeniería' },
-  { fr: 'Logistique / Supply chain', es: 'Logística / cadena de suministro' },
-  { fr: 'Achats / Approvisionnement', es: 'Compras / aprovisionamiento' },
-  { fr: 'Finance / Comptabilité / Contrôle de gestion', es: 'Finanzas / contabilidad / control de gestión' },
-  { fr: 'Ressources humaines', es: 'Recursos humanos' },
-  { fr: 'Informatique / SI / Digital', es: 'Informática / SI / Digital' },
-  { fr: 'Juridique / Compliance / Risques', es: 'Jurídico / cumplimiento / riesgos' },
+export const WORK_FUNCTION_I18N: { fr: string; es: string; en: string }[] = [
+  { fr: 'Direction générale', es: 'Dirección general', en: 'General management' },
+  { fr: 'Stratégie / Corporate', es: 'Estrategia / corporativo', en: 'Strategy / corporate' },
+  { fr: 'Vente / Business development', es: 'Ventas / desarrollo de negocio', en: 'Sales / business development' },
+  { fr: 'Marketing / Communication', es: 'Marketing / comunicación', en: 'Marketing / communications' },
+  { fr: 'Service client / Relation clients', es: 'Atención al cliente / relación con clientes', en: 'Customer service / client relations' },
+  { fr: 'Développement produits / R&D', es: 'Desarrollo de productos / I+D', en: 'Product development / R&D' },
+  { fr: 'Production / Opérations', es: 'Producción / operaciones', en: 'Production / operations' },
+  { fr: 'Qualité / HSE', es: 'Calidad / HSE', en: 'Quality / HSE' },
+  { fr: 'Technique / Maintenance / Ingénierie', es: 'Técnico / mantenimiento / ingeniería', en: 'Technical / maintenance / engineering' },
+  { fr: 'Logistique / Supply chain', es: 'Logística / cadena de suministro', en: 'Logistics / supply chain' },
+  { fr: 'Achats / Approvisionnement', es: 'Compras / aprovisionamiento', en: 'Purchasing / procurement' },
+  { fr: 'Finance / Comptabilité / Contrôle de gestion', es: 'Finanzas / contabilidad / control de gestión', en: 'Finance / accounting / controlling' },
+  { fr: 'Ressources humaines', es: 'Recursos humanos', en: 'Human resources' },
+  { fr: 'Informatique / SI / Digital', es: 'Informática / SI / Digital', en: 'IT / IS / digital' },
+  { fr: 'Juridique / Compliance / Risques', es: 'Jurídico / cumplimiento / riesgos', en: 'Legal / compliance / risk' },
 ];
 
 export const WORK_FUNCTION_OPTIONS = WORK_FUNCTION_I18N.map((x) => x.fr);
@@ -115,8 +118,11 @@ const workFunctionByFr = new Map(WORK_FUNCTION_I18N.map((x) => [x.fr, x]));
 
 export function workFunctionLabel(value: string | undefined | null, lang: Language): string {
   if (value == null || value === '') return '';
-  if (lang === 'fr') return value;
-  return workFunctionByFr.get(value)?.es ?? value;
+  const row = workFunctionByFr.get(value);
+  if (!row) return value;
+  if (lang === 'fr') return row.fr;
+  if (lang === 'es') return row.es;
+  return row.en;
 }
 
 export const CITIES = [
@@ -126,8 +132,16 @@ export const CITIES = [
   'Tonalá',
   'Tlajomulco de Zúñiga',
   'El Salto',
-  'Autre'
+  'Autre',
 ];
+
+/** Libellé affiché pour la liste des villes (`Autre` traduit ; noms propres inchangés). */
+export function cityOptionLabel(city: string, lang: Language): string {
+  if (city !== 'Autre') return city;
+  if (lang === 'fr') return 'Autre';
+  if (lang === 'es') return 'Otro';
+  return 'Other';
+}
 
 /** Seuil d’affichage : bloc « lancement » vs stats complètes (homepage). */
 export const MEMBERS_THRESHOLD = 20;
@@ -189,6 +203,51 @@ export const TRANSLATIONS: Translations = {
   employeeCount: { fr: "Nombre d'employés", es: "Número de empleados" },
   isEmailPublic: { fr: "Rendre l'email public", es: "Hacer público mi correo" },
   isWhatsappPublic: { fr: "Rendre WhatsApp public", es: "Hacer público mi WhatsApp" },
+  statsOnlySectionTitle: {
+    fr: "Données non publiées sur votre fiche",
+    es: "Datos que no aparecen en tu ficha pública",
+  },
+  statsOnlySectionHint: {
+    fr: "Ces champs servent à des statistiques internes et à l’organisation du réseau (conformément aux usages européens et au RGPD). Ils ne sont jamais affichés sur l’annuaire public.",
+    es: "Estos campos sirven para estadísticas internas y para la organización de la red (alineados con prácticas europeas y el RGPD). No se muestran en el directorio público.",
+  },
+  genderStatLabel: { fr: "Genre", es: "Género" },
+  genderStatHint: {
+    fr: "À fins statistiques uniquement — non affiché sur votre profil public.",
+    es: "Solo con fines estadísticos — no se muestra en tu perfil público.",
+  },
+  genderStatMale: { fr: "Homme", es: "Hombre" },
+  genderStatFemale: { fr: "Femme", es: "Mujer" },
+  genderStatOther: { fr: "Autre", es: "Otro" },
+  genderStatPreferNotSay: { fr: "Ne souhaite pas répondre", es: "No desea responder" },
+  genderStatSelectPlaceholder: {
+    fr: "— Choisir une réponse —",
+    es: "— Elegir una respuesta —",
+  },
+  nationalityLabel: { fr: "Nationalité", es: "Nacionalidad" },
+  nationalityHint: {
+    fr: "Non affichée sur la fiche publique.",
+    es: "No se muestra en la ficha pública.",
+  },
+  nationalitySelectPlaceholder: { fr: "— Sélectionner —", es: "— Seleccionar —" },
+  acceptsDelegationVisitsLabel: {
+    fr: "L’entreprise peut accueillir des visites de délégations",
+    es: "La empresa puede recibir visitas de delegaciones",
+  },
+  acceptsDelegationVisitsHint: {
+    fr: "Réservé à l’équipe d’administration (non affiché publiquement).",
+    es: "Solo para el equipo de administración (no es público).",
+  },
+  adminInternalDataTitle: {
+    fr: "Données internes (administrateur)",
+    es: "Datos internos (administrador)",
+  },
+  adminFieldGender: { fr: "Genre (stat.)", es: "Género (estad.)" },
+  adminFieldNationality: { fr: "Nationalité", es: "Nacionalidad" },
+  adminFieldDelegation: { fr: "Visites de délégations", es: "Visitas de delegaciones" },
+  adminDelegationYes: { fr: "Oui", es: "Sí" },
+  adminDelegationNo: { fr: "Non", es: "No" },
+  adminDelegationUnknown: { fr: "Non renseigné", es: "Sin indicar" },
   linkedin: { fr: "Lien LinkedIn", es: "Enlace LinkedIn" },
   fetchPhoto: { fr: "Récupérer la photo LinkedIn", es: "Importar foto de LinkedIn" },
   linkedinPhotoHelperTitle: { fr: "Comment récupérer votre photo LinkedIn ?", es: "¿Cómo importar tu foto de LinkedIn?" },
@@ -247,6 +306,10 @@ export const TRANSLATIONS: Translations = {
   statsMembers: { fr: "membres", es: "miembros" },
   statsSectors: { fr: "secteurs", es: "sectores" },
   statsOpportunities: { fr: "opportunités", es: "oportunidades" },
+  tagNewMember: { fr: "Nouveau", es: "Nuevo" },
+  tagUrgentNeed: { fr: "Besoin urgent", es: "Necesidad urgente" },
+  tagsMore: { fr: "+{{count}} autres", es: "+{{count}} más" },
+  tagsCollapse: { fr: "Réduire", es: "Mostrar menos" },
   details: { fr: "Détails", es: "Detalles" },
   restrictedInfo: { fr: "Connectez-vous pour voir", es: "Inicia sesión para ver" },
   registerPrompt: { fr: "Pour accéder à l'ensemble du profil, veuillez vous enregistrer sur l'annuaire", es: "Para ver el perfil completo, regístrate en el directorio" },
@@ -341,9 +404,50 @@ export const TRANSLATIONS: Translations = {
   foreign: { fr: "Étranger / Visiteur", es: "Extranjero / Visitante" },
   urgentNeeds: { fr: "Besoins Urgents", es: "Necesidades Urgentes" },
   opportunities: { fr: "Opportunités", es: "Oportunidades" },
+  opportunitiesEmpty: {
+    fr: "Aucune opportunité pour le moment.",
+    es: "Sin oportunidades por el momento.",
+  },
   radar: { fr: "Radar Guadalajara", es: "Radar Guadalajara" },
+  radarTitle: {
+    fr: "Radar du réseau",
+    es: "Radar de la red",
+  },
+  radarSubtitle: {
+    fr: "Données en temps réel sur les besoins et l'activité de la communauté francophone à Guadalajara.",
+    es: "Datos en tiempo real sobre las necesidades y la actividad de la comunidad francófona en Guadalajara.",
+  },
+  radarLive: {
+    fr: "Mis à jour en temps réel",
+    es: "Actualizado en tiempo real",
+  },
+  kpiMembers: { fr: "Membres", es: "Miembros" },
+  kpiNeeds: { fr: "Besoins", es: "Necesidades" },
+  kpiSectors: { fr: "Secteurs", es: "Sectores" },
+  kpiOpportunities: { fr: "Opportunités", es: "Oportunidades" },
+  chartSectorsTitle: { fr: "Secteurs représentés", es: "Sectores representados" },
+  chartSectorsEmpty: {
+    fr: "Le graphique s'enrichira avec de nouveaux membres.",
+    es: "El gráfico se enriquecerá con nuevos miembros.",
+  },
+  chartNeedsTitle: { fr: "Top besoins du réseau", es: "Principales necesidades de la red" },
+  chartPassionsTitle: { fr: "Passions du réseau", es: "Pasiones de la red" },
+  chartPassionsEmpty: {
+    fr: "Aucune passion renseignée.",
+    es: "Ninguna pasión indicada.",
+  },
+  chartCenter: { fr: "membres", es: "miembros" },
+  radarRecentOpportunitiesTitle: {
+    fr: "Opportunités récentes",
+    es: "Oportunidades recientes",
+  },
+  radarRecentOpportunitiesEmpty: {
+    fr: "Aucune opportunité pour le moment.",
+    es: "Sin oportunidades por el momento.",
+  },
   companies: { fr: "Entreprises", es: "Empresas" },
   members: { fr: "Membres", es: "Miembros" },
+  /** @deprecated Libellé d’onglet : utiliser `radarTitle`. Conservé pour rétrocompatibilité éventuelle. */
   activities: { fr: "Secteurs", es: "Sectores" },
   recommendedForYou: { fr: "Recommandé pour vous", es: "Recomendado para ti" },
   aiRecCompleteProfile: {

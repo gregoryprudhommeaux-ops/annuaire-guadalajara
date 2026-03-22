@@ -15,9 +15,11 @@ export function buildProfileSearchBlob(p: UserProfile): string {
     p.positionCategory || '',
     workFunctionLabel(p.positionCategory, 'fr'),
     workFunctionLabel(p.positionCategory, 'es'),
+    workFunctionLabel(p.positionCategory, 'en'),
     p.activityCategory || '',
     activityCategoryLabel(p.activityCategory, 'fr'),
     activityCategoryLabel(p.activityCategory, 'es'),
+    activityCategoryLabel(p.activityCategory, 'en'),
     p.bio || '',
     p.city || '',
     p.state || '',
@@ -25,6 +27,7 @@ export function buildProfileSearchBlob(p: UserProfile): string {
     ...sanitizePassionIds(p.passionIds).flatMap((id) => [
       getPassionLabel(id, 'fr'),
       getPassionLabel(id, 'es'),
+      getPassionLabel(id, 'en'),
       id,
     ]),
     p.linkedin || '',
@@ -33,6 +36,7 @@ export function buildProfileSearchBlob(p: UserProfile): string {
     ...(p.highlightedNeeds || []).flatMap((id) => [
       needOptionLabel(id, 'fr'),
       needOptionLabel(id, 'es'),
+      needOptionLabel(id, 'en'),
       id,
     ]),
   ];

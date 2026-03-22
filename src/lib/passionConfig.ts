@@ -4,16 +4,18 @@
  */
 
 /** Aligné sur `Language` du projet (évite d’importer `types` → dépendance circulaire). */
-export type PassionLocale = 'fr' | 'es';
+export type PassionLocale = 'fr' | 'es' | 'en';
+
+type TriLabel = { fr: string; es: string; en: string };
 
 export interface PassionOption {
   id: string;
-  label: { fr: string; es: string };
+  label: TriLabel;
 }
 
 export interface PassionCategory {
   id: string;
-  label: { fr: string; es: string };
+  label: TriLabel;
   emoji: string;
   options: PassionOption[];
 }
@@ -21,66 +23,66 @@ export interface PassionCategory {
 export const PASSIONS_CATEGORIES: PassionCategory[] = [
   {
     id: 'sport_nature',
-    label: { fr: 'Sport & Nature', es: 'Deporte y naturaleza' },
+    label: { fr: 'Sport & Nature', es: 'Deporte y naturaleza', en: 'Sport & nature' },
     emoji: '🌿',
     options: [
-      { id: 'golf', label: { fr: 'Golf', es: 'Golf' } },
-      { id: 'peche', label: { fr: 'Pêche', es: 'Pesca' } },
-      { id: 'randonnee', label: { fr: 'Randonnée', es: 'Senderismo' } },
-      { id: 'surf', label: { fr: 'Surf', es: 'Surf' } },
-      { id: 'tennis', label: { fr: 'Tennis', es: 'Tenis' } },
-      { id: 'cyclisme', label: { fr: 'Cyclisme', es: 'Ciclismo' } },
-      { id: 'yoga', label: { fr: 'Yoga', es: 'Yoga' } },
-      { id: 'natation', label: { fr: 'Natation', es: 'Natación' } },
+      { id: 'golf', label: { fr: 'Golf', es: 'Golf', en: 'Golf' } },
+      { id: 'peche', label: { fr: 'Pêche', es: 'Pesca', en: 'Fishing' } },
+      { id: 'randonnee', label: { fr: 'Randonnée', es: 'Senderismo', en: 'Hiking' } },
+      { id: 'surf', label: { fr: 'Surf', es: 'Surf', en: 'Surf' } },
+      { id: 'tennis', label: { fr: 'Tennis', es: 'Tenis', en: 'Tennis' } },
+      { id: 'cyclisme', label: { fr: 'Cyclisme', es: 'Ciclismo', en: 'Cycling' } },
+      { id: 'yoga', label: { fr: 'Yoga', es: 'Yoga', en: 'Yoga' } },
+      { id: 'natation', label: { fr: 'Natation', es: 'Natación', en: 'Swimming' } },
     ],
   },
   {
     id: 'gastronomie',
-    label: { fr: 'Gastronomie', es: 'Gastronomía' },
+    label: { fr: 'Gastronomie', es: 'Gastronomía', en: 'Food & drink' },
     emoji: '🍷',
     options: [
-      { id: 'cuisine', label: { fr: 'Cuisine', es: 'Cocina' } },
-      { id: 'vins', label: { fr: 'Vins', es: 'Vinos' } },
-      { id: 'gastronomie', label: { fr: 'Gastronomie', es: 'Gastronomía' } },
-      { id: 'mixologie', label: { fr: 'Mixologie', es: 'Mixología' } },
-      { id: 'patisserie', label: { fr: 'Pâtisserie', es: 'Repostería' } },
+      { id: 'cuisine', label: { fr: 'Cuisine', es: 'Cocina', en: 'Cooking' } },
+      { id: 'vins', label: { fr: 'Vins', es: 'Vinos', en: 'Wine' } },
+      { id: 'gastronomie', label: { fr: 'Gastronomie', es: 'Gastronomía', en: 'Gastronomy' } },
+      { id: 'mixologie', label: { fr: 'Mixologie', es: 'Mixología', en: 'Mixology' } },
+      { id: 'patisserie', label: { fr: 'Pâtisserie', es: 'Repostería', en: 'Pastry' } },
     ],
   },
   {
     id: 'culture_arts',
-    label: { fr: 'Culture & Arts', es: 'Cultura y arte' },
+    label: { fr: 'Culture & Arts', es: 'Cultura y arte', en: 'Culture & arts' },
     emoji: '🎭',
     options: [
-      { id: 'musique', label: { fr: 'Musique', es: 'Música' } },
-      { id: 'cinema', label: { fr: 'Cinéma', es: 'Cine' } },
-      { id: 'litterature', label: { fr: 'Littérature', es: 'Literatura' } },
-      { id: 'art', label: { fr: 'Art', es: 'Arte' } },
-      { id: 'photographie', label: { fr: 'Photographie', es: 'Fotografía' } },
-      { id: 'theatre', label: { fr: 'Théâtre', es: 'Teatro' } },
+      { id: 'musique', label: { fr: 'Musique', es: 'Música', en: 'Music' } },
+      { id: 'cinema', label: { fr: 'Cinéma', es: 'Cine', en: 'Film' } },
+      { id: 'litterature', label: { fr: 'Littérature', es: 'Literatura', en: 'Literature' } },
+      { id: 'art', label: { fr: 'Art', es: 'Arte', en: 'Art' } },
+      { id: 'photographie', label: { fr: 'Photographie', es: 'Fotografía', en: 'Photography' } },
+      { id: 'theatre', label: { fr: 'Théâtre', es: 'Teatro', en: 'Theatre' } },
     ],
   },
   {
     id: 'voyage_aventure',
-    label: { fr: 'Voyage & Aventure', es: 'Viaje y aventura' },
+    label: { fr: 'Voyage & Aventure', es: 'Viaje y aventura', en: 'Travel & adventure' },
     emoji: '✈️',
     options: [
-      { id: 'voyage', label: { fr: 'Voyage', es: 'Viaje' } },
-      { id: 'moto', label: { fr: 'Moto', es: 'Moto' } },
-      { id: 'plongee', label: { fr: 'Plongée', es: 'Buceo' } },
-      { id: 'escalade', label: { fr: 'Escalade', es: 'Escalada' } },
-      { id: 'camping', label: { fr: 'Camping', es: 'Camping' } },
+      { id: 'voyage', label: { fr: 'Voyage', es: 'Viaje', en: 'Travel' } },
+      { id: 'moto', label: { fr: 'Moto', es: 'Moto', en: 'Motorcycling' } },
+      { id: 'plongee', label: { fr: 'Plongée', es: 'Buceo', en: 'Diving' } },
+      { id: 'escalade', label: { fr: 'Escalade', es: 'Escalada', en: 'Climbing' } },
+      { id: 'camping', label: { fr: 'Camping', es: 'Camping', en: 'Camping' } },
     ],
   },
   {
     id: 'tech_business',
-    label: { fr: 'Tech & Business', es: 'Tech y negocios' },
+    label: { fr: 'Tech & Business', es: 'Tech y negocios', en: 'Tech & business' },
     emoji: '🚀',
     options: [
-      { id: 'startups', label: { fr: 'Startups', es: 'Startups' } },
-      { id: 'ia', label: { fr: 'Intelligence Artificielle', es: 'Inteligencia artificial' } },
-      { id: 'investissement', label: { fr: 'Investissement', es: 'Inversión' } },
-      { id: 'crypto', label: { fr: 'Crypto / Web3', es: 'Cripto / Web3' } },
-      { id: 'ecommerce', label: { fr: 'E-commerce', es: 'Comercio electrónico' } },
+      { id: 'startups', label: { fr: 'Startups', es: 'Startups', en: 'Startups' } },
+      { id: 'ia', label: { fr: 'Intelligence Artificielle', es: 'Inteligencia artificial', en: 'Artificial intelligence' } },
+      { id: 'investissement', label: { fr: 'Investissement', es: 'Inversión', en: 'Investing' } },
+      { id: 'crypto', label: { fr: 'Crypto / Web3', es: 'Cripto / Web3', en: 'Crypto / Web3' } },
+      { id: 'ecommerce', label: { fr: 'E-commerce', es: 'Comercio electrónico', en: 'E-commerce' } },
     ],
   },
 ];
@@ -108,7 +110,7 @@ export function getPassionEmoji(id: string): string {
   return '🎯';
 }
 
-/** Libellé de catégorie (FR / ES). */
+/** Libellé de catégorie (FR / ES / EN). */
 export function getPassionCategoryLabel(categoryId: string, lang: PassionLocale): string {
   const cat = PASSIONS_CATEGORIES.find((c) => c.id === categoryId);
   return cat ? cat.label[lang] : categoryId;

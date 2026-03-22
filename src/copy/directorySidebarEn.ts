@@ -1,6 +1,6 @@
 /**
  * Chaînes EN de référence pour la colonne annuaire (recherche + compteur).
- * Le type `Language` du projet est encore `fr` | `es` ; fusionner ici quand l’anglais sera activé.
+ * Référence EN pour alignement avec `src/i18n/en.ts` (clés proches de `TRANSLATIONS`).
  */
 export const DIRECTORY_SIDEBAR_COPY_EN = {
   searchBlockTitle: 'Search the directory',
@@ -21,10 +21,31 @@ export const DIRECTORY_SIDEBAR_COPY_EN = {
   clearFilters: 'Clear filters',
   randomProfile: '🎲 Discover a random profile',
   randomProfileEmpty: 'No profile available',
+  opportunitiesEmpty: 'No opportunities at the moment.',
   launchTitle: 'Community launching now',
-  launchSubtitle: 'Be among the first francophone members in Guadalajara.',
+  launchSubtitle: 'Be among the first French-speaking members in Guadalajara.',
   launchCta: 'Create my profile now →',
   statsMembers: 'members',
   statsSectors: 'sectors',
   statsOpportunities: 'opportunities',
+  radarTitle: 'Network radar',
+  radarSubtitle:
+    'Real-time data on the needs and activity of the French-speaking business community in Guadalajara.',
+  radarLive: 'Updated in real time',
+  kpiMembers: 'Members',
+  kpiNeeds: 'Needs',
+  kpiSectors: 'Sectors',
+  kpiOpportunities: 'Opportunities',
+  chartSectorsTitle: 'Sectors represented',
+  chartSectorsEmpty: 'The chart will grow as new members join.',
+  chartNeedsTitle: 'Top network needs',
+  chartPassionsTitle: 'Network passions',
+  chartPassionsEmpty: 'No passions listed yet.',
+  chartCenter: 'members',
+  radarRecentOpportunitiesTitle: 'Recent opportunities',
+  radarRecentOpportunitiesEmpty: 'No opportunities at the moment.',
+  tagNewMember: 'New',
+  tagUrgentNeed: 'Urgent need',
+  tagsMore: '+{{count}} more',
+  tagsCollapse: 'Show less',
 } as const;

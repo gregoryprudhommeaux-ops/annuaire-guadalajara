@@ -4,6 +4,7 @@ import type { HomeLandingCopy } from '../../copy/homeLanding';
 import { formatHomeBadge } from '../../copy/homeLanding';
 import { activityCategoryLabel } from '../../constants';
 import type { Language } from '../../types';
+import { cn } from '../../cn';
 
 function memberInitials(p: UserProfile): string {
   const n = (p.fullName || p.companyName || '?').trim();
@@ -22,6 +23,7 @@ type Props = {
   profiles: UserProfile[];
   totalNewThisWeek: number;
   onSeeAll: () => void;
+  className?: string;
 };
 
 /** Bandeau « nouveaux membres cette semaine » — cartes compactes + lien vers liste récente. */
@@ -31,12 +33,16 @@ export default function NewMembersStrip({
   profiles,
   totalNewThisWeek,
   onSeeAll,
+  className,
 }: Props) {
   const display = profiles.slice(0, 4);
 
   return (
     <section
-      className="rounded-2xl border border-stone-200 bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-5"
+      className={cn(
+        'flex min-h-0 flex-col rounded-2xl border border-stone-200 bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-5',
+        className
+      )}
       aria-labelledby="home-new-members-title"
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -56,9 +62,9 @@ export default function NewMembersStrip({
       </div>
 
       {display.length === 0 ? (
-        <p className="mt-4 text-sm text-stone-500">{copy.newMembersEmpty}</p>
+        <p className="mt-4 flex-1 text-sm text-stone-500">{copy.newMembersEmpty}</p>
       ) : (
-        <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+        <ul className="mt-4 grid min-h-0 flex-1 grid-cols-1 content-start gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
           {display.map((p) => (
             <li
               key={p.uid}

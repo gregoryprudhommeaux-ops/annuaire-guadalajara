@@ -45,6 +45,8 @@ import {
   UserProfile,
   Language,
   Role,
+  GENDER_STAT_VALUES,
+  type GenderStat,
   MatchSuggestion,
   UrgentPost,
   Recommendation,
@@ -59,6 +61,7 @@ import {
   TRANSLATIONS,
   ACTIVITY_CATEGORIES,
   CITIES,
+  cityOptionLabel,
   WORK_FUNCTION_OPTIONS,
   MEMBERS_THRESHOLD,
   isEmployeeCountRange,
@@ -68,11 +71,21 @@ import {
   activityCategoryLabel,
   workFunctionLabel,
 } from './constants';
+import { EN_STRINGS } from './i18n/en';
+import { pickLang, uiLocale, sortLocale } from './lib/uiLocale';
 import {
   profileMatchesLocationFilter,
   type LocationFilterKey,
   type ProfileTypeFilterKey,
 } from './lib/directoryFilters';
+import { NATIONALITY_OPTIONS, nationalityLabel } from './lib/nationalityOptions';
+import {
+  loadUserAdminPrivate,
+  saveUserAdminPrivate,
+  legacyAdminFromUserDoc,
+  USER_ADMIN_PRIVATE_COLLECTION,
+  type UserAdminPrivateDoc,
+} from './lib/userAdminPrivate';
 import {
   NEED_OPTIONS,
   NEED_OPTION_VALUE_SET,
@@ -92,6 +105,7 @@ import SearchBlock from './components/home/SearchBlock';
 import MembersCountBlock from './components/home/MembersCountBlock';
 import NewMembersStrip from './components/home/NewMembersStrip';
 import OpportunitiesSection from './components/home/OpportunitiesSection';
+import NetworkRadarSection from './components/home/NetworkRadarSection';
 import { homeLanding } from './copy/homeLanding';
 import AffinityScore from './components/AffinityScore';
 import { profileMatchesSearchQuery } from './profileSearch';
@@ -194,7 +208,7 @@ interface SocialSignInButtonsProps {
 }
 
 function SocialSignInButtons({ lang, t, busy, onSignIn }: SocialSignInButtonsProps) {
-  const connecting = lang === 'fr' ? 'Connexion...' : 'Conectando...';
+  const connecting = pickLang('Connexion...', 'Conectando...', 'Signing in...', lang);
   const baseBtn =
     'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none disabled:cursor-not-allowed';
 
@@ -289,14 +303,121 @@ function useLanguage(): LanguageContextValue {
 
 function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Language>('fr');
-  const t = useCallback((key: string) => TRANSLATIONS[key]?.[lang] || key, [lang]);
+  const t = useCallback(
+    (key: string) => {
+      const row = TRANSLATIONS[key];
+      if (!row) return key;
+      if (lang === 'en') return EN_STRINGS[key] ?? row.fr;
+      return row[lang];
+    },
+    [lang]
+  );
   const value = useMemo(() => ({ lang, setLang, t }), [lang, t]);
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
+const EMPTY_URGENT_AUTHOR_IDS: ReadonlySet<string> = new Set();
+const PROFILE_CARD_TAG_GROUP_LIMIT = 3;
+const PROFILE_CARD_NEW_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Tags listing (passions + besoins structurés), style unifié, max 3 + « +X » par groupe. */
+function ProfileCardTagsBlock({
+  profile: p,
+  urgentAuthorIds,
+}: {
+  profile: UserProfile;
+  urgentAuthorIds: ReadonlySet<string>;
+}) {
+  const { lang, t } = useLanguage();
+  const [expandPassions, setExpandPassions] = useState(false);
+  const [expandNeeds, setExpandNeeds] = useState(false);
+
+  const passionIds = sanitizePassionIds(p.passionIds);
+  const needIds = sanitizeHighlightedNeeds(p.highlightedNeeds).filter((id) =>
+    NEED_OPTION_VALUE_SET.has(id)
+  );
+
+  const isNew =
+    p.createdAt.toMillis() > Date.now() - PROFILE_CARD_NEW_MS && p.isValidated !== false;
+  const isUrgentAuthor = urgentAuthorIds.has(p.uid);
+
+  if (passionIds.length === 0 && needIds.length === 0 && !isNew && !isUrgentAuthor) {
+    return null;
+  }
+
+  const tagNeutral =
+    'inline-flex max-w-full items-center rounded-md px-2 py-0.5 text-[11px] font-normal leading-snug text-gray-700 bg-[#F3F4F6]';
+  const tagMore =
+    'inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-normal text-gray-500 bg-[#F3F4F6] transition-colors hover:bg-gray-200';
+  const tagNew = 'inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium bg-[#DBEAFE] text-[#1D4ED8]';
+  const tagUrgent =
+    'inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium bg-[#FEF3C7] text-[#92400E]';
+
+  const renderGroup = (
+    ids: string[],
+    getLabel: (id: string) => string,
+    expanded: boolean,
+    setExpanded: (v: boolean) => void,
+    Icon: typeof Briefcase
+  ) => {
+    if (ids.length === 0) return null;
+    const shown = expanded ? ids : ids.slice(0, PROFILE_CARD_TAG_GROUP_LIMIT);
+    const extra = ids.length - shown.length;
+    return (
+      <div className="flex flex-wrap items-start gap-x-1.5 gap-y-1">
+        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#9CA3AF]" strokeWidth={1.75} aria-hidden />
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
+          {shown.map((id) => (
+            <span key={id} className={cn(tagNeutral, 'max-w-full')}>
+              <span className="line-clamp-2 break-words">{getLabel(id)}</span>
+            </span>
+          ))}
+          {extra > 0 && !expanded && (
+            <button
+              type="button"
+              className={tagMore}
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded(true);
+              }}
+            >
+              {t('tagsMore').replace(/\{\{count\}\}/g, String(extra))}
+            </button>
+          )}
+          {expanded && ids.length > PROFILE_CARD_TAG_GROUP_LIMIT && (
+            <button
+              type="button"
+              className="text-[11px] font-medium text-gray-500 underline-offset-2 hover:underline"
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded(false);
+              }}
+            >
+              {t('tagsCollapse')}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="mb-1 mt-1 flex flex-col gap-1.5">
+      {(isNew || isUrgentAuthor) && (
+        <div className="flex flex-wrap gap-1.5">
+          {isNew && <span className={tagNew}>{t('tagNewMember')}</span>}
+          {isUrgentAuthor && <span className={tagUrgent}>{t('tagUrgentNeed')}</span>}
+        </div>
+      )}
+      {renderGroup(passionIds, (id) => getPassionLabel(id, lang), expandPassions, setExpandPassions, Briefcase)}
+      {renderGroup(needIds, (id) => needOptionLabel(id, lang), expandNeeds, setExpandNeeds, Target)}
+    </div>
+  );
+}
+
 type ProfileCardVariant = 'default' | 'company' | 'activity';
 
-const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profile, variant = 'default', highlightUid = null }: { 
+const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profile, variant = 'default', urgentAuthorIds = EMPTY_URGENT_AUTHOR_IDS }: { 
   p: UserProfile, 
   isOwn?: boolean, 
   onEdit?: (p: UserProfile) => void, 
@@ -305,7 +426,7 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
   user: any,
   profile: UserProfile | null,
   variant?: ProfileCardVariant,
-  highlightUid?: string | null,
+  urgentAuthorIds?: ReadonlySet<string>,
 }) => {
   const isActive = Date.now() - (p.lastSeen ?? 0) < 2592000000; // 30 days
   const { lang, t } = useLanguage();
@@ -319,8 +440,6 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
     return unsubscribe;
   }, [p.uid]);
 
-  const isRandomHighlight = highlightUid != null && highlightUid === p.uid;
-
   return (
     <motion.div 
       layout
@@ -330,10 +449,7 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
       key={p.uid}
       id={`profile-card-${p.uid}`}
       onClick={() => onSelect(p)}
-      className={cn(
-        'relative flex h-full min-h-0 cursor-pointer flex-col rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition-all group hover:shadow-md sm:p-5',
-        isRandomHighlight && 'z-10 ring-2 ring-blue-600 ring-offset-2'
-      )}
+      className="relative flex h-full min-h-0 cursor-pointer flex-col rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition-all group hover:shadow-md sm:p-5"
     >
       <div className="mb-2 flex shrink-0 justify-between items-start gap-2">
         <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -396,9 +512,7 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
                   <h3 className="text-base sm:text-lg font-bold text-stone-900 leading-snug line-clamp-2 break-words">
                     {p.activityCategory
                       ? activityCategoryLabel(p.activityCategory, lang)
-                      : lang === 'fr'
-                        ? 'Secteur non renseigné'
-                        : 'Sector no indicado'}
+                      : pickLang('Secteur non renseigné', 'Sector no indicado', 'Sector not specified', lang)}
                   </h3>
                 </div>
                 <p className="text-sm font-semibold text-stone-800 truncate">{p.companyName}</p>
@@ -466,7 +580,14 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
             {recCount > 0 && (
               <div
                 className="relative mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm ring-1 ring-blue-600/20"
-                title={lang === 'fr' ? `${recCount} recommandation(s)` : `${recCount} recomendacion(es)`}
+                title={
+                  pickLang(
+                    `${recCount} recommandation(s)`,
+                    `${recCount} recomendacion(es)`,
+                    `${recCount} recommendation(s)`,
+                    lang
+                  )
+                }
                 onClick={(e) => e.stopPropagation()}
               >
                 <Star size={16} className="fill-white text-white" strokeWidth={1.5} />
@@ -539,36 +660,7 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
         </div>
       </div>
 
-      {sanitizePassionIds(p.passionIds).length > 0 && (
-        <div className="mb-1 flex flex-wrap gap-1">
-          {sanitizePassionIds(p.passionIds).map((id) => (
-            <span
-              key={id}
-              className="inline-flex max-w-full items-center gap-0.5 rounded-md bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-800 ring-1 ring-rose-100"
-            >
-              <span aria-hidden>{getPassionEmoji(id)}</span>
-              <span className="line-clamp-1">{getPassionLabel(id, lang)}</span>
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div className="min-h-0 flex flex-1 flex-col gap-1 pt-1">
-        <div className="flex flex-col justify-start gap-1.5">
-          {(p.highlightedNeeds && p.highlightedNeeds.length > 0) && (
-            <div className="flex flex-wrap gap-1">
-              {p.highlightedNeeds.slice(0, 3).map((id) => (
-                <span
-                  key={id}
-                  className="max-w-full rounded-md bg-violet-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-violet-800"
-                >
-                  <span className="line-clamp-2">{needOptionLabel(id, lang)}</span>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <ProfileCardTagsBlock profile={p} urgentAuthorIds={urgentAuthorIds} />
 
       <div className="mt-auto flex w-full shrink-0 flex-col gap-1.5 border-t border-stone-100 pt-2.5">
         <div className="w-full min-h-[2.25rem] flex items-stretch">
@@ -627,6 +719,7 @@ const MatchCard = ({ m, p, onShare, expanded, onToggleHook }: {
   expanded: boolean,
   onToggleHook: () => void
 }) => {
+  const { lang } = useLanguage();
   return (
     <div className="bg-white rounded-2xl border border-indigo-100 p-5 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
       <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-full -mr-12 -mt-12 blur-2xl opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -660,7 +753,7 @@ const MatchCard = ({ m, p, onShare, expanded, onToggleHook }: {
           className="w-full py-2 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
         >
           <MessageSquare size={14} />
-          Comment l'aborder ?
+          {pickLang("Comment l'aborder ?", '¿Cómo abordarle?', 'How to reach out?', lang)}
           {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
         </button>
 
@@ -684,7 +777,7 @@ const MatchCard = ({ m, p, onShare, expanded, onToggleHook }: {
           className="w-full py-2 border border-stone-200 text-stone-600 rounded-xl text-xs font-bold hover:bg-stone-50 transition-all flex items-center justify-center gap-2"
         >
           <Share2 size={14} />
-          Voir le profil
+          {pickLang('Voir le profil', 'Ver perfil', 'View profile', lang)}
         </button>
       </div>
     </div>
@@ -699,14 +792,21 @@ const ShareNeedsModal = ({ isOpen, onClose, profile }: { isOpen: boolean, onClos
   useEffect(() => {
     const typed = formatHighlightedNeedsForText(profile.highlightedNeeds, lang);
     if (!typed) return;
-    const intro = lang === 'fr' ? 'Bonjour, ' : 'Hola, ';
+    const intro = pickLang('Bonjour, ', 'Hola, ', 'Hello, ', lang);
     const bits: string[] = [
-      lang === 'fr' ? `je mets en avant ces besoins : ${typed}.` : `destaco estas necesidades: ${typed}.`,
+      pickLang(
+        `je mets en avant ces besoins : ${typed}.`,
+        `destaco estas necesidades: ${typed}.`,
+        `I’m highlighting these needs: ${typed}.`,
+        lang
+      ),
     ];
-    const outro =
-      lang === 'fr'
-        ? 'Si vous avez des pistes ou connaissez quelqu’un, contactez-moi ! '
-        : 'Si tiene pistas o conoce a alguien, ¡escríbame! ';
+    const outro = pickLang(
+      'Si vous avez des pistes ou connaissez quelqu’un, contactez-moi ! ',
+      'Si tiene pistas o conoce a alguien, ¡escríbame! ',
+      'If you have leads or know someone, please reach out! ',
+      lang
+    );
     setMessage(intro + bits.join(' ') + ' ' + outro + `${window.location.origin}/profil/${profile.uid}`);
   }, [profile.highlightedNeeds, profile.uid, lang]);
 
@@ -717,12 +817,25 @@ const ShareNeedsModal = ({ isOpen, onClose, profile }: { isOpen: boolean, onClos
       const apiKey = getGeminiApiKey();
       if (!apiKey) throw new Error('missing-gemini-api-key');
       const ai = new GoogleGenAI({ apiKey });
+      const needsForAi = formatHighlightedNeedsForText(profile.highlightedNeeds, lang) || '—';
+      const prompt = pickLang(
+        `Reformule de manière professionnelle et engageante pour un partage LinkedIn/WhatsApp. Besoins structurés (tags): "${needsForAi}". Message court (max 200 caractères), sans guillemets autour du résultat.`,
+        `Reformula de forma profesional y atractiva para compartir en LinkedIn/WhatsApp. Necesidades estructuradas (etiquetas): "${needsForAi}". Mensaje breve (máx. 200 caracteres), sin comillas alrededor del resultado.`,
+        `Rephrase in a professional, engaging way for LinkedIn/WhatsApp sharing. Structured needs (tags): "${needsForAi}". Short message (max 200 characters), no quotes around the result.`,
+        lang
+      );
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `Reformule de manière professionnelle et engageante pour un partage LinkedIn/WhatsApp. Besoins structurés (tags): "${formatHighlightedNeedsForText(profile.highlightedNeeds, 'fr') || '—'}". Message court (max 200 caractères), sans guillemets autour du résultat.`,
+        contents: prompt,
       });
       const text = response.text || '';
-      setMessage(`${text}\n\nMon profil : ${window.location.origin}/profil/${profile.uid}`);
+      const footer = pickLang(
+        `\n\nMon profil : ${window.location.origin}/profil/${profile.uid}`,
+        `\n\nMi perfil: ${window.location.origin}/profil/${profile.uid}`,
+        `\n\nMy profile: ${window.location.origin}/profil/${profile.uid}`,
+        lang
+      );
+      setMessage(`${text}${footer}`);
     } catch (error) {
       console.error('Gemini error:', error);
     } finally {
@@ -732,7 +845,7 @@ const ShareNeedsModal = ({ isOpen, onClose, profile }: { isOpen: boolean, onClos
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message);
-    alert('Copié !');
+    alert(pickLang('Copié !', '¡Copiado!', 'Copied!', lang));
   };
 
   const handleWhatsApp = () => {
@@ -751,7 +864,7 @@ const ShareNeedsModal = ({ isOpen, onClose, profile }: { isOpen: boolean, onClos
         <div className="p-6 border-b border-stone-100 flex justify-between items-center bg-stone-50/50">
           <h3 className="text-xl font-bold text-stone-900 flex items-center gap-2">
             <Share2 className="text-indigo-600" size={24} />
-            Partager mes besoins
+            {pickLang('Partager mes besoins', 'Compartir mis necesidades', 'Share my needs', lang)}
           </h3>
           <button onClick={onClose} className="p-2 hover:bg-stone-200 rounded-full transition-colors">
             <Plus className="rotate-45 text-stone-500" size={24} />
@@ -760,7 +873,9 @@ const ShareNeedsModal = ({ isOpen, onClose, profile }: { isOpen: boolean, onClos
 
         <div className="p-6 space-y-6">
           <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 space-y-2">
-            <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">Aperçu du besoin</p>
+            <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">
+              {pickLang('Aperçu du besoin', 'Vista previa de la necesidad', 'Need preview', lang)}
+            </p>
             {sanitizeHighlightedNeeds(profile.highlightedNeeds).length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {sanitizeHighlightedNeeds(profile.highlightedNeeds).map((id) => (
@@ -774,7 +889,7 @@ const ShareNeedsModal = ({ isOpen, onClose, profile }: { isOpen: boolean, onClos
 
           <div className="space-y-2">
             <label className="text-sm font-bold text-stone-700 flex justify-between items-center">
-              Message personnalisé
+              {pickLang('Message personnalisé', 'Mensaje personalizado', 'Custom message', lang)}
               <button 
                 onClick={handleRegenerate}
                 disabled={
@@ -784,14 +899,14 @@ const ShareNeedsModal = ({ isOpen, onClose, profile }: { isOpen: boolean, onClos
                 className="text-xs text-indigo-600 hover:text-indigo-700 flex items-center gap-1 font-bold disabled:opacity-50"
               >
                 <RefreshCw size={12} className={isGenerating ? "animate-spin" : ""} />
-                Régénérer avec l'IA
+                {pickLang("Régénérer avec l'IA", 'Regenerar con IA', 'Regenerate with AI', lang)}
               </button>
             </label>
             <textarea 
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               className="w-full h-32 p-4 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none"
-              placeholder="Votre message ici..."
+              placeholder={pickLang('Votre message ici...', 'Su mensaje aquí...', 'Your message here...', lang)}
             />
           </div>
 
@@ -801,7 +916,7 @@ const ShareNeedsModal = ({ isOpen, onClose, profile }: { isOpen: boolean, onClos
               className="flex items-center justify-center gap-2 py-3 bg-stone-100 text-stone-700 rounded-2xl font-bold hover:bg-stone-200 transition-all"
             >
               <Copy size={18} />
-              Copier
+              {pickLang('Copier', 'Copiar', 'Copy', lang)}
             </button>
             <button 
               onClick={handleWhatsApp}
@@ -898,7 +1013,7 @@ const ProfilePage = () => {
   if (!profile) return <div className="min-h-screen flex items-center justify-center bg-stone-50">{t('profileNotFound')}</div>;
 
   const hasAlreadyRecommended = recs.some(r => r.authorId === currentUser?.uid);
-  const tp = (key: keyof typeof TRANSLATIONS) => TRANSLATIONS[key][lang];
+  const tp = t;
   const websiteDisplay = profile.website?.trim()
     ? profile.website.replace(/^https?:\/\//i, '')
     : '';
@@ -922,7 +1037,7 @@ const ProfilePage = () => {
       <div className="max-w-4xl mx-auto px-4 pt-8">
         <button onClick={() => navigate('/')} className="mb-6 flex items-center gap-2 text-stone-500 hover:text-stone-900 font-bold transition-colors">
           <ArrowLeft size={20} />
-          Retour à l'accueil
+          {pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
         </button>
 
         <div className="bg-white rounded-[2.5rem] shadow-xl border border-stone-200 overflow-hidden">
@@ -969,7 +1084,7 @@ const ProfilePage = () => {
                     className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
                   >
                     <Mail size={18} />
-                    Message
+                    {pickLang('Message', 'Mensaje', 'Message', lang)}
                   </a>
                   {profile.whatsapp && (
                     <a 
@@ -1033,7 +1148,7 @@ const ProfilePage = () => {
                       onClick={() => navigate(`/besoin/${profile.uid}`)}
                       className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-2xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200"
                     >
-                      {lang === 'fr' ? 'Voir le besoin' : 'Ver la necesidad'}
+                      {pickLang('Voir le besoin', 'Ver la necesidad', 'View need', lang)}
                       <ChevronRight size={16} />
                     </button>
                   )}
@@ -1041,7 +1156,9 @@ const ProfilePage = () => {
 
                 {profile.pitchVideoUrl && (
                   <section>
-                    <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">Pitch Vidéo</h2>
+                    <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">
+                      {pickLang('Pitch Vidéo', 'Video pitch', 'Video pitch', lang)}
+                    </h2>
                     <div className="aspect-video bg-stone-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white ring-1 ring-stone-200">
                       <video 
                         src={profile.pitchVideoUrl} 
@@ -1052,7 +1169,14 @@ const ProfilePage = () => {
                           if (v.duration > 60) {
                             setTimeout(() => {
                               v.pause();
-                              alert("Le pitch est limité à 60 secondes.");
+                              alert(
+                                pickLang(
+                                  'Le pitch est limité à 60 secondes.',
+                                  'El pitch está limitado a 60 segundos.',
+                                  'The pitch is limited to 60 seconds.',
+                                  lang
+                                )
+                              );
                             }, 60000);
                           }
                         }}
@@ -1065,7 +1189,8 @@ const ProfilePage = () => {
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-stone-900 flex items-center gap-2">
                       <Star className="text-amber-500" fill="currentColor" size={24} />
-                      {recs.length} Recommandations
+                      {recs.length}{' '}
+                      {pickLang('Recommandations', 'Recomendaciones', 'Recommendations', lang)}
                     </h2>
                     {currentUser && !hasAlreadyRecommended && currentUser.uid !== profileId && (
                       <button 
@@ -1073,7 +1198,7 @@ const ProfilePage = () => {
                         className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
                       >
                         <Plus size={16} />
-                        Je recommande
+                        {pickLang('Je recommande', 'Yo recomiendo', 'I recommend', lang)}
                       </button>
                     )}
                   </div>
@@ -1092,7 +1217,7 @@ const ProfilePage = () => {
                           <div>
                             <p className="text-sm font-bold text-stone-900">{r.authorName}</p>
                             <p className="text-[10px] text-stone-400 font-medium">
-                              {new Date(r.createdAt).toLocaleDateString()}
+                              {new Date(r.createdAt).toLocaleDateString(uiLocale(lang))}
                             </p>
                           </div>
                         </div>
@@ -1100,7 +1225,14 @@ const ProfilePage = () => {
                       </div>
                     ))}
                     {recs.length === 0 && (
-                      <p className="text-center text-stone-400 py-8 italic">Aucune recommandation pour le moment.</p>
+                      <p className="text-center text-stone-400 py-8 italic">
+                        {pickLang(
+                          'Aucune recommandation pour le moment.',
+                          'No hay recomendaciones por ahora.',
+                          'No recommendations yet.',
+                          lang
+                        )}
+                      </p>
                     )}
                   </div>
                 </section>
@@ -1112,19 +1244,19 @@ const ProfilePage = () => {
                     viewer={currentProfile}
                     target={profile}
                     lang={lang}
-                    t={(k) => tp(k as keyof typeof TRANSLATIONS)}
+                    t={t}
                     canRevealPrivateWhatsApp={!!currentUser}
                   />
                 )}
                 <div className="bg-stone-50 p-6 rounded-3xl border border-stone-200">
-                  <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">Détails</h2>
+                  <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">{tp('details')}</h2>
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-white rounded-lg shadow-sm text-indigo-600">
                         <Activity size={18} />
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-stone-400 uppercase tracking-wider">Catégorie</p>
+                        <p className="text-[10px] font-black text-stone-400 uppercase tracking-wider">{tp('activityCategory')}</p>
                         <p className="text-sm font-bold text-stone-900">
                           {activityCategoryLabel(profile.activityCategory, lang)}
                         </p>
@@ -1239,27 +1371,34 @@ const ProfilePage = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl"
           >
-            <h3 className="text-xl font-bold text-stone-900 mb-4">Recommander {profile.fullName}</h3>
+            <h3 className="text-xl font-bold text-stone-900 mb-4">
+              {pickLang('Recommander', 'Recomendar', 'Recommend', lang)} {profile.fullName}
+            </h3>
             <textarea 
               value={recText}
               onChange={(e) => setRecText(e.target.value)}
               maxLength={200}
               className="w-full h-32 p-4 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none mb-4"
-              placeholder="Pourquoi recommandez-vous ce membre ? (max 200 caractères)"
+              placeholder={pickLang(
+                'Pourquoi recommandez-vous ce membre ? (max 200 caractères)',
+                '¿Por qué recomiendas a este miembro? (máx. 200 caracteres)',
+                'Why do you recommend this member? (max 200 characters)',
+                lang
+              )}
             />
             <div className="flex gap-3">
               <button 
                 onClick={() => setShowRecModal(false)}
                 className="flex-1 py-3 bg-stone-100 text-stone-600 rounded-2xl font-bold hover:bg-stone-200 transition-all"
               >
-                Annuler
+                {t('cancel')}
               </button>
               <button 
                 onClick={handleAddRec}
                 disabled={!recText.trim()}
                 className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50"
               >
-                Publier
+                {pickLang('Publier', 'Publicar', 'Publish', lang)}
               </button>
             </div>
           </motion.div>
@@ -1364,7 +1503,7 @@ const NeedPage = () => {
       <div className="max-w-3xl mx-auto px-4 pt-8">
         <button onClick={() => navigate('/')} className="mb-6 flex items-center gap-2 text-stone-500 hover:text-stone-900 font-bold transition-colors">
           <ArrowLeft size={20} />
-          Retour à l'accueil
+          {pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
         </button>
 
         <div className="bg-white rounded-[2.5rem] shadow-xl border border-stone-200 overflow-hidden mb-8">
@@ -1384,17 +1523,19 @@ const NeedPage = () => {
               {urgentPost && (
                 <div className="ml-auto px-4 py-2 bg-red-100 text-red-700 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
                   <Zap size={14} fill="currentColor" />
-                  Urgent
+                  {pickLang('Urgent', 'Urgente', 'Urgent', lang)}
                 </div>
               )}
             </div>
 
             <div className="bg-stone-50 p-8 rounded-[2rem] border border-stone-200 mb-8">
-              <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">Description du besoin</h2>
+              <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">
+                {pickLang('Description du besoin', 'Descripción de la necesidad', 'Need description', lang)}
+              </h2>
               <p className="text-xl text-stone-800 font-bold leading-tight italic">
                 {urgentPost?.text ||
                   formatHighlightedNeedsForText(profile.highlightedNeeds, lang) ||
-                  'Aucun besoin spécifié.'}
+                  pickLang('Aucun besoin spécifié.', 'Ninguna necesidad especificada.', 'No need specified.', lang)}
               </p>
             </div>
 
@@ -1403,13 +1544,15 @@ const NeedPage = () => {
                 <div className="p-2 bg-white rounded-xl shadow-sm text-indigo-600">
                   <UserIcon size={20} />
                 </div>
-                <p className="text-sm font-bold text-stone-700">Voir le profil complet</p>
+                <p className="text-sm font-bold text-stone-700">
+                  {pickLang('Voir le profil complet', 'Ver perfil completo', 'View full profile', lang)}
+                </p>
               </div>
               <button 
                 onClick={() => navigate(`/profil/${profile.uid}`)}
                 className="px-6 py-2 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-all border border-indigo-200 shadow-sm"
               >
-                Ouvrir
+                {pickLang('Ouvrir', 'Abrir', 'Open', lang)}
               </button>
             </div>
           </div>
@@ -1419,7 +1562,8 @@ const NeedPage = () => {
           <div className="p-8 border-b border-stone-100">
             <h2 className="text-xl font-bold text-stone-900 flex items-center gap-2">
               <MessageSquare className="text-indigo-600" size={24} />
-              {comments.length} Commentaires
+              {comments.length}{' '}
+              {pickLang('Commentaires', 'Comentarios', 'Comments', lang)}
             </h2>
           </div>
 
@@ -1438,7 +1582,7 @@ const NeedPage = () => {
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-sm font-bold text-stone-900">{c.authorName}</p>
                       <p className="text-[10px] text-stone-400 font-medium">
-                        {new Date(c.createdAt).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'es-MX')}
+                        {new Date(c.createdAt).toLocaleDateString(uiLocale(lang))}
                       </p>
                     </div>
                     <p className="text-stone-700 text-sm leading-relaxed">{c.text}</p>
@@ -1446,7 +1590,14 @@ const NeedPage = () => {
                 </div>
               ))}
               {comments.length === 0 && (
-                <p className="text-center text-stone-400 py-8 italic">Soyez le premier à commenter ce besoin.</p>
+                <p className="text-center text-stone-400 py-8 italic">
+                  {pickLang(
+                    'Soyez le premier à commenter ce besoin.',
+                    'Sé el primero en comentar esta necesidad.',
+                    'Be the first to comment on this need.',
+                    lang
+                  )}
+                </p>
               )}
             </div>
 
@@ -1457,7 +1608,12 @@ const NeedPage = () => {
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     className="flex-1 p-4 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none h-24"
-                    placeholder="Ajouter un commentaire..."
+                    placeholder={pickLang(
+                      'Ajouter un commentaire...',
+                      'Añadir un comentario...',
+                      'Add a comment...',
+                      lang
+                    )}
                   />
                   <button 
                     onClick={handleAddComment}
@@ -1520,11 +1676,16 @@ const MainApp = () => {
   const [isShareNeedsModalOpen, setIsShareNeedsModalOpen] = useState(false);
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
+  /** Champs genre / nationalité / délégations (collection `user_admin_private`). */
+  const [formAdminPrivate, setFormAdminPrivate] = useState<UserAdminPrivateDoc | null>(null);
+  const [formAdminPrivateReady, setFormAdminPrivateReady] = useState(false);
+  const [adminModalPrivate, setAdminModalPrivate] = useState<UserAdminPrivateDoc | null>(null);
+  const [adminModalPrivateLoading, setAdminModalPrivateLoading] = useState(false);
+  const [pendingPrivateByUid, setPendingPrivateByUid] = useState<Record<string, UserAdminPrivateDoc>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterLocation, setFilterLocation] = useState<LocationFilterKey>('');
   const [filterProfileType, setFilterProfileType] = useState<ProfileTypeFilterKey>('');
-  const [randomHighlightUid, setRandomHighlightUid] = useState<string | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
@@ -1532,7 +1693,9 @@ const MainApp = () => {
   const [membersSortRecent, setMembersSortRecent] = useState(false);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'companies' | 'members' | 'activities' | 'opportunities'>('members');
+  const [viewMode, setViewMode] = useState<'companies' | 'members' | 'activities' | 'radar'>('members');
+  /** Masque « Nouveaux membres » et « Opportunités » après interaction avec les onglets du listing (remonte le bloc principal). */
+  const [directoryDiscoveryStripsHidden, setDirectoryDiscoveryStripsHidden] = useState(false);
   const [matches, setMatches] = useState<MatchSuggestion[]>([]);
   const [matchLoading, setMatchLoading] = useState(false);
   const [matchBlockReason, setMatchBlockReason] = useState<AiMatchBlockReason>(null);
@@ -1569,7 +1732,14 @@ const MainApp = () => {
       popupClosed: "La ventana de inicio de sesión se cerró antes de terminar. Inténtalo de nuevo.",
       generic: "No se pudo iniciar sesión. Verifica Firebase Auth y que el proveedor esté habilitado."
     };
-    const msg = lang === 'fr' ? fr : es;
+    const en = {
+      unauthorizedDomain: `This domain (${host}) is not authorized in Firebase Auth. Add it under Authentication > Settings > Authorized domains.`,
+      providerDisabled:
+        "This provider (Google, Microsoft, or Apple) is not enabled in Firebase Auth > Sign-in method.",
+      popupClosed: "The sign-in window was closed before finishing. Please try again.",
+      generic: "Sign-in failed. Check Firebase Auth and that the provider is enabled."
+    };
+    const msg = lang === 'fr' ? fr : lang === 'es' ? es : en;
 
     if (code === 'auth/unauthorized-domain') return msg.unauthorizedDomain;
     if (code === 'auth/operation-not-allowed') return msg.providerDisabled;
@@ -1580,6 +1750,92 @@ const MainApp = () => {
   const pendingProfiles = useMemo(() => {
     return allProfiles.filter(p => p.isValidated === false);
   }, [allProfiles]);
+
+  const pendingUidsKey = useMemo(
+    () => pendingProfiles.map((p) => p.uid).sort().join(','),
+    [pendingProfiles]
+  );
+
+  useEffect(() => {
+    if (!isEditing || !user) {
+      setFormAdminPrivate(null);
+      setFormAdminPrivateReady(false);
+      return;
+    }
+    const uid = editingProfile?.uid ?? profile?.uid;
+    if (!uid) {
+      setFormAdminPrivate(null);
+      setFormAdminPrivateReady(false);
+      return;
+    }
+    setFormAdminPrivateReady(false);
+    const legacy = editingProfile ?? profile;
+    let cancelled = false;
+    loadUserAdminPrivate(uid, legacy)
+      .then((d) => {
+        if (!cancelled) {
+          setFormAdminPrivate(d);
+          setFormAdminPrivateReady(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFormAdminPrivate({});
+          setFormAdminPrivateReady(true);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditing, editingProfile?.uid, profile?.uid, user]);
+
+  useEffect(() => {
+    if (!selectedProfile || profile?.role !== 'admin') {
+      setAdminModalPrivate(null);
+      setAdminModalPrivateLoading(false);
+      return;
+    }
+    setAdminModalPrivateLoading(true);
+    const uid = selectedProfile.uid;
+    let cancelled = false;
+    loadUserAdminPrivate(uid, selectedProfile)
+      .then((d) => {
+        if (!cancelled) {
+          setAdminModalPrivate(d);
+          setAdminModalPrivateLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAdminModalPrivate({});
+          setAdminModalPrivateLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedProfile?.uid, profile?.role]);
+
+  useEffect(() => {
+    if (!showValidationPanel || profile?.role !== 'admin' || pendingProfiles.length === 0) {
+      setPendingPrivateByUid({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const map: Record<string, UserAdminPrivateDoc> = {};
+      await Promise.all(
+        pendingProfiles.map(async (p) => {
+          const d = await loadUserAdminPrivate(p.uid, p);
+          map[p.uid] = d;
+        })
+      );
+      if (!cancelled) setPendingPrivateByUid(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showValidationPanel, profile?.role, pendingUidsKey, pendingProfiles]);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -1613,6 +1869,11 @@ const MainApp = () => {
       last10: last10 as UserProfile[]
     };
   }, [allProfiles]);
+
+  const urgentAuthorIdSet = useMemo(
+    () => new Set(urgentPosts.map((post) => post.authorId)),
+    [urgentPosts]
+  );
 
   useEffect(() => {
     const testConnection = async () => {
@@ -1663,7 +1924,7 @@ const MainApp = () => {
     );
     const unsubscribeUrgent = onSnapshot(urgentQuery, (snapshot) => {
       const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UrgentPost));
-      setUrgentPosts(posts.slice(0, 5));
+      setUrgentPosts(posts);
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'urgent_posts'));
 
     return () => {
@@ -1862,6 +2123,16 @@ const MainApp = () => {
         website: 'Sitio web',
         whatsapp: 'WhatsApp',
         bio: 'Presentacion'
+      },
+      en: {
+        fullName: 'Full name',
+        companyName: 'Company name',
+        activityCategory: 'Sector',
+        positionCategory: 'Role in the company',
+        email: 'Email',
+        website: 'Website',
+        whatsapp: 'WhatsApp',
+        bio: 'Bio'
       }
     };
     const labels = requiredFieldLabels[lang];
@@ -1882,15 +2153,21 @@ const MainApp = () => {
       const missingLabels = missingFields.map((key) => labels[key]);
       if (invalidWebsite) {
         missingLabels.push(
-          lang === 'fr'
-            ? 'Site web (doit commencer par http:// ou https://)'
-            : 'Sitio web (debe iniciar con http:// o https://)'
+          pickLang(
+            'Site web (doit commencer par http:// ou https://)',
+            'Sitio web (debe iniciar con http:// o https://)',
+            'Website (must start with http:// or https://)',
+            lang
+          )
         );
       }
       setProfileSaveError(
-        lang === 'fr'
-          ? `Pour terminer l'enregistrement, merci de completer les champs suivants : ${missingLabels.join(', ')}.`
-          : `Para guardar, completa estos campos: ${missingLabels.join(', ')}.`
+        pickLang(
+          `Pour terminer l'enregistrement, merci de completer les champs suivants : ${missingLabels.join(', ')}.`,
+          `Para guardar, completa estos campos: ${missingLabels.join(', ')}.`,
+          `To save, please complete the following fields: ${missingLabels.join(', ')}.`,
+          lang
+        )
       );
       setProfileSaveBusy(false);
       return;
@@ -1899,9 +2176,12 @@ const MainApp = () => {
     const posVal = getTrimmed('positionCategory');
     if (posVal && !(WORK_FUNCTION_OPTIONS as readonly string[]).includes(posVal)) {
       setProfileSaveError(
-        lang === 'fr'
-          ? 'La fonction dans l\'entreprise selectionnee est invalide.'
-          : 'La funcion en la empresa seleccionada no es valida.'
+        pickLang(
+          "La fonction dans l'entreprise selectionnee est invalide.",
+          'La funcion en la empresa seleccionada no es valida.',
+          'The selected role in the company is invalid.',
+          lang
+        )
       );
       setProfileSaveBusy(false);
       return;
@@ -1915,9 +2195,50 @@ const MainApp = () => {
       employeeCountVal = ecRaw;
     } else {
       setProfileSaveError(
-        lang === 'fr'
-          ? 'La fourchette « Nombre d\'employés » sélectionnée est invalide.'
-          : 'El rango de « Número de empleados » seleccionado no es válido.'
+        pickLang(
+          "La fourchette « Nombre d'employés » sélectionnée est invalide.",
+          'El rango de « Número de empleados » seleccionado no es válido.',
+          'The selected employee count range is invalid.',
+          lang
+        )
+      );
+      setProfileSaveBusy(false);
+      return;
+    }
+
+    const genderRaw = getTrimmed('genderStat');
+    let genderStat: GenderStat | undefined;
+    if (genderRaw === '') {
+      genderStat = undefined;
+    } else if ((GENDER_STAT_VALUES as readonly string[]).includes(genderRaw)) {
+      genderStat = genderRaw as GenderStat;
+    } else {
+      setProfileSaveError(
+        pickLang(
+          'La valeur « Genre » sélectionnée est invalide.',
+          'El valor de « Género » seleccionado no es válido.',
+          'The selected gender value is invalid.',
+          lang
+        )
+      );
+      setProfileSaveBusy(false);
+      return;
+    }
+
+    const nationalityRaw = getTrimmed('nationality');
+    let nationality: string | undefined;
+    if (nationalityRaw === '') {
+      nationality = undefined;
+    } else if (NATIONALITY_OPTIONS.some((o) => o.code === nationalityRaw)) {
+      nationality = nationalityRaw;
+    } else {
+      setProfileSaveError(
+        pickLang(
+          'La nationalité sélectionnée est invalide.',
+          'La nacionalidad seleccionada no es válida.',
+          'The selected nationality is invalid.',
+          lang
+        )
       );
       setProfileSaveBusy(false);
       return;
@@ -1961,10 +2282,22 @@ const MainApp = () => {
       Object.entries(newProfile).filter(([, value]) => value !== undefined)
     ) as Partial<UserProfile>;
 
+    const delegationFlag = formData.get('acceptsDelegationVisits') === 'on';
+
     try {
       await setDoc(doc(db, 'users', targetUid), sanitizedProfile);
+      await saveUserAdminPrivate(targetUid, {
+        genderStat,
+        nationality,
+        acceptsDelegationVisits: delegationFlag,
+      });
       if (isSelf) {
         setProfile(sanitizedProfile as UserProfile);
+        setFormAdminPrivate({
+          genderStat,
+          nationality,
+          acceptsDelegationVisits: delegationFlag,
+        });
       }
       setIsEditing(false);
       setEditingProfile(null);
@@ -1973,15 +2306,21 @@ const MainApp = () => {
       const code = (error as { code?: string })?.code || '';
       if (code === 'permission-denied') {
         setProfileSaveError(
-          lang === 'fr'
-            ? "Enregistrement refusé par les règles Firestore (permission-denied). Vérifie les règles 'users'."
-            : "Guardado rechazado por reglas de Firestore (permission-denied). Revisa las reglas de 'users'."
+          pickLang(
+            "Enregistrement refusé par les règles Firestore (permission-denied). Vérifie les règles 'users'.",
+            "Guardado rechazado por reglas de Firestore (permission-denied). Revisa las reglas de 'users'.",
+            "Save denied by Firestore rules (permission-denied). Check your 'users' rules.",
+            lang
+          )
         );
       } else {
         setProfileSaveError(
-          lang === 'fr'
-            ? `Impossible d'enregistrer le profil.${code ? ` (code: ${code})` : ''}`
-            : `No se pudo guardar el perfil.${code ? ` (code: ${code})` : ''}`
+          pickLang(
+            `Impossible d'enregistrer le profil.${code ? ` (code: ${code})` : ''}`,
+            `No se pudo guardar el perfil.${code ? ` (code: ${code})` : ''}`,
+            `Could not save the profile.${code ? ` (code: ${code})` : ''}`,
+            lang
+          )
         );
       }
       return;
@@ -1992,6 +2331,7 @@ const MainApp = () => {
 
   const handleDeleteProfile = async (uid: string) => {
     try {
+      await deleteDoc(doc(db, USER_ADMIN_PRIVATE_COLLECTION, uid)).catch(() => {});
       await deleteDoc(doc(db, 'users', uid));
       if (uid === user?.uid) {
         setProfile(null);
@@ -2004,11 +2344,17 @@ const MainApp = () => {
 
   const exportToExcel = async () => {
     if (profile?.role !== 'admin') return;
-    
-    const data = allProfiles.map(p => ({
-      ...p,
-      createdAt: p.createdAt.toDate().toISOString()
-    }));
+
+    const data = await Promise.all(
+      allProfiles.map(async (p) => {
+        const priv = await loadUserAdminPrivate(p.uid, p);
+        return {
+          ...p,
+          ...priv,
+          createdAt: p.createdAt.toDate().toISOString(),
+        };
+      })
+    );
     
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
@@ -2048,6 +2394,8 @@ const MainApp = () => {
     );
   }, [searchTerm, filterCategory, filterLocation, filterProfileType]);
 
+  const showDiscoveryStrips = !showDirectoryClearFilters && !directoryDiscoveryStripsHidden;
+
   const clearDirectoryFilters = useCallback(() => {
     setSearchTerm('');
     setFilterCategory('');
@@ -2074,16 +2422,7 @@ const MainApp = () => {
     if (viewMode !== 'companies' && viewMode !== 'members') {
       setViewMode(filterProfileType === 'company' ? 'companies' : 'members');
     }
-    setRandomHighlightUid(pick.uid);
-    const runScroll = () => {
-      document.getElementById(`profile-card-${pick.uid}`)?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
-    };
-    setTimeout(runScroll, 80);
-    setTimeout(runScroll, 320);
-    window.setTimeout(() => setRandomHighlightUid(null), 2000);
+    setSelectedProfile(pick);
   }, [filteredProfiles, filterProfileType, viewMode]);
 
   const membersFiltered = useMemo(() => {
@@ -2111,7 +2450,7 @@ const MainApp = () => {
 
   const profilesSortedForCompanies = useMemo(() => {
     return [...filteredProfiles].sort((a, b) => {
-      const locale = lang === 'fr' ? 'fr' : 'es';
+      const locale = sortLocale(lang);
       const byCompany = a.companyName.localeCompare(b.companyName, locale, { sensitivity: 'base' });
       if (byCompany !== 0) return byCompany;
       return a.fullName.localeCompare(b.fullName, locale, { sensitivity: 'base' });
@@ -2130,7 +2469,7 @@ const MainApp = () => {
   const profilesSortedForActivities = useMemo(() => {
     const rank = new Map<string, number>();
     activityCategoryPopularity.forEach(([cat], i) => rank.set(cat, i));
-    const locale = lang === 'fr' ? 'fr' : 'es';
+    const locale = sortLocale(lang);
     return [...filteredProfiles].sort((a, b) => {
       const ca = a.activityCategory || '';
       const cb = b.activityCategory || '';
@@ -2198,16 +2537,22 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       const code = (error as { code?: string })?.code || '';
       if (msg.includes('missing-gemini-api-key')) {
         setOptimizationError(
-          lang === 'fr'
-            ? "La cle Gemini est absente. Ajoute VITE_GEMINI_API_KEY dans .env.local puis redemarre le serveur."
-            : "Falta la clave Gemini. Agrega VITE_GEMINI_API_KEY en .env.local y reinicia el servidor."
+          pickLang(
+            'La cle Gemini est absente. Ajoute VITE_GEMINI_API_KEY dans .env.local puis redemarre le serveur.',
+            'Falta la clave Gemini. Agrega VITE_GEMINI_API_KEY en .env.local y reinicia el servidor.',
+            'The Gemini API key is missing. Add VITE_GEMINI_API_KEY to .env.local and restart the dev server.',
+            lang
+          )
         );
         return;
       }
       setOptimizationError(
-        lang === 'fr'
-          ? `Impossible de generer les suggestions IA pour ce profil.${code ? ` (code: ${code})` : ''}`
-          : `No se pudieron generar sugerencias IA para este perfil.${code ? ` (code: ${code})` : ''}`
+        pickLang(
+          `Impossible de generer les suggestions IA pour ce profil.${code ? ` (code: ${code})` : ''}`,
+          `No se pudieron generar sugerencias IA para este perfil.${code ? ` (code: ${code})` : ''}`,
+          `Could not generate AI suggestions for this profile.${code ? ` (code: ${code})` : ''}`,
+          lang
+        )
       );
     } finally {
       setOptimizationBusy(false);
@@ -2273,16 +2618,23 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 <button
                   type="button"
                   onClick={() => setLang('fr')}
-                  className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all ${lang === 'fr' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                  className={`px-1.5 py-1 rounded-md text-[10px] font-bold transition-all ${lang === 'fr' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
                 >
                   FR
                 </button>
                 <button
                   type="button"
                   onClick={() => setLang('es')}
-                  className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all ${lang === 'es' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                  className={`px-1.5 py-1 rounded-md text-[10px] font-bold transition-all ${lang === 'es' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
                 >
                   ES
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLang('en')}
+                  className={`px-1.5 py-1 rounded-md text-[10px] font-bold transition-all ${lang === 'en' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                >
+                  EN
                 </button>
               </div>
             </div>
@@ -2292,15 +2644,21 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             <div className="hidden bg-stone-100 p-0.5 sm:flex sm:p-1 sm:rounded-lg sm:rounded-xl border border-stone-200">
               <button 
                 onClick={() => setLang('fr')}
-                className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'fr' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'fr' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
               >
                 FR
               </button>
               <button 
                 onClick={() => setLang('es')}
-                className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'es' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'es' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
               >
                 ES
+              </button>
+              <button 
+                onClick={() => setLang('en')}
+                className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'en' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+              >
+                EN
               </button>
             </div>
 
@@ -2355,9 +2713,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 className="px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-900 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-stone-800 transition-all shadow-sm sm:shadow-md hover:shadow-lg active:scale-95 whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {authProviderBusy !== null
-                  ? lang === 'fr'
-                    ? 'Connexion...'
-                    : 'Conectando...'
+                  ? pickLang('Connexion...', 'Conectando...', 'Signing in...', lang)
                   : t('login')}
               </button>
             )}
@@ -2477,9 +2833,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     {profile?.isValidated === false && profile.optimizationSuggestion && !isEditing && (
                       <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl space-y-3">
                         <p className="text-xs font-bold text-indigo-900">
-                          {lang === 'fr'
-                            ? "Suggestions IA disponibles pour optimiser votre profil avant validation."
-                            : "Sugerencias IA disponibles para optimizar tu perfil antes de la validación."}
+                          {pickLang(
+                            'Suggestions IA disponibles pour optimiser votre profil avant validation.',
+                            'Sugerencias IA disponibles para optimizar tu perfil antes de la validación.',
+                            'AI suggestions are available to improve your profile before validation.',
+                            lang
+                          )}
                         </p>
                         <ul className="text-xs text-indigo-800 list-disc pl-4 space-y-1">
                           {profile.optimizationSuggestion.summary.slice(0, 4).map((item) => (
@@ -2498,7 +2857,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             }}
                             className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all"
                           >
-                            {lang === 'fr' ? 'Appliquer les suggestions IA' : 'Aplicar sugerencias IA'}
+                            {pickLang(
+                              'Appliquer les suggestions IA',
+                              'Aplicar sugerencias IA',
+                              'Apply AI suggestions',
+                              lang
+                            )}
                           </button>
                         </div>
                       </div>
@@ -2531,7 +2895,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
                                   >
                                     <option value="">
-                                      {lang === 'fr' ? '— Choisir une fourchette —' : '— Elegir un rango —'}
+                                      {pickLang(
+                                        '— Choisir une fourchette —',
+                                        '— Elegir un rango —',
+                                        '— Choose a range —',
+                                        lang
+                                      )}
                                     </option>
                                     {EMPLOYEE_COUNT_RANGES.map((r) => (
                                       <option key={r} value={r}>
@@ -2547,7 +2916,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               <div className="space-y-1">
                                 <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('city')}</label>
                                 <select name="city" defaultValue={editingProfile?.city || profile?.city} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all">
-                                  {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                  {CITIES.map((c) => (
+                                    <option key={c} value={c}>
+                                      {cityOptionLabel(c, lang)}
+                                    </option>
+                                  ))}
                                 </select>
                               </div>
                               <div className="space-y-1">
@@ -2708,6 +3081,71 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </div>
                           </div>
 
+                          {formAdminPrivateReady && formAdminPrivate !== null && (
+                            <div
+                              key={`admin-priv-${editingProfile?.uid ?? profile?.uid}`}
+                              className="rounded-xl border border-violet-200/70 bg-violet-50/50 p-4 md:p-5 space-y-4"
+                            >
+                              <div>
+                                <p className="text-xs font-bold text-violet-950">{t('statsOnlySectionTitle')}</p>
+                                <p className="text-[10px] text-violet-900/80 mt-1 leading-relaxed">{t('statsOnlySectionHint')}</p>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                    {t('genderStatLabel')}
+                                  </label>
+                                  <p className="text-[10px] text-stone-400 leading-snug">{t('genderStatHint')}</p>
+                                  <select
+                                    name="genderStat"
+                                    defaultValue={formAdminPrivate.genderStat ?? ''}
+                                    className="mt-1 w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all text-sm"
+                                  >
+                                    <option value="">{t('genderStatSelectPlaceholder')}</option>
+                                    <option value="male">{t('genderStatMale')}</option>
+                                    <option value="female">{t('genderStatFemale')}</option>
+                                    <option value="other">{t('genderStatOther')}</option>
+                                    <option value="prefer_not_say">{t('genderStatPreferNotSay')}</option>
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                    {t('nationalityLabel')}
+                                  </label>
+                                  <p className="text-[10px] text-stone-400 leading-snug">{t('nationalityHint')}</p>
+                                  <select
+                                    name="nationality"
+                                    defaultValue={formAdminPrivate.nationality ?? ''}
+                                    className="mt-1 w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all text-sm"
+                                  >
+                                    <option value="">{t('nationalitySelectPlaceholder')}</option>
+                                    {NATIONALITY_OPTIONS.map((o) => (
+                                      <option key={o.code} value={o.code}>
+                                        {nationalityLabel(o.code, lang)}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                              <label className="flex items-start gap-3 cursor-pointer group rounded-lg p-2 -m-2 hover:bg-white/60 transition-colors">
+                                <input
+                                  type="checkbox"
+                                  name="acceptsDelegationVisits"
+                                  defaultChecked={formAdminPrivate.acceptsDelegationVisits === true}
+                                  className="mt-1 w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900 shrink-0"
+                                />
+                                <span className="min-w-0">
+                                  <span className="block text-sm text-stone-700 group-hover:text-stone-900">
+                                    {t('acceptsDelegationVisitsLabel')}
+                                  </span>
+                                  <span className="block text-[10px] text-stone-500 mt-0.5">
+                                    {t('acceptsDelegationVisitsHint')}
+                                  </span>
+                                </span>
+                              </label>
+                            </div>
+                          )}
+
                           <div className="flex flex-wrap gap-6 py-2">
                             <label className="flex items-center gap-3 cursor-pointer group">
                               <input type="checkbox" name="isEmailPublic" defaultChecked={editingProfile?.isEmailPublic ?? profile?.isEmailPublic} className="w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900" />
@@ -2721,7 +3159,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                           <div className="flex gap-3 pt-4 border-t border-stone-100">
                             <button type="submit" disabled={profileSaveBusy} className="px-8 bg-stone-900 text-white py-2 rounded-lg hover:bg-stone-800 transition-all font-medium disabled:opacity-60 disabled:cursor-not-allowed">
-                              {profileSaveBusy ? (lang === 'fr' ? 'Enregistrement...' : 'Guardando...') : t('save')}
+                              {profileSaveBusy
+                                ? pickLang('Enregistrement...', 'Guardando...', 'Saving...', lang)
+                                : t('save')}
                             </button>
                             <button type="button" onClick={() => { setIsEditing(false); setEditingProfile(null); }} className="px-8 bg-stone-100 text-stone-600 py-2 rounded-lg hover:bg-stone-200 transition-all font-medium">{t('cancel')}</button>
                           </div>
@@ -2792,7 +3232,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               <div>
                                 <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold mb-1">{t('arrivalYear')}</p>
                                 <p className="text-sm font-medium">
-                                  {profile.arrivalYear ? `${profile.arrivalYear} (${new Date().getFullYear() - profile.arrivalYear} ans)` : '-'}
+                                  {profile.arrivalYear
+                                    ? `${profile.arrivalYear} (${new Date().getFullYear() - profile.arrivalYear} ${pickLang('ans', 'años', 'years', lang)})`
+                                    : '-'}
                                 </p>
                               </div>
                               <div>
@@ -2814,7 +3256,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 <button 
                                   onClick={() => setIsShareNeedsModalOpen(true)}
                                   className="p-2 hover:bg-indigo-50 text-indigo-600 rounded-lg transition-colors"
-                                  title="Partager mes besoins"
+                                  title={pickLang('Partager mes besoins', 'Compartir mis necesidades', 'Share my needs', lang)}
                                 >
                                   <Share2 size={18} />
                                 </button>
@@ -2832,7 +3274,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
                               >
                                 <Share2 size={14} />
-                                Partager mes besoins
+                                {pickLang('Partager mes besoins', 'Compartir mis necesidades', 'Share my needs', lang)}
                               </button>
                             )}
                           </div>
@@ -2868,7 +3310,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           {!user && (
             <>
               <div className="order-5 h-full min-h-0 lg:order-none lg:col-span-4">
-                <WelcomeContextCard title={t('welcome')} body={t('welcomeIntro')} />
+                <WelcomeContextCard
+                  title={t('welcome')}
+                  body={t('welcomeIntro')}
+                  className="h-full"
+                />
               </div>
               <div className="order-1 h-full min-h-0 lg:order-none lg:col-span-8">
                 <HeroSection
@@ -2879,6 +3325,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     setShowAuthModal(true);
                   }}
                   onExploreMembers={() => {
+                    setDirectoryDiscoveryStripsHidden(true);
                     setViewMode('members');
                     setMembersSortRecent(false);
                     requestAnimationFrame(() =>
@@ -2891,8 +3338,46 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </>
           )}
 
-          {/* Colonne gauche — recherche + stats */}
-          <div className="order-6 space-y-6 lg:order-none lg:col-span-4">
+          {/* Connecté : Bienvenue | Nouveaux membres — même hauteur de ligne (pas de hero) */}
+          {user && showDiscoveryStrips && (
+            <>
+              <div className="order-1 flex h-full min-h-0 lg:order-none lg:col-span-4">
+                <WelcomeContextCard
+                  title={t('welcome')}
+                  body={t('welcomeIntro')}
+                  className="h-full w-full min-h-[200px]"
+                />
+              </div>
+              <div className="order-2 flex h-full min-h-0 lg:order-none lg:col-span-8">
+                <NewMembersStrip
+                  copy={h}
+                  lang={lang}
+                  profiles={stats.newThisWeekProfiles}
+                  totalNewThisWeek={stats.newThisWeekCount}
+                  className="h-full min-h-[200px] w-full"
+                  onSeeAll={() => {
+                    setDirectoryDiscoveryStripsHidden(true);
+                    setViewMode('members');
+                    setMembersSortRecent(true);
+                    requestAnimationFrame(() =>
+                      directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    );
+                  }}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Colonne gauche — recherche (+ opportunités si connecté), stats */}
+          <div
+            className={cn(
+              'space-y-6 lg:order-none lg:col-span-4',
+              user ? 'order-3' : 'order-6'
+            )}
+          >
+            {user && !showDiscoveryStrips && (
+              <WelcomeContextCard title={t('welcome')} body={t('welcomeIntro')} />
+            )}
             <SearchBlock
               lang={lang}
               t={t}
@@ -2911,6 +3396,34 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               showClearFilters={showDirectoryClearFilters}
             />
 
+            {user && showDiscoveryStrips && (
+              <OpportunitiesSection
+                copy={h}
+                t={t}
+                lang={lang}
+                posts={urgentPosts}
+                allProfiles={allProfiles}
+                user={user}
+                compactLayout
+                onSeeAll={() => {
+                  setDirectoryDiscoveryStripsHidden(true);
+                  setViewMode('radar');
+                  requestAnimationFrame(() =>
+                    directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  );
+                }}
+                onPost={() => setShowUrgentPostModal(true)}
+                onCreateProfile={() => {
+                  setAuthError(null);
+                  setShowAuthModal(true);
+                }}
+                onOpenPost={(post) => {
+                  const author = allProfiles.find((ap) => ap.uid === post.authorId);
+                  if (author) setSelectedProfile(author);
+                }}
+              />
+            )}
+
             {/* [MEMBERS-COUNT] Bloc lancement / compteur dynamique */}
             <MembersCountBlock
               t={t}
@@ -2925,14 +3438,17 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             />
           </div>
 
-          {/* Colonne droite — nouveaux membres, opportunités, onglets, listes */}
+          {/* Colonne droite — invités : nouveaux membres + opportunités ; connecté : recommandations, onglets, listes */}
           <div
             ref={directoryMainRef}
             id="directory-main"
-            className="order-2 scroll-mt-24 space-y-6 lg:order-none lg:col-span-8"
+            className={cn(
+              'scroll-mt-24 space-y-6 lg:order-none lg:col-span-8',
+              user ? 'order-4' : 'order-2'
+            )}
           >
-            {/* Bandeaux découverte masqués dès qu’une recherche / filtre est actif : les fiches remontent visuellement */}
-            {!showDirectoryClearFilters && (
+            {/* Bandeaux découverte : visiteurs uniquement (connectés : ligne du haut + colonne gauche) */}
+            {!user && showDiscoveryStrips && (
               <>
                 <NewMembersStrip
                   copy={h}
@@ -2940,6 +3456,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   profiles={stats.newThisWeekProfiles}
                   totalNewThisWeek={stats.newThisWeekCount}
                   onSeeAll={() => {
+                    setDirectoryDiscoveryStripsHidden(true);
                     setViewMode('members');
                     setMembersSortRecent(true);
                     requestAnimationFrame(() =>
@@ -2950,12 +3467,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                 <OpportunitiesSection
                   copy={h}
+                  t={t}
                   lang={lang}
                   posts={urgentPosts}
                   allProfiles={allProfiles}
                   user={user}
                   onSeeAll={() => {
-                    setViewMode('opportunities');
+                    setDirectoryDiscoveryStripsHidden(true);
+                    setViewMode('radar');
                     requestAnimationFrame(() =>
                       directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                     );
@@ -2972,30 +3491,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 />
               </>
             )}
-
-            {/* View Mode Tabs */}
-            <div className="flex bg-white p-1 rounded-2xl border border-stone-200 shadow-sm overflow-x-auto no-scrollbar">
-              {[
-                { id: 'companies', icon: Building2, label: t('companies') },
-                { id: 'members', icon: Users, label: t('members') },
-                { id: 'activities', icon: Activity, label: t('activities') },
-                { id: 'opportunities', icon: Target, label: t('opportunities') }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setViewMode(tab.id as any)}
-                  className={cn(
-                    "flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
-                    viewMode === tab.id 
-                      ? "bg-stone-900 text-white shadow-lg" 
-                      : "text-stone-400 hover:text-stone-600 hover:bg-stone-50"
-                  )}
-                >
-                  <tab.icon size={16} />
-                  {tab.label}
-                </button>
-              ))}
-            </div>
 
             {/* Recommendations Section */}
             {user && profile && (
@@ -3063,6 +3558,38 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </section>
             )}
 
+            {/* View Mode Tabs — seule barre d’onglets, collée au listing ; sticky sous le header (z-50) */}
+            <div className="sticky top-24 z-40 -mx-4 bg-stone-50 px-4 py-2 sm:top-16 sm:mx-0 sm:px-0">
+              <div className="flex w-full gap-1 rounded-2xl border border-stone-200 bg-white p-1 shadow-sm">
+                {(
+                  [
+                    { id: 'companies' as const, icon: Building2, label: t('companies') },
+                    { id: 'members' as const, icon: Users, label: t('members') },
+                    { id: 'activities' as const, icon: Briefcase, label: t('activities') },
+                    { id: 'radar' as const, icon: Activity, label: t('radarTitle') },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      setDirectoryDiscoveryStripsHidden(true);
+                      setViewMode(tab.id);
+                    }}
+                    className={cn(
+                      'flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-center text-xs font-bold transition-all sm:gap-2 sm:px-3 sm:text-sm',
+                      viewMode === tab.id
+                        ? 'bg-stone-900 text-white shadow-lg'
+                        : 'text-stone-400 hover:bg-stone-50 hover:text-stone-600'
+                    )}
+                  >
+                    <tab.icon size={16} className="shrink-0" aria-hidden />
+                    <span className="min-w-0 truncate">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Main Content Area based on viewMode */}
             <div className="space-y-6">
               {viewMode === 'companies' && (
@@ -3077,7 +3604,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         onDelete={setProfileToDelete}
                         user={user}
                         profile={profile}
-                        highlightUid={randomHighlightUid}
+                        urgentAuthorIds={urgentAuthorIdSet}
                       />
                     </React.Fragment>
                   ))}
@@ -3111,7 +3638,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         onClick={() => setHighlightedNeedFilter('')}
                         className="text-xs font-bold text-violet-700 hover:text-violet-900 underline"
                       >
-                        {lang === 'fr' ? 'Effacer le filtre' : 'Quitar filtro'}
+                        {pickLang('Effacer le filtre', 'Quitar filtro', 'Clear filter', lang)}
                       </button>
                     </div>
                   )}
@@ -3131,7 +3658,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         onClick={() => setPassionIdFilter('')}
                         className="text-xs font-bold text-rose-700 hover:text-rose-900 underline shrink-0"
                       >
-                        {lang === 'fr' ? 'Effacer le filtre' : 'Quitar filtro'}
+                        {pickLang('Effacer le filtre', 'Quitar filtro', 'Clear filter', lang)}
                       </button>
                     </div>
                   )}
@@ -3145,7 +3672,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           onDelete={setProfileToDelete}
                           user={user}
                           profile={profile}
-                          highlightUid={randomHighlightUid}
+                          urgentAuthorIds={urgentAuthorIdSet}
                         />
                       </React.Fragment>
                     ))}
@@ -3155,25 +3682,25 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
               {viewMode === 'activities' && (
                 <div className="space-y-6">
-                  <div className="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row lg:items-end gap-4">
-                    <div className="flex-1 min-w-[220px] space-y-1">
-                      <label className="text-[10px] uppercase tracking-widest text-stone-400 font-bold block">
+                  <div className="flex flex-col gap-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-5 lg:flex-row lg:items-end">
+                    <div className="min-w-[220px] flex-1 space-y-1">
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-400">
                         {t('activityCategory')}
                       </label>
-                      <select 
+                      <select
                         value={filterCategory}
                         onChange={(e) => setFilterCategory(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all text-sm font-medium"
+                        className="w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-stone-900"
                       >
                         <option value="">{t('allIndustries')}</option>
                         {ACTIVITY_CATEGORIES.map((c) => (
-                          <option key={c} value={c}>{activityCategoryLabel(c, lang)}</option>
+                          <option key={c} value={c}>
+                            {activityCategoryLabel(c, lang)}
+                          </option>
                         ))}
                       </select>
                     </div>
-                    <p className="text-xs text-stone-500 leading-relaxed lg:max-w-md">
-                      {t('filterSectorHint')}
-                    </p>
+                    <p className="text-xs leading-relaxed text-stone-500 lg:max-w-md">{t('filterSectorHint')}</p>
                   </div>
                   {activityCategoryPopularity.filter(([cat]) => cat).length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -3186,40 +3713,43 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             type="button"
                             onClick={() => setFilterCategory(filterCategory === cat ? '' : cat)}
                             className={cn(
-                              'px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all',
+                              'rounded-full border px-3 py-1.5 text-[11px] font-bold transition-all',
                               filterCategory === cat
-                                ? 'bg-stone-900 text-white border-stone-900 shadow-sm'
-                                : 'bg-stone-50 text-stone-600 border-stone-200 hover:border-stone-300 hover:bg-stone-100'
+                                ? 'border-stone-900 bg-stone-900 text-white shadow-sm'
+                                : 'border-stone-200 bg-stone-50 text-stone-600 hover:border-stone-300 hover:bg-stone-100'
                             )}
                           >
                             {activityCategoryLabel(cat, lang)}
-                            <span className="opacity-70 font-medium"> · {count}</span>
+                            <span className="ml-1 font-medium opacity-70">· {count}</span>
                           </button>
                         ))}
                     </div>
                   )}
                   {profilesSortedForActivities.length === 0 ? (
-                    <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-stone-200">
-                      <Briefcase size={40} className="mx-auto text-stone-200 mb-3" />
-                      <p className="text-stone-500 text-sm font-medium px-4">
-                        {lang === 'fr'
-                          ? 'Aucun profil pour ce secteur. Essayez « Toutes les industries » ou un autre secteur.'
-                          : 'No hay perfiles para este sector. Prueba « Todas las industrias » u otro sector.'}
+                    <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-16 text-center">
+                      <Briefcase size={40} className="mx-auto mb-3 text-stone-200" />
+                      <p className="px-4 text-sm font-medium text-stone-500">
+                        {pickLang(
+                          'Aucun profil pour ce secteur. Essayez « Toutes les industries » ou un autre secteur.',
+                          'No hay perfiles para este sector. Prueba « Todas las industrias » u otro sector.',
+                          'No profiles for this sector. Try “All industries” or another sector.',
+                          lang
+                        )}
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+                    <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
                       {profilesSortedForActivities.map((p) => (
                         <React.Fragment key={p.uid}>
-                          <ProfileCard 
+                          <ProfileCard
                             variant="activity"
-                            p={p} 
+                            p={p}
                             onSelect={setSelectedProfile}
                             onEdit={startEditing}
                             onDelete={setProfileToDelete}
                             user={user}
                             profile={profile}
-                            highlightUid={randomHighlightUid}
+                            urgentAuthorIds={urgentAuthorIdSet}
                           />
                         </React.Fragment>
                       ))}
@@ -3228,162 +3758,39 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </div>
               )}
 
-              {viewMode === 'opportunities' && (
-                <div className="space-y-8">
-                  <div className="bg-stone-900 rounded-3xl p-8 text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
-                    <div className="relative z-10">
-                      <h2 className="text-3xl font-bold tracking-tight mb-2">{t('radar')}</h2>
-                      <p className="text-stone-400 text-sm mb-8">{lang === 'fr' ? 'Visualisez les besoins et opportunités du réseau en temps réel.' : 'Visualiza las necesidades y oportunidades de la red en tiempo real.'}</p>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                          <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold mb-1">{lang === 'fr' ? 'Membres Actifs' : 'Miembros Activos'}</p>
-                          <p className="text-2xl font-bold">{allProfiles.filter(p => Date.now() - (p.lastSeen ?? 0) < 2592000000).length}</p>
-                        </div>
-                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                          <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold mb-1">{lang === 'fr' ? 'Besoins Postés' : 'Necesidades Publicadas'}</p>
-                          <p className="text-2xl font-bold">{urgentPosts.length}</p>
-                        </div>
-                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                          <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold mb-1">{t('keywordsUniqueStat')}</p>
-                          <p className="text-2xl font-bold">{[...new Set(allProfiles.flatMap(p => p.targetSectors || []))].length}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                    <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm">
-                      <h3 className="text-lg font-bold text-stone-900 mb-6 flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-emerald-600" />
-                        {t('keywordsTopRadar')}
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {(Object.entries(
-                          allProfiles.reduce((acc, p) => {
-                            (p.targetSectors || []).forEach(s => acc[s] = (acc[s] || 0) + 1);
-                            return acc;
-                          }, {} as Record<string, number>)
-                        ) as [string, number][]).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([key, count]) => (
-                          <div key={key} className="px-4 py-2 bg-stone-50 border border-stone-100 rounded-2xl flex items-center gap-3">
-                            <span className="text-sm font-medium text-stone-700">{key}</span>
-                            <span className="w-6 h-6 bg-white rounded-lg flex items-center justify-center text-[10px] font-bold text-stone-400 border border-stone-100">
-                              {count}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm">
-                      <h3 className="text-lg font-bold text-stone-900 mb-6 flex items-center gap-2">
-                        <span className="text-xl" aria-hidden>
-                          🎯
-                        </span>
-                        {t('passionsRadarNetwork')}
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {(() => {
-                          const counts = allProfiles.reduce((acc, p) => {
-                            sanitizePassionIds(p.passionIds).forEach((id) => {
-                              acc[id] = (acc[id] || 0) + 1;
-                            });
-                            return acc;
-                          }, {} as Record<string, number>);
-                          const entries = (Object.entries(counts) as [string, number][]).sort(
-                            (a, b) => b[1] - a[1] || getPassionLabel(a[0], lang).localeCompare(getPassionLabel(b[0], lang))
-                          );
-                          if (entries.length === 0) {
-                            return (
-                              <p className="text-sm text-stone-400 italic py-2 w-full text-center">
-                                {t('passionsRadarEmpty')}
-                              </p>
-                            );
-                          }
-                          return entries.slice(0, 18).map(([id, count]) => (
-                            <button
-                              key={id}
-                              type="button"
-                              onClick={() => {
-                                setViewMode('members');
-                                setHighlightedNeedFilter('');
-                                setPassionIdFilter(id);
-                              }}
-                              className="px-4 py-2 bg-stone-50 border border-stone-100 rounded-2xl flex items-center gap-2 hover:border-violet-200 hover:bg-violet-50/60 transition-all text-left group"
-                            >
-                              <span className="text-base shrink-0" aria-hidden>
-                                {getPassionEmoji(id)}
-                              </span>
-                              <span className="text-sm font-medium text-stone-700 group-hover:text-violet-900">
-                                {getPassionLabel(id, lang)}
-                              </span>
-                              <span className="w-6 h-6 bg-white rounded-lg flex items-center justify-center text-[10px] font-bold text-stone-400 border border-stone-100 group-hover:border-violet-100">
-                                {count}
-                              </span>
-                            </button>
-                          ));
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-sm">
-                    <h3 className="text-lg font-bold text-stone-900 mb-6 flex items-center gap-2">
-                      <Target className="w-5 h-5 text-violet-600" />
-                      {t('typedNeedsRadar')}
-                    </h3>
-                    <div className="space-y-4 max-h-[min(420px,50vh)] overflow-y-auto pr-1">
-                      {(Object.entries(
-                        allProfiles.reduce((acc, p) => {
-                          (p.highlightedNeeds || []).forEach((id) => {
-                            if (!NEED_OPTION_VALUE_SET.has(id)) return;
-                            acc[id] = (acc[id] || 0) + 1;
-                          });
-                          return acc;
-                        }, {} as Record<string, number>)
-                      ) as [string, number][])
-                        .sort((a, b) => b[1] - a[1])
-                        .map(([needId, count]) => (
-                          <div key={needId} className="flex items-center justify-between group">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between gap-2 mb-1">
-                                <span className="text-sm font-medium text-stone-700 line-clamp-2">
-                                  {needOptionLabel(needId, lang)}
-                                </span>
-                                <span className="text-xs font-bold text-stone-400 shrink-0">{count}</span>
-                              </div>
-                              <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${(count / Math.max(allProfiles.length, 1)) * 100}%` }}
-                                  className="h-full bg-violet-500 rounded-full"
-                                />
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setViewMode('members');
-                                setPassionIdFilter('');
-                                setHighlightedNeedFilter(needId);
-                              }}
-                              className="ml-4 p-2 text-stone-300 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 shrink-0"
-                            >
-                              <ChevronRight size={16} />
-                            </button>
-                          </div>
-                        ))}
-                      {allProfiles.every(
-                        (p) => !(p.highlightedNeeds || []).some((id) => NEED_OPTION_VALUE_SET.has(id))
-                      ) && (
-                        <p className="text-sm text-stone-400 italic py-4 text-center">
-                          {t('typedNeedsRadarEmpty')}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
+              {viewMode === 'radar' && (
+                <NetworkRadarSection
+                  lang={lang}
+                  t={t}
+                  allProfiles={allProfiles}
+                  urgentPosts={urgentPosts}
+                  viewerProfile={profile}
+                  user={user}
+                  copy={h}
+                  activityCategoryLabel={activityCategoryLabel}
+                  needOptionLabel={needOptionLabel}
+                  getPassionEmoji={getPassionEmoji}
+                  getPassionLabel={getPassionLabel}
+                  onNeedClick={(needId) => {
+                    setViewMode('members');
+                    setPassionIdFilter('');
+                    setHighlightedNeedFilter(needId);
+                  }}
+                  onPassionClick={(passionId) => {
+                    setViewMode('members');
+                    setHighlightedNeedFilter('');
+                    setPassionIdFilter(passionId);
+                  }}
+                  onOpportunityClick={(post) => {
+                    const author = allProfiles.find((ap) => ap.uid === post.authorId);
+                    if (author) setSelectedProfile(author);
+                  }}
+                  onPostOpportunity={() => setShowUrgentPostModal(true)}
+                  onCreateProfile={() => {
+                    setAuthError(null);
+                    setShowAuthModal(true);
+                  }}
+                />
               )}
 
             {filteredProfiles.length === 0 && (
@@ -3477,14 +3884,21 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           disabled={optimizationBusy}
                           className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                          {optimizationBusy ? (lang === 'fr' ? 'Analyse IA...' : 'Analizando IA...') : (lang === 'fr' ? 'Analyser avec IA' : 'Analizar con IA')}
+                          {optimizationBusy
+                            ? pickLang('Analyse IA...', 'Analizando IA...', 'AI analysis...', lang)
+                            : pickLang('Analyser avec IA', 'Analizar con IA', 'Analyze with AI', lang)}
                         </button>
                       </div>
                     )}
                     {profile?.role === 'admin' && selectedProfile.isValidated === false && selectedProfile.optimizationSuggestion && (
                       <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl space-y-3">
                         <p className="text-xs font-bold text-indigo-900">
-                          {lang === 'fr' ? 'Resume des optimisations proposees:' : 'Resumen de optimizaciones propuestas:'}
+                          {pickLang(
+                            'Resume des optimisations proposees:',
+                            'Resumen de optimizaciones propuestas:',
+                            'Summary of suggested improvements:',
+                            lang
+                          )}
                         </p>
                         <ul className="text-xs text-indigo-800 list-disc pl-4 space-y-1">
                           {selectedProfile.optimizationSuggestion.summary.map((item) => (
@@ -3495,7 +3909,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           onClick={() => sendOptimizationEmail(selectedProfile)}
                           className="px-4 py-2 bg-white text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all"
                         >
-                          {lang === 'fr' ? 'Envoyer ces suggestions par email' : 'Enviar estas sugerencias por correo'}
+                          {pickLang(
+                            'Envoyer ces suggestions par email',
+                            'Enviar estas sugerencias por correo',
+                            'Email these suggestions',
+                            lang
+                          )}
                         </button>
                       </div>
                     )}
@@ -3670,7 +4089,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                   <div className="border-t border-stone-200 pt-6 md:border-t-0 md:border-l md:border-stone-200 md:pt-0 md:pl-8">
                       <h3 className="text-[10px] uppercase tracking-[0.2em] text-stone-400 font-black mb-2">
-                        {lang === 'fr' ? 'Contact' : 'Contacto'}
+                        {pickLang('Contact', 'Contacto', 'Contact', lang)}
                       </h3>
                       <div className="space-y-4">
                         <div className="group">
@@ -3741,6 +4160,55 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </div>
                 </div>
 
+                {profile?.role === 'admin' && (
+                  <div
+                    className="mt-6 rounded-xl border border-amber-200 bg-amber-50/90 p-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-amber-900 mb-3">
+                      {t('adminInternalDataTitle')}
+                    </p>
+                    {adminModalPrivateLoading ? (
+                      <p className="text-sm text-stone-500">
+                        {pickLang('Chargement…', 'Cargando…', 'Loading…', lang)}
+                      </p>
+                    ) : (
+                      <dl className="space-y-2 text-sm text-stone-800">
+                        <div className="flex flex-wrap justify-between gap-2">
+                          <dt className="text-stone-500 shrink-0">{t('adminFieldGender')}</dt>
+                          <dd className="font-medium text-right">
+                            {adminModalPrivate?.genderStat === 'male'
+                              ? t('genderStatMale')
+                              : adminModalPrivate?.genderStat === 'female'
+                                ? t('genderStatFemale')
+                                : adminModalPrivate?.genderStat === 'other'
+                                  ? t('genderStatOther')
+                                  : adminModalPrivate?.genderStat === 'prefer_not_say'
+                                    ? t('genderStatPreferNotSay')
+                                    : t('adminDelegationUnknown')}
+                          </dd>
+                        </div>
+                        <div className="flex flex-wrap justify-between gap-2">
+                          <dt className="text-stone-500 shrink-0">{t('adminFieldNationality')}</dt>
+                          <dd className="font-medium text-right">
+                            {nationalityLabel(adminModalPrivate?.nationality, lang) || t('adminDelegationUnknown')}
+                          </dd>
+                        </div>
+                        <div className="flex flex-wrap justify-between gap-2">
+                          <dt className="text-stone-500 shrink-0">{t('adminFieldDelegation')}</dt>
+                          <dd className="font-medium text-right">
+                            {adminModalPrivate?.acceptsDelegationVisits === true
+                              ? t('adminDelegationYes')
+                              : adminModalPrivate?.acceptsDelegationVisits === false
+                                ? t('adminDelegationNo')
+                                : t('adminDelegationUnknown')}
+                          </dd>
+                        </div>
+                      </dl>
+                    )}
+                  </div>
+                )}
+
                 {!user && (!selectedProfile.isEmailPublic || (selectedProfile.whatsapp && !selectedProfile.isWhatsappPublic)) && (
                   <div
                     className="mt-8 p-6 bg-stone-900 rounded-2xl text-white text-center"
@@ -3809,7 +4277,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     <p className="text-stone-400 font-medium">{t('noPendingProfiles')}</p>
                   </div>
                 ) : (
-                  pendingProfiles.map(p => (
+                  pendingProfiles.map((p) => {
+                    const priv = pendingPrivateByUid[p.uid] ?? legacyAdminFromUserDoc(p);
+                    const showPriv =
+                      !!priv.genderStat ||
+                      !!priv.nationality ||
+                      priv.acceptsDelegationVisits !== undefined;
+                    return (
                     <div key={p.uid} className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -3824,6 +4298,39 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             <h4 className="font-bold text-stone-900">{p.fullName}</h4>
                             <p className="text-xs text-stone-500">{p.companyName} • {activityCategoryLabel(p.activityCategory, lang)}</p>
                             <p className="text-[10px] text-stone-400 mt-1">{p.email}</p>
+                            {showPriv && (
+                              <div className="mt-2 space-y-0.5 text-[10px] text-stone-500">
+                                {priv.genderStat ? (
+                                  <p>
+                                    {t('adminFieldGender')}:{' '}
+                                    {priv.genderStat === 'male'
+                                      ? t('genderStatMale')
+                                      : priv.genderStat === 'female'
+                                        ? t('genderStatFemale')
+                                        : priv.genderStat === 'other'
+                                          ? t('genderStatOther')
+                                          : t('genderStatPreferNotSay')}
+                                  </p>
+                                ) : null}
+                                {priv.nationality ? (
+                                  <p>
+                                    {t('adminFieldNationality')}: {nationalityLabel(priv.nationality, lang)}
+                                  </p>
+                                ) : null}
+                                {priv.acceptsDelegationVisits !== undefined ? (
+                                  <p
+                                    className={
+                                      priv.acceptsDelegationVisits ? 'font-semibold text-emerald-800' : ''
+                                    }
+                                  >
+                                    {t('adminFieldDelegation')}:{' '}
+                                    {priv.acceptsDelegationVisits
+                                      ? t('adminDelegationYes')
+                                      : t('adminDelegationNo')}
+                                  </p>
+                                ) : null}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -3845,7 +4352,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         </div>
                       </div>
                     </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </motion.div>
@@ -3948,12 +4456,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 }
               }} className="space-y-6">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('bio')} (max 200 caractères)</label>
+                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                    {t('bio')}{' '}
+                    {pickLang('(max 200 caractères)', '(máx. 200 caracteres)', '(max 200 characters)', lang)}
+                  </label>
                   <textarea 
                     name="text" 
                     required 
                     maxLength={200}
-                    placeholder="Ex: Cherche distributeur logistique pour Guadalajara..." 
+                    placeholder={pickLang(
+                      'Ex: Cherche distributeur logistique pour Guadalajara...',
+                      'Ej.: Busco distribuidor logístico en Guadalajara...',
+                      'E.g. Looking for a logistics distributor in Guadalajara...',
+                      lang
+                    )}
                     className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all h-32 resize-none" 
                   />
                 </div>
@@ -3965,7 +4481,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </div>
                 <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl">
                   <p className="text-xs text-amber-800 leading-relaxed">
-                    Votre annonce sera visible par tous les membres pendant 7 jours. Elle apparaîtra en priorité sur la page d'accueil.
+                    {pickLang(
+                      "Votre annonce sera visible par tous les membres pendant 7 jours. Elle apparaîtra en priorité sur la page d'accueil.",
+                      'Tu anuncio será visible para todos los miembros durante 7 días y aparecerá con prioridad en la página de inicio.',
+                      'Your post will be visible to all members for 7 days and will appear prominently on the home page.',
+                      lang
+                    )}
                   </p>
                 </div>
                 <button 

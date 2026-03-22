@@ -1,11 +1,16 @@
 import React from 'react';
+import { Zap } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import type { UrgentPost, UserProfile, Language } from '../../types';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
 import { activityCategoryLabel } from '../../constants';
+import { cn } from '../../cn';
+
+type TFn = (key: string) => string;
 
 type Props = {
   copy: HomeLandingCopy;
+  t: TFn;
   lang: Language;
   posts: UrgentPost[];
   allProfiles: UserProfile[];
@@ -14,12 +19,14 @@ type Props = {
   onPost: () => void;
   onCreateProfile: () => void;
   onOpenPost: (post: UrgentPost) => void;
+  /** Colonne étroite (sous la recherche) : une seule colonne de cartes. */
+  compactLayout?: boolean;
 };
 
 function titleFromPost(text: string, max = 72): string {
-  const t = text.replace(/\s+/g, ' ').trim();
-  if (t.length <= max) return t;
-  return `${t.slice(0, max - 1)}…`;
+  const s = text.replace(/\s+/g, ' ').trim();
+  if (s.length <= max) return s;
+  return `${s.slice(0, max - 1)}…`;
 }
 
 function cityForAuthor(authorId: string, allProfiles: UserProfile[]): string {
@@ -30,6 +37,7 @@ function cityForAuthor(authorId: string, allProfiles: UserProfile[]): string {
 /** Opportunités (données = besoins urgents existants ; structure prête pour d’autres sources). */
 export default function OpportunitiesSection({
   copy,
+  t,
   lang,
   posts,
   allProfiles,
@@ -38,12 +46,17 @@ export default function OpportunitiesSection({
   onPost,
   onCreateProfile,
   onOpenPost,
+  compactLayout = false,
 }: Props) {
   const slice = posts.slice(0, 5);
+  const hasPosts = slice.length > 0;
 
   return (
     <section
-      className="rounded-2xl border border-stone-200 bg-white px-4 py-5 shadow-sm sm:px-6"
+      className={cn(
+        'rounded-2xl border border-stone-200 bg-white shadow-sm',
+        hasPosts ? 'px-4 py-5 sm:px-6' : 'p-5'
+      )}
       aria-labelledby="home-opportunities-title"
     >
       <h2
@@ -53,14 +66,16 @@ export default function OpportunitiesSection({
         {copy.opportunitiesTitle}
       </h2>
 
-      {slice.length === 0 ? (
-        <p className="mt-4 text-sm leading-relaxed text-stone-500">{copy.opportunitiesEmpty}</p>
-      ) : (
-        <ul className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+      {hasPosts ? (
+        <ul
+          className={cn(
+            'mt-4 grid grid-cols-1 gap-3',
+            !compactLayout && 'md:grid-cols-2 lg:grid-cols-3'
+          )}
+        >
           {slice.map((post) => {
             const city = cityForAuthor(post.authorId, allProfiles);
-            const typeLabel =
-              post.sector?.trim() || copy.opportunityTypeUrgent;
+            const typeLabel = post.sector?.trim() || copy.opportunityTypeUrgent;
             return (
               <li
                 key={post.id}
@@ -71,27 +86,35 @@ export default function OpportunitiesSection({
                   onClick={() => onOpenPost(post)}
                   className="flex flex-col text-left"
                 >
-                <p className="text-sm font-semibold leading-snug text-stone-900">
-                  {titleFromPost(post.text)}
-                </p>
-                <p className="mt-2 text-xs font-medium uppercase tracking-wide text-stone-400">
-                  {activityCategoryLabel(typeLabel, lang) || typeLabel}
-                </p>
-                <p className="mt-2 text-xs text-stone-600">
-                  {post.authorName}
-                  {post.authorCompany ? ` · ${post.authorCompany}` : ''}
-                </p>
-                {city ? (
-                  <p className="mt-1 text-xs text-stone-500">{city}</p>
-                ) : null}
+                  <p className="text-sm font-semibold leading-snug text-stone-900">
+                    {titleFromPost(post.text)}
+                  </p>
+                  <p className="mt-2 text-xs font-medium uppercase tracking-wide text-stone-400">
+                    {activityCategoryLabel(typeLabel, lang) || typeLabel}
+                  </p>
+                  <p className="mt-2 text-xs text-stone-600">
+                    {post.authorName}
+                    {post.authorCompany ? ` · ${post.authorCompany}` : ''}
+                  </p>
+                  {city ? <p className="mt-1 text-xs text-stone-500">{city}</p> : null}
                 </button>
               </li>
             );
           })}
         </ul>
+      ) : (
+        <div className="mt-3 flex flex-col items-center text-center">
+          <Zap className="h-8 w-8 shrink-0 text-[#D1D5DB]" strokeWidth={1.25} aria-hidden />
+          <p className="mt-2 max-w-sm text-sm text-stone-500">{t('opportunitiesEmpty')}</p>
+        </div>
       )}
 
-      <div className="mt-5 flex flex-col gap-2 border-t border-stone-100 pt-4 sm:flex-row sm:flex-wrap sm:items-start">
+      <div
+        className={cn(
+          'flex flex-row flex-wrap items-start gap-3',
+          hasPosts ? 'mt-5 border-t border-stone-100 pt-4' : 'mt-4'
+        )}
+      >
         <button
           type="button"
           onClick={onSeeAll}
@@ -99,7 +122,7 @@ export default function OpportunitiesSection({
         >
           {copy.opportunitiesSeeAll}
         </button>
-        <div className="flex min-w-0 flex-col gap-1 sm:ml-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <button
             type="button"
             onClick={user ? onPost : onCreateProfile}

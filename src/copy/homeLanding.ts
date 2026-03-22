@@ -2,7 +2,7 @@ import type { Language } from '../types';
 
 /**
  * Textes dédiés au bandeau d’accueil (hero, nouveaux membres, opportunités).
- * FR + ES actifs via `lang` ; EN prêt pour une future couche i18n (non branchée).
+ * FR, ES et EN via `homeLanding(lang)` (`Language`).
  */
 export type HomeLandingCopy = {
   heroTitle: string;
@@ -20,7 +20,6 @@ export type HomeLandingCopy = {
   opportunitiesPost: string;
   opportunitiesMembersOnly: string;
   opportunityTypeUrgent: string;
-  opportunitiesEmpty: string;
   membersSortBanner: string;
   membersSortReset: string;
 };
@@ -47,12 +46,11 @@ const HOME_LANDING: Record<'fr' | 'en' | 'es', HomeLandingCopy> = {
     opportunitiesPost: 'Poster une opportunité',
     opportunitiesMembersOnly: 'Réservé aux membres',
     opportunityTypeUrgent: 'Besoin urgent',
-    opportunitiesEmpty: 'Aucune opportunité publiée pour le moment. Revenez bientôt ou publiez la vôtre.',
     membersSortBanner: 'Affichage : plus récents en premier',
     membersSortReset: 'Réinitialiser le tri',
   },
   en: {
-    heroTitle: 'Francophone business directory in Guadalajara',
+    heroTitle: 'French-speaking business directory in Guadalajara',
     heroSubtitle:
       'See at a glance who does what in the area, find the right contacts, and join the community.',
     ctaPrimary: 'Create my profile',
@@ -72,7 +70,6 @@ const HOME_LANDING: Record<'fr' | 'en' | 'es', HomeLandingCopy> = {
     opportunitiesPost: 'Post an opportunity',
     opportunitiesMembersOnly: 'Members only',
     opportunityTypeUrgent: 'Urgent need',
-    opportunitiesEmpty: 'No opportunities yet. Check back soon or post your own.',
     membersSortBanner: 'Sorted by: newest first',
     membersSortReset: 'Reset sort order',
   },
@@ -97,22 +94,13 @@ const HOME_LANDING: Record<'fr' | 'en' | 'es', HomeLandingCopy> = {
     opportunitiesPost: 'Publicar una oportunidad',
     opportunitiesMembersOnly: 'Solo miembros',
     opportunityTypeUrgent: 'Necesidad urgente',
-    opportunitiesEmpty:
-      'Aún no hay oportunidades publicadas. Vuelve pronto o publica la tuya.',
     membersSortBanner: 'Orden: más recientes primero',
     membersSortReset: 'Restablecer orden',
   },
 };
 
 export function homeLanding(lang: Language): HomeLandingCopy {
-  return lang === 'fr' ? HOME_LANDING.fr : HOME_LANDING.es;
-}
-
-/** Pour une future langue `en` sans toucher au type `Language` aujourd’hui. */
-export function homeLandingAny(lang: string): HomeLandingCopy {
-  if (lang === 'en') return HOME_LANDING.en;
-  if (lang === 'es') return HOME_LANDING.es;
-  return HOME_LANDING.fr;
+  return HOME_LANDING[lang];
 }
 
 export function formatHomeBadge(template: string, n: number): string {
