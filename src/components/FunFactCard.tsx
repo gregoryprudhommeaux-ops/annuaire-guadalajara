@@ -1,4 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useId, useMemo, useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { cn } from '../cn';
 import type { Language } from '@/types';
 import type { MemberForFun, NeedForFun } from '@/lib/funFactData';
 
@@ -7,6 +9,9 @@ type FunFactCardProps = {
   members: MemberForFun[];
   needs: NeedForFun[];
   className?: string;
+  collapsibleOnMobile?: boolean;
+  mobileShowLabel?: string;
+  mobileHideLabel?: string;
 };
 
 const funTranslations: Record<
@@ -171,8 +176,18 @@ function labelNeed(lang: Language, needId: string): string {
   return row[needId] ?? needId;
 }
 
-export default function FunFactCard({ lang, members, needs, className }: FunFactCardProps) {
+export default function FunFactCard({
+  lang,
+  members,
+  needs,
+  className,
+  collapsibleOnMobile = false,
+  mobileShowLabel = 'Show fun fact',
+  mobileHideLabel = 'Hide fun fact',
+}: FunFactCardProps) {
   const t = funTranslations[lang] ?? funTranslations.fr;
+  const [mobileOpen, setMobileOpen] = useState(true);
+  const bodyId = useId();
 
   const message = useMemo(() => {
     const loc = funTranslations[lang] ?? funTranslations.fr;
@@ -212,14 +227,51 @@ export default function FunFactCard({ lang, members, needs, className }: FunFact
     return pickRandom(candidates) ?? loc.default;
   }, [members, needs, lang]);
 
+  const showToggle = collapsibleOnMobile;
+
   return (
     <aside
-      className={`rounded-xl border border-indigo-100/80 bg-gradient-to-br from-indigo-50/90 to-white px-4 py-4 sm:px-5 sm:py-5 ${className ?? ''}`}
+      className={cn(
+        'rounded-xl border border-indigo-100/80 bg-gradient-to-br from-indigo-50/90 to-white px-4 py-4 sm:px-5 sm:py-5',
+        className
+      )}
     >
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-800">
-        {t.title}
+      <div className={cn(showToggle && 'flex items-start justify-between gap-3 sm:block')}>
+        <p
+          className={cn(
+            'text-[11px] font-semibold uppercase tracking-wider text-indigo-800',
+            showToggle && 'min-w-0 flex-1'
+          )}
+        >
+          {t.title}
+        </p>
+        {showToggle ? (
+          <button
+            type="button"
+            onClick={() => setMobileOpen((v) => !v)}
+            className="-m-1 shrink-0 rounded-lg p-1.5 text-indigo-800/80 transition-colors hover:bg-indigo-100/60 hover:text-indigo-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 sm:hidden"
+            aria-expanded={mobileOpen}
+            aria-controls={bodyId}
+            title={mobileOpen ? mobileHideLabel : mobileShowLabel}
+          >
+            {mobileOpen ? (
+              <ChevronUp className="h-5 w-5" strokeWidth={2} aria-hidden />
+            ) : (
+              <ChevronDown className="h-5 w-5" strokeWidth={2} aria-hidden />
+            )}
+            <span className="sr-only">{mobileOpen ? mobileHideLabel : mobileShowLabel}</span>
+          </button>
+        ) : null}
+      </div>
+      <p
+        id={bodyId}
+        className={cn(
+          'mt-2 line-clamp-3 text-sm leading-snug text-stone-700 sm:mt-2 sm:block',
+          showToggle && !mobileOpen && 'hidden'
+        )}
+      >
+        {message}
       </p>
-      <p className="mt-2 line-clamp-3 text-sm leading-snug text-stone-700">{message}</p>
     </aside>
   );
 }

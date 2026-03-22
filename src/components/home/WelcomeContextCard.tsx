@@ -1,14 +1,30 @@
-import React from 'react';
+import React, { useId, useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '../../cn';
 
 type Props = {
   title: string;
   body: string;
   className?: string;
+  /** Sur les écrans &lt; sm : bouton pour replier le corps et libérer de la hauteur. */
+  collapsibleOnMobile?: boolean;
+  mobileShowIntroLabel?: string;
+  mobileHideIntroLabel?: string;
 };
 
-/** Encart sombre de contexte (texte d’accueil historique), sans CTA — aligné sur la colonne filtres. */
-export default function WelcomeContextCard({ title, body, className }: Props) {
+/** Encart sombre de contexte (texte d’accueil), sans CTA — repli possible sur mobile. */
+export default function WelcomeContextCard({
+  title,
+  body,
+  className,
+  collapsibleOnMobile = false,
+  mobileShowIntroLabel = 'Show introduction',
+  mobileHideIntroLabel = 'Hide introduction',
+}: Props) {
+  const [mobileOpen, setMobileOpen] = useState(true);
+  const bodyId = useId();
+  const showToggle = collapsibleOnMobile;
+
   return (
     <section
       className={cn(
@@ -19,13 +35,47 @@ export default function WelcomeContextCard({ title, body, className }: Props) {
     >
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/5 blur-2xl" />
       <div className="relative z-10">
-        <h2
-          id="welcome-context-title"
-          className="text-base font-bold leading-snug tracking-tight text-white break-words sm:text-lg"
+        <div
+          className={cn(
+            showToggle && 'flex items-start justify-between gap-3 sm:block'
+          )}
         >
-          {title}
-        </h2>
-        <p className="mt-3 hyphens-auto text-xs leading-relaxed text-stone-300/95 break-words sm:text-sm">
+          <h2
+            id="welcome-context-title"
+            className={cn(
+              'text-base font-bold leading-snug tracking-tight text-white break-words sm:text-lg',
+              showToggle && 'min-w-0 flex-1'
+            )}
+          >
+            {title}
+          </h2>
+          {showToggle ? (
+            <button
+              type="button"
+              onClick={() => setMobileOpen((v) => !v)}
+              className="-m-1 shrink-0 rounded-lg p-1.5 text-white/85 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 sm:hidden"
+              aria-expanded={mobileOpen}
+              aria-controls={bodyId}
+              title={mobileOpen ? mobileHideIntroLabel : mobileShowIntroLabel}
+            >
+              {mobileOpen ? (
+                <ChevronUp className="h-5 w-5" strokeWidth={2} aria-hidden />
+              ) : (
+                <ChevronDown className="h-5 w-5" strokeWidth={2} aria-hidden />
+              )}
+              <span className="sr-only">
+                {mobileOpen ? mobileHideIntroLabel : mobileShowIntroLabel}
+              </span>
+            </button>
+          ) : null}
+        </div>
+        <p
+          id={bodyId}
+          className={cn(
+            'mt-3 hyphens-auto text-xs leading-relaxed text-stone-300/95 break-words sm:mt-3 sm:block sm:text-sm',
+            showToggle && !mobileOpen && 'hidden'
+          )}
+        >
           {body}
         </p>
       </div>

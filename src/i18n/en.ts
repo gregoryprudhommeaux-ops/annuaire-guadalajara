@@ -129,6 +129,7 @@ export const EN_STRINGS: Record<string, string> = {
   statsOpportunities: "opportunities",
   tagNewMember: "New",
   tagUrgentNeed: "Urgent need",
+  profileCardTapForMore: "Tap for full profile",
   tagsMore: "+{{count}} more",
   tagsCollapse: "Show less",
   details: "Details",
@@ -140,6 +141,10 @@ export const EN_STRINGS: Record<string, string> = {
   welcome: "Welcome to the directory of the French-speaking business community in Guadalajara.",
   welcomeIntro:
     "Discover companies and members already on the directory, filter by sector, profile type or location, then explore the first suggested profiles. Invite your network to join the platform to unlock more opportunities and accelerate your connections in Guadalajara.",
+  welcomeIntroShow: "Show introduction",
+  welcomeIntroHide: "Hide introduction",
+  funFactIntroShow: "Show fun fact",
+  funFactIntroHide: "Hide fun fact",
   noProfile: "You don’t have a profile yet. Create one to appear in the directory.",
   edit: "Edit",
   editProfile: "Edit my profile",

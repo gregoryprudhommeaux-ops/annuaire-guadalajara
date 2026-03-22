@@ -354,6 +354,10 @@ export const TRANSLATIONS: Translations = {
   statsOpportunities: { fr: "opportunités", es: "oportunidades" },
   tagNewMember: { fr: "Nouveau", es: "Nuevo" },
   tagUrgentNeed: { fr: "Besoin urgent", es: "Necesidad urgente" },
+  profileCardTapForMore: {
+    fr: "Toucher pour la fiche complète",
+    es: "Toca para ver la ficha completa",
+  },
   tagsMore: { fr: "+{{count}} autres", es: "+{{count}} más" },
   tagsCollapse: { fr: "Réduire", es: "Mostrar menos" },
   details: { fr: "Détails", es: "Detalles" },
@@ -369,6 +373,22 @@ export const TRANSLATIONS: Translations = {
   welcomeIntro: {
     fr: "Découvrez les entreprises et membres déjà inscrits, filtrez par secteur, profil ou localisation, puis explorez les premiers profils suggérés. Invitez votre réseau à rejoindre la plateforme pour activer davantage d'opportunités et accélérer vos connexions à Guadalajara.",
     es: "Descubre empresas y miembros ya inscritos, filtra por sector, tipo de perfil o ubicación, explora las primeras fichas sugeridas e invita a tu red a unirse a la plataforma para activar más oportunidades y acelerar tus conexiones en Guadalajara.",
+  },
+  welcomeIntroShow: {
+    fr: "Afficher l'introduction",
+    es: "Mostrar la introducción",
+  },
+  welcomeIntroHide: {
+    fr: "Réduire l'introduction",
+    es: "Ocultar la introducción",
+  },
+  funFactIntroShow: {
+    fr: 'Afficher le fun fact',
+    es: 'Mostrar el fun fact',
+  },
+  funFactIntroHide: {
+    fr: 'Réduire le fun fact',
+    es: 'Ocultar el fun fact',
   },
   noProfile: { fr: "Vous n'avez pas encore de profil. Veuillez en créer un pour apparaître dans l'annuaire.", es: "Aún no tienes un perfil. Por favor, crea uno para aparecer en el directorio." },
   edit: { fr: "Modifier", es: "Editar" },

@@ -480,6 +480,13 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
     return unsubscribe;
   }, [p.uid]);
 
+  const mobileSummaryLine = [
+    p.city,
+    p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <motion.div 
       layout
@@ -514,28 +521,31 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
                   <UserIcon size={14} className="text-stone-400 shrink-0" />
                   <span className="truncate">{p.fullName}</span>
                 </p>
+                {mobileSummaryLine ? (
+                  <p className="mt-0.5 truncate text-xs text-stone-500 sm:hidden">{mobileSummaryLine}</p>
+                ) : null}
                 {p.positionCategory ? (
-                  <div className="mt-1 flex items-start gap-1.5 text-xs text-stone-500">
+                  <div className="mt-1 hidden items-start gap-1.5 text-xs text-stone-500 sm:flex">
                     <UserCog size={12} className="mt-0.5 shrink-0 text-stone-400" />
                     <span className="line-clamp-2 break-words leading-snug">
                       {workFunctionLabel(p.positionCategory, lang)}
                     </span>
                   </div>
                 ) : null}
-                <div className="mt-1 flex items-start gap-1.5 text-xs text-stone-500">
+                <div className="mt-1 hidden items-start gap-1.5 text-xs text-stone-500 sm:flex">
                   <MapPin size={12} className="shrink-0 mt-0.5 text-stone-400" />
                   <span className="min-w-0 flex-1 leading-snug line-clamp-2 break-words">
                     {[p.city, p.neighborhood, p.state || 'Jalisco'].filter(Boolean).join(', ')}
                   </span>
                 </div>
-                <div className="mt-0.5 flex items-start gap-1.5 text-xs text-stone-500">
+                <div className="mt-0.5 hidden items-start gap-1.5 text-xs text-stone-500 sm:flex">
                   <Briefcase size={12} className="shrink-0 mt-0.5 text-stone-400" />
                   <span className="min-w-0 flex-1 leading-snug line-clamp-2 break-words">
                     {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
                   </span>
                 </div>
                 {p.bio?.trim() ? (
-                  <p className="mt-1.5 text-sm text-stone-500 italic line-clamp-2 min-w-0 break-words leading-snug">
+                  <p className="mt-1.5 hidden text-sm text-stone-500 italic line-clamp-2 min-w-0 break-words leading-snug sm:block">
                     {p.bio.trim()}
                   </p>
                 ) : null}
@@ -555,22 +565,25 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
                 <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-stone-500">
                   <span className="truncate">{p.fullName}</span>
                 </p>
+                {p.city ? (
+                  <p className="mt-0.5 truncate text-[11px] text-stone-500 sm:hidden">{p.city}</p>
+                ) : null}
                 {p.positionCategory ? (
-                  <div className="mt-1 flex items-start gap-1.5 text-[11px] text-stone-500">
+                  <div className="mt-1 hidden items-start gap-1.5 text-[11px] text-stone-500 sm:flex">
                     <UserCog size={11} className="mt-0.5 shrink-0 text-stone-400" />
                     <span className="line-clamp-2 leading-snug break-words">
                       {workFunctionLabel(p.positionCategory, lang)}
                     </span>
                   </div>
                 ) : null}
-                <div className="mt-1 flex items-start gap-1.5 text-[11px] text-stone-500">
+                <div className="mt-1 hidden items-start gap-1.5 text-[11px] text-stone-500 sm:flex">
                   <MapPin size={11} className="shrink-0 mt-0.5 text-stone-400" />
                   <span className="min-w-0 flex-1 leading-snug line-clamp-2 break-words">
                     {[p.city, p.neighborhood, p.state || 'Jalisco'].filter(Boolean).join(', ')}
                   </span>
                 </div>
                 {p.bio?.trim() ? (
-                  <p className="mt-1.5 text-sm text-stone-500 italic line-clamp-2 min-w-0 break-words leading-snug">
+                  <p className="mt-1.5 hidden text-sm text-stone-500 italic line-clamp-2 min-w-0 break-words leading-snug sm:block">
                     {p.bio.trim()}
                   </p>
                 ) : null}
@@ -582,28 +595,31 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
                   {p.fullName}
                 </h3>
                 <p className="text-xs text-stone-500 font-medium truncate mt-0.5">{p.companyName}</p>
+                {mobileSummaryLine ? (
+                  <p className="mt-0.5 truncate text-xs text-stone-500 sm:hidden">{mobileSummaryLine}</p>
+                ) : null}
                 {p.positionCategory ? (
-                  <div className="mt-1 flex items-start gap-1.5 text-xs text-stone-600">
+                  <div className="mt-1 hidden items-start gap-1.5 text-xs text-stone-600 sm:flex">
                     <UserCog size={12} className="mt-0.5 shrink-0 text-stone-400" />
                     <span className="line-clamp-2 break-words leading-snug">
                       {workFunctionLabel(p.positionCategory, lang)}
                     </span>
                   </div>
                 ) : null}
-                <div className="mt-1 flex items-start gap-1.5 text-xs text-stone-500">
+                <div className="mt-1 hidden items-start gap-1.5 text-xs text-stone-500 sm:flex">
                   <MapPin size={12} className="shrink-0 mt-0.5 text-stone-400" />
                   <span className="min-w-0 flex-1 leading-snug line-clamp-2 break-words">
                     {[p.city, p.neighborhood, p.state || 'Jalisco'].filter(Boolean).join(', ')}
                   </span>
                 </div>
-                <div className="mt-0.5 flex items-start gap-1.5 text-xs text-stone-500">
+                <div className="mt-0.5 hidden items-start gap-1.5 text-xs text-stone-500 sm:flex">
                   <Briefcase size={12} className="shrink-0 mt-0.5 text-stone-400" />
                   <span className="min-w-0 flex-1 leading-snug line-clamp-2 break-words">
                     {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
                   </span>
                 </div>
                 {p.bio?.trim() ? (
-                  <p className="mt-1.5 text-sm text-stone-500 italic line-clamp-2 min-w-0 break-words leading-snug">
+                  <p className="mt-1.5 hidden text-sm text-stone-500 italic line-clamp-2 min-w-0 break-words leading-snug sm:block">
                     {p.bio.trim()}
                   </p>
                 ) : null}
@@ -612,7 +628,7 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
           </div>
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <div className="flex flex-col items-center gap-2 pb-0.5">
+          <div className="hidden flex-col items-center gap-2 pb-0.5 sm:flex">
             {recCount > 0 && (
               <div
                 className="relative mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm ring-1 ring-blue-600/20"
@@ -696,53 +712,81 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
         </div>
       </div>
 
-      <ProfileCardTagsBlock profile={p} urgentAuthorIds={urgentAuthorIds} />
+      {(() => {
+        const isNewMobile =
+          p.createdAt.toMillis() > Date.now() - PROFILE_CARD_NEW_MS && p.isValidated !== false;
+        const isUrgentMobile = urgentAuthorIds.has(p.uid);
+        if (!isNewMobile && !isUrgentMobile) return null;
+        return (
+          <div className="-mt-0.5 mb-1 flex flex-wrap gap-1.5 sm:hidden">
+            {isNewMobile ? (
+              <span className="inline-flex items-center rounded-md bg-[#DBEAFE] px-2 py-0.5 text-[11px] font-medium text-[#1D4ED8]">
+                {t('tagNewMember')}
+              </span>
+            ) : null}
+            {isUrgentMobile ? (
+              <span className="inline-flex items-center rounded-md bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-medium text-[#92400E]">
+                {t('tagUrgentNeed')}
+              </span>
+            ) : null}
+          </div>
+        );
+      })()}
 
-      <div className="mt-auto flex w-full shrink-0 flex-col gap-1.5 border-t border-stone-100 pt-2.5">
-        <div className="w-full min-h-[2.25rem] flex items-stretch">
-          {(p.isEmailPublic || (user && profile?.isValidated)) ? (
-            <a 
-              href={`mailto:${p.email}`} 
-              onClick={(e) => e.stopPropagation()}
-              className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-stone-50 px-3 py-2 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-100"
-            >
-              <Mail size={14} className="shrink-0 text-stone-500" />
-              <span className="truncate">{p.email}</span>
-            </a>
-          ) : (
-            <div className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-stone-50 px-3 py-2 text-xs italic text-stone-400 blur-[2px] select-none">
-              <Mail size={14} className="shrink-0" />
-              <span>email@example.com</span>
-            </div>
-          )}
-        </div>
-        <div className="w-full min-h-[2.25rem] flex items-stretch">
-          {p.whatsapp ? (
-            (p.isWhatsappPublic || (user && profile?.isValidated)) ? (
-              <a 
-                href={`https://wa.me/${p.whatsapp.replace(/\D/g, '')}`} 
-                target="_blank" 
-                rel="noopener noreferrer" 
+      <div className="hidden sm:block">
+        <ProfileCardTagsBlock profile={p} urgentAuthorIds={urgentAuthorIds} />
+      </div>
+
+      <div className="mt-auto hidden w-full shrink-0 sm:block">
+        <div className="flex w-full shrink-0 flex-col gap-1.5 border-t border-stone-100 pt-2.5">
+          <div className="flex min-h-[2.25rem] w-full items-stretch">
+            {(p.isEmailPublic || (user && profile?.isValidated)) ? (
+              <a
+                href={`mailto:${p.email}`}
                 onClick={(e) => e.stopPropagation()}
-                className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
+                className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-stone-50 px-3 py-2 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-100"
               >
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-emerald-600" fill="currentColor" aria-hidden>
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                </svg>
-                <span className="truncate">{p.whatsapp}</span>
+                <Mail size={14} className="shrink-0 text-stone-500" />
+                <span className="truncate">{p.email}</span>
               </a>
             ) : (
               <div className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-stone-50 px-3 py-2 text-xs italic text-stone-400 blur-[2px] select-none">
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden>
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                </svg>
-                <span>+52 33 0000 0000</span>
+                <Mail size={14} className="shrink-0" />
+                <span>email@example.com</span>
               </div>
-            )
-          ) : (
-            <div className="w-full rounded-lg border border-transparent bg-transparent px-3 py-2 min-h-[2.25rem]" aria-hidden />
-          )}
+            )}
+          </div>
+          <div className="flex min-h-[2.25rem] w-full items-stretch">
+            {p.whatsapp ? (
+              p.isWhatsappPublic || (user && profile?.isValidated) ? (
+                <a
+                  href={`https://wa.me/${p.whatsapp.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-emerald-600" fill="currentColor" aria-hidden>
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                  </svg>
+                  <span className="truncate">{p.whatsapp}</span>
+                </a>
+              ) : (
+                <div className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-stone-50 px-3 py-2 text-xs italic text-stone-400 blur-[2px] select-none">
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden>
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                  </svg>
+                  <span>+52 33 0000 0000</span>
+                </div>
+              )
+            ) : (
+              <div className="min-h-[2.25rem] w-full rounded-lg border border-transparent bg-transparent px-3 py-2" aria-hidden />
+            )}
+          </div>
         </div>
+      </div>
+      <div className="mt-auto w-full shrink-0 border-t border-stone-100 pt-2.5 sm:hidden">
+        <p className="text-center text-[11px] font-semibold leading-snug text-blue-700">{t('profileCardTapForMore')}</p>
       </div>
     </motion.div>
   );
@@ -4122,14 +4166,17 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           {/* Ligne 1 (desktop) : Bienvenue | Hero — même hauteur de ligne */}
           {!user && (
             <>
-              <div className="order-5 h-full min-h-0 min-w-0 lg:order-none lg:col-span-4">
+              <div className="order-1 h-full min-h-0 min-w-0 lg:order-none lg:col-span-4">
                 <WelcomeContextCard
                   title={t('welcome')}
                   body={t('welcomeIntro')}
                   className="h-full"
+                  collapsibleOnMobile
+                  mobileShowIntroLabel={t('welcomeIntroShow')}
+                  mobileHideIntroLabel={t('welcomeIntroHide')}
                 />
               </div>
-              <div className="order-1 h-full min-h-0 min-w-0 lg:order-none lg:col-span-8">
+              <div className="order-2 h-full min-h-0 min-w-0 lg:order-none lg:col-span-8">
                 <HeroSection
                   copy={h}
                   authBusy={authProviderBusy !== null}
@@ -4159,6 +4206,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   title={t('welcome')}
                   body={t('welcomeIntro')}
                   className="h-full w-full"
+                  collapsibleOnMobile
+                  mobileShowIntroLabel={t('welcomeIntroShow')}
+                  mobileHideIntroLabel={t('welcomeIntroHide')}
                 />
               </div>
               <div className="order-2 h-full min-h-0 w-full min-w-0 lg:order-none lg:col-span-8">
@@ -4182,16 +4232,30 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </>
           )}
 
+          {/* Mobile : fun fact entre le hero (ou bandeau connecté) et recherche / onglets */}
+          {(!user || (user && showDiscoveryStrips)) && (
+            <div className="order-3 min-w-0 w-full sm:hidden">
+              <HomeFunFactStrip
+                lang={lang}
+                collapsibleOnMobile
+                mobileShowLabel={t('funFactIntroShow')}
+                mobileHideLabel={t('funFactIntroHide')}
+              />
+            </div>
+          )}
+
           {/* Colonne gauche — recherche (+ opportunités si connecté), stats */}
-          <div
-            className={cn(
-              'min-w-0 w-full space-y-6 lg:order-none lg:col-span-4 lg:self-start',
-              user ? 'order-3' : 'order-6'
-            )}
-          >
+          <div className="order-4 min-w-0 w-full space-y-6 lg:order-none lg:col-span-4 lg:self-start">
             {user && !showDiscoveryStrips && (
               <div className="h-fit shrink-0">
-                <WelcomeContextCard title={t('welcome')} body={t('welcomeIntro')} className="w-full" />
+                <WelcomeContextCard
+                  title={t('welcome')}
+                  body={t('welcomeIntro')}
+                  className="w-full"
+                  collapsibleOnMobile
+                  mobileShowIntroLabel={t('welcomeIntroShow')}
+                  mobileHideIntroLabel={t('welcomeIntroHide')}
+                />
               </div>
             )}
             <SearchBlock
@@ -4212,7 +4276,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               showClearFilters={showDirectoryClearFilters}
             />
 
-            <HomeFunFactStrip lang={lang} />
+            <div className={cn((!user || showDiscoveryStrips) && 'hidden sm:block')}>
+              <HomeFunFactStrip lang={lang} />
+            </div>
 
             {!user && showDiscoveryStrips && urgentPostsListed.length === 0 && (
               <OpportunitiesSection
@@ -4284,10 +4350,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           <div
             ref={directoryMainRef}
             id="directory-main"
-            className={cn(
-              'min-w-0 w-full scroll-mt-24 space-y-6 lg:order-none lg:col-span-8',
-              user ? 'order-4' : 'order-2'
-            )}
+            className="order-5 min-w-0 w-full scroll-mt-24 space-y-6 lg:order-none lg:col-span-8"
           >
             {/* Bandeaux découverte : visiteurs uniquement (connectés : ligne du haut + colonne gauche) */}
             {!user && showDiscoveryStrips && (
