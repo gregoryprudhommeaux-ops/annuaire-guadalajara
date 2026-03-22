@@ -2207,7 +2207,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0 w-full sm:w-auto">
+          <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-4 shrink-0 w-full sm:w-auto">
             <div className="flex bg-stone-100 p-0.5 sm:p-1 rounded-lg sm:rounded-xl border border-stone-200">
               <button 
                 onClick={() => setLang('fr')}
