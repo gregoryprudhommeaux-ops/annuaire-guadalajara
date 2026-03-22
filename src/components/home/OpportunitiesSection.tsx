@@ -1,5 +1,4 @@
 import React from 'react';
-import { Zap } from 'lucide-react';
 import type { User } from 'firebase/auth';
 import type { UrgentPost, UserProfile, Language } from '../../types';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
@@ -50,18 +49,29 @@ export default function OpportunitiesSection({
 }: Props) {
   const slice = posts.slice(0, 5);
   const hasPosts = slice.length > 0;
+  /** Même gabarit que SearchBlock / MembersCountBlock (colonne gauche, état vide). */
+  const sidebarEmptyStyle = compactLayout && !hasPosts;
 
   return (
     <section
       className={cn(
-        'min-w-0 rounded-2xl border border-stone-200 bg-white shadow-sm',
-        hasPosts ? 'px-4 py-5 sm:px-6' : 'p-5'
+        'min-w-0 shadow-sm',
+        sidebarEmptyStyle
+          ? 'rounded-xl border border-gray-200 bg-[#F7F7F9] p-4 lg:p-5'
+          : hasPosts
+            ? 'rounded-2xl border border-stone-200 bg-white px-4 py-5 sm:px-6'
+            : 'rounded-2xl border border-stone-200 bg-white p-5'
       )}
       aria-labelledby="home-opportunities-title"
     >
       <h2
         id="home-opportunities-title"
-        className="text-base font-bold tracking-tight text-stone-900 break-words hyphens-auto sm:text-lg"
+        className={cn(
+          'break-words hyphens-auto',
+          sidebarEmptyStyle
+            ? 'mb-4 text-sm font-semibold text-gray-700'
+            : 'text-base font-bold tracking-tight text-stone-900 sm:text-lg'
+        )}
       >
         {copy.opportunitiesTitle}
       </h2>
@@ -102,18 +112,22 @@ export default function OpportunitiesSection({
             );
           })}
         </ul>
+      ) : sidebarEmptyStyle ? (
+        <p className="text-[13px] leading-snug text-gray-600 break-words hyphens-auto">
+          {t('opportunitiesEmpty')}
+        </p>
       ) : (
-        <div className="mt-3 flex flex-col items-center text-center">
-          <Zap className="h-8 w-8 shrink-0 text-[#D1D5DB]" strokeWidth={1.25} aria-hidden />
-          <p className="mt-2 max-w-sm text-sm text-stone-500">{t('opportunitiesEmpty')}</p>
-        </div>
+        <p className="mt-3 text-sm leading-snug text-stone-500">{t('opportunitiesEmpty')}</p>
       )}
 
       <div
         className={cn(
           'flex w-full gap-2 sm:gap-3',
           hasPosts ? 'mt-5 border-t border-stone-100 pt-4' : 'mt-4',
-          user ? 'flex-row flex-nowrap items-stretch' : 'flex-row flex-wrap items-start'
+          user ? 'flex-row flex-nowrap items-stretch' : 'flex-row flex-wrap items-start',
+          sidebarEmptyStyle && !user && 'flex-col items-stretch',
+          compactLayout && !sidebarEmptyStyle && 'justify-start',
+          sidebarEmptyStyle && user && 'justify-start'
         )}
       >
         {user ? (
@@ -121,17 +135,45 @@ export default function OpportunitiesSection({
             <button
               type="button"
               onClick={onSeeAll}
-              className="flex min-h-[44px] min-w-0 flex-1 items-center justify-center rounded-lg border border-stone-300 bg-white px-2 py-2.5 text-center text-xs font-semibold leading-snug text-stone-800 transition-colors hover:bg-stone-50 sm:px-3 sm:text-sm"
+              className={cn(
+                'flex min-h-[44px] min-w-0 flex-1 items-center justify-center rounded-lg px-2 py-2.5 text-center text-xs font-semibold leading-snug transition-colors sm:px-3 sm:text-sm',
+                sidebarEmptyStyle
+                  ? 'border border-gray-200 bg-white text-gray-800 hover:bg-gray-50'
+                  : 'border border-stone-300 bg-white text-stone-800 hover:bg-stone-50'
+              )}
             >
               {copy.opportunitiesSeeAll}
             </button>
             <button
               type="button"
               onClick={onPost}
-              className="flex min-h-[44px] min-w-0 flex-1 items-center justify-center rounded-lg bg-blue-700 px-2 py-2.5 text-center text-xs font-semibold leading-snug text-white transition-colors hover:bg-blue-800 sm:px-3 sm:text-sm"
+              className={cn(
+                'flex min-h-[44px] min-w-0 flex-1 items-center justify-center rounded-lg px-2 py-2.5 text-center text-xs font-semibold leading-snug text-white transition-colors sm:px-3 sm:text-sm',
+                sidebarEmptyStyle ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-700 hover:bg-blue-800'
+              )}
             >
               {copy.opportunitiesPost}
             </button>
+          </>
+        ) : sidebarEmptyStyle ? (
+          <>
+            <div className="flex min-w-0 w-full flex-row gap-2">
+              <button
+                type="button"
+                onClick={onSeeAll}
+                className="min-h-[44px] min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-2 py-2.5 text-center text-xs font-semibold text-gray-800 transition-colors hover:bg-gray-50 sm:px-3 sm:text-sm"
+              >
+                {copy.opportunitiesSeeAll}
+              </button>
+              <button
+                type="button"
+                onClick={onCreateProfile}
+                className="min-h-[44px] min-w-0 flex-1 rounded-lg bg-blue-600 px-2 py-2.5 text-center text-xs font-semibold text-white transition-colors hover:bg-blue-700 sm:px-3 sm:text-sm"
+              >
+                {copy.opportunitiesPost}
+              </button>
+            </div>
+            <span className="text-left text-xs text-gray-500">{copy.opportunitiesMembersOnly}</span>
           </>
         ) : (
           <>
@@ -150,7 +192,12 @@ export default function OpportunitiesSection({
               >
                 {copy.opportunitiesPost}
               </button>
-              <span className="text-center text-xs text-stone-400 sm:text-left">
+              <span
+                className={cn(
+                  'text-xs text-stone-400',
+                  compactLayout ? 'text-left' : 'text-center sm:text-left'
+                )}
+              >
                 {copy.opportunitiesMembersOnly}
               </span>
             </div>

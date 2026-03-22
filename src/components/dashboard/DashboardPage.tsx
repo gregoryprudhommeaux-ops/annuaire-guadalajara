@@ -1,12 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { User } from 'firebase/auth';
 import type { Language } from '@/types';
+import type { UserProfile } from '@/types';
 import ExplorerProfils from '@/components/matching/ExplorerProfils';
 import VueEnsemble from '@/components/dashboard/VueEnsemble';
 import { NeedsDashboard } from '@/components/dashboard/NeedsDashboard';
-import { getMembersExtended, getNeeds } from '@/lib/api';
+import FunFactCard from '@/components/FunFactCard';
+import {
+  loadDashboardFirestoreData,
+  userProfileToMemberExtended,
+  userProfileToMemberForFun,
+} from '@/lib/api';
 import type { MemberExtended, MemberNeed } from '@/lib/communityMemberExtended';
 import { mockNeeds } from '@/lib/communityMemberExtended';
+import {
+  filterNeedsSince,
+  filterProfilesJoinedSince,
+  memberNeedsToNeedForFun,
+  startOfCurrentWeekLocal,
+} from '@/lib/funFactData';
 import { memberExtendedToExplorerMember } from '@/lib/vueEnsembleCompute';
 
 type TFn = (key: string) => string;
@@ -34,30 +46,30 @@ export default function DashboardPage({
   user,
   className,
 }: DashboardPageProps) {
-  const [membersExtended, setMembersExtended] = useState<MemberExtended[] | null>(null);
+  const [profiles, setProfiles] = useState<UserProfile[] | null>(null);
   const [needs, setNeeds] = useState<MemberNeed[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!registeredWithProfile) {
-      setMembersExtended(null);
+      setProfiles(null);
       setNeeds(null);
       setLoadError(null);
       return;
     }
     let cancelled = false;
     setLoadError(null);
-    Promise.all([getMembersExtended(), getNeeds()])
-      .then(([m, n]) => {
+    loadDashboardFirestoreData()
+      .then(({ profiles: p, needs: n }) => {
         if (!cancelled) {
-          setMembersExtended(m);
+          setProfiles(p);
           setNeeds(n);
         }
       })
       .catch((e: unknown) => {
         if (!cancelled) {
           setLoadError(e instanceof Error ? e.message : String(e));
-          setMembersExtended([]);
+          setProfiles([]);
           setNeeds([]);
         }
       });
@@ -66,15 +78,32 @@ export default function DashboardPage({
     };
   }, [registeredWithProfile]);
 
+  const membersExtended = useMemo<MemberExtended[]>(
+    () => (profiles ?? []).map(userProfileToMemberExtended),
+    [profiles]
+  );
+
   const explorerMembers = useMemo(
-    () => (membersExtended ?? []).map(memberExtendedToExplorerMember),
+    () => membersExtended.map(memberExtendedToExplorerMember),
     [membersExtended]
   );
+
+  const funFactMembers = useMemo(() => {
+    const since = startOfCurrentWeekLocal();
+    return filterProfilesJoinedSince(profiles ?? [], since).map((p) =>
+      userProfileToMemberForFun(p, lang)
+    );
+  }, [profiles, lang]);
+
+  const funFactNeeds = useMemo(() => {
+    const since = startOfCurrentWeekLocal();
+    return memberNeedsToNeedForFun(filterNeedsSince(needs ?? [], since));
+  }, [needs]);
 
   const loading =
     lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
 
-  if (registeredWithProfile && membersExtended === null && !loadError) {
+  if (registeredWithProfile && profiles === null && !loadError) {
     return (
       <div className={className}>
         <p className="text-sm text-gray-500">{loading}</p>
@@ -92,6 +121,10 @@ export default function DashboardPage({
         </p>
       )}
 
+      {registeredWithProfile && profiles !== null && (
+        <FunFactCard lang={lang} members={funFactMembers} needs={funFactNeeds} />
+      )}
+
       <VueEnsemble
         lang={lang}
         t={t}
@@ -103,7 +136,7 @@ export default function DashboardPage({
         includeNeedsDashboard={false}
       />
 
-      {registeredWithProfile && membersExtended !== null && (
+      {registeredWithProfile && profiles !== null && (
         <NeedsDashboard
           needs={needs ?? mockNeeds}
           members={membersExtended}
@@ -112,7 +145,7 @@ export default function DashboardPage({
         />
       )}
 
-      {registeredWithProfile && membersExtended !== null && (
+      {registeredWithProfile && profiles !== null && (
         <ExplorerProfils members={explorerMembers} lang={lang} showPageHeader />
       )}
     </div>

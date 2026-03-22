@@ -23,17 +23,28 @@ export interface PassionCategory {
 export const PASSIONS_CATEGORIES: PassionCategory[] = [
   {
     id: 'sport_nature',
-    label: { fr: 'Sport & Nature', es: 'Deporte y naturaleza', en: 'Sport & nature' },
+    label: {
+      fr: 'Sport, nature & aventure',
+      es: 'Deporte, naturaleza y aventura',
+      en: 'Sport, nature & adventure',
+    },
     emoji: '🌿',
     options: [
       { id: 'golf', label: { fr: 'Golf', es: 'Golf', en: 'Golf' } },
       { id: 'peche', label: { fr: 'Pêche', es: 'Pesca', en: 'Fishing' } },
+      { id: 'padel', label: { fr: 'Padel', es: 'Pádel', en: 'Padel' } },
+      { id: 'petanque', label: { fr: 'Pétanque', es: 'Petanca', en: 'Pétanque' } },
       { id: 'randonnee', label: { fr: 'Randonnée', es: 'Senderismo', en: 'Hiking' } },
       { id: 'surf', label: { fr: 'Surf', es: 'Surf', en: 'Surf' } },
       { id: 'tennis', label: { fr: 'Tennis', es: 'Tenis', en: 'Tennis' } },
       { id: 'cyclisme', label: { fr: 'Cyclisme', es: 'Ciclismo', en: 'Cycling' } },
       { id: 'yoga', label: { fr: 'Yoga', es: 'Yoga', en: 'Yoga' } },
       { id: 'natation', label: { fr: 'Natation', es: 'Natación', en: 'Swimming' } },
+      { id: 'plongee', label: { fr: 'Plongée', es: 'Buceo', en: 'Diving' } },
+      { id: 'escalade', label: { fr: 'Escalade', es: 'Escalada', en: 'Climbing' } },
+      { id: 'camping', label: { fr: 'Camping', es: 'Camping', en: 'Camping' } },
+      { id: 'voyage', label: { fr: 'Voyage', es: 'Viaje', en: 'Travel' } },
+      { id: 'moto', label: { fr: 'Moto', es: 'Moto', en: 'Motorcycling' } },
     ],
   },
   {
@@ -59,18 +70,6 @@ export const PASSIONS_CATEGORIES: PassionCategory[] = [
       { id: 'art', label: { fr: 'Art', es: 'Arte', en: 'Art' } },
       { id: 'photographie', label: { fr: 'Photographie', es: 'Fotografía', en: 'Photography' } },
       { id: 'theatre', label: { fr: 'Théâtre', es: 'Teatro', en: 'Theatre' } },
-    ],
-  },
-  {
-    id: 'voyage_aventure',
-    label: { fr: 'Voyage & Aventure', es: 'Viaje y aventura', en: 'Travel & adventure' },
-    emoji: '✈️',
-    options: [
-      { id: 'voyage', label: { fr: 'Voyage', es: 'Viaje', en: 'Travel' } },
-      { id: 'moto', label: { fr: 'Moto', es: 'Moto', en: 'Motorcycling' } },
-      { id: 'plongee', label: { fr: 'Plongée', es: 'Buceo', en: 'Diving' } },
-      { id: 'escalade', label: { fr: 'Escalade', es: 'Escalada', en: 'Climbing' } },
-      { id: 'camping', label: { fr: 'Camping', es: 'Camping', en: 'Camping' } },
     ],
   },
   {

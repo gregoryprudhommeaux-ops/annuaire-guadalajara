@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ResponsiveRadar } from '@nivo/radar';
 import { VennDiagram } from 'react-venn-diagram';
 import type { Language } from '../../types';
+import { pickLang } from '../../lib/uiLocale';
 import { useExplorerProfilsI18n } from '../../copy/explorerProfilsI18n';
 import {
   computeRadarData,
@@ -177,73 +178,72 @@ export default function ExplorerProfils({
   };
 
   return (
-    <div className={className}>
+    <div className={`min-w-0 ${className ?? ''}`}>
       {showPageHeader && (
-        <header className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">{t('title')}</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-stone-600 sm:text-base">
+        <header className="mb-6 sm:mb-8">
+          <h1 className="text-xl font-semibold tracking-tight text-stone-900 sm:text-2xl">
+            {t('title')}
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-stone-600">
             {t('subtitle')}
           </p>
         </header>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <section className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-stone-900">{t('radarTitle')}</h2>
-              <p className="mt-1 text-sm text-stone-500">{t('radarHint')}</p>
-            </div>
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <label htmlFor="explorer-radar-segment" className="text-xs text-stone-500">
-                {t('radarSegmentToggleLabel')}:
-              </label>
-              <select
-                id="explorer-radar-segment"
-                value={segment}
-                onChange={(e) => setSegment(e.target.value as SegmentKey)}
-                className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs text-stone-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm"
-              >
-                <option value="community">{t('radarSeriesCommunity')}</option>
-                <option value="freelance">{t('sizeFreelance')}</option>
-                <option value="pme">{t('sizePme')}</option>
-                <option value="corporate">{t('sizeCorporate')}</option>
-              </select>
-            </div>
+      <div className="flex flex-col gap-6 sm:gap-8">
+        <section className="min-w-0 rounded-xl border border-stone-200 bg-white p-5 sm:p-6">
+          <h2 className="text-base font-semibold text-stone-900 sm:text-lg">{t('radarTitle')}</h2>
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-stone-500">{t('radarHint')}</p>
+
+          <div className="mt-4 flex flex-col gap-2 sm:mt-5">
+            <label htmlFor="explorer-radar-segment" className="text-xs font-medium text-stone-600">
+              {t('radarSegmentToggleLabel')}
+            </label>
+            <select
+              id="explorer-radar-segment"
+              value={segment}
+              onChange={(e) => setSegment(e.target.value as SegmentKey)}
+              className="w-full max-w-sm rounded-lg border border-stone-200 bg-stone-50/80 px-3 py-2.5 text-sm text-stone-900 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+            >
+              <option value="community">{t('radarSeriesCommunity')}</option>
+              <option value="freelance">{t('sizeFreelance')}</option>
+              <option value="pme">{t('sizePme')}</option>
+              <option value="corporate">{t('sizeCorporate')}</option>
+            </select>
           </div>
 
-          <div className="mt-4 h-[340px] w-full min-h-[300px]">
+          <div className="relative mt-6 h-[min(420px,70vw)] w-full min-h-[320px] overflow-visible sm:h-[400px] sm:min-h-[360px]">
             {filteredMembers.length === 0 ? (
-              <p className="flex h-full items-center justify-center text-sm text-stone-400">
+              <p className="flex h-full items-center justify-center rounded-lg bg-stone-50/50 px-4 text-center text-sm text-stone-500">
                 {t('radarEmpty')}
               </p>
             ) : !segmentHasRadarData ? (
-              <p className="flex h-full items-center justify-center px-4 text-center text-sm text-stone-400">
+              <p className="flex h-full items-center justify-center rounded-lg bg-stone-50/50 px-4 text-center text-sm text-stone-500">
                 {t('radarSegmentEmpty')}
               </p>
             ) : (
               <ResponsiveRadar
                 theme={{
-                  text: { fill: '#57534e', fontSize: 11 },
-                  grid: { line: { stroke: '#e7e5e4' } },
+                  text: { fill: '#44403c', fontSize: 10 },
+                  grid: { line: { stroke: '#d6d3d1' } },
                 }}
                 data={nivoRadarRows}
                 keys={radarKeys}
                 indexBy="axis"
                 maxValue={5}
                 valueFormat=">-.2f"
-                margin={{ top: 48, right: 56, bottom: 48, left: 56 }}
+                margin={{ top: 70, right: 88, bottom: 70, left: 88 }}
                 curve="linearClosed"
                 gridLevels={5}
                 gridShape="circular"
-                gridLabelOffset={36}
+                gridLabelOffset={32}
                 enableDots
-                dotSize={8}
+                dotSize={7}
                 dotBorderWidth={2}
                 dotColor={{ theme: 'background' }}
                 dotBorderColor={{ from: 'color' }}
                 colors={[RADAR_SEGMENT_COLOR[segment]]}
-                fillOpacity={0.35}
+                fillOpacity={0.32}
                 blendMode="multiply"
                 borderWidth={2}
                 borderColor={{ from: 'color' }}
@@ -255,96 +255,116 @@ export default function ExplorerProfils({
           </div>
 
           {filteredMembers.length > 0 && segmentHasRadarData && (
-            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-stone-600">
-              <li className="flex items-center gap-1.5">
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: RADAR_SEGMENT_COLOR[segment] }}
-                  aria-hidden
-                />
-                {serieLabel(segment)}
-              </li>
-            </ul>
+            <p className="mt-4 flex items-center gap-2 text-xs text-stone-600">
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: RADAR_SEGMENT_COLOR[segment] }}
+                aria-hidden
+              />
+              {serieLabel(segment)}
+            </p>
           )}
         </section>
 
-        <section className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
-          <h2 className="text-lg font-bold text-stone-900">{t('vennTitle')}</h2>
-          <p className="mt-1 text-sm text-stone-500">{t('vennHint')}</p>
+        <section className="min-w-0 rounded-xl border border-stone-200 bg-white p-5 sm:p-6">
+          <h2 className="text-base font-semibold text-stone-900 sm:text-lg">{t('vennTitle')}</h2>
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-stone-500">{t('vennHint')}</p>
 
-          <div className="mt-6 flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-center">
-            <div className="flex flex-1 justify-center overflow-x-auto">
-              {showVenn ? (
-                <VennDiagram
-                  width={280}
-                  height={260}
-                  data={{
-                    a: vennCommunity.a,
-                    b: vennCommunity.b,
-                    intersection: vennCommunity.intersection,
-                  }}
-                  labels={{
-                    labelA: t('vennLegendFB'),
-                    labelB: t('vennLegendNetworking'),
-                    labelIntersection: '\u00a0',
-                  }}
-                  colors={{
-                    colorA: '#6366f1',
-                    colorB: '#10b981',
-                    fontColorA: '#1c1917',
-                    fontColorB: '#1c1917',
-                    fontColorIntersection: '#1c1917',
-                  }}
-                />
-              ) : (
-                <p className="py-12 text-sm text-stone-400">{t('vennNoTags')}</p>
-              )}
+          {!showVenn ? (
+            <div className="mt-6 rounded-lg border border-dashed border-stone-200 bg-stone-50/60 px-4 py-10 text-center">
+              <p className="mx-auto max-w-md text-sm text-stone-600">{t('vennNoTags')}</p>
             </div>
-
-            {filteredMembers.length > 0 && (
-              <div className="flex-1 space-y-2 text-sm text-stone-700 xl:min-w-[220px]">
-                <p>
-                  <span className="mr-2 inline-block h-3 w-3 rounded-full bg-indigo-400" aria-hidden />
-                  {t('vennLegendFB')}: <strong className="tabular-nums">{vennCommunity.a}</strong>
-                </p>
-                <p>
-                  <span className="mr-2 inline-block h-3 w-3 rounded-full bg-emerald-400" aria-hidden />
-                  {t('vennLegendNetworking')}:{' '}
-                  <strong className="tabular-nums">{vennCommunity.b}</strong>
-                </p>
-                <p>
-                  <span className="mr-2 inline-block h-3 w-3 rounded-full bg-cyan-500" aria-hidden />
-                  {t('vennLegendAfterwork')}:{' '}
-                  <strong className="tabular-nums">{vennCommunity.extras.totalAfterwork}</strong>
-                </p>
-                <div className="mt-3 border-t border-stone-100 pt-3 text-xs text-stone-600 sm:text-sm">
-                  <p>
-                    {t('vennStatFbAfter')}:{' '}
-                    <strong className="tabular-nums">{vennCommunity.extras.fbAndAfterwork}</strong>
-                  </p>
-                  <p>
-                    {t('vennStatNetAfter')}:{' '}
-                    <strong className="tabular-nums">{vennCommunity.extras.networkingAndAfterwork}</strong>
-                  </p>
-                  <p>
-                    {t('vennStatTriple')}:{' '}
-                    <strong className="tabular-nums">{vennCommunity.extras.allThree}</strong>
-                  </p>
+          ) : (
+            <div className="mt-6 space-y-8">
+              <div className="relative isolate flex justify-center overflow-x-auto py-2">
+                <div className="inline-flex rounded-lg bg-white p-2 shadow-none ring-1 ring-stone-100">
+                  <VennDiagram
+                    width={280}
+                    height={260}
+                    data={{
+                      a: vennCommunity.a,
+                      b: vennCommunity.b,
+                      intersection: vennCommunity.intersection,
+                    }}
+                    labels={{
+                      labelA: t('vennLegendFB'),
+                      labelB: t('vennLegendNetworking'),
+                      labelIntersection: '\u00a0',
+                    }}
+                    colors={{
+                      colorA: '#6366f1',
+                      colorB: '#10b981',
+                      fontColorA: '#1c1917',
+                      fontColorB: '#1c1917',
+                      fontColorIntersection: '#1c1917',
+                    }}
+                  />
                 </div>
               </div>
-            )}
-          </div>
+
+              <div className="mx-auto max-w-lg border-t border-stone-100 pt-6">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-stone-400">
+                  {pickLang('Chiffres', 'Cifras', 'Counts', lang)}
+                </p>
+                <ul className="space-y-2.5 text-sm text-stone-700">
+                  <li className="flex items-baseline justify-between gap-4 border-b border-stone-50 pb-2">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-indigo-500" aria-hidden />
+                      <span className="truncate">{t('vennLegendFB')}</span>
+                    </span>
+                    <strong className="tabular-nums text-stone-900">{vennCommunity.a}</strong>
+                  </li>
+                  <li className="flex items-baseline justify-between gap-4 border-b border-stone-50 pb-2">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
+                      <span className="truncate">{t('vennLegendNetworking')}</span>
+                    </span>
+                    <strong className="tabular-nums text-stone-900">{vennCommunity.b}</strong>
+                  </li>
+                  <li className="flex items-baseline justify-between gap-4 border-b border-stone-50 pb-2">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-cyan-500" aria-hidden />
+                      <span className="truncate">{t('vennLegendAfterwork')}</span>
+                    </span>
+                    <strong className="tabular-nums text-stone-900">
+                      {vennCommunity.extras.totalAfterwork}
+                    </strong>
+                  </li>
+                </ul>
+                <ul className="mt-4 space-y-2 text-xs text-stone-600 sm:text-sm">
+                  <li className="flex justify-between gap-4">
+                    <span className="min-w-0 pr-2">{t('vennStatFbAfter')}</span>
+                    <strong className="tabular-nums text-stone-800">
+                      {vennCommunity.extras.fbAndAfterwork}
+                    </strong>
+                  </li>
+                  <li className="flex justify-between gap-4">
+                    <span className="min-w-0 pr-2">{t('vennStatNetAfter')}</span>
+                    <strong className="tabular-nums text-stone-800">
+                      {vennCommunity.extras.networkingAndAfterwork}
+                    </strong>
+                  </li>
+                  <li className="flex justify-between gap-4">
+                    <span className="min-w-0 pr-2">{t('vennStatTriple')}</span>
+                    <strong className="tabular-nums text-stone-800">
+                      {vennCommunity.extras.allThree}
+                    </strong>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          )}
         </section>
       </div>
 
-      <section className="mt-8 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
-        <h2 className="text-lg font-bold text-stone-900">{t('tableTitle')}</h2>
+      <section className="mt-6 min-w-0 rounded-xl border border-stone-200 bg-white p-5 sm:mt-8 sm:p-6">
+        <h2 className="text-base font-semibold text-stone-900 sm:text-lg">{t('tableTitle')}</h2>
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <select
             value={sectorFilter}
             onChange={(e) => setSectorFilter(e.target.value)}
-            className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full min-w-0 rounded-lg border border-stone-200 bg-stone-50/80 px-3 py-2.5 text-sm text-stone-900 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
           >
             <option value="">{t('filterSector')}</option>
             {sectors.map((s) => (
@@ -356,7 +376,7 @@ export default function ExplorerProfils({
           <select
             value={cityFilter}
             onChange={(e) => setCityFilter(e.target.value)}
-            className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full min-w-0 rounded-lg border border-stone-200 bg-stone-50/80 px-3 py-2.5 text-sm text-stone-900 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
           >
             <option value="">{t('filterCity')}</option>
             {cities.map((c) => (
@@ -368,7 +388,7 @@ export default function ExplorerProfils({
           <select
             value={languageFilter}
             onChange={(e) => setLanguageFilter(e.target.value)}
-            className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full min-w-0 rounded-lg border border-stone-200 bg-stone-50/80 px-3 py-2.5 text-sm text-stone-900 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
           >
             <option value="">{t('filterLanguage')}</option>
             {languages.map((l) => (
@@ -380,7 +400,7 @@ export default function ExplorerProfils({
           <select
             value={tagFilter}
             onChange={(e) => setTagFilter(e.target.value)}
-            className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full min-w-0 rounded-lg border border-stone-200 bg-stone-50/80 px-3 py-2.5 text-sm text-stone-900 focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
           >
             <option value="">{t('filterNeeds')}</option>
             {tags.map((tag) => (

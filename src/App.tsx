@@ -101,7 +101,7 @@ import {
   getPassionEmoji,
   sanitizePassionIds,
 } from './lib/passionConfig';
-import PassionPicker from './components/PassionPicker';
+import IceBreakerInterests from './components/profile/IceBreakerInterests';
 import HeroSection from './components/home/HeroSection';
 import WelcomeContextCard from './components/home/WelcomeContextCard';
 import SearchBlock from './components/home/SearchBlock';
@@ -110,6 +110,7 @@ import InviteNetworkModal from './components/home/InviteNetworkModal';
 import NewMembersStrip from './components/home/NewMembersStrip';
 import OpportunitiesSection from './components/home/OpportunitiesSection';
 import NetworkRadarSection from './components/home/NetworkRadarSection';
+import HomeFunFactStrip from './components/home/HomeFunFactStrip';
 import DashboardPage from './components/dashboard/DashboardPage';
 import { homeLanding } from './copy/homeLanding';
 import AffinityScore from './components/AffinityScore';
@@ -2061,6 +2062,12 @@ const MainApp = () => {
     });
   }, []);
 
+  useEffect(() => {
+    if (viewMode === 'dashboard' && profile?.role !== 'admin') {
+      setViewMode('members');
+    }
+  }, [viewMode, profile?.role]);
+
   const handleSocialLogin = async (which: SocialAuthProvider) => {
     const provider = buildAuthProvider(which);
     setAuthProviderBusy(which);
@@ -2486,6 +2493,20 @@ const MainApp = () => {
   }, [searchTerm, filterCategory, filterLocation, filterProfileType]);
 
   const showDiscoveryStrips = !showDirectoryClearFilters && !directoryDiscoveryStripsHidden;
+
+  const directoryViewTabs = useMemo(
+    () =>
+      [
+        { id: 'companies' as const, icon: Building2, label: t('companies') },
+        { id: 'members' as const, icon: Users, label: t('members') },
+        { id: 'activities' as const, icon: Briefcase, label: t('activities') },
+        { id: 'radar' as const, icon: Activity, label: t('radarTitle') },
+        ...(profile?.role === 'admin'
+          ? [{ id: 'dashboard' as const, icon: LayoutDashboard, label: t('dashboardTab') }]
+          : []),
+      ] as const,
+    [t, profile?.role]
+  );
 
   const clearDirectoryFilters = useCallback(() => {
     setSearchTerm('');
@@ -3200,11 +3221,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             <textarea name="bio" defaultValue={editingProfile?.bio || profile?.bio} placeholder="Décrivez votre activité ou votre parcours..." className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all min-h-[6rem]" />
                           </div>
 
-                          <PassionPicker
-                            value={passionIdsDraft}
-                            onChange={setPassionIdsDraft}
+                          <IceBreakerInterests
                             lang={lang}
-                            t={t}
+                            value={passionIdsDraft}
+                            onChange={(ids) => setPassionIdsDraft(sanitizePassionIds(ids))}
                           />
 
                           <div className="rounded-xl border border-stone-200 bg-stone-50/80 p-4 md:p-5 space-y-4">
@@ -3578,6 +3598,34 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               showClearFilters={showDirectoryClearFilters}
             />
 
+            {!user && showDiscoveryStrips && urgentPosts.length === 0 && (
+              <OpportunitiesSection
+                copy={h}
+                t={t}
+                lang={lang}
+                posts={urgentPosts}
+                allProfiles={allProfiles}
+                user={user}
+                compactLayout
+                onSeeAll={() => {
+                  setDirectoryDiscoveryStripsHidden(true);
+                  setViewMode('radar');
+                  requestAnimationFrame(() =>
+                    directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  );
+                }}
+                onPost={() => setShowUrgentPostModal(true)}
+                onCreateProfile={() => {
+                  setAuthError(null);
+                  setShowAuthModal(true);
+                }}
+                onOpenPost={(post) => {
+                  const author = allProfiles.find((ap) => ap.uid === post.authorId);
+                  if (author) setSelectedProfile(author);
+                }}
+              />
+            )}
+
             {user && showDiscoveryStrips && (
               <OpportunitiesSection
                 copy={h}
@@ -3649,30 +3697,34 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   }}
                 />
 
-                <OpportunitiesSection
-                  copy={h}
-                  t={t}
-                  lang={lang}
-                  posts={urgentPosts}
-                  allProfiles={allProfiles}
-                  user={user}
-                  onSeeAll={() => {
-                    setDirectoryDiscoveryStripsHidden(true);
-                    setViewMode('radar');
-                    requestAnimationFrame(() =>
-                      directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    );
-                  }}
-                  onPost={() => setShowUrgentPostModal(true)}
-                  onCreateProfile={() => {
-                    setAuthError(null);
-                    setShowAuthModal(true);
-                  }}
-                  onOpenPost={(post) => {
-                    const author = allProfiles.find((ap) => ap.uid === post.authorId);
-                    if (author) setSelectedProfile(author);
-                  }}
-                />
+                <HomeFunFactStrip lang={lang} />
+
+                {urgentPosts.length > 0 && (
+                  <OpportunitiesSection
+                    copy={h}
+                    t={t}
+                    lang={lang}
+                    posts={urgentPosts}
+                    allProfiles={allProfiles}
+                    user={user}
+                    onSeeAll={() => {
+                      setDirectoryDiscoveryStripsHidden(true);
+                      setViewMode('radar');
+                      requestAnimationFrame(() =>
+                        directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                      );
+                    }}
+                    onPost={() => setShowUrgentPostModal(true)}
+                    onCreateProfile={() => {
+                      setAuthError(null);
+                      setShowAuthModal(true);
+                    }}
+                    onOpenPost={(post) => {
+                      const author = allProfiles.find((ap) => ap.uid === post.authorId);
+                      if (author) setSelectedProfile(author);
+                    }}
+                  />
+                )}
               </>
             )}
 
@@ -3747,15 +3799,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             {/* View Mode Tabs — seule barre d’onglets, collée au listing ; sticky sous le header (z-50) */}
             <div className="sticky top-24 z-40 min-w-0 bg-stone-50 py-2 sm:top-16">
               <div className="flex w-full min-w-0 flex-wrap gap-1 rounded-2xl border border-stone-200 bg-white p-1 shadow-sm sm:flex-nowrap">
-                {(
-                  [
-                    { id: 'companies' as const, icon: Building2, label: t('companies') },
-                    { id: 'members' as const, icon: Users, label: t('members') },
-                    { id: 'activities' as const, icon: Briefcase, label: t('activities') },
-                    { id: 'radar' as const, icon: Activity, label: t('radarTitle') },
-                    { id: 'dashboard' as const, icon: LayoutDashboard, label: t('dashboardTab') },
-                  ] as const
-                ).map((tab) => (
+                {directoryViewTabs.map((tab) => (
                   <button
                     key={tab.id}
                     type="button"
@@ -3991,7 +4035,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 />
               )}
 
-              {viewMode === 'dashboard' && (
+              {viewMode === 'dashboard' && profile?.role === 'admin' && (
                 <DashboardPage
                   lang={lang}
                   t={t}

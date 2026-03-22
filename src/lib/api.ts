@@ -12,7 +12,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/firebase';
-import { sanitizePassionIds } from '@/lib/passionConfig';
+import { getPassionLabel, sanitizePassionIds } from '@/lib/passionConfig';
 import type { ExplorerMember, CompanySize } from '@/lib/explorerProfilsCompute';
 import type {
   CompanyKind,
@@ -23,7 +23,14 @@ import type {
 } from '@/lib/communityMemberExtended';
 import { isNeedCategory } from '@/lib/communityMemberExtended';
 import { sanitizeHighlightedNeeds } from '@/needOptions';
-import type { UserProfile } from '@/types';
+import type { Language, UserProfile } from '@/types';
+import type { MemberForFun, NeedForFun } from '@/components/FunFactCard';
+import {
+  filterNeedsSince,
+  filterProfilesJoinedSince,
+  memberNeedsToNeedForFun,
+  startOfCurrentWeekLocal,
+} from '@/lib/funFactData';
 
 /** Besoins interprétés comme « networking » pour le Venn F&B / Networking. */
 const NETWORKING_NEED_IDS = new Set([
@@ -57,7 +64,7 @@ function companySizeToExplorer(
   return 'pme';
 }
 
-function languagesFromProfile(p: UserProfile): string[] {
+export function languagesFromProfile(p: UserProfile): string[] {
   const out = new Set<string>();
   out.add('es');
   if (p.accountType === 'foreign') {
@@ -145,7 +152,7 @@ function radarScoresFromProfile(p: UserProfile): Pick<
   };
 }
 
-function profileSector(p: UserProfile): string {
+export function profileSector(p: UserProfile): string {
   return (
     (p.activityCategory && p.activityCategory.trim()) ||
     (p.targetSectors && String(p.targetSectors).split(',')[0]?.trim()) ||
@@ -204,6 +211,21 @@ export function userProfileToMemberExtended(p: UserProfile): MemberExtended {
   };
 }
 
+/** Données « fun fact » (passions traduites selon `lang`). */
+export function userProfileToMemberForFun(p: UserProfile, lang: Language): MemberForFun {
+  const m = userProfileToMemberExtended(p);
+  const hobbies = sanitizePassionIds(p.passionIds).map((id) => getPassionLabel(id, lang));
+  return {
+    id: p.uid,
+    sector: m.sector,
+    city: m.city,
+    country: m.country,
+    yearsInGDL: m.yearsInGDL,
+    hobbies,
+    languages: languagesFromProfile(p),
+  };
+}
+
 /**
  * Mappe un profil annuaire (`users`) vers le modèle utilisé par `ExplorerProfils`.
  */
@@ -243,6 +265,19 @@ export async function getMembersExtended(): Promise<MemberExtended[]> {
   const q = query(collection(db, 'users'), orderBy('fullName', 'asc'));
   const snap = await getDocs(q);
   return snap.docs.map((d) => userProfileToMemberExtended(d.data() as UserProfile));
+}
+
+/**
+ * Un seul aller-retour Firestore pour le tableau de bord : profils bruts + besoins.
+ */
+export async function loadDashboardFirestoreData(): Promise<{
+  profiles: UserProfile[];
+  needs: MemberNeed[];
+}> {
+  const q = query(collection(db, 'users'), orderBy('fullName', 'asc'));
+  const [snap, needs] = await Promise.all([getDocs(q), getNeeds()]);
+  const profiles = snap.docs.map((d) => d.data() as UserProfile);
+  return { profiles, needs };
 }
 
 function firestoreDateToIsoDate(v: unknown): string {
@@ -295,4 +330,34 @@ export async function addMemberNeed(input: {
     need: input.need,
     createdAt: serverTimestamp(),
   });
+}
+
+/**
+ * Équivalent Firestore de `db.member.findMany({ where: { createdAt: { gte } } })` :
+ * collection `users`, filtre depuis le **lundi 00:00 (heure locale)**.
+ *
+ * Mapping → `MemberForFun` : `hobbies` = libellés des `passionIds`, `languages` = heuristique profil,
+ * `yearsInGDL` = champ communauté ou dérivé (voir `userProfileToMemberExtended`).
+ *
+ * `lang` : libellés des passions ; défaut `fr`. Côté client : `useEffect` ; côté Next : RSC / route API.
+ */
+export async function getNewMembersThisWeek(
+  lang: Language = 'fr'
+): Promise<MemberForFun[]> {
+  const q = query(collection(db, 'users'), orderBy('fullName', 'asc'));
+  const snap = await getDocs(q);
+  const profiles = snap.docs.map((d) => d.data() as UserProfile);
+  const since = startOfCurrentWeekLocal();
+  return filterProfilesJoinedSince(profiles, since).map((p) =>
+    userProfileToMemberForFun(p, lang)
+  );
+}
+
+/**
+ * Équivalent Firestore de `db.need.findMany` sur les 7 derniers jours **calendaires** alignés semaine :
+ * collection `member_needs`, même fenêtre que {@link getNewMembersThisWeek} (`need` = type Prisma).
+ */
+export async function getNeedsThisWeek(): Promise<NeedForFun[]> {
+  const needs = await getNeeds();
+  return memberNeedsToNeedForFun(filterNeedsSince(needs, startOfCurrentWeekLocal()));
 }

@@ -48,6 +48,18 @@ const barTheme = {
   },
 };
 
+/** Couleurs bien visibles sur fond blanc (indigo / violet / bleu / teal / ambre — pas de blanc ni gris clair). */
+const BAR_FILL_COLORS = [
+  '#4338ca',
+  '#6d28d9',
+  '#1d4ed8',
+  '#0369a1',
+  '#0f766e',
+  '#b45309',
+  '#be123c',
+  '#a21caf',
+] as const;
+
 function barRowsForNivo(data: BarDatum[]): { label: string; value: number }[] {
   return data.map((d) => ({ label: d.label, value: d.value }));
 }
@@ -88,7 +100,10 @@ function MiniBarCard({
             padding={0.3}
             layout="vertical"
             valueScale={{ type: 'linear', min: 0 }}
-            colors={{ scheme: 'blues' }}
+            colorBy="indexValue"
+            colors={[...BAR_FILL_COLORS]}
+            borderWidth={1}
+            borderColor={{ from: 'color', modifiers: [['darker', 0.65]] }}
             axisTop={null}
             axisRight={null}
             axisBottom={{
