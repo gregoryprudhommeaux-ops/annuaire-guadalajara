@@ -128,7 +128,7 @@ export const EN_STRINGS: Record<string, string> = {
   signature: "Built and managed by NextStep Services",
   welcome: "Welcome to the directory of the French-speaking business community in Guadalajara.",
   welcomeIntro:
-    "Explore company and member profiles, filter by sector or structured needs, and get suggested matches between complementary profiles. Post or browse urgent needs, open the opportunities radar, and follow network activity — a tool to accelerate your connections in Guadalajara.",
+    "Discover companies and members already on the directory, filter by sector, profile type or location, then explore the first suggested profiles. Invite your network to join the platform to unlock more opportunities and accelerate your connections in Guadalajara.",
   noProfile: "You don’t have a profile yet. Create one to appear in the directory.",
   edit: "Edit",
   editProfile: "Edit my profile",

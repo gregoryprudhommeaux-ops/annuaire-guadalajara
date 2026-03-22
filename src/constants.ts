@@ -339,10 +339,13 @@ export const TRANSLATIONS: Translations = {
   adminPanel: { fr: "Panneau Admin", es: "Panel de Admin" },
   exportData: { fr: "Exporter la base de données", es: "Exportar base de datos" },
   signature: { fr: "Produit et managé par NextStep Services", es: "Producido y gestionado por NextStep Services" },
-  welcome: { fr: "Bienvenue sur l'annuaire de la communauté d'affaires francophone de Guadalajara.", es: "Bienvenido al directorio de la comunidad de negocios francohablante de Guadalajara." },
+  welcome: {
+    fr: "Bienvenue dans l'annuaire de la communauté d'affaires francophone de Guadalajara.",
+    es: "Bienvenido al directorio de la comunidad de negocios francohablante de Guadalajara.",
+  },
   welcomeIntro: {
-    fr: "Explorez les fiches entreprises et membres, affinez par secteur ou par besoins structurés, et laissez-vous proposer des matchings entre profils complémentaires. Publiez ou consultez des besoins urgents, ouvrez le radar d'opportunités et suivez l'activité du réseau — un outil pour accélérer vos connexions à Guadalajara.",
-    es: "Explora fichas de empresas y miembros, refina por sector o por necesidades estructuradas y recibe emparejamientos sugeridos entre perfiles complementarios. Publica o consulta necesidades urgentes, abre el radar de oportunidades y sigue la actividad de la red: una herramienta para acelerar tus conexiones en Guadalajara.",
+    fr: "Découvrez les entreprises et membres déjà inscrits, filtrez par secteur, profil ou localisation, puis explorez les premiers profils suggérés. Invitez votre réseau à rejoindre la plateforme pour activer davantage d'opportunités et accélérer vos connexions à Guadalajara.",
+    es: "Descubre empresas y miembros ya inscritos, filtra por sector, tipo de perfil o ubicación, explora las primeras fichas sugeridas e invita a tu red a unirse a la plataforma para activar más oportunidades y acelerar tus conexiones en Guadalajara.",
   },
   noProfile: { fr: "Vous n'avez pas encore de profil. Veuillez en créer un pour apparaître dans l'annuaire.", es: "Aún no tienes un perfil. Por favor, crea uno para aparecer en el directorio." },
   edit: { fr: "Modifier", es: "Editar" },

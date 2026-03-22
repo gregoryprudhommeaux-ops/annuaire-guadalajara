@@ -3541,20 +3541,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           {/* Connecté : Bienvenue | Nouveaux membres — même hauteur de ligne (pas de hero) */}
           {user && showDiscoveryStrips && (
             <>
-              <div className="order-1 h-fit w-full min-w-0 self-start lg:order-none lg:col-span-4">
+              <div className="order-1 h-full min-h-0 min-w-0 lg:order-none lg:col-span-4">
                 <WelcomeContextCard
                   title={t('welcome')}
                   body={t('welcomeIntro')}
-                  className="w-full"
+                  className="h-full w-full"
                 />
               </div>
-              <div className="order-2 h-fit min-h-0 w-full min-w-0 self-start lg:order-none lg:col-span-8">
+              <div className="order-2 h-full min-h-0 w-full min-w-0 lg:order-none lg:col-span-8">
                 <NewMembersStrip
                   copy={h}
                   lang={lang}
                   profiles={stats.newThisWeekProfiles}
                   totalNewThisWeek={stats.newThisWeekCount}
-                  className="w-full"
+                  className="h-full w-full"
                   onSeeAll={() => {
                     setDirectoryDiscoveryStripsHidden(true);
                     setViewMode('members');
