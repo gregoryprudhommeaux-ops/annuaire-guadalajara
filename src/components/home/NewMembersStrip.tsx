@@ -40,16 +40,16 @@ export default function NewMembersStrip({
   return (
     <section
       className={cn(
-        'flex min-h-0 flex-col rounded-2xl border border-stone-200 bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-5',
+        'flex min-h-0 min-w-0 flex-col rounded-2xl border border-stone-200 bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-5',
         className
       )}
       aria-labelledby="home-new-members-title"
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <h2
             id="home-new-members-title"
-            className="text-base font-bold tracking-tight text-stone-900 sm:text-lg"
+            className="text-base font-bold tracking-tight text-stone-900 break-words hyphens-auto sm:text-lg"
           >
             {copy.newMembersTitle}
           </h2>
@@ -62,9 +62,9 @@ export default function NewMembersStrip({
       </div>
 
       {display.length === 0 ? (
-        <p className="mt-4 flex-1 text-sm text-stone-500">{copy.newMembersEmpty}</p>
+        <p className="mt-4 text-sm text-stone-500 break-words hyphens-auto">{copy.newMembersEmpty}</p>
       ) : (
-        <ul className="mt-4 grid min-h-0 flex-1 grid-cols-1 content-start gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+        <ul className="mt-4 grid min-h-0 grid-cols-1 content-start gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
           {display.map((p) => (
             <li
               key={p.uid}

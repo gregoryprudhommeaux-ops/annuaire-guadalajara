@@ -53,7 +53,9 @@ export default function SearchBlock({
   return (
     <div className="min-w-0 rounded-xl border border-gray-200 bg-[#F7F7F9] p-4 shadow-sm lg:p-5">
       {/* [SEARCH] Titre du bloc */}
-      <h2 className="mb-4 text-sm font-semibold text-gray-700">{t('searchBlockTitle')}</h2>
+      <h2 className="mb-4 hyphens-auto text-sm font-semibold text-gray-700 break-words">
+        {t('searchBlockTitle')}
+      </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* [SEARCH] Ligne 1 - Input + bouton */}

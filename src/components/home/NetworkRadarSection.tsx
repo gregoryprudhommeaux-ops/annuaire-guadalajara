@@ -155,24 +155,28 @@ export default function NetworkRadarSection({
   const recentOpportunities = urgentPosts.slice(0, 3);
 
   return (
-    <div className="space-y-4 rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4 sm:p-5 md:space-y-4">
+    <div className="min-w-0 space-y-4 rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4 sm:p-5 md:space-y-4">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight text-[#1F2937] sm:text-xl">
+          <h2 className="text-lg font-semibold tracking-tight text-[#1F2937] break-words hyphens-auto sm:text-xl">
             <span className="mr-1.5" aria-hidden>
               📡
             </span>
             {t('radarTitle')}
           </h2>
-          <p className="mt-1 text-[13px] leading-snug text-[#6B7280]">{t('radarSubtitle')}</p>
+          <p className="mt-1 text-[13px] leading-snug text-[#6B7280] break-words hyphens-auto">
+            {t('radarSubtitle')}
+          </p>
         </div>
         <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
           </span>
-          <span className="text-[11px] font-medium text-[#6B7280]">{t('radarLive')}</span>
+          <span className="max-w-[min(100%,12rem)] text-right text-[11px] font-medium leading-snug text-[#6B7280] break-words sm:max-w-none sm:text-left">
+            {t('radarLive')}
+          </span>
         </div>
       </div>
 
@@ -188,11 +192,11 @@ export default function NetworkRadarSection({
         ).map(({ icon: Icon, value, labelKey }) => (
           <div
             key={labelKey}
-            className="flex flex-col items-center justify-center bg-white px-3 py-4 text-center md:py-5"
+            className="flex min-w-0 flex-col items-center justify-center bg-white px-2 py-4 text-center md:px-3 md:py-5"
           >
-            <Icon className="h-6 w-6 text-[#6B7280]" strokeWidth={1.75} aria-hidden />
+            <Icon className="h-6 w-6 shrink-0 text-[#6B7280]" strokeWidth={1.75} aria-hidden />
             <p className="mt-2 text-[32px] font-semibold leading-none text-[#1F2937]">{value}</p>
-            <p className="mt-1 text-xs font-normal uppercase tracking-wide text-[#6B7280]">
+            <p className="mt-1 max-w-full hyphens-auto text-[10px] font-normal uppercase leading-tight tracking-wide text-[#6B7280] break-words sm:text-xs">
               {t(labelKey)}
             </p>
           </div>
@@ -200,10 +204,12 @@ export default function NetworkRadarSection({
       </div>
 
       {/* Charts grid */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
         {/* Donut — Secteurs */}
         <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm sm:p-6">
-          <h3 className="mb-4 text-[15px] font-semibold text-[#1F2937]">{t('chartSectorsTitle')}</h3>
+          <h3 className="mb-4 text-[15px] font-semibold leading-snug text-[#1F2937] break-words">
+            {t('chartSectorsTitle')}
+          </h3>
           {sectorPieData.length === 0 ? (
             <p className="text-[13px] text-[#6B7280]">{t('chartSectorsEmpty')}</p>
           ) : (
@@ -269,24 +275,30 @@ export default function NetworkRadarSection({
 
         {/* Bar — Top besoins */}
         <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm sm:p-6">
-          <h3 className="mb-4 text-[15px] font-semibold text-[#1F2937]">{t('chartNeedsTitle')}</h3>
+          <h3 className="mb-4 text-[15px] font-semibold leading-snug text-[#1F2937] break-words">
+            {t('chartNeedsTitle')}
+          </h3>
           {needsBarData.length === 0 ? (
             <p className="text-[13px] text-[#6B7280]">{t('typedNeedsRadarEmpty')}</p>
           ) : (
-            <div className="w-full" style={{ height: Math.min(320, 40 + needsBarData.length * 50) }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  layout="vertical"
-                  data={needsBarData}
-                  margin={{ top: 4, right: 40, left: 8, bottom: 4 }}
+            <div
+              className="min-w-0 w-full overflow-x-auto"
+              style={{ height: Math.min(320, 40 + needsBarData.length * 50) }}
+            >
+              <div className="h-full min-w-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    layout="vertical"
+                    data={needsBarData}
+                    margin={{ top: 4, right: 36, left: 4, bottom: 4 }}
                   barCategoryGap={12}
                 >
                   <XAxis type="number" hide domain={[0, maxNeedCount]} />
                   <YAxis
                     type="category"
                     dataKey="label"
-                    width={124}
-                    tick={{ fill: '#374151', fontSize: 12 }}
+                    width={108}
+                    tick={{ fill: '#374151', fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
                     reversed
@@ -319,7 +331,8 @@ export default function NetworkRadarSection({
                     <LabelList dataKey="count" position="right" fill="#6B7280" fontSize={12} fontWeight={600} />
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer>
+                </ResponsiveContainer>
+              </div>
             </div>
           )}
         </div>
@@ -327,7 +340,9 @@ export default function NetworkRadarSection({
 
       {/* Passions */}
       <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm sm:p-6">
-        <h3 className="mb-4 text-[15px] font-semibold text-[#1F2937]">{t('chartPassionsTitle')}</h3>
+        <h3 className="mb-4 text-[15px] font-semibold leading-snug text-[#1F2937] break-words">
+          {t('chartPassionsTitle')}
+        </h3>
         {passionEntries.length === 0 ? (
           <p className="text-[13px] text-[#6B7280]">{t('chartPassionsEmpty')}</p>
         ) : (
@@ -337,10 +352,10 @@ export default function NetworkRadarSection({
                 key={id}
                 type="button"
                 onClick={() => onPassionClick(id)}
-                className="inline-flex items-center gap-2 rounded-full border border-transparent bg-[#F3F4F6] px-3 py-1.5 text-[13px] text-[#374151] transition-colors hover:bg-[#E5E7EB]"
+                className="inline-flex max-w-full min-w-0 items-center gap-2 rounded-full border border-transparent bg-[#F3F4F6] px-3 py-1.5 text-left text-[13px] text-[#374151] transition-colors hover:bg-[#E5E7EB]"
               >
                 <span aria-hidden>{getPassionEmoji(id)}</span>
-                <span>{getPassionLabel(id, lang)}</span>
+                <span className="min-w-0 break-words">{getPassionLabel(id, lang)}</span>
                 <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-white px-1 text-[11px] font-semibold text-[#6B7280] ring-1 ring-[#E5E7EB]">
                   {count}
                 </span>
@@ -352,7 +367,9 @@ export default function NetworkRadarSection({
 
       {/* Opportunités récentes */}
       <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm sm:p-6">
-        <h3 className="mb-4 text-[15px] font-semibold text-[#1F2937]">{t('radarRecentOpportunitiesTitle')}</h3>
+        <h3 className="mb-4 text-[15px] font-semibold leading-snug text-[#1F2937] break-words">
+          {t('radarRecentOpportunitiesTitle')}
+        </h3>
         {recentOpportunities.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-[#E5E7EB] bg-[#FAFAFA] px-4 py-8 text-center">
             <p className="text-[13px] text-[#6B7280]">{t('radarRecentOpportunitiesEmpty')}</p>
@@ -376,7 +393,7 @@ export default function NetworkRadarSection({
                   onClick={() => onOpportunityClick(post)}
                   className="flex h-full w-full flex-col rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4 text-left transition-colors hover:border-[#D1D5DB] hover:bg-white"
                 >
-                  <p className="line-clamp-3 text-[13px] font-medium leading-snug text-[#1F2937]">
+                  <p className="line-clamp-3 text-[13px] font-medium leading-snug text-[#1F2937] break-words">
                     {titleFromPost(post.text, 100)}
                   </p>
                   <p className="mt-2 text-[11px] text-[#6B7280]">

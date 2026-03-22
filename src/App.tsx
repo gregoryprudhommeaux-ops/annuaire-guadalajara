@@ -303,6 +303,11 @@ function useLanguage(): LanguageContextValue {
 
 function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Language>('fr');
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
   const t = useCallback(
     (key: string) => {
       const row = TRANSLATIONS[key];
@@ -2596,10 +2601,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 font-sans selection:bg-stone-200">
+    <div className="min-h-screen min-w-0 bg-stone-50 text-stone-900 font-sans selection:bg-stone-200">
       {/* Header */}
-      <header className="bg-white border-b border-stone-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-0 sm:h-16 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <header className="sticky top-0 z-50 border-b border-stone-200 bg-white">
+        <div className="mx-auto flex min-w-0 max-w-7xl flex-col gap-2 px-3 py-2 sm:h-16 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-0 lg:px-8">
           <div className="flex w-full min-w-0 items-start gap-2 sm:w-auto sm:flex-1 sm:items-center sm:gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 bg-stone-900 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-md sm:shadow-lg">
               <Building2 className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2} />
@@ -2640,7 +2645,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
           </div>
 
-          <div className="flex w-full flex-col items-end gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-4 shrink-0">
+          <div className="flex w-full min-w-0 shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-4">
             <div className="hidden bg-stone-100 p-0.5 sm:flex sm:p-1 sm:rounded-lg sm:rounded-xl border border-stone-200">
               <button 
                 onClick={() => setLang('fr')}
@@ -2663,9 +2668,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
 
             {user ? (
-              <div className="flex items-center gap-2 sm:gap-4">
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-4">
                 {profile?.role === 'admin' && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <button 
                       onClick={() => setShowValidationPanel(true)}
                       className="relative flex items-center gap-2 px-3 py-2 bg-stone-100 text-stone-700 rounded-lg hover:bg-stone-200 transition-colors text-sm font-medium"
@@ -3341,14 +3346,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           {/* Connecté : Bienvenue | Nouveaux membres — même hauteur de ligne (pas de hero) */}
           {user && showDiscoveryStrips && (
             <>
-              <div className="order-1 w-full min-w-0 self-start lg:order-none lg:col-span-4">
+              <div className="order-1 h-fit w-full min-w-0 self-start lg:order-none lg:col-span-4">
                 <WelcomeContextCard
                   title={t('welcome')}
                   body={t('welcomeIntro')}
                   className="w-full"
                 />
               </div>
-              <div className="order-2 min-h-0 w-full min-w-0 lg:order-none lg:col-span-8">
+              <div className="order-2 h-fit min-h-0 w-full min-w-0 self-start lg:order-none lg:col-span-8">
                 <NewMembersStrip
                   copy={h}
                   lang={lang}
@@ -3376,7 +3381,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             )}
           >
             {user && !showDiscoveryStrips && (
-              <WelcomeContextCard title={t('welcome')} body={t('welcomeIntro')} />
+              <div className="h-fit shrink-0">
+                <WelcomeContextCard title={t('welcome')} body={t('welcomeIntro')} className="w-full" />
+              </div>
             )}
             <SearchBlock
               lang={lang}
@@ -3496,8 +3503,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             {user && profile && (
               <section className="min-w-0 space-y-4">
                 <div className="flex min-w-0 items-center gap-2">
-                  <Trophy className="w-5 h-5 text-indigo-500" />
-                  <h2 className="text-lg font-bold text-stone-900">{t('recommendedForYou')}</h2>
+                  <Trophy className="h-5 w-5 shrink-0 text-indigo-500" />
+                  <h2 className="min-w-0 text-lg font-bold leading-snug text-stone-900 break-words">
+                    {t('recommendedForYou')}
+                  </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {matchLoading || (matches.length === 0 && !aiRecResolved) ? (
@@ -3559,8 +3568,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             )}
 
             {/* View Mode Tabs — seule barre d’onglets, collée au listing ; sticky sous le header (z-50) */}
-            <div className="sticky top-24 z-40 bg-stone-50 py-2 sm:top-16">
-              <div className="flex w-full gap-1 rounded-2xl border border-stone-200 bg-white p-1 shadow-sm">
+            <div className="sticky top-24 z-40 min-w-0 bg-stone-50 py-2 sm:top-16">
+              <div className="flex w-full min-w-0 flex-wrap gap-1 rounded-2xl border border-stone-200 bg-white p-1 shadow-sm sm:flex-nowrap">
                 {(
                   [
                     { id: 'companies' as const, icon: Building2, label: t('companies') },
@@ -3577,14 +3586,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       setViewMode(tab.id);
                     }}
                     className={cn(
-                      'flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-center text-xs font-bold transition-all sm:gap-2 sm:px-3 sm:text-sm',
+                      'flex min-w-0 basis-[calc(50%-2px)] items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-center text-[11px] font-bold transition-all sm:basis-0 sm:flex-1 sm:gap-2 sm:px-3 sm:text-sm',
                       viewMode === tab.id
                         ? 'bg-stone-900 text-white shadow-lg'
                         : 'text-stone-400 hover:bg-stone-50 hover:text-stone-600'
                     )}
                   >
                     <tab.icon size={16} className="shrink-0" aria-hidden />
-                    <span className="min-w-0 truncate">{tab.label}</span>
+                    <span className="min-w-0 text-center leading-tight sm:truncate">{tab.label}</span>
                   </button>
                 ))}
               </div>
@@ -3615,7 +3624,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 <div className="space-y-6">
                   {membersSortRecent && (
                     <div className="flex flex-col gap-2 rounded-2xl border border-blue-100 bg-blue-50/80 p-4 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-sm font-medium text-blue-950">{h.membersSortBanner}</p>
+                      <p className="min-w-0 text-sm font-medium leading-snug text-blue-950 break-words hyphens-auto">
+                        {h.membersSortBanner}
+                      </p>
                       <button
                         type="button"
                         onClick={() => setMembersSortRecent(false)}
@@ -3626,37 +3637,37 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     </div>
                   )}
                   {highlightedNeedFilter && (
-                    <div className="flex items-center justify-between bg-violet-50 p-4 rounded-2xl border border-violet-100">
-                      <div className="flex items-center gap-3">
-                        <Target className="w-5 h-5 text-violet-600" />
-                        <p className="text-sm font-medium text-violet-900">
+                    <div className="flex flex-col gap-3 rounded-2xl border border-violet-100 bg-violet-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-start gap-3 sm:items-center">
+                        <Target className="h-5 w-5 shrink-0 text-violet-600" />
+                        <p className="min-w-0 text-sm font-medium leading-snug text-violet-900">
                           {t('filterByTypedNeed')}{' '}
                           <span className="font-bold">{needOptionLabel(highlightedNeedFilter, lang)}</span>
                         </p>
                       </div>
                       <button 
                         onClick={() => setHighlightedNeedFilter('')}
-                        className="text-xs font-bold text-violet-700 hover:text-violet-900 underline"
+                        className="shrink-0 self-start text-xs font-bold text-violet-700 underline hover:text-violet-900 sm:self-center"
                       >
                         {pickLang('Effacer le filtre', 'Quitar filtro', 'Clear filter', lang)}
                       </button>
                     </div>
                   )}
                   {passionIdFilter && (
-                    <div className="flex items-center justify-between bg-rose-50 p-4 rounded-2xl border border-rose-100">
-                      <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex flex-col gap-3 rounded-2xl border border-rose-100 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-start gap-3 sm:items-center">
                         <span className="text-xl shrink-0" aria-hidden>
                           {getPassionEmoji(passionIdFilter)}
                         </span>
-                        <p className="text-sm font-medium text-rose-900 min-w-0">
+                        <p className="min-w-0 text-sm font-medium leading-snug text-rose-900">
                           {t('filterByPassion')}{' '}
-                          <span className="font-bold">{getPassionLabel(passionIdFilter, lang)}</span>
+                          <span className="font-bold break-words">{getPassionLabel(passionIdFilter, lang)}</span>
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => setPassionIdFilter('')}
-                        className="text-xs font-bold text-rose-700 hover:text-rose-900 underline shrink-0"
+                        className="shrink-0 self-start text-xs font-bold text-rose-700 underline hover:text-rose-900 sm:self-center"
                       >
                         {pickLang('Effacer le filtre', 'Quitar filtro', 'Clear filter', lang)}
                       </button>
@@ -3682,8 +3693,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
               {viewMode === 'activities' && (
                 <div className="space-y-6">
-                  <div className="flex flex-col gap-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-5 lg:flex-row lg:items-end">
-                    <div className="min-w-[220px] flex-1 space-y-1">
+                  <div className="flex min-w-0 flex-col gap-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-5 lg:flex-row lg:items-end">
+                    <div className="min-w-0 w-full flex-1 space-y-1 lg:max-w-md">
                       <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-400">
                         {t('activityCategory')}
                       </label>
@@ -3700,7 +3711,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         ))}
                       </select>
                     </div>
-                    <p className="text-xs leading-relaxed text-stone-500 lg:max-w-md">{t('filterSectorHint')}</p>
+                    <p className="min-w-0 text-xs leading-relaxed text-stone-500 lg:max-w-md">{t('filterSectorHint')}</p>
                   </div>
                   {activityCategoryPopularity.filter(([cat]) => cat).length > 0 && (
                     <div className="flex flex-wrap gap-2">

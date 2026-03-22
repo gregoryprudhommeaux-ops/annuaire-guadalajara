@@ -54,14 +54,14 @@ export default function OpportunitiesSection({
   return (
     <section
       className={cn(
-        'rounded-2xl border border-stone-200 bg-white shadow-sm',
+        'min-w-0 rounded-2xl border border-stone-200 bg-white shadow-sm',
         hasPosts ? 'px-4 py-5 sm:px-6' : 'p-5'
       )}
       aria-labelledby="home-opportunities-title"
     >
       <h2
         id="home-opportunities-title"
-        className="text-base font-bold tracking-tight text-stone-900 sm:text-lg"
+        className="text-base font-bold tracking-tight text-stone-900 break-words hyphens-auto sm:text-lg"
       >
         {copy.opportunitiesTitle}
       </h2>
@@ -86,7 +86,7 @@ export default function OpportunitiesSection({
                   onClick={() => onOpenPost(post)}
                   className="flex flex-col text-left"
                 >
-                  <p className="text-sm font-semibold leading-snug text-stone-900">
+                  <p className="text-sm font-semibold leading-snug text-stone-900 break-words">
                     {titleFromPost(post.text)}
                   </p>
                   <p className="mt-2 text-xs font-medium uppercase tracking-wide text-stone-400">
@@ -118,7 +118,7 @@ export default function OpportunitiesSection({
         <button
           type="button"
           onClick={onSeeAll}
-          className="min-h-[44px] rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-50"
+          className="min-h-[44px] max-w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-center text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-50"
         >
           {copy.opportunitiesSeeAll}
         </button>
@@ -126,7 +126,7 @@ export default function OpportunitiesSection({
           <button
             type="button"
             onClick={user ? onPost : onCreateProfile}
-            className="min-h-[44px] rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-800"
+            className="min-h-[44px] max-w-full rounded-lg bg-blue-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-blue-800"
           >
             {copy.opportunitiesPost}
           </button>

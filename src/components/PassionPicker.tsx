@@ -25,11 +25,13 @@ function PassionPicker({ value, onChange, lang, t }: PassionPickerProps) {
   };
 
   return (
-    <div className="rounded-xl border border-violet-100 bg-violet-50/40 p-4 md:p-5 space-y-4">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between gap-y-2">
-        <div>
-          <p className="text-xs font-semibold text-stone-500 tracking-wide">{t('passions')}</p>
-          <p className="text-[10px] text-stone-400 mt-1 leading-relaxed">{t('passionsHint')}</p>
+    <div className="min-w-0 space-y-4 rounded-xl border border-violet-100 bg-violet-50/40 p-4 md:p-5">
+      <div className="flex flex-col gap-y-2 gap-x-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold tracking-wide text-stone-500">{t('passions')}</p>
+          <p className="mt-1 text-[10px] leading-relaxed text-stone-400 break-words hyphens-auto">
+            {t('passionsHint')}
+          </p>
         </div>
         <span
           className={cn(
@@ -43,9 +45,9 @@ function PassionPicker({ value, onChange, lang, t }: PassionPickerProps) {
 
       {PASSIONS_CATEGORIES.map((cat) => (
         <div key={cat.id}>
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-stone-400 flex items-center gap-1.5">
+          <p className="mb-2 flex min-w-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-400 break-words">
             <span aria-hidden>{cat.emoji}</span>
-            {cat.label[lang]}
+            <span className="min-w-0">{cat.label[lang]}</span>
           </p>
           <div className="flex flex-wrap gap-2">
             {cat.options.map((option) => {
@@ -59,7 +61,7 @@ function PassionPicker({ value, onChange, lang, t }: PassionPickerProps) {
                   onClick={() => toggle(option.id)}
                   disabled={isDisabled}
                   className={cn(
-                    'rounded-full px-3 py-1.5 text-xs font-medium transition-all border max-w-[260px] text-left',
+                    'max-w-full min-w-0 rounded-full border px-3 py-1.5 text-left text-xs font-medium transition-all sm:max-w-[min(100%,260px)]',
                     isSelected
                       ? 'border-violet-600 bg-violet-600 text-white shadow-sm'
                       : isDisabled
@@ -67,7 +69,7 @@ function PassionPicker({ value, onChange, lang, t }: PassionPickerProps) {
                         : 'border-stone-200 bg-white text-stone-600 hover:border-violet-300 hover:text-violet-700'
                   )}
                 >
-                  {option.label[lang]}
+                  <span className="break-words">{option.label[lang]}</span>
                 </button>
               );
             })}
