@@ -111,31 +111,51 @@ export default function OpportunitiesSection({
 
       <div
         className={cn(
-          'flex flex-row flex-wrap items-start gap-3',
-          hasPosts ? 'mt-5 border-t border-stone-100 pt-4' : 'mt-4'
+          'flex w-full gap-2 sm:gap-3',
+          hasPosts ? 'mt-5 border-t border-stone-100 pt-4' : 'mt-4',
+          user ? 'flex-row flex-nowrap items-stretch' : 'flex-row flex-wrap items-start'
         )}
       >
-        <button
-          type="button"
-          onClick={onSeeAll}
-          className="min-h-[44px] max-w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-center text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-50"
-        >
-          {copy.opportunitiesSeeAll}
-        </button>
-        <div className="flex min-w-0 flex-col gap-1">
-          <button
-            type="button"
-            onClick={user ? onPost : onCreateProfile}
-            className="min-h-[44px] max-w-full rounded-lg bg-blue-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-blue-800"
-          >
-            {copy.opportunitiesPost}
-          </button>
-          {!user && (
-            <span className="text-center text-xs text-stone-400 sm:text-left">
-              {copy.opportunitiesMembersOnly}
-            </span>
-          )}
-        </div>
+        {user ? (
+          <>
+            <button
+              type="button"
+              onClick={onSeeAll}
+              className="flex min-h-[44px] min-w-0 flex-1 items-center justify-center rounded-lg border border-stone-300 bg-white px-2 py-2.5 text-center text-xs font-semibold leading-snug text-stone-800 transition-colors hover:bg-stone-50 sm:px-3 sm:text-sm"
+            >
+              {copy.opportunitiesSeeAll}
+            </button>
+            <button
+              type="button"
+              onClick={onPost}
+              className="flex min-h-[44px] min-w-0 flex-1 items-center justify-center rounded-lg bg-blue-700 px-2 py-2.5 text-center text-xs font-semibold leading-snug text-white transition-colors hover:bg-blue-800 sm:px-3 sm:text-sm"
+            >
+              {copy.opportunitiesPost}
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={onSeeAll}
+              className="min-h-[44px] max-w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-center text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-50"
+            >
+              {copy.opportunitiesSeeAll}
+            </button>
+            <div className="flex min-w-0 flex-col gap-1">
+              <button
+                type="button"
+                onClick={onCreateProfile}
+                className="min-h-[44px] max-w-full rounded-lg bg-blue-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-blue-800"
+              >
+                {copy.opportunitiesPost}
+              </button>
+              <span className="text-center text-xs text-stone-400 sm:text-left">
+                {copy.opportunitiesMembersOnly}
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </section>
   );
