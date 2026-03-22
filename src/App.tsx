@@ -3598,6 +3598,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               showClearFilters={showDirectoryClearFilters}
             />
 
+            <HomeFunFactStrip lang={lang} />
+
             {!user && showDiscoveryStrips && urgentPosts.length === 0 && (
               <OpportunitiesSection
                 copy={h}
@@ -3696,8 +3698,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     );
                   }}
                 />
-
-                <HomeFunFactStrip lang={lang} />
 
                 {urgentPosts.length > 0 && (
                   <OpportunitiesSection
