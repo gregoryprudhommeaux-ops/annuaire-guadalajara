@@ -14,6 +14,8 @@ export type IceBreakerInterestsProps = {
   /** met à jour le draft dans le parent */
   onChange: (ids: string[]) => void;
   maxSelected?: number;
+  /** Affiche une astérisque sur le titre (champ requis publication) */
+  markRequired?: boolean;
 };
 
 /** Emojis par id de passion (fallback : emoji de catégorie dans le rendu). */
@@ -115,6 +117,7 @@ export function IceBreakerInterests({
   value,
   onChange,
   maxSelected = MAX_PASSIONS,
+  markRequired = false,
 }: IceBreakerInterestsProps) {
   const selected = value ?? [];
   const locale = lang as PassionLocale;
@@ -136,7 +139,14 @@ export function IceBreakerInterests({
     <section className="mt-6 min-w-0 rounded-2xl border border-gray-100 bg-white p-4 md:p-5">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold text-gray-900 break-words">{header.title}</h3>
+          <h3 className="text-base font-semibold text-gray-900 break-words">
+            {header.title}
+            {markRequired ? (
+              <span className="ml-0.5 text-red-500 font-semibold" aria-hidden>
+                *
+              </span>
+            ) : null}
+          </h3>
           <p className="mt-1 text-xs text-gray-500 md:text-sm break-words hyphens-auto">
             {header.subtitle}
           </p>

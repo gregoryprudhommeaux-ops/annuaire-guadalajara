@@ -101,6 +101,18 @@ import {
   getPassionEmoji,
   sanitizePassionIds,
 } from './lib/passionConfig';
+import {
+  WORKING_LANGUAGE_OPTIONS,
+  TYPICAL_CLIENT_SIZE_VALUES,
+  sanitizeWorkingLanguageCodes,
+  typicalClientSizeLabel,
+  workingLanguageLabel,
+  type TypicalClientSize,
+} from './lib/contactPreferences';
+import {
+  profileMeetsPublicationRequirements,
+  AI_OPTIMIZATION_READINESS_TARGET,
+} from './lib/profilePublicationRules';
 import IceBreakerInterests from './components/profile/IceBreakerInterests';
 import HeroSection from './components/home/HeroSection';
 import WelcomeContextCard from './components/home/WelcomeContextCard';
@@ -1719,6 +1731,7 @@ const MainApp = () => {
   const [passionIdFilter, setPassionIdFilter] = useState('');
   const [highlightedNeedsDraft, setHighlightedNeedsDraft] = useState<string[]>([]);
   const [passionIdsDraft, setPassionIdsDraft] = useState<string[]>([]);
+  const [workingLanguagesDraft, setWorkingLanguagesDraft] = useState<string[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showUrgentPostModal, setShowUrgentPostModal] = useState(false);
   const [expandedHookId, setExpandedHookId] = useState<string | null>(null);
@@ -1728,6 +1741,7 @@ const MainApp = () => {
   const [showInviteNetworkModal, setShowInviteNetworkModal] = useState(false);
   const [profileSaveBusy, setProfileSaveBusy] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+  const [profileReminderDismissed, setProfileReminderDismissed] = useState(false);
   const [optimizationBusy, setOptimizationBusy] = useState(false);
   const [optimizationError, setOptimizationError] = useState<string | null>(null);
 
@@ -1853,12 +1867,25 @@ const MainApp = () => {
   }, [showValidationPanel, profile?.role, pendingUidsKey, pendingProfiles]);
 
   useEffect(() => {
+    setProfileReminderDismissed(false);
+  }, [user?.uid]);
+
+  useEffect(() => {
     if (!isEditing) return;
     const src = editingProfile ?? profile;
     if (!src) return;
     setHighlightedNeedsDraft(sanitizeHighlightedNeeds(src.highlightedNeeds));
     setPassionIdsDraft(sanitizePassionIds(src.passionIds));
+    setWorkingLanguagesDraft(sanitizeWorkingLanguageCodes(src.workingLanguageCodes));
   }, [isEditing, editingProfile?.uid, profile?.uid]);
+
+  const toggleWorkingLanguageDraft = (code: string) => {
+    setWorkingLanguagesDraft((prev) => {
+      if (prev.includes(code)) return prev.filter((x) => x !== code);
+      if (prev.length >= 3) return prev;
+      return [...prev, code];
+    });
+  };
 
   const toggleHighlightedNeedDraft = (id: string) => {
     setHighlightedNeedsDraft((prev) => {
@@ -1889,6 +1916,19 @@ const MainApp = () => {
     () => new Set(urgentPosts.map((post) => post.authorId)),
     [urgentPosts]
   );
+
+  const profileUpdateBanner = useMemo(() => {
+    if (!profile) {
+      return { show: false, mandatory: false, ai: false };
+    }
+    const pubOk = profileMeetsPublicationRequirements(profile);
+    const readiness = getProfileAiRecommendationReadiness(profile);
+    return {
+      show: !pubOk || readiness < AI_OPTIMIZATION_READINESS_TARGET,
+      mandatory: !pubOk,
+      ai: pubOk && readiness < AI_OPTIMIZATION_READINESS_TARGET,
+    };
+  }, [profile]);
 
   useEffect(() => {
     const testConnection = async () => {
@@ -2124,69 +2164,56 @@ const MainApp = () => {
       const n = Number(raw);
       return Number.isFinite(n) ? n : undefined;
     };
-    const requiredFieldLabels = {
-      fr: {
-        fullName: 'Nom complet',
-        companyName: 'Nom de la societe',
-        activityCategory: 'Categorie',
-        positionCategory: 'Fonction dans l\'entreprise',
-        email: 'Email',
-        website: 'Site web',
-        whatsapp: 'WhatsApp',
-        bio: 'Presentation'
-      },
-      es: {
-        fullName: 'Nombre completo',
-        companyName: 'Nombre de la empresa',
-        activityCategory: 'Categoria',
-        positionCategory: 'Funcion en la empresa',
-        email: 'Correo electronico',
-        website: 'Sitio web',
-        whatsapp: 'WhatsApp',
-        bio: 'Presentacion'
-      },
-      en: {
-        fullName: 'Full name',
-        companyName: 'Company name',
-        activityCategory: 'Sector',
-        positionCategory: 'Role in the company',
-        email: 'Email',
-        website: 'Website',
-        whatsapp: 'WhatsApp',
-        bio: 'Bio'
-      }
-    };
-    const labels = requiredFieldLabels[lang];
-    const requiredKeys: Array<keyof typeof requiredFieldLabels.fr> = [
-      'fullName',
-      'companyName',
-      'activityCategory',
-      'positionCategory',
-      'email',
-      'website',
-      'whatsapp',
-      'bio'
-    ];
-    const missingFields = requiredKeys.filter((key) => !getTrimmed(key));
-    const websiteValue = getTrimmed('website');
-    const invalidWebsite = websiteValue && !/^https?:\/\/.+/i.test(websiteValue);
-    if (missingFields.length > 0 || invalidWebsite) {
-      const missingLabels = missingFields.map((key) => labels[key]);
-      if (invalidWebsite) {
-        missingLabels.push(
-          pickLang(
-            'Site web (doit commencer par http:// ou https://)',
-            'Sitio web (debe iniciar con http:// o https://)',
-            'Website (must start with http:// or https://)',
-            lang
-          )
-        );
-      }
+    const ecRaw = getTrimmed('employeeCount');
+    let employeeCountVal: EmployeeCountRange | undefined;
+    if (ecRaw === '') {
+      employeeCountVal = undefined;
+    } else if (isEmployeeCountRange(ecRaw)) {
+      employeeCountVal = ecRaw;
+    } else {
       setProfileSaveError(
         pickLang(
-          `Pour terminer l'enregistrement, merci de completer les champs suivants : ${missingLabels.join(', ')}.`,
-          `Para guardar, completa estos campos: ${missingLabels.join(', ')}.`,
-          `To save, please complete the following fields: ${missingLabels.join(', ')}.`,
+          "La fourchette « Nombre d'employés » sélectionnée est invalide.",
+          'El rango de « Número de empleados » seleccionado no es válido.',
+          'The selected employee count range is invalid.',
+          lang
+        )
+      );
+      setProfileSaveBusy(false);
+      return;
+    }
+
+    const baseProfileProbe = isSelf ? profile : editingProfile;
+    const computedCompanySizeProbe: UserProfile['companySize'] | undefined = employeeCountVal
+      ? companySizeFromEmployeeRange(employeeCountVal)
+      : baseProfileProbe?.companySize;
+
+    const targetSectorListProbe =
+      (formData.get('targetSectors') as string)?.split(',').map((s) => s.trim()).filter(Boolean) || [];
+
+    const publicationProbe: Partial<UserProfile> = {
+      fullName: getTrimmed('fullName'),
+      companyName: getTrimmed('companyName'),
+      email: getTrimmed('email'),
+      activityCategory: getTrimmed('activityCategory'),
+      positionCategory: getTrimmed('positionCategory'),
+      city: getTrimmed('city'),
+      website: getTrimmed('website'),
+      whatsapp: getTrimmed('whatsapp'),
+      bio: getTrimmed('bio'),
+      employeeCount: employeeCountVal,
+      companySize: computedCompanySizeProbe,
+      highlightedNeeds: highlightedNeedsDraft,
+      passionIds: passionIdsDraft,
+      targetSectors: targetSectorListProbe,
+    };
+
+    if (!profileMeetsPublicationRequirements(publicationProbe)) {
+      setProfileSaveError(
+        pickLang(
+          'Pour une fiche publiable et validable par l’admin, remplissez tous les champs marqués d’une astérisque (*), dont la bio (au moins 15 caractères), la fourchette d’employés, au moins un besoin mis en avant, et au moins une passion ou des mots-clés secteur.',
+          'Para un perfil publicable y validable por el admin, completa los campos marcados con asterisco (*), incluida la bio (mín. 15 caracteres), el rango de empleados, al menos una necesidad destacada, y al menos una pasión o palabras clave de sector.',
+          'To publish and get admin validation, complete every field marked with an asterisk (*), including your bio (min. 15 characters), employee range, at least one highlighted need, and at least one interest or sector keywords.',
           lang
         )
       );
@@ -2201,25 +2228,6 @@ const MainApp = () => {
           "La fonction dans l'entreprise selectionnee est invalide.",
           'La funcion en la empresa seleccionada no es valida.',
           'The selected role in the company is invalid.',
-          lang
-        )
-      );
-      setProfileSaveBusy(false);
-      return;
-    }
-
-    const ecRaw = getTrimmed('employeeCount');
-    let employeeCountVal: EmployeeCountRange | undefined;
-    if (ecRaw === '') {
-      employeeCountVal = undefined;
-    } else if (isEmployeeCountRange(ecRaw)) {
-      employeeCountVal = ecRaw;
-    } else {
-      setProfileSaveError(
-        pickLang(
-          "La fourchette « Nombre d'employés » sélectionnée est invalide.",
-          'El rango de « Número de empleados » seleccionado no es válido.',
-          'The selected employee count range is invalid.',
           lang
         )
       );
@@ -2336,6 +2344,25 @@ const MainApp = () => {
       communityYearsInGdl = Math.floor(n);
     }
 
+    const tcsRaw = getTrimmed('typicalClientSize');
+    let typicalClientSize: TypicalClientSize | ReturnType<typeof deleteField>;
+    if (tcsRaw === '') {
+      typicalClientSize = deleteField();
+    } else if ((TYPICAL_CLIENT_SIZE_VALUES as readonly string[]).includes(tcsRaw)) {
+      typicalClientSize = tcsRaw as TypicalClientSize;
+    } else {
+      setProfileSaveError(
+        pickLang(
+          'La taille de clients habituels sélectionnée est invalide.',
+          'El tamaño habitual de clientes seleccionado no es válido.',
+          'The selected typical client size is invalid.',
+          lang
+        )
+      );
+      setProfileSaveBusy(false);
+      return;
+    }
+
     const baseProfile = isSelf ? profile : editingProfile;
     const computedCompanySize: UserProfile['companySize'] = employeeCountVal
       ? companySizeFromEmployeeRange(employeeCountVal)
@@ -2364,6 +2391,15 @@ const MainApp = () => {
       highlightedNeeds: sanitizeHighlightedNeeds(highlightedNeedsDraft),
       passionIds: sanitizePassionIds(passionIdsDraft),
       targetSectors: (formData.get('targetSectors') as string)?.split(',').map(s => s.trim()).filter(Boolean) || [],
+      contactPreferenceCta: (() => {
+        const v = getTrimmed('contactPreferenceCta');
+        return v === '' ? deleteField() : v;
+      })(),
+      workingLanguageCodes: sanitizeWorkingLanguageCodes(workingLanguagesDraft),
+      typicalClientSize,
+      openToMentoring: formData.get('openToMentoring') === 'on',
+      openToTalks: formData.get('openToTalks') === 'on',
+      openToEvents: formData.get('openToEvents') === 'on',
       companySize: computedCompanySize,
       accountType: ((isSelf ? profile?.accountType : editingProfile?.accountType) ?? 'local') as 'local' | 'foreign',
       role: (targetUid === user.uid && user.email === ADMIN_EMAIL) ? 'admin' : (editingProfile?.role || profile?.role || 'user') as Role,
@@ -2885,6 +2921,27 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         <div className="bg-stone-50 border-b border-stone-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <section className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden relative">
+              {profile &&
+                !profileReminderDismissed &&
+                profileUpdateBanner.show && (
+                  <div className="border-b border-amber-200/80 bg-amber-50/95 px-4 py-3 sm:px-5">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                      <div className="min-w-0 space-y-2 text-sm leading-snug text-amber-950">
+                        {profileUpdateBanner.mandatory ? (
+                          <p className="font-medium">{t('profileBannerMandatory')}</p>
+                        ) : null}
+                        {profileUpdateBanner.ai ? <p>{t('profileBannerAi')}</p> : null}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setProfileReminderDismissed(true)}
+                        className="shrink-0 self-start rounded-lg border border-amber-300/80 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100/80"
+                      >
+                        {t('profileBannerDismiss')}
+                      </button>
+                    </div>
+                  </div>
+                )}
               <div 
                 className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors"
                 onClick={() => setIsProfileExpanded(!isProfileExpanded)}
@@ -2982,14 +3039,27 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     <div className="mt-6">
                       {isEditing ? (
                         <form onSubmit={handleSaveProfile} className="space-y-6">
+                          <p className="rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2 text-xs leading-relaxed text-stone-600">
+                            {t('profileFormRequiredLegend')}
+                          </p>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div className="space-y-4">
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('fullName')}</label>
+                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                  {t('fullName')}
+                                  <span className="text-red-500 font-semibold" aria-hidden>
+                                    {' *'}
+                                  </span>
+                                </label>
                                 <input name="fullName" defaultValue={editingProfile?.fullName || profile?.fullName} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('companyName')}</label>
+                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                  {t('companyName')}
+                                  <span className="text-red-500 font-semibold" aria-hidden>
+                                    {' *'}
+                                  </span>
+                                </label>
                                 <input name="companyName" defaultValue={editingProfile?.companyName || profile?.companyName} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
                               </div>
                               <div className="grid grid-cols-2 gap-4">
@@ -2998,7 +3068,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   <input type="number" name="creationYear" defaultValue={editingProfile?.creationYear || profile?.creationYear} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('employeeCount')}</label>
+                                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                    {t('employeeCount')}
+                                    <span className="text-red-500 font-semibold" aria-hidden>
+                                      {' *'}
+                                    </span>
+                                  </label>
                                   <select
                                     name="employeeCount"
                                     defaultValue={employeeCountToSelectDefault(
@@ -3026,7 +3101,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                             <div className="space-y-4">
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('city')}</label>
+                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                  {t('city')}
+                                  <span className="text-red-500 font-semibold" aria-hidden>
+                                    {' *'}
+                                  </span>
+                                </label>
                                 <select name="city" defaultValue={editingProfile?.city || profile?.city} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all">
                                   {CITIES.map((c) => (
                                     <option key={c} value={c}>
@@ -3047,7 +3127,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                             <div className="space-y-4">
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('activityCategory')}</label>
+                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                  {t('activityCategory')}
+                                  <span className="text-red-500 font-semibold" aria-hidden>
+                                    {' *'}
+                                  </span>
+                                </label>
                                 <select name="activityCategory" defaultValue={editingProfile?.activityCategory || profile?.activityCategory} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all">
                                   {ACTIVITY_CATEGORIES.map((c) => (
                                     <option key={c} value={c}>
@@ -3057,18 +3142,33 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 </select>
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('email')}</label>
+                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                  {t('email')}
+                                  <span className="text-red-500 font-semibold" aria-hidden>
+                                    {' *'}
+                                  </span>
+                                </label>
                                 <input type="email" name="email" defaultValue={editingProfile?.email || profile?.email || user.email || ''} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('website')}</label>
+                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                  {t('website')}
+                                  <span className="text-red-500 font-semibold" aria-hidden>
+                                    {' *'}
+                                  </span>
+                                </label>
                                 <input name="website" defaultValue={editingProfile?.website || profile?.website} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
                               </div>
                             </div>
                           </div>
 
                           <div className="space-y-1 max-w-2xl">
-                            <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('workFunction')}</label>
+                            <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                              {t('workFunction')}
+                              <span className="text-red-500 font-semibold" aria-hidden>
+                                {' *'}
+                              </span>
+                            </label>
                             <p className="text-[10px] text-stone-400 leading-snug">{t('workFunctionHint')}</p>
                             <select
                               name="positionCategory"
@@ -3086,7 +3186,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-1">
-                              <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('whatsapp')}</label>
+                              <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                {t('whatsapp')}
+                                <span className="text-red-500 font-semibold" aria-hidden>
+                                  {' *'}
+                                </span>
+                              </label>
                               <input name="whatsapp" defaultValue={editingProfile?.whatsapp || profile?.whatsapp} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
                             </div>
                             <div className="space-y-1">
@@ -3217,7 +3322,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           </div>
 
                           <div className="space-y-1">
-                            <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Bio / Description</label>
+                            <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                              Bio / Description
+                              <span className="text-red-500 font-semibold" aria-hidden>
+                                {' *'}
+                              </span>
+                            </label>
+                            <p className="text-[10px] text-stone-400 leading-snug">
+                              {pickLang(
+                                'Minimum 15 caractères pour la validation de la fiche.',
+                                'Mínimo 15 caracteres para validar la ficha.',
+                                'At least 15 characters are required to validate your profile.',
+                                lang
+                              )}
+                            </p>
                             <textarea name="bio" defaultValue={editingProfile?.bio || profile?.bio} placeholder="Décrivez votre activité ou votre parcours..." className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all min-h-[6rem]" />
                           </div>
 
@@ -3225,12 +3343,166 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             lang={lang}
                             value={passionIdsDraft}
                             onChange={(ids) => setPassionIdsDraft(sanitizePassionIds(ids))}
+                            markRequired
                           />
+
+                          <section className="space-y-4 rounded-xl border border-stone-200 bg-white p-4 md:p-5">
+                            <h3 className="text-base font-semibold text-stone-900">
+                              {t('contactPrefsTitle')}
+                            </h3>
+                            <div className="space-y-1">
+                              <label
+                                htmlFor="contactPreferenceCta"
+                                className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
+                              >
+                                {t('contactPrefsCtaLabel')}
+                              </label>
+                              <p className="text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsCtaHint')}</p>
+                              <input
+                                id="contactPreferenceCta"
+                                name="contactPreferenceCta"
+                                type="text"
+                                defaultValue={
+                                  (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta) || ''
+                                }
+                                placeholder={t('contactPrefsCtaPlaceholder')}
+                                className="mt-1 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <span className="block text-xs font-semibold uppercase tracking-wider text-stone-500">
+                                {t('contactPrefsWorkingLangLabel')}
+                              </span>
+                              <p className="text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsWorkingLangHint')}</p>
+                              <p className="text-xs font-bold text-indigo-600 mt-2">
+                                {workingLanguagesDraft.length}/3
+                              </p>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {WORKING_LANGUAGE_OPTIONS.map((opt) => {
+                                  const selected = workingLanguagesDraft.includes(opt.code);
+                                  const disabled = !selected && workingLanguagesDraft.length >= 3;
+                                  return (
+                                    <button
+                                      key={opt.code}
+                                      type="button"
+                                      onClick={() => toggleWorkingLanguageDraft(opt.code)}
+                                      disabled={disabled}
+                                      className={cn(
+                                        'rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-all',
+                                        selected
+                                          ? 'border-indigo-500 bg-indigo-600 text-white shadow-sm'
+                                          : 'border-stone-200 bg-stone-50 text-stone-700 hover:border-stone-300',
+                                        disabled && !selected && 'cursor-not-allowed opacity-40 hover:border-stone-200'
+                                      )}
+                                    >
+                                      {opt.label[lang]}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <p className="text-[10px] text-stone-400 mt-1">{t('contactPrefsWorkingLangTip')}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <label
+                                htmlFor="targetSectors-contact"
+                                className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
+                              >
+                                {t('targetSectors')}
+                                <span className="text-red-500 font-semibold" aria-hidden>
+                                  {' *'}
+                                </span>
+                              </label>
+                              <p className="text-[10px] text-stone-400 leading-relaxed">{t('needKeywordsHint')}</p>
+                              <p className="text-[10px] text-stone-500 leading-relaxed">
+                                {pickLang(
+                                  '* Requis si vous n’avez pas sélectionné au moins une passion ci-dessus.',
+                                  '* Obligatorio si no elegiste al menos una pasión arriba.',
+                                  '* Required if you did not pick at least one interest above.',
+                                  lang
+                                )}
+                              </p>
+                              <input
+                                id="targetSectors-contact"
+                                name="targetSectors"
+                                defaultValue={(editingProfile?.targetSectors || profile?.targetSectors || []).join(', ')}
+                                placeholder={t('needKeywordsPlaceholder')}
+                                className="mt-1 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label
+                                htmlFor="typicalClientSize"
+                                className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
+                              >
+                                {t('contactPrefsClientSizeLabel')}
+                              </label>
+                              <p className="text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsClientSizeHint')}</p>
+                              <select
+                                id="typicalClientSize"
+                                name="typicalClientSize"
+                                defaultValue={
+                                  (editingProfile?.typicalClientSize ?? profile?.typicalClientSize) || ''
+                                }
+                                className="mt-1 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                              >
+                                <option value="">{t('contactPrefsClientSizeEmpty')}</option>
+                                {(TYPICAL_CLIENT_SIZE_VALUES as readonly TypicalClientSize[]).map((v) => (
+                                  <option key={v} value={v}>
+                                    {typicalClientSizeLabel(v, lang)}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="space-y-1">
+                              <span className="block text-xs font-semibold uppercase tracking-wider text-stone-500">
+                                {t('contactPrefsOpenToLabel')}
+                              </span>
+                              <p className="text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsOpenToHint')}</p>
+                              <div className="mt-2 space-y-2">
+                                <label className="flex cursor-pointer items-start gap-3 rounded-lg p-1 hover:bg-stone-50">
+                                  <input
+                                    type="checkbox"
+                                    name="openToMentoring"
+                                    defaultChecked={
+                                      (editingProfile?.openToMentoring ?? profile?.openToMentoring) === true
+                                    }
+                                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                  />
+                                  <span className="text-sm text-stone-700">{t('contactPrefsOpenMentoring')}</span>
+                                </label>
+                                <label className="flex cursor-pointer items-start gap-3 rounded-lg p-1 hover:bg-stone-50">
+                                  <input
+                                    type="checkbox"
+                                    name="openToTalks"
+                                    defaultChecked={
+                                      (editingProfile?.openToTalks ?? profile?.openToTalks) === true
+                                    }
+                                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                  />
+                                  <span className="text-sm text-stone-700">{t('contactPrefsOpenTalks')}</span>
+                                </label>
+                                <label className="flex cursor-pointer items-start gap-3 rounded-lg p-1 hover:bg-stone-50">
+                                  <input
+                                    type="checkbox"
+                                    name="openToEvents"
+                                    defaultChecked={
+                                      (editingProfile?.openToEvents ?? profile?.openToEvents) === true
+                                    }
+                                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                  />
+                                  <span className="text-sm text-stone-700">{t('contactPrefsOpenEvents')}</span>
+                                </label>
+                              </div>
+                            </div>
+                          </section>
 
                           <div className="rounded-xl border border-stone-200 bg-stone-50/80 p-4 md:p-5 space-y-4">
                             <div>
                               <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider block">
                                 {t('highlightedNeedsTitle')}
+                                <span className="text-red-500 font-semibold" aria-hidden>
+                                  {' *'}
+                                </span>
                               </label>
                               <p className="text-[10px] text-stone-400 mt-1 leading-relaxed">{t('highlightedNeedsHint')}</p>
                               <p className="text-xs font-bold text-indigo-600 mt-2">
@@ -3267,18 +3539,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 </div>
                               </div>
                             ))}
-                            <div className="space-y-1 border-t border-stone-200 pt-4 mt-2">
-                              <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider block">
-                                {t('targetSectors')}
-                              </label>
-                              <p className="text-[10px] text-stone-400 leading-relaxed">{t('needKeywordsHint')}</p>
-                              <input
-                                name="targetSectors"
-                                defaultValue={(editingProfile?.targetSectors || profile?.targetSectors || []).join(', ')}
-                                placeholder={t('needKeywordsPlaceholder')}
-                                className="mt-2 w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all text-sm"
-                              />
-                            </div>
                           </div>
 
                           {formAdminPrivateReady && formAdminPrivate !== null && (
@@ -3479,6 +3739,68 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             )}
                           </div>
                         )}
+                        {(() => {
+                          const wl = sanitizeWorkingLanguageCodes(profile.workingLanguageCodes);
+                          const hasPrefs =
+                            (profile.contactPreferenceCta?.trim() ?? '') !== '' ||
+                            wl.length > 0 ||
+                            !!profile.typicalClientSize ||
+                            profile.openToMentoring ||
+                            profile.openToTalks ||
+                            profile.openToEvents;
+                          if (!hasPrefs) return null;
+                          return (
+                            <div className="mt-6 space-y-3 border-t border-stone-100 pt-6">
+                              <p className="text-xs font-black uppercase tracking-widest text-stone-400">
+                                {t('contactPrefsTitle')}
+                              </p>
+                              {profile.contactPreferenceCta?.trim() ? (
+                                <div>
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                                    {t('contactPrefsCtaLabel')}
+                                  </p>
+                                  <p className="mt-1 text-sm text-stone-600">{profile.contactPreferenceCta.trim()}</p>
+                                </div>
+                              ) : null}
+                              {wl.length > 0 ? (
+                                <div>
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                                    {t('contactPrefsWorkingLangLabel')}
+                                  </p>
+                                  <p className="mt-1 text-sm text-stone-600">
+                                    {wl.map((c) => workingLanguageLabel(c, lang)).join(', ')}
+                                  </p>
+                                </div>
+                              ) : null}
+                              {profile.typicalClientSize ? (
+                                <div>
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                                    {t('contactPrefsClientSizeLabel')}
+                                  </p>
+                                  <p className="mt-1 text-sm text-stone-600">
+                                    {typicalClientSizeLabel(profile.typicalClientSize, lang)}
+                                  </p>
+                                </div>
+                              ) : null}
+                              {(profile.openToMentoring ||
+                                profile.openToTalks ||
+                                profile.openToEvents) && (
+                                <div>
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                                    {t('contactPrefsOpenToLabel')}
+                                  </p>
+                                  <ul className="mt-1 list-inside list-disc text-sm text-stone-600">
+                                    {profile.openToMentoring ? (
+                                      <li>{t('contactPrefsOpenMentoring')}</li>
+                                    ) : null}
+                                    {profile.openToTalks ? <li>{t('contactPrefsOpenTalks')}</li> : null}
+                                    {profile.openToEvents ? <li>{t('contactPrefsOpenEvents')}</li> : null}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     ) : (
                         <div className="text-center py-8">

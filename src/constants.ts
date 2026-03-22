@@ -382,6 +382,19 @@ export const TRANSLATIONS: Translations = {
   seeMore: { fr: "Voir plus", es: "Ver más" },
   pendingValidation: { fr: "Profil en attente de validation", es: "Perfil pendiente de validación" },
   validationMessage: { fr: "Votre profil doit être validé par un administrateur pour accéder à toutes les informations de l'annuaire.", es: "Tu perfil debe ser validado por un administrador para acceder a toda la información del directorio." },
+  profileFormRequiredLegend: {
+    fr: 'Les champs suivis d’une astérisque (*) sont obligatoires pour la validation de votre fiche par l’équipe.',
+    es: 'Los campos con asterisco (*) son obligatorios para que el equipo valide tu ficha.',
+  },
+  profileBannerMandatory: {
+    fr: 'Merci de mettre à jour votre profil avec les nouveaux champs obligatoires (marqués *) pour permettre sa validation.',
+    es: 'Actualiza tu perfil con los nuevos campos obligatorios (marcados con *) para poder validarlo.',
+  },
+  profileBannerAi: {
+    fr: 'Pensez à optimiser votre profil en complétant les champs utiles au matching IA (secteur, besoins, bio, fonction, taille d’entreprise, passions ou mots-clés).',
+    es: 'Optimiza tu perfil completando los campos útiles para el emparejamiento por IA (sector, necesidades, bio, función, tamaño, pasiones o palabras clave).',
+  },
+  profileBannerDismiss: { fr: 'Masquer pour cette session', es: 'Ocultar esta sesión' },
   newProfiles: { fr: "Nouveaux Profils", es: "Nuevos Perfiles" },
   validate: { fr: "Valider", es: "Validar" },
   reject: { fr: "Rejeter", es: "Rechazar" },
@@ -508,6 +521,66 @@ export const TRANSLATIONS: Translations = {
   postUrgentNeed: { fr: "Publier un besoin urgent", es: "Publicar necesidad urgente" },
   contact: { fr: "Contacter", es: "Contactar" },
   contactLinks: { fr: "Contact & liens", es: "Contacto y enlaces" },
+  contactPrefsTitle: {
+    fr: 'Préférences de contact & collaboration',
+    es: 'Preferencias de contacto y colaboración',
+  },
+  contactPrefsCtaLabel: {
+    fr: 'Le contacter de préférence par…',
+    es: 'Contactar de preferencia por…',
+  },
+  contactPrefsCtaHint: {
+    fr: 'Indiquez le canal à privilégier pour un premier contact (WhatsApp, email, LinkedIn…).',
+    es: 'Indica el canal preferido para un primer contacto (WhatsApp, correo, LinkedIn…).',
+  },
+  contactPrefsCtaPlaceholder: {
+    fr: 'Ex. WhatsApp en journée, email pour les demandes formelles',
+    es: 'Ej. WhatsApp por el día, correo para solicitudes formales',
+  },
+  contactPrefsWorkingLangLabel: {
+    fr: 'Langues de travail (max. 3)',
+    es: 'Idiomas de trabajo (máx. 3)',
+  },
+  contactPrefsWorkingLangHint: {
+    fr: 'Sélectionnez vos langues de travail prioritaires dans la région.',
+    es: 'Elige tus idiomas de trabajo prioritarios en la región.',
+  },
+  contactPrefsWorkingLangTip: {
+    fr: 'Astuce : gardez uniquement vos 2–3 langues les plus utilisées dans le business.',
+    es: 'Consejo: deja solo tus 2–3 idiomas más usados en el negocio.',
+  },
+  contactPrefsClientSizeLabel: {
+    fr: 'Taille de clients habituels',
+    es: 'Tamaño habitual de clientes',
+  },
+  contactPrefsClientSizeHint: {
+    fr: 'Tailles de clients avec lesquelles vous travaillez le plus souvent.',
+    es: 'Tamaños de cliente con los que trabajas con más frecuencia.',
+  },
+  contactPrefsClientSizeEmpty: {
+    fr: '— Choisir une option —',
+    es: '— Elegir una opción —',
+  },
+  contactPrefsOpenToLabel: {
+    fr: 'Ouvert à…',
+    es: 'Abierto a…',
+  },
+  contactPrefsOpenToHint: {
+    fr: 'Indiquez à quoi vous êtes ouvert pour faire vivre la communauté.',
+    es: 'Indica en qué estás abierto para animar la comunidad.',
+  },
+  contactPrefsOpenMentoring: {
+    fr: 'Mentorat / partage d’expérience',
+    es: 'Mentoría / compartir experiencia',
+  },
+  contactPrefsOpenTalks: {
+    fr: 'Interventions / prises de parole',
+    es: 'Intervenciones / ponencias',
+  },
+  contactPrefsOpenEvents: {
+    fr: 'Co-organisation d’événements',
+    es: 'Coorganización de eventos',
+  },
   highlightedNeedsTitle: {
     fr: "Besoins actuels (max. 3)",
     es: "Necesidades actuales (máx. 3)",

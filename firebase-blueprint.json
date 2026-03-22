@@ -30,6 +30,12 @@
         "bio": { "type": "string", "description": "Biographie courte" },
         "lookingFor": { "type": "string", "description": "Obsolète (doublon des besoins structurés) — peut rester sur d'anciens documents" },
         "targetSectors": { "type": "array", "items": { "type": "string" }, "description": "Secteurs cibles" },
+        "contactPreferenceCta": { "type": "string", "description": "Canal privilégié pour un premier contact (texte libre)" },
+        "workingLanguageCodes": { "type": "array", "items": { "type": "string" }, "description": "Jusqu'à 3 codes langue (FR, ES, EN, PT, DE, IT, ZH)" },
+        "typicalClientSize": { "type": "string", "enum": ["independant", "pme", "corporate", "mixte"], "description": "Taille de clients habituels (distinct de companySize)" },
+        "openToMentoring": { "type": "boolean" },
+        "openToTalks": { "type": "boolean" },
+        "openToEvents": { "type": "boolean" },
         "companySize": { "type": "string", "enum": ["solo", "2-10", "11-50", "50+"], "description": "Taille de l'entreprise" },
         "accountType": { "type": "string", "enum": ["local", "foreign"], "description": "Type de compte" }
       },

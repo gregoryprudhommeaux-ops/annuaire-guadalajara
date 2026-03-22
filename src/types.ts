@@ -110,6 +110,15 @@ export interface UserProfile {
   lookingFor?: string;
   /** Mots-clés libres (industrie, zone, domaine…), saisis séparés par virgules côté UI */
   targetSectors?: string[];
+  /** Canal privilégié pour un premier contact (texte libre) */
+  contactPreferenceCta?: string;
+  /** Jusqu’à 3 codes langue (FR, ES, EN, …) — voir `WORKING_LANGUAGE_OPTIONS` */
+  workingLanguageCodes?: string[];
+  /** Taille de clients avec lesquels le membre travaille le plus souvent (distinct de `companySize`) */
+  typicalClientSize?: 'independant' | 'pme' | 'corporate' | 'mixte';
+  openToMentoring?: boolean;
+  openToTalks?: boolean;
+  openToEvents?: boolean;
   companySize?: 'solo' | '2-10' | '11-50' | '50+';
   lastSeen?: number;
   pitchVideoUrl?: string;

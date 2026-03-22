@@ -159,6 +159,13 @@ export const EN_STRINGS: Record<string, string> = {
   pendingValidation: "Profile pending validation",
   validationMessage:
     "Your profile must be validated by an administrator to access all directory information.",
+  profileFormRequiredLegend:
+    "Fields marked with an asterisk (*) are required for the team to validate your directory profile.",
+  profileBannerMandatory:
+    "Please update your profile with the new required fields (marked *) so it can be validated.",
+  profileBannerAi:
+    "Consider optimizing your profile by filling in fields that power AI matching (sector, needs, bio, role, company size, interests or sector keywords).",
+  profileBannerDismiss: "Hide for this session",
   newProfiles: "New profiles",
   validate: "Approve",
   reject: "Reject",
@@ -216,6 +223,22 @@ export const EN_STRINGS: Record<string, string> = {
   postUrgentNeed: "Post an urgent need",
   contact: "Contact",
   contactLinks: "Contact & links",
+  contactPrefsTitle: "Contact & collaboration preferences",
+  contactPrefsCtaLabel: "Preferred first contact channel…",
+  contactPrefsCtaHint:
+    "Indicate the channel you prefer for a first contact (WhatsApp, email, LinkedIn…).",
+  contactPrefsCtaPlaceholder: "e.g. WhatsApp during the day, email for formal requests",
+  contactPrefsWorkingLangLabel: "Working languages (max. 3)",
+  contactPrefsWorkingLangHint: "Select your priority business languages in the region.",
+  contactPrefsWorkingLangTip: "Tip: keep only your 2–3 most-used business languages.",
+  contactPrefsClientSizeLabel: "Typical client size",
+  contactPrefsClientSizeHint: "Select the client sizes you work with most often.",
+  contactPrefsClientSizeEmpty: "— Choose an option —",
+  contactPrefsOpenToLabel: "Open to…",
+  contactPrefsOpenToHint: "What you’re open to in order to grow the community.",
+  contactPrefsOpenMentoring: "Mentoring / sharing experience",
+  contactPrefsOpenTalks: "Talks / speaking engagements",
+  contactPrefsOpenEvents: "Co-organizing events",
   highlightedNeedsTitle: "Current needs (max. 3)",
   highlightedNeedsHint: "Select up to 3 representative needs; they will appear on your directory profile.",
   highlightedNeedsCount: "selected",
