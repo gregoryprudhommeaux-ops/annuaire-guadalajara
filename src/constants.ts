@@ -468,6 +468,18 @@ export const TRANSLATIONS: Translations = {
     fr: "Aucune opportunité pour le moment.",
     es: "Sin oportunidades por el momento.",
   },
+  radarLockedMessage: {
+    fr: "Données du radar disponibles après inscription : connectez-vous et enregistrez votre fiche dans l’annuaire pour voir les statistiques et interactions.",
+    es: "Los datos del radar están disponibles tras registrarte: inicia sesión y completa tu ficha en el directorio para ver estadísticas e interacciones.",
+  },
+  radarLockedCtaGuest: {
+    fr: "Me connecter ou m’inscrire",
+    es: "Iniciar sesión o registrarme",
+  },
+  radarLockedCtaProfile: {
+    fr: "Compléter mon profil annuaire",
+    es: "Completar mi perfil del directorio",
+  },
   companies: { fr: "Entreprises", es: "Empresas" },
   members: { fr: "Membres", es: "Miembros" },
   /** @deprecated Libellé d’onglet : utiliser `radarTitle`. Conservé pour rétrocompatibilité éventuelle. */

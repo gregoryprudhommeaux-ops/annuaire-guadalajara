@@ -38,6 +38,10 @@ type Props = {
   onOpportunityClick: (post: UrgentPost) => void;
   onPostOpportunity: () => void;
   onCreateProfile: () => void;
+  /** Utilisateur connecté avec fiche annuaire enregistrée (Firestore `users`). */
+  registeredWithProfile: boolean;
+  /** Ouvre la connexion, ou l’onboarding profil si déjà connecté sans fiche. */
+  onUnlockRadar: () => void;
 };
 
 function truncateLabel(s: string, max = 30): string {
@@ -69,7 +73,10 @@ export default function NetworkRadarSection({
   onOpportunityClick,
   onPostOpportunity,
   onCreateProfile,
+  registeredWithProfile,
+  onUnlockRadar,
 }: Props) {
+  const radarLocked = !registeredWithProfile;
   const profilesForStats = useMemo(() => {
     return allProfiles.filter((p) => {
       if (viewerProfile?.role !== 'admin' && p.isValidated === false) return false;
@@ -169,17 +176,28 @@ export default function NetworkRadarSection({
             {t('radarSubtitle')}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-          </span>
-          <span className="max-w-[min(100%,12rem)] text-right text-[11px] font-medium leading-snug text-[#6B7280] break-words sm:max-w-none sm:text-left">
-            {t('radarLive')}
-          </span>
-        </div>
+        {!radarLocked && (
+          <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            <span className="max-w-[min(100%,12rem)] text-right text-[11px] font-medium leading-snug text-[#6B7280] break-words sm:max-w-none sm:text-left">
+              {t('radarLive')}
+            </span>
+          </div>
+        )}
       </div>
 
+      <div className="relative min-h-[240px]">
+        <div
+          className={
+            radarLocked
+              ? 'pointer-events-none select-none blur-md saturate-50 transition-[filter]'
+              : undefined
+          }
+          aria-hidden={radarLocked}
+        >
       {/* KPI bar */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#E5E7EB] shadow-sm md:grid-cols-4">
         {(
@@ -407,6 +425,33 @@ export default function NetworkRadarSection({
               </li>
             ))}
           </ul>
+        )}
+      </div>
+        </div>
+
+        {radarLocked && (
+          <div
+            className="absolute inset-0 z-10 flex items-start justify-center overflow-y-auto bg-stone-100/40 px-4 py-10 backdrop-blur-[2px] sm:items-center sm:py-12"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="radar-locked-title"
+          >
+            <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white/95 p-6 text-center shadow-lg">
+              <p
+                id="radar-locked-title"
+                className="text-sm font-medium leading-relaxed text-stone-800 sm:text-[15px]"
+              >
+                {t('radarLockedMessage')}
+              </p>
+              <button
+                type="button"
+                onClick={onUnlockRadar}
+                className="mt-5 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 sm:w-auto sm:min-w-[200px]"
+              >
+                {!user ? t('radarLockedCtaGuest') : t('radarLockedCtaProfile')}
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>

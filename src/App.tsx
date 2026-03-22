@@ -3805,6 +3805,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     setAuthError(null);
                     setShowAuthModal(true);
                   }}
+                  registeredWithProfile={!!user && !!profile}
+                  onUnlockRadar={() => {
+                    setAuthError(null);
+                    if (!user) {
+                      setShowAuthModal(true);
+                    } else {
+                      setShowOnboarding(true);
+                    }
+                  }}
                 />
               )}
 

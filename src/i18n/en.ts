@@ -197,6 +197,10 @@ export const EN_STRINGS: Record<string, string> = {
   chartCenter: "members",
   radarRecentOpportunitiesTitle: "Recent opportunities",
   radarRecentOpportunitiesEmpty: "No opportunities at the moment.",
+  radarLockedMessage:
+    "Radar data is available after you sign up: sign in and save your directory profile to view stats and use interactions.",
+  radarLockedCtaGuest: "Sign in or register",
+  radarLockedCtaProfile: "Complete my directory profile",
   companies: "Companies",
   members: "Members",
   activities: "Sectors",
