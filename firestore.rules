@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        (request.auth.token.email == "chinois2001@gmail.com" &&
+          request.auth.token.email_verified == true));
+    }
+
+    // Validation minimale : champs obligatoires uniquement
+    // Les champs optionnels (positionCategory, keywords, highlightedNeeds, etc.)
+    // sont acceptés sans restriction pour ne pas bloquer l'enregistrement du profil.
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'fullName', 'companyName', 'email', 'role', 'createdAt'])
+        && data.uid is string
+        && data.uid == request.auth.uid
+        && data.fullName is string && data.fullName.size() >= 1
+        && data.companyName is string && data.companyName.size() >= 1
+        && data.email is string
+        && data.role in ['user', 'admin']
+        && data.createdAt is timestamp;
+    }
+
+    function isValidUrgentPost(data) {
+      return data.keys().hasAll(['authorId', 'authorName', 'text', 'sector', 'createdAt', 'expiresAt'])
+        && data.authorId == request.auth.uid
+        && data.authorName is string
+        && data.text is string && data.text.size() <= 200
+        && data.sector is string
+        && data.createdAt is number
+        && data.expiresAt is number
+        && data.expiresAt > data.createdAt;
+    }
+
+    function isValidNeedComment(data) {
+      return data.keys().hasAll(['needId', 'authorId', 'authorName', 'authorPhoto', 'text', 'createdAt'])
+        && data.authorId == request.auth.uid
+        && data.authorName is string
+        && data.authorPhoto is string
+        && data.text is string && data.text.size() <= 500
+        && data.createdAt is number;
+    }
+
+    function isValidRecommendation(data) {
+      return data.keys().hasAll(['profileId', 'authorId', 'authorName', 'authorPhoto', 'text', 'createdAt'])
+        && data.authorId == request.auth.uid
+        && data.authorName is string
+        && data.authorPhoto is string
+        && data.text is string && data.text.size() <= 200
+        && data.createdAt is number;
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+
+      allow create: if isAuthenticated()
+        && isOwner(userId)
+        && isValidUser(request.resource.data)
+        && (request.resource.data.role == 'user' || isAdmin());
+
+      allow update: if isAuthenticated()
+        && (isOwner(userId) || isAdmin())
+        && isValidUser(request.resource.data)
+        && request.resource.data.uid == resource.data.uid;
+
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /urgent_posts/{postId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidUrgentPost(request.resource.data);
+      allow update: if isAuthenticated()
+        && (request.auth.uid == resource.data.authorId || isAdmin())
+        && isValidUrgentPost(request.resource.data);
+      allow delete: if isAuthenticated()
+        && (request.auth.uid == resource.data.authorId || isAdmin());
+    }
+
+    match /need_comments/{commentId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidNeedComment(request.resource.data);
+      allow delete: if isAuthenticated()
+        && (request.auth.uid == resource.data.authorId || isAdmin());
+    }
+
+    match /recommendations/{recId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidRecommendation(request.resource.data);
+      allow delete: if isAuthenticated()
+        && (request.auth.uid == resource.data.authorId || isAdmin());
+    }
+  }
+}

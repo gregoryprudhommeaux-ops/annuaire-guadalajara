@@ -1,0 +1,101 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "Profil Utilisateur",
+      "description": "Informations sur le membre de la communauté d'affaires.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "ID unique de l'utilisateur Firebase Auth" },
+        "fullName": { "type": "string", "description": "Prénom et noms" },
+        "companyName": { "type": "string", "description": "Nom de la société" },
+        "creationYear": { "type": "number", "description": "Année de création" },
+        "city": { "type": "string", "description": "Ville (Guadalajara, Zapopan, etc.)" },
+        "state": { "type": "string", "description": "État" },
+        "neighborhood": { "type": "string", "description": "Quartier d'enregistrement" },
+        "activityCategory": { "type": "string", "description": "Catégorie d'activité" },
+        "email": { "type": "string", "format": "email", "description": "Email de contact" },
+        "website": { "type": "string", "format": "uri", "description": "Site web" },
+        "whatsapp": { "type": "string", "description": "Numéro WhatsApp" },
+        "linkedin": { "type": "string", "description": "Lien LinkedIn" },
+        "photoURL": { "type": "string", "description": "URL de la photo" },
+        "passionIds": { "type": "array", "items": { "type": "string" }, "description": "En dehors du business : jusqu'à 3 ids de passions (voir passionConfig). Ancien champ `hobby` (string) obsolète." },
+        "arrivalYear": { "type": "number", "description": "Année d'arrivée au Mexique" },
+        "employeeCount": { "type": "string|number", "description": "Nombre d'employés (fourchette: 1-5, 5-15, … 1000+ ; anciens profils: nombre)" },
+        "isEmailPublic": { "type": "boolean", "description": "Rendre l'email public" },
+        "isWhatsappPublic": { "type": "boolean", "description": "Rendre WhatsApp public" },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "Rôle de l'utilisateur" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Date de création du profil" },
+        "isValidated": { "type": "boolean", "description": "Profil validé par un administrateur" },
+        "lastSeen": { "type": "number", "description": "Dernière connexion (timestamp)" },
+        "bio": { "type": "string", "description": "Biographie courte" },
+        "lookingFor": { "type": "string", "description": "Obsolète (doublon des besoins structurés) — peut rester sur d'anciens documents" },
+        "targetSectors": { "type": "array", "items": { "type": "string" }, "description": "Secteurs cibles" },
+        "companySize": { "type": "string", "enum": ["solo", "2-10", "11-50", "50+"], "description": "Taille de l'entreprise" },
+        "accountType": { "type": "string", "enum": ["local", "foreign"], "description": "Type de compte" }
+      },
+      "required": ["uid", "fullName", "companyName", "email", "role", "createdAt"]
+    },
+    "UrgentPost": {
+      "title": "Besoin Urgent",
+      "description": "Post pour un besoin urgent dans la communauté.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID du post" },
+        "authorId": { "type": "string", "description": "ID de l'auteur" },
+        "authorName": { "type": "string", "description": "Nom de l'auteur" },
+        "authorPhoto": { "type": "string", "description": "Photo de l'auteur" },
+        "text": { "type": "string", "description": "Contenu du besoin" },
+        "sector": { "type": "string", "description": "Secteur d'activité" },
+        "createdAt": { "type": "number", "description": "Date de création" },
+        "expiresAt": { "type": "number", "description": "Date d'expiration" }
+      },
+      "required": ["authorId", "authorName", "text", "sector", "createdAt", "expiresAt"]
+    },
+    "NeedComment": {
+      "title": "Commentaire de besoin",
+      "description": "Commentaire sur un besoin partagé.",
+      "type": "object",
+      "properties": {
+        "needId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["needId", "authorId", "authorName", "authorPhoto", "text", "createdAt"]
+    },
+    "Recommendation": {
+      "title": "Recommandation",
+      "description": "Recommandation d'un profil par un autre membre.",
+      "type": "object",
+      "properties": {
+        "profileId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["profileId", "authorId", "authorName", "authorPhoto", "text", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Collection des profils utilisateurs"
+    },
+    "/urgent_posts/{postId}": {
+      "schema": "UrgentPost",
+      "description": "Collection des besoins urgents"
+    },
+    "/need_comments/{commentId}": {
+      "schema": "NeedComment",
+      "description": "Collection des commentaires de besoins"
+    },
+    "/recommendations/{recId}": {
+      "schema": "Recommendation",
+      "description": "Collection des recommandations"
+    }
+  }
+}
