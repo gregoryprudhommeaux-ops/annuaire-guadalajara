@@ -140,6 +140,7 @@ import NetworkRadarSection from './components/home/NetworkRadarSection';
 import AiTranslatedFreeText from './components/AiTranslatedFreeText';
 import ProfileAvatar from './components/ProfileAvatar';
 import { uploadProfileAvatar } from './lib/uploadProfileAvatar';
+import { isLikelyNonEmbeddablePhotoUrl } from './lib/profilePhotoUrl';
 import HomeFunFactStrip from './components/home/HomeFunFactStrip';
 import DashboardPage from './components/dashboard/DashboardPage';
 import { homeLanding } from './copy/homeLanding';
@@ -2614,6 +2615,13 @@ const MainApp = () => {
       ? companySizeFromEmployeeRange(employeeCountVal)
       : (baseProfile?.companySize ?? 'solo');
 
+    const photoUrlForSave = getTrimmed('photoURL');
+    if (photoUrlForSave && isLikelyNonEmbeddablePhotoUrl(photoUrlForSave)) {
+      setProfileSaveError(t('profilePhotoUrlBlockedHost'));
+      setProfileSaveBusy(false);
+      return;
+    }
+
     const newProfile = {
       uid: targetUid,
       fullName: getTrimmed('fullName'),
@@ -3018,14 +3026,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-stone-400 animate-pulse font-medium">{t('loading')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen min-w-0 bg-stone-50 text-stone-900 font-sans selection:bg-stone-200">
+    <div className="min-h-screen min-w-0 bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-stone-200 bg-white">
         <div className="mx-auto flex min-w-0 max-w-7xl flex-col gap-2 px-3 py-2 sm:h-16 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-0 lg:px-8">

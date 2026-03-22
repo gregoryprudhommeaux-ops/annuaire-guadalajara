@@ -255,14 +255,21 @@ export const TRANSLATIONS: Translations = {
   linkedinPhotoHelperStep1: { fr: "1. Ouvrez votre profil LinkedIn dans un nouvel onglet.", es: "1. Abre tu perfil de LinkedIn en una nueva pestaña." },
   linkedinPhotoHelperStep2: { fr: "2. Faites un clic droit sur votre photo de profil.", es: "2. Haz clic derecho en tu foto de perfil." },
   linkedinPhotoHelperStep3: { fr: "3. Choisissez 'Copier l'adresse de l'image'.", es: "3. Elige « Copiar dirección de la imagen »." },
-  linkedinPhotoHelperStep4: { fr: "4. Revenez ici et collez l'adresse dans le champ 'URL de la photo'.", es: "4. Vuelve aquí y pega la dirección en el campo « URL de la foto »." },
+  linkedinPhotoHelperStep4: {
+    fr: "4. Sur cet annuaire, ce lien ne fonctionnera pas : utilisez plutôt « Envoyer une photo » (fichier JPEG/PNG…), ou hébergez l’image ailleurs et collez cette URL.",
+    es: "4. En este directorio ese enlace no funciona: usa « Subir una foto » (archivo JPEG/PNG…), o sube la imagen a otro sitio y pega esa URL.",
+  },
   openLinkedin: { fr: "Ouvrir LinkedIn", es: "Abrir LinkedIn" },
   photoURL: { fr: "URL de la photo", es: "URL de la foto" },
   photoUploadFromDevice: { fr: "Envoyer une photo", es: "Subir una foto" },
   photoUploading: { fr: "Envoi…", es: "Subiendo…" },
   photoUploadHint: {
-    fr: "Les liens copiés depuis LinkedIn expirent souvent ou ne s’affichent pas ici ; envoyez un fichier pour une photo fiable.",
-    es: "Los enlaces copiados de LinkedIn suelen caducar o no mostrarse aquí; sube un archivo para una foto fiable.",
+    fr: "Les URL LinkedIn (linkedin.com, media.licdn.com…) ne peuvent pas être enregistrées : le site bloque l’affichage ailleurs. Utilisez « Envoyer une photo » ou une image hébergée sur votre site / un service d’images.",
+    es: "Las URL de LinkedIn (linkedin.com, media.licdn.com…) no se pueden guardar: el sitio bloquea mostrarlas fuera. Usa « Subir una foto » o una imagen en tu web / un servicio de hosting.",
+  },
+  profilePhotoUrlBlockedHost: {
+    fr: "Cette URL d’image provient de LinkedIn : elle ne peut pas s’afficher dans l’annuaire (blocage côté LinkedIn). Videz le champ ou utilisez « Envoyer une photo », ou une URL hébergée ailleurs.",
+    es: "Esta URL de imagen es de LinkedIn: no puede mostrarse en el directorio (bloqueo de LinkedIn). Borra el campo o usa « Subir una foto », u otra URL alojada fuera de LinkedIn.",
   },
   photoUploadWrongAccount: {
     fr: "L’envoi de fichier n’est disponible que sur votre propre fiche (pas en édition d’un autre membre).",

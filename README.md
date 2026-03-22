@@ -28,3 +28,12 @@ The app supports **Google**, **Microsoft**, and **Apple** sign-in. In [Firebase 
 - **Apple** — enable *Apple*; for production you need an Apple Developer account, a Services ID, and (for web) **Sign in with Apple** configured for your domain. Local testing may be limited without HTTPS and Apple configuration.
 
 Also add your deployment domain under **Authentication** → **Settings** → **Authorized domains**.
+
+## Design system (`src/design-system.tsx`)
+
+Reusable UI primitives aligned with a minimal palette: **slate** neutrals, **blue-600** primary CTA, **emerald** / **amber** accents. **Inter** is loaded in `src/index.css`.
+
+- Components: `Button`, `Heading`, `BodyText`, `Tag`, `Card`, `MemberCard`, `OpportunityCard`, `SearchInput`, `SectorSelect`.
+- `DirectoryExampleSection` is a static demo layout for reference; import it only if you need a playground page.
+
+The global shell uses `bg-slate-50` / `text-slate-900` on `body` and the main `MainApp` wrapper. The rest of the app still uses many `stone-*` utility classes; migrate sections gradually or compose new features with the design-system components.

@@ -72,13 +72,16 @@ export const EN_STRINGS: Record<string, string> = {
   linkedinPhotoHelperStep1: "1. Open your LinkedIn profile in a new tab.",
   linkedinPhotoHelperStep2: "2. Right-click your profile photo.",
   linkedinPhotoHelperStep3: "3. Choose “Copy image address”.",
-  linkedinPhotoHelperStep4: "4. Come back here and paste the address in the “Photo URL” field.",
+  linkedinPhotoHelperStep4:
+    "4. On this directory that link won’t work: use “Upload a photo” (JPEG/PNG file) instead, or host the image elsewhere and paste that URL.",
   openLinkedin: "Open LinkedIn",
   photoURL: "Photo URL",
   photoUploadFromDevice: "Upload a photo",
   photoUploading: "Uploading…",
   photoUploadHint:
-    "Links copied from LinkedIn often expire or won’t load here; upload a file for a reliable photo.",
+    "LinkedIn image URLs (linkedin.com, media.licdn.com, etc.) cannot be saved: LinkedIn blocks showing them off-site. Use “Upload a photo” or an image on your own site / an image host.",
+  profilePhotoUrlBlockedHost:
+    "This image URL is from LinkedIn: it cannot display in the directory (LinkedIn blocks third-party embedding). Clear the field or use “Upload a photo”, or a URL hosted elsewhere.",
   photoUploadWrongAccount:
     "File upload is only available on your own profile (not when editing another member).",
   photoUploadInvalidFile: "Unsupported format or file too large (JPEG, PNG, WebP, or GIF, max 5 MB).",
