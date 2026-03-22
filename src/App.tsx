@@ -4221,7 +4221,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   lang={lang}
                   profiles={stats.newThisWeekProfiles}
                   totalNewThisWeek={stats.newThisWeekCount}
-                  className="h-full w-full"
+                  className="w-full min-h-0"
                   onOpenProfile={(p) => setSelectedProfile(p)}
                   onSeeAll={() => {
                     setDirectoryDiscoveryStripsHidden(true);
