@@ -2192,35 +2192,39 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
     <div className="min-h-screen bg-stone-50 text-stone-900 font-sans selection:bg-stone-200">
       {/* Header */}
       <header className="bg-white border-b border-stone-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-stone-900 rounded-xl flex items-center justify-center text-white shadow-lg">
-              <Building2 size={20} />
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-0 sm:h-16 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="flex items-start gap-2 sm:items-center sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 bg-stone-900 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-md sm:shadow-lg">
+              <Building2 className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2} />
             </div>
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight leading-none">{t('title')}</h1>
-              <p className="text-xs text-stone-500 mt-1">{t('subtitle')}</p>
+            <div className="min-w-0 flex-1 pr-1">
+              <h1 className="text-sm sm:text-lg font-semibold tracking-tight leading-snug text-stone-900">
+                {t('title')}
+              </h1>
+              <p className="text-[10px] sm:text-xs text-stone-500 mt-0.5 sm:mt-1 leading-snug line-clamp-2 sm:line-clamp-none">
+                {t('subtitle')}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex bg-stone-100 p-1 rounded-xl border border-stone-200">
+          <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0 w-full sm:w-auto">
+            <div className="flex bg-stone-100 p-0.5 sm:p-1 rounded-lg sm:rounded-xl border border-stone-200">
               <button 
                 onClick={() => setLang('fr')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${lang === 'fr' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'fr' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
               >
                 FR
               </button>
               <button 
                 onClick={() => setLang('es')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${lang === 'es' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
+                className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'es' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
               >
                 ES
               </button>
             </div>
 
             {user ? (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
                 {profile?.role === 'admin' && (
                   <div className="flex items-center gap-2">
                     <button 
@@ -2267,7 +2271,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   setShowAuthModal(true);
                 }}
                 disabled={authProviderBusy !== null}
-                className="px-4 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 transition-all shadow-md hover:shadow-lg active:scale-95 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-900 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-stone-800 transition-all shadow-sm sm:shadow-md hover:shadow-lg active:scale-95 whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {authProviderBusy !== null
                   ? lang === 'fr'
