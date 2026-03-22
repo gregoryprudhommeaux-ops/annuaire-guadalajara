@@ -426,6 +426,9 @@ export const TRANSLATIONS: Translations = {
   lastRegistrants: { fr: "Derniers inscrits", es: "Últimos registros" },
   showLastRegistrants: { fr: "Afficher les derniers inscrits", es: "Ver los últimos registros" },
   seeMore: { fr: "Voir plus", es: "Ver más" },
+  cardBioSeeLess: { fr: "Voir moins", es: "Ver menos" },
+  cardContactByEmail: { fr: "Contacter par email", es: "Contactar por email" },
+  cardContactByWhatsapp: { fr: "Contacter sur WhatsApp", es: "Contactar por WhatsApp" },
   pendingValidation: { fr: "Profil en attente de validation", es: "Perfil pendiente de validación" },
   validationMessage: { fr: "Votre profil doit être validé par un administrateur pour accéder à toutes les informations de l'annuaire.", es: "Tu perfil debe ser validado por un administrador para acceder a toda la información del directorio." },
   profileFormRequiredLegend: {
@@ -545,6 +548,11 @@ export const TRANSLATIONS: Translations = {
   radarTitle: {
     fr: "Radar du réseau",
     es: "Radar de la red",
+  },
+  /** Libellé court pour l’onglet du listing (vs. titre long du bloc radar). */
+  directoryTabRadar: {
+    fr: "Radar",
+    es: "Radar",
   },
   radarSubtitle: {
     fr: "Données en temps réel sur les besoins et l'activité de la communauté francophone à Guadalajara.",

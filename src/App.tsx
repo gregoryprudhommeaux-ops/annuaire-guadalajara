@@ -139,6 +139,13 @@ import OpportunitiesSection from './components/home/OpportunitiesSection';
 import NetworkRadarSection from './components/home/NetworkRadarSection';
 import AiTranslatedFreeText from './components/AiTranslatedFreeText';
 import ProfileAvatar from './components/ProfileAvatar';
+import {
+  ProfileCardBio,
+  ProfileCardEmailContact,
+  ProfileCardWhatsappContactFooter,
+} from './components/profile/ProfileCardUi';
+import { Header as AppHeader } from './components/Header';
+import { DirectoryTabBar } from './components/DirectoryUi';
 import { uploadProfileAvatar } from './lib/uploadProfileAvatar';
 import { isLikelyNonEmbeddablePhotoUrl } from './lib/profilePhotoUrl';
 import HomeFunFactStrip from './components/home/HomeFunFactStrip';
@@ -387,30 +394,34 @@ function ProfileCardTagsBlock({
     return null;
   }
 
-  const tagNeutral =
-    'inline-flex max-w-full items-center rounded-md px-2 py-0.5 text-[11px] font-normal leading-snug text-gray-700 bg-[#F3F4F6]';
+  const tagPassion =
+    'inline-flex max-w-full items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600';
+  const tagNeed =
+    'inline-flex max-w-full items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-500';
   const tagMore =
-    'inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-normal text-gray-500 bg-[#F3F4F6] transition-colors hover:bg-gray-200';
-  const tagNew = 'inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium bg-[#DBEAFE] text-[#1D4ED8]';
+    'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-slate-500 bg-slate-100 transition-colors hover:bg-slate-200';
+  const tagNew =
+    'inline-flex items-center rounded-full border border-blue-200 bg-blue-100 px-3 py-0.5 text-xs font-semibold text-blue-700';
   const tagUrgent =
-    'inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium bg-[#FEF3C7] text-[#92400E]';
+    'inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-3 py-0.5 text-xs font-semibold text-amber-800';
 
   const renderGroup = (
     ids: string[],
     getLabel: (id: string) => string,
     expanded: boolean,
     setExpanded: (v: boolean) => void,
-    Icon: typeof Briefcase
+    Icon: typeof Briefcase,
+    tagClass: string
   ) => {
     if (ids.length === 0) return null;
     const shown = expanded ? ids : ids.slice(0, PROFILE_CARD_TAG_GROUP_LIMIT);
     const extra = ids.length - shown.length;
     return (
       <div className="flex flex-wrap items-start gap-x-1.5 gap-y-1">
-        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#9CA3AF]" strokeWidth={1.75} aria-hidden />
+        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" strokeWidth={1.75} aria-hidden />
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
           {shown.map((id) => (
-            <span key={id} className={cn(tagNeutral, 'max-w-full')}>
+            <span key={id} className={cn(tagClass, 'max-w-full')}>
               <span className="line-clamp-2 break-words">{getLabel(id)}</span>
             </span>
           ))}
@@ -429,7 +440,7 @@ function ProfileCardTagsBlock({
           {expanded && ids.length > PROFILE_CARD_TAG_GROUP_LIMIT && (
             <button
               type="button"
-              className="text-[11px] font-medium text-gray-500 underline-offset-2 hover:underline"
+              className="text-xs font-medium text-slate-500 underline-offset-2 hover:underline"
               onClick={(e) => {
                 e.stopPropagation();
                 setExpanded(false);
@@ -443,16 +454,42 @@ function ProfileCardTagsBlock({
     );
   };
 
+  const hasStatus = isNew || isUrgentAuthor;
+  const hasTagsBelow = passionIds.length > 0 || needIds.length > 0;
+
   return (
-    <div className="mb-1 mt-1 flex flex-col gap-1.5">
-      {(isNew || isUrgentAuthor) && (
-        <div className="flex flex-wrap gap-1.5">
+    <div className="mb-1 mt-1 flex flex-col gap-2">
+      {hasStatus && (
+        <div
+          className={cn(
+            'flex flex-wrap gap-1.5',
+            hasTagsBelow && 'border-b border-slate-100 pb-2'
+          )}
+        >
           {isNew && <span className={tagNew}>{t('tagNewMember')}</span>}
           {isUrgentAuthor && <span className={tagUrgent}>{t('tagUrgentNeed')}</span>}
         </div>
       )}
-      {renderGroup(passionIds, (id) => getPassionLabel(id, lang), expandPassions, setExpandPassions, Briefcase)}
-      {renderGroup(needIds, (id) => needOptionLabel(id, lang), expandNeeds, setExpandNeeds, Target)}
+      {hasTagsBelow && (
+        <div className={cn('flex flex-col gap-2', hasStatus && 'pt-0.5')}>
+          {renderGroup(
+            passionIds,
+            (id) => getPassionLabel(id, lang),
+            expandPassions,
+            setExpandPassions,
+            Briefcase,
+            tagPassion
+          )}
+          {renderGroup(
+            needIds,
+            (id) => needOptionLabel(id, lang),
+            expandNeeds,
+            setExpandNeeds,
+            Target,
+            tagNeed
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -498,7 +535,7 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
       key={p.uid}
       id={`profile-card-${p.uid}`}
       onClick={() => onSelect(p)}
-      className="relative flex h-full min-h-0 cursor-pointer flex-col rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition-all group hover:shadow-md sm:p-5"
+      className="relative flex h-full min-h-0 cursor-pointer flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow group hover:shadow-md sm:p-5"
     >
       <div className="mb-2 flex shrink-0 justify-between items-start gap-2">
         <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -546,11 +583,7 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
                     {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
                   </span>
                 </div>
-                {p.bio?.trim() ? (
-                  <p className="mt-1.5 hidden text-sm text-stone-500 italic line-clamp-2 min-w-0 break-words leading-snug sm:block">
-                    {p.bio.trim()}
-                  </p>
-                ) : null}
+                {p.bio?.trim() ? <ProfileCardBio text={p.bio} t={t} /> : null}
               </>
             )}
             {variant === 'activity' && (
@@ -584,11 +617,7 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
                     {[p.city, p.neighborhood, p.state || 'Jalisco'].filter(Boolean).join(', ')}
                   </span>
                 </div>
-                {p.bio?.trim() ? (
-                  <p className="mt-1.5 hidden text-sm text-stone-500 italic line-clamp-2 min-w-0 break-words leading-snug sm:block">
-                    {p.bio.trim()}
-                  </p>
-                ) : null}
+                {p.bio?.trim() ? <ProfileCardBio text={p.bio} t={t} /> : null}
               </>
             )}
             {variant === 'default' && (
@@ -620,11 +649,7 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
                     {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
                   </span>
                 </div>
-                {p.bio?.trim() ? (
-                  <p className="mt-1.5 hidden text-sm text-stone-500 italic line-clamp-2 min-w-0 break-words leading-snug sm:block">
-                    {p.bio.trim()}
-                  </p>
-                ) : null}
+                {p.bio?.trim() ? <ProfileCardBio text={p.bio} t={t} /> : null}
               </>
             )}
           </div>
@@ -714,73 +739,24 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
         </div>
       </div>
 
-      {(() => {
-        const isNewMobile =
-          p.createdAt.toMillis() > Date.now() - PROFILE_CARD_NEW_MS && p.isValidated !== false;
-        const isUrgentMobile = urgentAuthorIds.has(p.uid);
-        if (!isNewMobile && !isUrgentMobile) return null;
-        return (
-          <div className="-mt-0.5 mb-1 flex flex-wrap gap-1.5 sm:hidden">
-            {isNewMobile ? (
-              <span className="inline-flex items-center rounded-md bg-[#DBEAFE] px-2 py-0.5 text-[11px] font-medium text-[#1D4ED8]">
-                {t('tagNewMember')}
-              </span>
-            ) : null}
-            {isUrgentMobile ? (
-              <span className="inline-flex items-center rounded-md bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-medium text-[#92400E]">
-                {t('tagUrgentNeed')}
-              </span>
-            ) : null}
-          </div>
-        );
-      })()}
+      <ProfileCardTagsBlock profile={p} urgentAuthorIds={urgentAuthorIds} />
 
-      <div className="hidden sm:block">
-        <ProfileCardTagsBlock profile={p} urgentAuthorIds={urgentAuthorIds} />
-      </div>
-
-      <div className="mt-auto hidden w-full shrink-0 sm:block">
-        <div className="flex w-full shrink-0 flex-col gap-1.5 border-t border-stone-100 pt-2.5">
+      <div className="mt-auto w-full shrink-0">
+        <div className="flex w-full shrink-0 flex-col gap-1.5 border-t border-slate-100 pt-2.5">
           <div className="flex min-h-[2.25rem] w-full items-stretch">
-            {(p.isEmailPublic || (user && profile?.isValidated)) ? (
-              <a
-                href={`mailto:${p.email}`}
-                onClick={(e) => e.stopPropagation()}
-                className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-stone-50 px-3 py-2 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-100"
-              >
-                <Mail size={14} className="shrink-0 text-stone-500" />
-                <span className="truncate">{p.email}</span>
-              </a>
-            ) : (
-              <div className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-stone-50 px-3 py-2 text-xs italic text-stone-400 blur-[2px] select-none">
-                <Mail size={14} className="shrink-0" />
-                <span>email@example.com</span>
-              </div>
-            )}
+            <ProfileCardEmailContact
+              email={p.email}
+              canView={Boolean(p.isEmailPublic || (user && profile?.isValidated))}
+              t={t}
+            />
           </div>
           <div className="flex min-h-[2.25rem] w-full items-stretch">
             {p.whatsapp ? (
-              p.isWhatsappPublic || (user && profile?.isValidated) ? (
-                <a
-                  href={`https://wa.me/${p.whatsapp.replace(/\D/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
-                >
-                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-emerald-600" fill="currentColor" aria-hidden>
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                  </svg>
-                  <span className="truncate">{p.whatsapp}</span>
-                </a>
-              ) : (
-                <div className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-stone-50 px-3 py-2 text-xs italic text-stone-400 blur-[2px] select-none">
-                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden>
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                  </svg>
-                  <span>+52 33 0000 0000</span>
-                </div>
-              )
+              <ProfileCardWhatsappContactFooter
+                whatsapp={p.whatsapp}
+                canView={Boolean(p.isWhatsappPublic || (user && profile?.isValidated))}
+                t={t}
+              />
             ) : (
               <div className="min-h-[2.25rem] w-full rounded-lg border border-transparent bg-transparent px-3 py-2" aria-hidden />
             )}
@@ -2795,7 +2771,7 @@ const MainApp = () => {
         { id: 'companies' as const, icon: Building2, label: t('companies') },
         { id: 'members' as const, icon: Users, label: t('members') },
         { id: 'activities' as const, icon: Briefcase, label: t('activities') },
-        { id: 'radar' as const, icon: Activity, label: t('radarTitle') },
+        { id: 'radar' as const, icon: Activity, label: t('directoryTabRadar') },
         ...(profile?.role === 'admin'
           ? [{ id: 'dashboard' as const, icon: LayoutDashboard, label: t('dashboardTab') }]
           : []),
@@ -3034,155 +3010,93 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
   return (
     <div className="min-h-screen min-w-0 bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-stone-200 bg-white">
-        <div className="mx-auto flex min-w-0 max-w-7xl flex-col gap-2 px-3 py-2 sm:h-16 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-0 lg:px-8">
-          <div className="flex w-full min-w-0 items-start gap-2 sm:w-auto sm:flex-1 sm:items-center sm:gap-3">
-            <a
-              href="/"
-              onClick={(e) => {
-                e.preventDefault();
-                window.location.assign('/');
-              }}
-              className="flex min-w-0 flex-1 cursor-pointer items-start gap-2 rounded-lg pr-1 outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 sm:items-center sm:gap-3"
-              aria-label={pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
-            >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-stone-900 text-white shadow-md sm:h-10 sm:w-10 sm:rounded-xl sm:shadow-lg">
-                <Building2 className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2} aria-hidden />
-              </div>
-              <div className="min-w-0 flex-1 text-left">
-                <h1 className="text-[10px] font-medium leading-snug tracking-tight text-stone-900 break-words sm:text-[11px] sm:font-semibold md:text-sm lg:text-base xl:text-lg">
-                  {t('title')}
-                </h1>
-                <p className="mt-0.5 line-clamp-2 text-[9px] leading-snug text-stone-500 sm:mt-1 sm:text-[10px] md:text-xs md:line-clamp-none">
-                  {t('subtitle')}
-                </p>
-              </div>
-            </a>
-            {/* Langues alignées avec le titre sur mobile uniquement */}
-            <div className="ml-auto shrink-0 self-start pt-0.5 sm:hidden">
-              <div className="flex bg-stone-100 p-0.5 rounded-lg border border-stone-200">
-                <button
-                  type="button"
-                  onClick={() => setLang('fr')}
-                  className={`px-1.5 py-1 rounded-md text-[10px] font-bold transition-all ${lang === 'fr' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
-                >
-                  FR
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLang('es')}
-                  className={`px-1.5 py-1 rounded-md text-[10px] font-bold transition-all ${lang === 'es' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
-                >
-                  ES
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLang('en')}
-                  className={`px-1.5 py-1 rounded-md text-[10px] font-bold transition-all ${lang === 'en' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
-                >
-                  EN
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex w-full min-w-0 shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-4">
-            <div className="hidden bg-stone-100 p-0.5 sm:flex sm:p-1 sm:rounded-lg sm:rounded-xl border border-stone-200">
-              <button 
-                onClick={() => setLang('fr')}
-                className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'fr' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
-              >
-                FR
-              </button>
-              <button 
-                onClick={() => setLang('es')}
-                className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'es' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
-              >
-                ES
-              </button>
-              <button 
-                onClick={() => setLang('en')}
-                className={`px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all ${lang === 'en' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
-              >
-                EN
-              </button>
-            </div>
-
-            {user ? (
-              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-4">
-                {profile?.role === 'admin' && (
-                  <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <button 
-                      onClick={() => setShowValidationPanel(true)}
-                      className="relative flex items-center gap-2 px-3 py-2 bg-stone-100 text-stone-700 rounded-lg hover:bg-stone-200 transition-colors text-sm font-medium"
-                    >
-                      <Users size={16} />
-                      <span className="hidden sm:inline">{t('newProfiles')}</span>
-                      {pendingProfiles.length > 0 && (
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
-                          {pendingProfiles.length}
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowOpportunitiesModerationPanel(true)}
-                      className="relative flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-900 rounded-lg hover:bg-amber-100 transition-colors text-sm font-medium"
-                    >
-                      <Zap size={16} />
-                      <span className="hidden sm:inline">{t('opportunitiesModerationTitle')}</span>
-                      {pendingUrgentForAdmin.length > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-amber-600 px-1 text-[10px] font-bold text-white">
-                          {pendingUrgentForAdmin.length}
-                        </span>
-                      )}
-                    </button>
-                    <button 
-                      onClick={exportToExcel}
-                      className="hidden sm:flex items-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-medium"
-                    >
-                      <Download size={16} />
-                      {t('exportData')}
-                    </button>
-                  </div>
-                )}
-                <div className="h-8 w-px bg-stone-200 hidden sm:block" />
-                <button 
-                  onClick={handleLogout}
-                  className="p-2 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors text-stone-600"
-                  title={t('logout')}
-                >
-                  <LogOut size={18} />
-                </button>
-                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-stone-200">
-                  <ProfileAvatar
-                    photoURL={user.photoURL}
-                    fullName={user.displayName || user.email || ''}
-                    className="h-full w-full"
-                    initialsClassName="text-[10px] font-bold text-stone-600"
-                    iconSize={16}
-                  />
+      <AppHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        homeAriaLabel={pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
+        onHomeClick={(e) => {
+          e.preventDefault();
+          window.location.assign('/');
+        }}
+        lang={lang}
+        onLangChange={setLang}
+        trailing={
+          user ? (
+            <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
+              {profile?.role === 'admin' && (
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowValidationPanel(true)}
+                    className="relative flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-200"
+                  >
+                    <Users size={16} />
+                    <span className="hidden sm:inline">{t('newProfiles')}</span>
+                    {pendingProfiles.length > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 text-[10px] font-bold text-white">
+                        {pendingProfiles.length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowOpportunitiesModerationPanel(true)}
+                    className="relative flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100"
+                  >
+                    <Zap size={16} />
+                    <span className="hidden sm:inline">{t('opportunitiesModerationTitle')}</span>
+                    {pendingUrgentForAdmin.length > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-amber-600 px-1 text-[10px] font-bold text-white">
+                        {pendingUrgentForAdmin.length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportToExcel}
+                    className="hidden items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 transition-colors hover:bg-emerald-100 sm:flex"
+                  >
+                    <Download size={16} />
+                    {t('exportData')}
+                  </button>
                 </div>
-              </div>
-            ) : (
+              )}
+              <div className="hidden h-8 w-px bg-slate-200 sm:block" aria-hidden />
               <button
                 type="button"
-                onClick={() => {
-                  setAuthError(null);
-                  setShowAuthModal(true);
-                }}
-                disabled={authProviderBusy !== null}
-                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-900 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-stone-800 transition-all shadow-sm sm:shadow-md hover:shadow-lg active:scale-95 whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={handleLogout}
+                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
+                title={t('logout')}
               >
-                {authProviderBusy !== null
-                  ? pickLang('Connexion...', 'Conectando...', 'Signing in...', lang)
-                  : t('login')}
+                <LogOut size={18} />
               </button>
-            )}
-          </div>
-        </div>
-      </header>
+              <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200">
+                <ProfileAvatar
+                  photoURL={user.photoURL}
+                  fullName={user.displayName || user.email || ''}
+                  className="h-full w-full"
+                  initialsClassName="text-[10px] font-bold text-slate-600"
+                  iconSize={16}
+                />
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setAuthError(null);
+                setShowAuthModal(true);
+              }}
+              disabled={authProviderBusy !== null}
+              className="whitespace-nowrap rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-2 sm:text-sm"
+            >
+              {authProviderBusy !== null
+                ? pickLang('Connexion...', 'Conectando...', 'Signing in...', lang)
+                : t('login')}
+            </button>
+          )
+        }
+      />
 
       <AnimatePresence>
         {showAuthModal && !user && (
@@ -4488,28 +4402,21 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             )}
 
             {/* View Mode Tabs — seule barre d’onglets, collée au listing ; sticky sous le header (z-50) */}
-            <div className="sticky top-24 z-40 min-w-0 bg-stone-50 py-2 sm:top-16">
-              <div className="flex w-full min-w-0 flex-wrap gap-1 rounded-2xl border border-stone-200 bg-white p-1 shadow-sm sm:flex-nowrap">
-                {directoryViewTabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => {
-                      setDirectoryDiscoveryStripsHidden(true);
-                      setViewMode(tab.id);
-                    }}
-                    className={cn(
-                      'flex min-w-0 basis-[calc(50%-2px)] items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-center text-[11px] font-bold transition-all sm:basis-0 sm:flex-1 sm:gap-2 sm:px-3 sm:text-sm',
-                      viewMode === tab.id
-                        ? 'bg-stone-900 text-white shadow-lg'
-                        : 'text-stone-400 hover:bg-stone-50 hover:text-stone-600'
-                    )}
-                  >
-                    <tab.icon size={16} className="shrink-0" aria-hidden />
-                    <span className="min-w-0 text-center leading-tight sm:truncate">{tab.label}</span>
-                  </button>
-                ))}
-              </div>
+            <div className="sticky top-24 z-40 min-w-0 bg-slate-50 py-2 sm:top-16">
+              <DirectoryTabBar
+                tabs={directoryViewTabs.map((tab) => ({
+                  id: tab.id,
+                  label: tab.label,
+                  icon: <tab.icon size={16} aria-hidden />,
+                }))}
+                activeTab={viewMode}
+                onTabChange={(id) => {
+                  setDirectoryDiscoveryStripsHidden(true);
+                  setViewMode(
+                    id as 'companies' | 'members' | 'activities' | 'radar' | 'dashboard'
+                  );
+                }}
+              />
             </div>
 
             {/* Main Content Area based on viewMode */}

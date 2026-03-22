@@ -5,6 +5,7 @@ import type { HomeLandingCopy } from '../../copy/homeLanding';
 import { activityCategoryLabel } from '../../constants';
 import { cn } from '../../cn';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
+import { OpportunityActions } from '../DirectoryUi';
 
 type TFn = (key: string) => string;
 
@@ -143,87 +144,28 @@ export default function OpportunitiesSection({
 
       <div
         className={cn(
-          'flex w-full gap-2 sm:gap-3',
           hasPosts ? 'mt-5 border-t border-stone-100 pt-4' : 'mt-4',
-          user ? 'flex-row flex-nowrap items-stretch' : 'flex-row flex-wrap items-start',
-          sidebarEmptyStyle && !user && 'flex-col items-stretch',
-          compactLayout && !sidebarEmptyStyle && 'justify-start',
-          sidebarEmptyStyle && user && 'justify-start'
+          !user && !sidebarEmptyStyle && 'space-y-1'
         )}
       >
-        {user ? (
-          <>
-            <button
-              type="button"
-              onClick={onSeeAll}
-              className={cn(
-                'flex min-h-[44px] min-w-0 flex-1 items-center justify-center rounded-lg px-2 py-2.5 text-center text-xs font-semibold leading-snug transition-colors sm:px-3 sm:text-sm',
-                sidebarEmptyStyle
-                  ? 'border border-gray-200 bg-white text-gray-800 hover:bg-gray-50'
-                  : 'border border-stone-300 bg-white text-stone-800 hover:bg-stone-50'
-              )}
-            >
-              {copy.opportunitiesSeeAll}
-            </button>
-            <button
-              type="button"
-              onClick={onPost}
-              className={cn(
-                'flex min-h-[44px] min-w-0 flex-1 items-center justify-center rounded-lg px-2 py-2.5 text-center text-xs font-semibold leading-snug text-white transition-colors sm:px-3 sm:text-sm',
-                sidebarEmptyStyle ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-700 hover:bg-blue-800'
-              )}
-            >
-              {copy.opportunitiesPost}
-            </button>
-          </>
-        ) : sidebarEmptyStyle ? (
-          <>
-            <div className="flex min-w-0 w-full flex-row gap-2">
-              <button
-                type="button"
-                onClick={onSeeAll}
-                className="min-h-[44px] min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-2 py-2.5 text-center text-xs font-semibold text-gray-800 transition-colors hover:bg-gray-50 sm:px-3 sm:text-sm"
-              >
-                {copy.opportunitiesSeeAll}
-              </button>
-              <button
-                type="button"
-                onClick={onCreateProfile}
-                className="min-h-[44px] min-w-0 flex-1 rounded-lg bg-blue-600 px-2 py-2.5 text-center text-xs font-semibold text-white transition-colors hover:bg-blue-700 sm:px-3 sm:text-sm"
-              >
-                {copy.opportunitiesPost}
-              </button>
-            </div>
-            <span className="text-left text-xs text-gray-500">{copy.opportunitiesMembersOnly}</span>
-          </>
-        ) : (
-          <>
-            <button
-              type="button"
-              onClick={onSeeAll}
-              className="min-h-[44px] max-w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-center text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-50"
-            >
-              {copy.opportunitiesSeeAll}
-            </button>
-            <div className="flex min-w-0 flex-col gap-1">
-              <button
-                type="button"
-                onClick={onCreateProfile}
-                className="min-h-[44px] max-w-full rounded-lg bg-blue-700 px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-blue-800"
-              >
-                {copy.opportunitiesPost}
-              </button>
-              <span
-                className={cn(
-                  'text-xs text-stone-400',
-                  compactLayout ? 'text-left' : 'text-center sm:text-left'
-                )}
-              >
-                {copy.opportunitiesMembersOnly}
-              </span>
-            </div>
-          </>
-        )}
+        <OpportunityActions
+          className={cn('mt-0', user && 'sm:gap-3')}
+          onSeeAll={onSeeAll}
+          onPost={user ? onPost : onCreateProfile}
+          seeAllLabel={copy.opportunitiesSeeAll}
+          postLabel={copy.opportunitiesPost}
+        />
+        {!user ? (
+          <span
+            className={cn(
+              'block text-xs text-slate-500',
+              sidebarEmptyStyle && 'text-gray-500',
+              !sidebarEmptyStyle && (compactLayout ? 'text-left' : 'text-center sm:text-left')
+            )}
+          >
+            {copy.opportunitiesMembersOnly}
+          </span>
+        ) : null}
       </div>
     </section>
   );

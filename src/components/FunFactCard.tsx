@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '../cn';
 import type { Language } from '@/types';
 import type { MemberForFun, NeedForFun } from '@/lib/funFactData';
+import { FunFactBlock } from './DirectoryUi';
 
 type FunFactCardProps = {
   lang: Language;
@@ -230,48 +231,36 @@ export default function FunFactCard({
   const showToggle = collapsibleOnMobile;
 
   return (
-    <aside
-      className={cn(
-        'rounded-xl border border-indigo-100/80 bg-gradient-to-br from-indigo-50/90 to-white px-4 py-4 sm:px-5 sm:py-5',
-        className
-      )}
-    >
-      <div className={cn(showToggle && 'flex items-start justify-between gap-3 sm:block')}>
-        <p
-          className={cn(
-            'text-[11px] font-semibold uppercase tracking-wider text-indigo-800',
-            showToggle && 'min-w-0 flex-1'
-          )}
-        >
-          {t.title}
-        </p>
-        {showToggle ? (
-          <button
-            type="button"
-            onClick={() => setMobileOpen((v) => !v)}
-            className="-m-1 shrink-0 rounded-lg p-1.5 text-indigo-800/80 transition-colors hover:bg-indigo-100/60 hover:text-indigo-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 sm:hidden"
-            aria-expanded={mobileOpen}
-            aria-controls={bodyId}
-            title={mobileOpen ? mobileHideLabel : mobileShowLabel}
-          >
-            {mobileOpen ? (
-              <ChevronUp className="h-5 w-5" strokeWidth={2} aria-hidden />
-            ) : (
-              <ChevronDown className="h-5 w-5" strokeWidth={2} aria-hidden />
-            )}
-            <span className="sr-only">{mobileOpen ? mobileHideLabel : mobileShowLabel}</span>
-          </button>
-        ) : null}
-      </div>
-      <p
-        id={bodyId}
-        className={cn(
-          'mt-2 line-clamp-3 text-sm leading-snug text-stone-700 sm:mt-2 sm:block',
-          showToggle && !mobileOpen && 'hidden'
+    <aside className={cn(className)}>
+      <FunFactBlock
+        badgeLabel={t.title}
+        text={message}
+        bodyId={bodyId}
+        className="sm:px-5 sm:py-5"
+        headerRight={
+          showToggle ? (
+            <button
+              type="button"
+              onClick={() => setMobileOpen((v) => !v)}
+              className="-m-1 shrink-0 rounded-lg p-1.5 text-white/80 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:hidden"
+              aria-expanded={mobileOpen}
+              aria-controls={bodyId}
+              title={mobileOpen ? mobileHideLabel : mobileShowLabel}
+            >
+              {mobileOpen ? (
+                <ChevronUp className="h-5 w-5" strokeWidth={2} aria-hidden />
+              ) : (
+                <ChevronDown className="h-5 w-5" strokeWidth={2} aria-hidden />
+              )}
+              <span className="sr-only">{mobileOpen ? mobileHideLabel : mobileShowLabel}</span>
+            </button>
+          ) : undefined
+        }
+        bodyClassName={cn(
+          'line-clamp-3 sm:line-clamp-none',
+          showToggle && !mobileOpen && 'hidden sm:block'
         )}
-      >
-        {message}
-      </p>
+      />
     </aside>
   );
 }
