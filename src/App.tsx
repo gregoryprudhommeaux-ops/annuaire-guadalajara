@@ -103,6 +103,7 @@ import HeroSection from './components/home/HeroSection';
 import WelcomeContextCard from './components/home/WelcomeContextCard';
 import SearchBlock from './components/home/SearchBlock';
 import MembersCountBlock from './components/home/MembersCountBlock';
+import InviteNetworkModal from './components/home/InviteNetworkModal';
 import NewMembersStrip from './components/home/NewMembersStrip';
 import OpportunitiesSection from './components/home/OpportunitiesSection';
 import NetworkRadarSection from './components/home/NetworkRadarSection';
@@ -1716,6 +1717,7 @@ const MainApp = () => {
   const [authProviderBusy, setAuthProviderBusy] = useState<SocialAuthProvider | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showInviteNetworkModal, setShowInviteNetworkModal] = useState(false);
   const [profileSaveBusy, setProfileSaveBusy] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [optimizationBusy, setOptimizationBusy] = useState(false);
@@ -3438,6 +3440,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               sectorCount={distinctSectorCount}
               opportunitiesCount={urgentPosts.length}
               threshold={MEMBERS_THRESHOLD}
+              registeredWithProfile={!!user && !!profile}
+              onOpenInvite={() => setShowInviteNetworkModal(true)}
               onCreateProfile={() => {
                 setAuthError(null);
                 setShowAuthModal(true);
@@ -4639,6 +4643,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           profile={profile} 
         />
       )}
+      <InviteNetworkModal
+        open={showInviteNetworkModal}
+        onClose={() => setShowInviteNetworkModal(false)}
+        lang={lang}
+        t={t}
+      />
     </div>
   );
 };

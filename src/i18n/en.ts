@@ -99,6 +99,20 @@ export const EN_STRINGS: Record<string, string> = {
   launchTitle: "Community launching now",
   launchSubtitle: "Be among the first French-speaking members in Guadalajara.",
   launchCta: "Create my profile now →",
+  inviteNetworkTitle: "Invite my network",
+  inviteNetworkSubtitle:
+    "Share the directory link to grow the French-speaking business community in Guadalajara.",
+  inviteNetworkCta: "Invite →",
+  inviteNetworkModalTitle: "Invite my network",
+  inviteNetworkModalHint:
+    "Send this message via WhatsApp or email, or copy it to paste anywhere you like.",
+  inviteNetworkMessageLabel: "Invitation message",
+  inviteEmailSubject: "Join the French-speaking business directory in Guadalajara",
+  inviteShareBody:
+    "Hi,\n\nI’d like to invite you to join the French-speaking business community directory in Guadalajara:\n\n{url}\n\nSee you soon!",
+  inviteShareWhatsApp: "WhatsApp",
+  inviteShareEmail: "Email",
+  inviteShareCopy: "Copy message",
   statsMembers: "members",
   statsSectors: "sectors",
   statsOpportunities: "opportunities",
