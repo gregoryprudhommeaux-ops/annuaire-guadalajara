@@ -32,7 +32,8 @@ service cloud.firestore {
         && data.createdAt is timestamp;
     }
 
-    function isValidUrgentPost(data) {
+    /** Anciennes annonces : auteur encore sur `urgent_posts`. */
+    function isValidUrgentPostLegacy(data) {
       return data.keys().hasAll(['authorId', 'authorName', 'text', 'sector', 'createdAt', 'expiresAt'])
         && data.authorId == request.auth.uid
         && data.authorName is string
@@ -41,6 +42,38 @@ service cloud.firestore {
         && data.createdAt is number
         && data.expiresAt is number
         && data.expiresAt > data.createdAt;
+    }
+
+    function isValidUrgentPostPublicCreate(data) {
+      return data.keys().hasOnly(['text', 'sector', 'createdAt', 'expiresAt', 'isPublished'])
+        && data.text is string && data.text.size() >= 1 && data.text.size() <= 200
+        && data.sector is string && data.sector.size() >= 1
+        && data.createdAt is number
+        && data.expiresAt is number
+        && data.expiresAt > data.createdAt
+        && data.isPublished == false;
+    }
+
+    function urgentPostNonExpired(data) {
+      return data.expiresAt is number && data.expiresAt > request.time.toMillis();
+    }
+
+    function urgentPostListedForEveryone(data) {
+      return !('isPublished' in data) || data.isPublished == true;
+    }
+
+    function urgentPostAuthorOwns(postId) {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/urgent_post_private/$(postId))
+        && get(/databases/$(database)/documents/urgent_post_private/$(postId)).data.authorId == request.auth.uid;
+    }
+
+    function isValidUrgentPostPrivateCreate(data) {
+      return data.keys().hasAll(['authorId', 'authorName', 'authorPhoto'])
+        && data.authorId == request.auth.uid
+        && data.authorName is string && data.authorName.size() >= 1
+        && data.authorPhoto is string
+        && (!('authorCompany' in data) || (data.authorCompany is string));
     }
 
     function isValidNeedComment(data) {
@@ -103,13 +136,36 @@ service cloud.firestore {
     }
 
     match /urgent_posts/{postId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && isValidUrgentPost(request.resource.data);
-      allow update: if isAuthenticated()
-        && (request.auth.uid == resource.data.authorId || isAdmin())
-        && isValidUrgentPost(request.resource.data);
-      allow delete: if isAuthenticated()
-        && (request.auth.uid == resource.data.authorId || isAdmin());
+      allow read: if urgentPostNonExpired(resource.data) && (
+        urgentPostListedForEveryone(resource.data)
+        || isAdmin()
+        || urgentPostAuthorOwns(postId)
+        || (isAuthenticated() && resource.data.authorId == request.auth.uid)
+      );
+      allow create: if isAuthenticated() && (
+        isValidUrgentPostPublicCreate(request.resource.data)
+        || isValidUrgentPostLegacy(request.resource.data)
+      );
+      allow update: if isAdmin();
+      allow delete: if isAdmin()
+        || (isAuthenticated() && resource.data.authorId == request.auth.uid)
+        || (resource.data.isPublished == false && urgentPostAuthorOwns(postId));
+    }
+
+    match /urgent_post_private/{postId} {
+      allow read: if isAdmin()
+        || (isAuthenticated() && resource.data.authorId == request.auth.uid)
+        || (isAuthenticated()
+            && exists(/databases/$(database)/documents/urgent_posts/$(postId))
+            && urgentPostNonExpired(get(/databases/$(database)/documents/urgent_posts/$(postId)).data)
+            && urgentPostListedForEveryone(get(/databases/$(database)/documents/urgent_posts/$(postId)).data));
+      allow create: if isAuthenticated() && isValidUrgentPostPrivateCreate(request.resource.data);
+      allow delete: if isAdmin()
+        || (isAuthenticated()
+            && resource.data.authorId == request.auth.uid
+            && exists(/databases/$(database)/documents/urgent_posts/$(postId))
+            && get(/databases/$(database)/documents/urgent_posts/$(postId)).data.isPublished == false);
+      allow update: if false;
     }
 
     match /need_comments/{commentId} {

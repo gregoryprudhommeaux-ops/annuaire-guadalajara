@@ -5,17 +5,8 @@ import { formatHomeBadge } from '../../copy/homeLanding';
 import { activityCategoryLabel } from '../../constants';
 import type { Language } from '../../types';
 import { cn } from '../../cn';
-
-function memberInitials(p: UserProfile): string {
-  const n = (p.fullName || p.companyName || '?').trim();
-  const parts = n.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    const a = parts[0][0];
-    const b = parts[parts.length - 1][0];
-    if (a && b) return (a + b).toUpperCase();
-  }
-  return n.slice(0, 2).toUpperCase() || '?';
-}
+import { pickLang } from '../../lib/uiLocale';
+import ProfileAvatar from '../ProfileAvatar';
 
 type Props = {
   copy: HomeLandingCopy;
@@ -23,6 +14,8 @@ type Props = {
   profiles: UserProfile[];
   totalNewThisWeek: number;
   onSeeAll: () => void;
+  /** Ouvre la fiche (ex. modal annuaire). */
+  onOpenProfile?: (p: UserProfile) => void;
   className?: string;
 };
 
@@ -33,6 +26,7 @@ export default function NewMembersStrip({
   profiles,
   totalNewThisWeek,
   onSeeAll,
+  onOpenProfile,
   className,
 }: Props) {
   const display = profiles.slice(0, 4);
@@ -65,33 +59,52 @@ export default function NewMembersStrip({
         <p className="mt-4 text-sm text-stone-500 break-words hyphens-auto">{copy.newMembersEmpty}</p>
       ) : (
         <ul className="mt-4 grid min-h-0 grid-cols-1 content-start gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
-          {display.map((p) => (
-            <li
-              key={p.uid}
-              className="flex gap-2.5 rounded-xl border border-stone-100 bg-stone-50/80 p-2.5"
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[10px] font-bold text-blue-800 ring-1 ring-stone-200">
-                {p.photoURL ? (
-                  <img
-                    src={p.photoURL}
-                    alt=""
-                    className="h-full w-full object-cover"
-                    referrerPolicy="no-referrer"
+          {display.map((p) => {
+            const cardInner = (
+              <>
+                <div className="flex h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-stone-200">
+                  <ProfileAvatar
+                    photoURL={p.photoURL}
+                    fullName={p.fullName}
+                    className="h-full w-full bg-white"
+                    initialsClassName="text-[10px] font-bold text-blue-800"
+                    iconSize={14}
                   />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-stone-900">{p.fullName}</p>
+                  <p className="truncate text-xs text-stone-600">{p.companyName}</p>
+                  <p className="mt-1 truncate text-xs text-stone-500">
+                    {activityCategoryLabel(p.activityCategory, lang)}
+                    {p.city ? ` · ${p.city}` : ''}
+                  </p>
+                </div>
+              </>
+            );
+            return (
+              <li key={p.uid} className="min-w-0">
+                {onOpenProfile ? (
+                  <button
+                    type="button"
+                    onClick={() => onOpenProfile(p)}
+                    className="flex w-full gap-2.5 rounded-xl border border-stone-100 bg-stone-50/80 p-2.5 text-left transition-colors hover:border-stone-200 hover:bg-stone-100/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                    aria-label={pickLang(
+                      `Ouvrir la fiche de ${p.fullName}`,
+                      `Abrir la ficha de ${p.fullName}`,
+                      `Open profile: ${p.fullName}`,
+                      lang
+                    )}
+                  >
+                    {cardInner}
+                  </button>
                 ) : (
-                  <span aria-hidden>{memberInitials(p)}</span>
+                  <div className="flex gap-2.5 rounded-xl border border-stone-100 bg-stone-50/80 p-2.5">
+                    {cardInner}
+                  </div>
                 )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-stone-900">{p.fullName}</p>
-                <p className="truncate text-xs text-stone-600">{p.companyName}</p>
-                <p className="mt-1 truncate text-xs text-stone-500">
-                  {activityCategoryLabel(p.activityCategory, lang)}
-                  {p.city ? ` · ${p.city}` : ''}
-                </p>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
 

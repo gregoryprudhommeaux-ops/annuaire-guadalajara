@@ -39,7 +39,8 @@ import {
   updateDoc,
   where,
   addDoc,
-  limit
+  limit,
+  writeBatch,
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import {
@@ -119,6 +120,14 @@ import {
   fetchAiProfileCoachLine,
   normalizeAiCoachToSingleTip,
 } from './lib/profileCoach';
+import {
+  URGENT_POST_PRIVATE_COLLECTION,
+  mergeUrgentPostFromFirestore,
+  isUrgentPostListedForEveryone,
+  isUrgentPostPendingModeration,
+  type UrgentPostPrivateDoc,
+} from './lib/urgentPosts';
+import { getGeminiApiKey } from './lib/geminiEnv';
 import IceBreakerInterests from './components/profile/IceBreakerInterests';
 import HeroSection from './components/home/HeroSection';
 import WelcomeContextCard from './components/home/WelcomeContextCard';
@@ -128,6 +137,9 @@ import InviteNetworkModal from './components/home/InviteNetworkModal';
 import NewMembersStrip from './components/home/NewMembersStrip';
 import OpportunitiesSection from './components/home/OpportunitiesSection';
 import NetworkRadarSection from './components/home/NetworkRadarSection';
+import AiTranslatedFreeText from './components/AiTranslatedFreeText';
+import ProfileAvatar from './components/ProfileAvatar';
+import { uploadProfileAvatar } from './lib/uploadProfileAvatar';
 import HomeFunFactStrip from './components/home/HomeFunFactStrip';
 import DashboardPage from './components/dashboard/DashboardPage';
 import { homeLanding } from './copy/homeLanding';
@@ -168,7 +180,8 @@ import {
   RefreshCw,
   ArrowLeft,
   UserCog,
-  Sparkles
+  Sparkles,
+  ImageUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as XLSX from 'xlsx';
@@ -274,10 +287,6 @@ function SocialSignInButtons({ lang, t, busy, onSignIn }: SocialSignInButtonsPro
 }
 
 const ADMIN_EMAIL = "chinois2001@gmail.com";
-const getGeminiApiKey = () =>
-  import.meta.env.VITE_GEMINI_API_KEY ||
-  (import.meta.env as any).GEMINI_API_KEY ||
-  ((globalThis as any)?.process?.env?.GEMINI_API_KEY as string | undefined);
 
 enum OperationType {
   CREATE = 'create',
@@ -485,12 +494,8 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
       <div className="mb-2 flex shrink-0 justify-between items-start gap-2">
         <div className="flex items-start gap-3 min-w-0 flex-1">
           <div className="relative shrink-0">
-            <div className="w-12 h-12 bg-stone-100 rounded-xl flex items-center justify-center text-stone-400 overflow-hidden shrink-0 border border-stone-200">
-              {p.photoURL ? (
-                <img src={p.photoURL} alt={p.fullName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              ) : (
-                <UserIcon size={24} />
-              )}
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-stone-200">
+              <ProfileAvatar photoURL={p.photoURL} fullName={p.fullName} className="h-full w-full" iconSize={24} />
             </div>
             {isActive && (
               <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" title="Actif ce mois" />
@@ -750,19 +755,20 @@ const MatchCard = ({ m, p, onShare, expanded, onToggleHook }: {
   expanded: boolean,
   onToggleHook: () => void
 }) => {
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
   return (
     <div className="bg-white rounded-2xl border border-indigo-100 p-5 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
       <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-full -mr-12 -mt-12 blur-2xl opacity-50 group-hover:opacity-100 transition-opacity" />
       
       <div className="flex items-start justify-between mb-4 relative">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 overflow-hidden border border-indigo-100">
-            {p.photoURL ? (
-              <img src={p.photoURL} alt={p.fullName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-            ) : (
-              <UserIcon size={24} />
-            )}
+          <div className="h-12 w-12 overflow-hidden rounded-xl border border-indigo-100">
+            <ProfileAvatar
+              photoURL={p.photoURL}
+              fullName={p.fullName}
+              className="h-full w-full bg-indigo-50"
+              iconSize={24}
+            />
           </div>
           <div>
             <h4 className="font-bold text-stone-900 leading-tight">{p.fullName}</h4>
@@ -774,9 +780,16 @@ const MatchCard = ({ m, p, onShare, expanded, onToggleHook }: {
         </div>
       </div>
 
-      <p className="text-xs text-stone-600 italic mb-4 leading-relaxed line-clamp-2">
-        {m.reason}
-      </p>
+      <div className="mb-4 text-xs italic leading-relaxed text-stone-600 line-clamp-2 min-h-0 break-words">
+        <AiTranslatedFreeText
+          lang={lang}
+          t={t}
+          text={m.reason}
+          as="span"
+          omitAiDisclaimer
+          className="line-clamp-2 break-words"
+        />
+      </div>
 
       <div className="space-y-3">
         <button 
@@ -797,7 +810,7 @@ const MatchCard = ({ m, p, onShare, expanded, onToggleHook }: {
               className="overflow-hidden"
             >
               <div className="p-3 bg-stone-50 rounded-xl border border-stone-100 text-xs text-stone-600 leading-relaxed">
-                {m.hook}
+                <AiTranslatedFreeText lang={lang} t={t} text={m.hook} className="leading-relaxed" />
               </div>
             </motion.div>
           )}
@@ -1074,12 +1087,14 @@ const ProfilePage = () => {
         <div className="bg-white rounded-[2.5rem] shadow-xl border border-stone-200 overflow-hidden">
           <div className="h-48 bg-gradient-to-r from-indigo-600 to-violet-600 relative">
             <div className="absolute -bottom-16 left-8 p-2 bg-white rounded-3xl shadow-lg">
-              <div className="w-32 h-32 bg-stone-100 rounded-2xl overflow-hidden border-4 border-white">
-                {profile.photoURL ? (
-                  <img src={profile.photoURL} alt={profile.fullName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                  <UserIcon size={48} className="m-auto mt-8 text-stone-300" />
-                )}
+              <div className="h-32 w-32 overflow-hidden rounded-2xl border-4 border-white bg-stone-100">
+                <ProfileAvatar
+                  photoURL={profile.photoURL}
+                  fullName={profile.fullName}
+                  className="h-full w-full"
+                  initialsClassName="text-2xl font-bold text-stone-400 sm:text-3xl"
+                  iconSize={48}
+                />
               </div>
             </div>
             <button 
@@ -1093,8 +1108,25 @@ const ProfilePage = () => {
           <div className="pt-20 pb-10 px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
               <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-4xl font-black text-stone-900 tracking-tight">{profile.fullName}</h1>
+                <div className="mb-2">
+                  <h1 className="inline-flex max-w-full flex-wrap items-center gap-2 text-4xl font-black tracking-tight text-stone-900">
+                    <span className="min-w-0 break-words">{profile.fullName}</span>
+                    {profile.linkedin?.trim() ? (
+                      <a
+                        href={
+                          profile.linkedin.trim().startsWith('http')
+                            ? profile.linkedin.trim()
+                            : `https://${profile.linkedin.trim()}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 text-[#0A66C2] transition-opacity hover:opacity-80 focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#0A66C2] focus-visible:ring-offset-2"
+                        aria-label="LinkedIn"
+                      >
+                        <Linkedin className="size-[0.82em]" strokeWidth={2} aria-hidden />
+                      </a>
+                    ) : null}
+                  </h1>
                 </div>
                 <p className="text-xl text-stone-500 font-medium flex items-center gap-2">
                   <Building2 size={20} className="text-stone-400" />
@@ -1136,7 +1168,17 @@ const ProfilePage = () => {
               <div className="md:col-span-2 space-y-8">
                 <section>
                   <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">{tp('companyDescription')}</h2>
-                  <p className="text-stone-700 leading-relaxed text-lg whitespace-pre-wrap">{profile.bio?.trim() || tp('noCompanyDescription')}</p>
+                  {profile.bio?.trim() ? (
+                    <AiTranslatedFreeText
+                      lang={lang}
+                      t={t}
+                      text={profile.bio}
+                      className="text-stone-700 leading-relaxed text-lg"
+                      whitespace="pre-wrap"
+                    />
+                  ) : (
+                    <p className="text-stone-700 leading-relaxed text-lg whitespace-pre-wrap">{tp('noCompanyDescription')}</p>
+                  )}
                 </section>
 
                 {sanitizePassionIds(profile.passionIds).length > 0 && (
@@ -1252,7 +1294,12 @@ const ProfilePage = () => {
                             </p>
                           </div>
                         </div>
-                        <p className="text-stone-600 text-sm leading-relaxed italic">{r.text}</p>
+                        <AiTranslatedFreeText
+                          lang={lang}
+                          t={t}
+                          text={r.text}
+                          className="text-stone-600 text-sm leading-relaxed italic"
+                        />
                       </div>
                     ))}
                     {recs.length === 0 && (
@@ -1540,12 +1587,14 @@ const NeedPage = () => {
         <div className="bg-white rounded-[2.5rem] shadow-xl border border-stone-200 overflow-hidden mb-8">
           <div className="p-8">
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-16 h-16 bg-stone-100 rounded-2xl overflow-hidden border border-stone-200">
-                {profile.photoURL ? (
-                  <img src={profile.photoURL} alt={profile.fullName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                  <UserIcon size={32} className="m-auto mt-4 text-stone-300" />
-                )}
+              <div className="h-16 w-16 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
+                <ProfileAvatar
+                  photoURL={profile.photoURL}
+                  fullName={profile.fullName}
+                  className="h-full w-full"
+                  initialsClassName="text-lg font-bold text-stone-400"
+                  iconSize={32}
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-stone-900">{profile.fullName}</h1>
@@ -1563,11 +1612,16 @@ const NeedPage = () => {
               <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">
                 {pickLang('Description du besoin', 'Descripción de la necesidad', 'Need description', lang)}
               </h2>
-              <p className="text-xl text-stone-800 font-bold leading-tight italic">
-                {urgentPost?.text ||
-                  formatHighlightedNeedsForText(profile.highlightedNeeds, lang) ||
-                  pickLang('Aucun besoin spécifié.', 'Ninguna necesidad especificada.', 'No need specified.', lang)}
-              </p>
+              <div className="text-xl text-stone-800 font-bold leading-tight italic">
+                {urgentPost?.text ? (
+                  <AiTranslatedFreeText lang={lang} t={t} text={urgentPost.text} className="font-bold italic" />
+                ) : (
+                  <span>
+                    {formatHighlightedNeedsForText(profile.highlightedNeeds, lang) ||
+                      pickLang('Aucun besoin spécifié.', 'Ninguna necesidad especificada.', 'No need specified.', lang)}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center justify-between p-6 bg-indigo-50 rounded-3xl border border-indigo-100">
@@ -1616,7 +1670,7 @@ const NeedPage = () => {
                         {new Date(c.createdAt).toLocaleDateString(uiLocale(lang))}
                       </p>
                     </div>
-                    <p className="text-stone-700 text-sm leading-relaxed">{c.text}</p>
+                    <AiTranslatedFreeText lang={lang} t={t} text={c.text} className="text-stone-700 text-sm leading-relaxed" />
                   </div>
                 </div>
               ))}
@@ -1723,6 +1777,7 @@ const MainApp = () => {
   const directoryMainRef = useRef<HTMLDivElement>(null);
   const [membersSortRecent, setMembersSortRecent] = useState(false);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
+  const [showOpportunitiesModerationPanel, setShowOpportunitiesModerationPanel] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<
     'companies' | 'members' | 'activities' | 'radar' | 'dashboard'
@@ -1733,7 +1788,10 @@ const MainApp = () => {
   const [matchLoading, setMatchLoading] = useState(false);
   const [matchBlockReason, setMatchBlockReason] = useState<AiMatchBlockReason>(null);
   const [aiRecResolved, setAiRecResolved] = useState(false);
-  const [urgentPosts, setUrgentPosts] = useState<UrgentPost[]>([]);
+  const [urgentPublicDocs, setUrgentPublicDocs] = useState<
+    Array<{ id: string; data: Record<string, unknown> }>
+  >([]);
+  const [urgentPrivateById, setUrgentPrivateById] = useState<Record<string, UrgentPostPrivateDoc>>({});
   const [highlightedNeedFilter, setHighlightedNeedFilter] = useState('');
   const [passionIdFilter, setPassionIdFilter] = useState('');
   const [highlightedNeedsDraft, setHighlightedNeedsDraft] = useState<string[]>([]);
@@ -1754,6 +1812,9 @@ const MainApp = () => {
   const [profileCoachLine, setProfileCoachLine] = useState('');
   const [profileCoachSource, setProfileCoachSource] = useState<'local' | 'ai' | null>(null);
   const [profileCoachLoading, setProfileCoachLoading] = useState(false);
+  const photoUrlInputRef = useRef<HTMLInputElement | null>(null);
+  const [profilePhotoUploading, setProfilePhotoUploading] = useState(false);
+  const [profilePhotoUploadError, setProfilePhotoUploadError] = useState<string | null>(null);
 
   const getAuthErrorMessage = (code: string) => {
     const host = typeof window !== 'undefined' ? window.location.host : '';
@@ -1922,10 +1983,34 @@ const MainApp = () => {
     };
   }, [allProfiles]);
 
-  const urgentAuthorIdSet = useMemo(
-    () => new Set(urgentPosts.map((post) => post.authorId)),
+  const urgentPosts = useMemo(
+    () =>
+      urgentPublicDocs.map(({ id, data }) =>
+        mergeUrgentPostFromFirestore(id, data, urgentPrivateById[id] ?? null)
+      ),
+    [urgentPublicDocs, urgentPrivateById]
+  );
+
+  const urgentPostsListed = useMemo(
+    () => urgentPosts.filter(isUrgentPostListedForEveryone),
     [urgentPosts]
   );
+
+  const pendingUrgentForAdmin = useMemo(
+    () =>
+      profile?.role === 'admin'
+        ? urgentPosts.filter(isUrgentPostPendingModeration)
+        : [],
+    [urgentPosts, profile?.role]
+  );
+
+  const urgentAuthorIdSet = useMemo(() => {
+    const s = new Set<string>();
+    urgentPostsListed.forEach((post) => {
+      if (post.authorId) s.add(post.authorId);
+    });
+    return s;
+  }, [urgentPostsListed]);
 
   const profileUpdateBanner = useMemo(() => {
     if (!profile) {
@@ -2009,6 +2094,10 @@ const MainApp = () => {
   }, [profile, isEditing, lang, t]);
 
   useEffect(() => {
+    if (isEditing) setProfilePhotoUploadError(null);
+  }, [isEditing]);
+
+  useEffect(() => {
     const testConnection = async () => {
       try {
         await getDocFromServer(doc(db, 'test', 'connection'));
@@ -2056,8 +2145,7 @@ const MainApp = () => {
       orderBy('expiresAt', 'desc')
     );
     const unsubscribeUrgent = onSnapshot(urgentQuery, (snapshot) => {
-      const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UrgentPost));
-      setUrgentPosts(posts);
+      setUrgentPublicDocs(snapshot.docs.map((d) => ({ id: d.id, data: d.data() })));
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'urgent_posts'));
 
     return () => {
@@ -2066,6 +2154,26 @@ const MainApp = () => {
       unsubscribeUrgent();
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setUrgentPrivateById({});
+      return;
+    }
+    const unsub = onSnapshot(
+      collection(db, URGENT_POST_PRIVATE_COLLECTION),
+      (snapshot) => {
+        const m: Record<string, UrgentPostPrivateDoc> = {};
+        snapshot.docs.forEach((d) => {
+          m[d.id] = d.data() as UrgentPostPrivateDoc;
+        });
+        setUrgentPrivateById(m);
+      },
+      (error) =>
+        handleFirestoreError(error, OperationType.LIST, URGENT_POST_PRIVATE_COLLECTION)
+    );
+    return () => unsub();
+  }, [user?.uid]);
 
   const fetchMatches = useCallback(async (u: UserProfile, profiles: UserProfile[]) => {
     if (!u.uid) return;
@@ -2221,6 +2329,39 @@ const MainApp = () => {
   };
 
   const handleLogout = () => signOut(auth);
+
+  const handleProfileAvatarFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (!file || !user) return;
+      const targetUid = editingProfile?.uid ?? user.uid;
+      if (targetUid !== user.uid) {
+        setProfilePhotoUploadError(t('photoUploadWrongAccount'));
+        return;
+      }
+      setProfilePhotoUploading(true);
+      setProfilePhotoUploadError(null);
+      try {
+        const url = await uploadProfileAvatar(targetUid, file);
+        const input = photoUrlInputRef.current;
+        if (input) input.value = url;
+      } catch (err: unknown) {
+        const code = (err as { code?: string })?.code;
+        const msg = (err as Error)?.message;
+        if (msg === 'INVALID_TYPE' || msg === 'TOO_LARGE') {
+          setProfilePhotoUploadError(t('photoUploadInvalidFile'));
+        } else if (code === 'storage/unauthorized') {
+          setProfilePhotoUploadError(t('photoUploadStorageRules'));
+        } else {
+          setProfilePhotoUploadError(t('photoUploadError'));
+        }
+      } finally {
+        setProfilePhotoUploading(false);
+      }
+    },
+    [user, editingProfile, t]
+  );
 
   const handleSaveProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -2700,6 +2841,36 @@ const MainApp = () => {
     }
   };
 
+  const handlePublishUrgentPost = async (postId: string) => {
+    if (profile?.role !== 'admin') return;
+    try {
+      await updateDoc(doc(db, 'urgent_posts', postId), { isPublished: true });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `urgent_posts/${postId}`);
+    }
+  };
+
+  const handleRejectUrgentPost = async (postId: string) => {
+    if (profile?.role !== 'admin') return;
+    try {
+      const batch = writeBatch(db);
+      batch.delete(doc(db, 'urgent_posts', postId));
+      batch.delete(doc(db, URGENT_POST_PRIVATE_COLLECTION, postId));
+      await batch.commit();
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `urgent_posts/${postId}`);
+    }
+  };
+
+  const openOpportunityProfile = useCallback(
+    (post: UrgentPost) => {
+      if (!user || !post.authorId) return;
+      const author = allProfiles.find((ap) => ap.uid === post.authorId);
+      if (author) setSelectedProfile(author);
+    },
+    [user, allProfiles]
+  );
+
   const generateOptimizationSuggestion = async (targetProfile: UserProfile) => {
     setOptimizationBusy(true);
     setOptimizationError(null);
@@ -2888,6 +3059,19 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         </span>
                       )}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowOpportunitiesModerationPanel(true)}
+                      className="relative flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-900 rounded-lg hover:bg-amber-100 transition-colors text-sm font-medium"
+                    >
+                      <Zap size={16} />
+                      <span className="hidden sm:inline">{t('opportunitiesModerationTitle')}</span>
+                      {pendingUrgentForAdmin.length > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-amber-600 px-1 text-[10px] font-bold text-white">
+                          {pendingUrgentForAdmin.length}
+                        </span>
+                      )}
+                    </button>
                     <button 
                       onClick={exportToExcel}
                       className="hidden sm:flex items-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-medium"
@@ -2905,12 +3089,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 >
                   <LogOut size={18} />
                 </button>
-                <img 
-                  src={user.photoURL || ''} 
-                  alt={user.displayName || ''} 
-                  className="w-8 h-8 rounded-full border border-stone-200"
-                  referrerPolicy="no-referrer"
-                />
+                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-stone-200">
+                  <ProfileAvatar
+                    photoURL={user.photoURL}
+                    fullName={user.displayName || user.email || ''}
+                    className="h-full w-full"
+                    initialsClassName="text-[10px] font-bold text-stone-600"
+                    iconSize={16}
+                  />
+                </div>
               </div>
             ) : (
               <button
@@ -3358,14 +3545,39 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 </button>
                               </div>
                             </div>
-                            <div className="space-y-1">
+                            <div className="space-y-1 md:col-span-2">
                               <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('photoURL')}</label>
-                              <input 
-                                name="photoURL" 
-                                defaultValue={editingProfile?.photoURL || profile?.photoURL} 
-                                placeholder="https://..."
-                                className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" 
-                              />
+                              <p className="text-[10px] text-stone-400 leading-snug">{t('photoUploadHint')}</p>
+                              <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
+                                <input
+                                  ref={photoUrlInputRef}
+                                  name="photoURL"
+                                  id="profile-photo-url-input"
+                                  defaultValue={editingProfile?.photoURL || profile?.photoURL}
+                                  placeholder="https://..."
+                                  className="w-full flex-1 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                />
+                                <label
+                                  className={cn(
+                                    'inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-stone-200 bg-stone-100 px-3 py-2 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-200 sm:shrink-0',
+                                    (profilePhotoUploading || (editingProfile && editingProfile.uid !== user?.uid)) &&
+                                      'pointer-events-none opacity-50'
+                                  )}
+                                >
+                                  <ImageUp size={14} />
+                                  {profilePhotoUploading ? t('photoUploading') : t('photoUploadFromDevice')}
+                                  <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp,image/gif"
+                                    className="sr-only"
+                                    onChange={handleProfileAvatarFile}
+                                    disabled={profilePhotoUploading || !!(editingProfile && editingProfile.uid !== user?.uid)}
+                                  />
+                                </label>
+                              </div>
+                              {profilePhotoUploadError ? (
+                                <p className="text-xs text-red-600">{profilePhotoUploadError}</p>
+                              ) : null}
                             </div>
                           </div>
 
@@ -3699,12 +3911,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         <div className="space-y-6">
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 bg-stone-100 rounded-2xl flex items-center justify-center text-stone-400 overflow-hidden">
-                              {profile.photoURL ? (
-                                <img src={profile.photoURL} alt={profile.fullName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                              ) : (
-                                <UserIcon size={32} />
-                              )}
+                            <div className="h-16 w-16 overflow-hidden rounded-2xl bg-stone-100">
+                              <ProfileAvatar
+                                photoURL={profile.photoURL}
+                                fullName={profile.fullName}
+                                className="h-full w-full"
+                                initialsClassName="text-sm font-bold text-stone-500"
+                                iconSize={32}
+                              />
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
@@ -3793,7 +4007,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         {profile.bio && (
                           <div className="mt-6 pt-6 border-t border-stone-100">
                             <p className="text-xs font-black text-stone-400 uppercase tracking-widest mb-2">Bio</p>
-                            <p className="text-sm text-stone-600 leading-relaxed">{profile.bio}</p>
+                            <AiTranslatedFreeText
+                              lang={lang}
+                              t={t}
+                              text={profile.bio}
+                              className="text-sm text-stone-600 leading-relaxed"
+                              whitespace="pre-wrap"
+                            />
                             {sanitizeHighlightedNeeds(profile.highlightedNeeds).length > 0 && (
                               <button 
                                 onClick={() => setIsShareNeedsModalOpen(true)}
@@ -3825,7 +4045,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
                                     {t('contactPrefsCtaLabel')}
                                   </p>
-                                  <p className="mt-1 text-sm text-stone-600">{profile.contactPreferenceCta.trim()}</p>
+                                  <AiTranslatedFreeText
+                                    lang={lang}
+                                    t={t}
+                                    text={profile.contactPreferenceCta.trim()}
+                                    className="mt-1 text-sm text-stone-600"
+                                  />
                                 </div>
                               ) : null}
                               {wl.length > 0 ? (
@@ -3943,6 +4168,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   profiles={stats.newThisWeekProfiles}
                   totalNewThisWeek={stats.newThisWeekCount}
                   className="h-full w-full"
+                  onOpenProfile={(p) => setSelectedProfile(p)}
                   onSeeAll={() => {
                     setDirectoryDiscoveryStripsHidden(true);
                     setViewMode('members');
@@ -3988,12 +4214,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
             <HomeFunFactStrip lang={lang} />
 
-            {!user && showDiscoveryStrips && urgentPosts.length === 0 && (
+            {!user && showDiscoveryStrips && urgentPostsListed.length === 0 && (
               <OpportunitiesSection
                 copy={h}
                 t={t}
                 lang={lang}
-                posts={urgentPosts}
+                posts={urgentPostsListed}
                 allProfiles={allProfiles}
                 user={user}
                 compactLayout
@@ -4009,10 +4235,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   setAuthError(null);
                   setShowAuthModal(true);
                 }}
-                onOpenPost={(post) => {
-                  const author = allProfiles.find((ap) => ap.uid === post.authorId);
-                  if (author) setSelectedProfile(author);
-                }}
+                onOpenPost={openOpportunityProfile}
               />
             )}
 
@@ -4021,7 +4244,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 copy={h}
                 t={t}
                 lang={lang}
-                posts={urgentPosts}
+                posts={urgentPostsListed}
                 allProfiles={allProfiles}
                 user={user}
                 compactLayout
@@ -4037,10 +4260,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   setAuthError(null);
                   setShowAuthModal(true);
                 }}
-                onOpenPost={(post) => {
-                  const author = allProfiles.find((ap) => ap.uid === post.authorId);
-                  if (author) setSelectedProfile(author);
-                }}
+                onOpenPost={openOpportunityProfile}
               />
             )}
 
@@ -4049,7 +4269,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               t={t}
               memberCount={stats.total}
               sectorCount={distinctSectorCount}
-              opportunitiesCount={urgentPosts.length}
+              opportunitiesCount={urgentPostsListed.length}
               threshold={MEMBERS_THRESHOLD}
               registeredWithProfile={!!user && !!profile}
               onOpenInvite={() => setShowInviteNetworkModal(true)}
@@ -4077,6 +4297,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   lang={lang}
                   profiles={stats.newThisWeekProfiles}
                   totalNewThisWeek={stats.newThisWeekCount}
+                  onOpenProfile={(p) => setSelectedProfile(p)}
                   onSeeAll={() => {
                     setDirectoryDiscoveryStripsHidden(true);
                     setViewMode('members');
@@ -4087,12 +4308,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   }}
                 />
 
-                {urgentPosts.length > 0 && (
+                {urgentPostsListed.length > 0 && (
                   <OpportunitiesSection
                     copy={h}
                     t={t}
                     lang={lang}
-                    posts={urgentPosts}
+                    posts={urgentPostsListed}
                     allProfiles={allProfiles}
                     user={user}
                     onSeeAll={() => {
@@ -4107,10 +4328,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       setAuthError(null);
                       setShowAuthModal(true);
                     }}
-                    onOpenPost={(post) => {
-                      const author = allProfiles.find((ap) => ap.uid === post.authorId);
-                      if (author) setSelectedProfile(author);
-                    }}
+                    onOpenPost={openOpportunityProfile}
                   />
                 )}
               </>
@@ -4384,7 +4602,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   lang={lang}
                   t={t}
                   allProfiles={allProfiles}
-                  urgentPosts={urgentPosts}
+                  urgentPosts={urgentPostsListed}
                   viewerProfile={profile}
                   user={user}
                   copy={h}
@@ -4402,10 +4620,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     setHighlightedNeedFilter('');
                     setPassionIdFilter(passionId);
                   }}
-                  onOpportunityClick={(post) => {
-                    const author = allProfiles.find((ap) => ap.uid === post.authorId);
-                    if (author) setSelectedProfile(author);
-                  }}
+                  onOpportunityClick={openOpportunityProfile}
                   onPostOpportunity={() => setShowUrgentPostModal(true)}
                   onCreateProfile={() => {
                     setAuthError(null);
@@ -4480,36 +4695,41 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </button>
 
                 <div className="flex flex-col sm:flex-row gap-5 items-start mb-5">
-                  <div className="w-24 h-24 bg-stone-100 rounded-3xl flex items-center justify-center text-stone-300 flex-shrink-0 overflow-hidden">
-                    {selectedProfile.photoURL ? (
-                      <img src={selectedProfile.photoURL} alt={selectedProfile.fullName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                    ) : (
-                      <UserIcon size={48} />
-                    )}
+                  <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-3xl bg-stone-100">
+                    <ProfileAvatar
+                      photoURL={selectedProfile.photoURL}
+                      fullName={selectedProfile.fullName}
+                      className="h-full w-full"
+                      initialsClassName="text-xl font-bold text-stone-400 sm:text-2xl"
+                      iconSize={48}
+                    />
                   </div>
-                  <div className="pt-2 flex-1">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h2 className="text-3xl font-bold tracking-tight text-stone-900 mb-1">{selectedProfile.fullName}</h2>
-                        <p className="text-xl text-stone-500 font-medium">{selectedProfile.companyName}</p>
-                        {selectedProfile.positionCategory && (
-                          <p className="text-sm text-stone-600 mt-2 flex items-center gap-2">
-                            <UserCog size={16} className="text-stone-400 shrink-0" />
-                            {workFunctionLabel(selectedProfile.positionCategory, lang)}
-                          </p>
-                        )}
-                      </div>
-                      {selectedProfile.linkedin && (
-                        <a 
-                          href={selectedProfile.linkedin} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="p-3 bg-stone-50 text-stone-400 hover:text-blue-600 hover:bg-stone-100 rounded-2xl transition-all"
+                  <div className="min-w-0 flex-1 pt-2 pr-10 sm:pr-12">
+                    <h2 className="mb-1 inline-flex max-w-full flex-wrap items-center gap-2 text-3xl font-bold tracking-tight text-stone-900">
+                      <span className="min-w-0 break-words">{selectedProfile.fullName}</span>
+                      {selectedProfile.linkedin?.trim() ? (
+                        <a
+                          href={
+                            selectedProfile.linkedin.trim().startsWith('http')
+                              ? selectedProfile.linkedin.trim()
+                              : `https://${selectedProfile.linkedin.trim()}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 text-[#0A66C2] transition-opacity hover:opacity-80 focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#0A66C2] focus-visible:ring-offset-2"
+                          aria-label="LinkedIn"
                         >
-                          <Linkedin size={24} />
+                          <Linkedin className="size-[0.82em]" strokeWidth={2} aria-hidden />
                         </a>
-                      )}
-                    </div>
+                      ) : null}
+                    </h2>
+                    <p className="text-xl font-medium text-stone-500">{selectedProfile.companyName}</p>
+                    {selectedProfile.positionCategory && (
+                      <p className="mt-2 flex items-center gap-2 text-sm text-stone-600">
+                        <UserCog size={16} className="shrink-0 text-stone-400" />
+                        {workFunctionLabel(selectedProfile.positionCategory, lang)}
+                      </p>
+                    )}
                     <div className="mt-3 flex flex-wrap gap-2">
                       <span className="px-3 py-1 bg-stone-100 text-stone-600 rounded-full text-xs font-bold uppercase tracking-wider">
                         {activityCategoryLabel(selectedProfile.activityCategory, lang)}
@@ -4633,9 +4853,19 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         {t('company')}
                       </h3>
                       <div className="order-2 min-w-0 md:order-3">
-                        <p className="text-sm text-stone-600 leading-relaxed whitespace-pre-wrap">
-                          {selectedProfile.bio?.trim() ? selectedProfile.bio.trim() : t('noCompanyDescription')}
-                        </p>
+                        {selectedProfile.bio?.trim() ? (
+                          <AiTranslatedFreeText
+                            lang={lang}
+                            t={t}
+                            text={selectedProfile.bio}
+                            className="text-sm text-stone-600 leading-relaxed"
+                            whitespace="pre-wrap"
+                          />
+                        ) : (
+                          <p className="text-sm text-stone-600 leading-relaxed whitespace-pre-wrap">
+                            {t('noCompanyDescription')}
+                          </p>
+                        )}
                       </div>
                       <div className="order-4 space-y-2 md:order-4">
                         <div className="flex items-center gap-3 group">
@@ -4948,12 +5178,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     <div key={p.uid} className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-stone-300 overflow-hidden shrink-0">
-                            {p.photoURL ? (
-                              <img src={p.photoURL} alt={p.fullName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                            ) : (
-                              <UserIcon size={24} />
-                            )}
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white">
+                            <ProfileAvatar
+                              photoURL={p.photoURL}
+                              fullName={p.fullName}
+                              className="h-full w-full bg-white"
+                              iconSize={24}
+                            />
                           </div>
                           <div>
                             <h4 className="font-bold text-stone-900">{p.fullName}</h4>
@@ -5035,6 +5266,104 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       </AnimatePresence>
 
       <AnimatePresence>
+        {showOpportunitiesModerationPanel && profile?.role === 'admin' && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowOpportunitiesModerationPanel(false)}
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-stone-100 p-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+                    <Zap size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">{t('opportunitiesModerationTitle')}</h3>
+                    <p className="text-xs text-stone-500">
+                      {pendingUrgentForAdmin.length}{' '}
+                      {t('opportunitiesModerationPendingCount').toLowerCase()}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowOpportunitiesModerationPanel(false)}
+                  className="rounded-full p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-900"
+                >
+                  <Plus size={24} className="rotate-45" />
+                </button>
+              </div>
+              <div className="flex-1 space-y-4 overflow-y-auto p-6">
+                {pendingUrgentForAdmin.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <Zap size={48} className="mx-auto mb-4 text-stone-100" />
+                    <p className="font-medium text-stone-400">{t('opportunitiesModerationEmpty')}</p>
+                  </div>
+                ) : (
+                  pendingUrgentForAdmin.map((post) => (
+                    <div
+                      key={post.id}
+                      className="rounded-2xl border border-amber-100 bg-amber-50/40 p-4"
+                    >
+                      <AiTranslatedFreeText
+                        lang={lang}
+                        t={t}
+                        text={post.text}
+                        className="text-sm font-semibold leading-snug text-stone-900"
+                      />
+                      <p className="mt-2 text-xs font-medium uppercase tracking-wide text-stone-500">
+                        {activityCategoryLabel(post.sector, lang)}
+                      </p>
+                      <p className="mt-2 text-xs text-stone-600">
+                        {post.authorName || '—'}
+                        {post.authorCompany ? ` · ${post.authorCompany}` : ''}
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handlePublishUrgentPost(post.id)}
+                          className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+                        >
+                          {t('opportunityPublish')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRejectUrgentPost(post.id)}
+                          className="rounded-lg border border-stone-200 bg-white px-4 py-2 text-xs font-bold text-stone-700 hover:bg-stone-50"
+                        >
+                          {t('opportunityReject')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowOpportunitiesModerationPanel(false);
+                            openOpportunityProfile(post);
+                          }}
+                          disabled={!post.authorId}
+                          className="rounded-lg border border-stone-200 bg-white px-4 py-2 text-xs font-bold text-stone-700 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {t('details')}
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {showOnboarding && (
           <div className="fixed inset-0 z-[160] flex items-center justify-center p-4">
             <motion.div 
@@ -5102,7 +5431,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600">
                   <Zap size={24} />
                 </div>
-                <h3 className="text-xl font-bold text-stone-900">{t('postUrgentNeed')}</h3>
+                <div>
+                  <h3 className="text-xl font-bold text-stone-900">{t('postUrgentNeed')}</h3>
+                  <p className="mt-1 text-xs leading-snug text-amber-800">{t('opportunityModerationPendingNote')}</p>
+                </div>
               </div>
 
               <form onSubmit={async (e) => {
@@ -5111,18 +5443,26 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 const formData = new FormData(e.currentTarget);
                 const text = formData.get('text') as string;
                 const sector = formData.get('sector') as string;
-                
+                const createdAt = Date.now();
+                const expiresAt = createdAt + (7 * 24 * 60 * 60 * 1000);
+
                 try {
-                  await addDoc(collection(db, 'urgent_posts'), {
+                  const postRef = doc(collection(db, 'urgent_posts'));
+                  const batch = writeBatch(db);
+                  batch.set(postRef, {
+                    text,
+                    sector,
+                    createdAt,
+                    expiresAt,
+                    isPublished: false,
+                  });
+                  batch.set(doc(db, URGENT_POST_PRIVATE_COLLECTION, postRef.id), {
                     authorId: user.uid,
                     authorName: profile.fullName,
                     authorCompany: profile.companyName,
                     authorPhoto: profile.photoURL || '',
-                    text,
-                    sector,
-                    createdAt: Date.now(),
-                    expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
                   });
+                  await batch.commit();
                   setShowUrgentPostModal(false);
                 } catch (error) {
                   handleFirestoreError(error, OperationType.CREATE, 'urgent_posts');

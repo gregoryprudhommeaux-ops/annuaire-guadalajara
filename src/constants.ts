@@ -258,6 +258,28 @@ export const TRANSLATIONS: Translations = {
   linkedinPhotoHelperStep4: { fr: "4. Revenez ici et collez l'adresse dans le champ 'URL de la photo'.", es: "4. Vuelve aquí y pega la dirección en el campo « URL de la foto »." },
   openLinkedin: { fr: "Ouvrir LinkedIn", es: "Abrir LinkedIn" },
   photoURL: { fr: "URL de la photo", es: "URL de la foto" },
+  photoUploadFromDevice: { fr: "Envoyer une photo", es: "Subir una foto" },
+  photoUploading: { fr: "Envoi…", es: "Subiendo…" },
+  photoUploadHint: {
+    fr: "Les liens copiés depuis LinkedIn expirent souvent ou ne s’affichent pas ici ; envoyez un fichier pour une photo fiable.",
+    es: "Los enlaces copiados de LinkedIn suelen caducar o no mostrarse aquí; sube un archivo para una foto fiable.",
+  },
+  photoUploadWrongAccount: {
+    fr: "L’envoi de fichier n’est disponible que sur votre propre fiche (pas en édition d’un autre membre).",
+    es: "La subida solo está disponible en tu propia ficha (no al editar a otro miembro).",
+  },
+  photoUploadInvalidFile: {
+    fr: "Format non pris en charge ou fichier trop volumineux (JPEG, PNG, WebP ou GIF, max 5 Mo).",
+    es: "Formato no admitido o archivo demasiado grande (JPEG, PNG, WebP o GIF, máx. 5 MB).",
+  },
+  photoUploadStorageRules: {
+    fr: "Accès refusé par Firebase Storage : vérifiez les règles (déploiement de storage.rules) et que vous êtes connecté.",
+    es: "Acceso denegado en Firebase Storage: revisa las reglas (despliega storage.rules) y que hayas iniciado sesión.",
+  },
+  photoUploadError: {
+    fr: "Impossible d’envoyer la photo. Réessayez ou collez une URL hébergée de façon stable.",
+    es: "No se pudo subir la foto. Inténtalo de nuevo o pega una URL alojada de forma estable.",
+  },
   save: { fr: "Enregistrer", es: "Guardar" },
   cancel: { fr: "Annuler", es: "Cancelar" },
   search: { fr: "Rechercher", es: "Buscar" },
@@ -469,6 +491,32 @@ export const TRANSLATIONS: Translations = {
   opportunitiesEmpty: {
     fr: "Aucune opportunité pour le moment.",
     es: "Sin oportunidades por el momento.",
+  },
+  opportunityModerationPendingNote: {
+    fr: "Votre annonce sera visible par tous après validation par un administrateur.",
+    es: "Tu anuncio será visible para todos tras la validación de un administrador.",
+  },
+  opportunityAuthorHiddenGuest: {
+    fr: "Membre — connectez-vous pour voir l’auteur et le contacter.",
+    es: "Miembro — inicia sesión para ver al autor y contactarle.",
+  },
+  opportunitiesModerationTitle: {
+    fr: "Modération opportunités",
+    es: "Moderación de oportunidades",
+  },
+  opportunitiesModerationPendingCount: {
+    fr: "en attente",
+    es: "pendientes",
+  },
+  opportunitiesModerationEmpty: {
+    fr: "Aucune opportunité en attente de publication.",
+    es: "Ninguna oportunidad pendiente de publicación.",
+  },
+  opportunityPublish: { fr: "Publier", es: "Publicar" },
+  opportunityReject: { fr: "Refuser", es: "Rechazar" },
+  aiTranslationDisclaimer: {
+    fr: 'Traduction générée automatiquement par IA.',
+    es: 'Traducción generada automáticamente por IA.',
   },
   radar: { fr: "Radar Guadalajara", es: "Radar Guadalajara" },
   radarTitle: {

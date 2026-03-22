@@ -4,6 +4,7 @@ import type { UrgentPost, UserProfile, Language } from '../../types';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
 import { activityCategoryLabel } from '../../constants';
 import { cn } from '../../cn';
+import AiTranslatedFreeText from '../AiTranslatedFreeText';
 
 type TFn = (key: string) => string;
 
@@ -22,13 +23,8 @@ type Props = {
   compactLayout?: boolean;
 };
 
-function titleFromPost(text: string, max = 72): string {
-  const s = text.replace(/\s+/g, ' ').trim();
-  if (s.length <= max) return s;
-  return `${s.slice(0, max - 1)}…`;
-}
-
-function cityForAuthor(authorId: string, allProfiles: UserProfile[]): string {
+function cityForAuthor(authorId: string | undefined, allProfiles: UserProfile[]): string {
+  if (!authorId) return '';
   const p = allProfiles.find((x) => x.uid === authorId);
   return (p?.city || '').trim();
 }
@@ -84,30 +80,55 @@ export default function OpportunitiesSection({
           )}
         >
           {slice.map((post) => {
-            const city = cityForAuthor(post.authorId, allProfiles);
+            const canOpenProfile = !!user && !!post.authorId;
+            const city = canOpenProfile ? cityForAuthor(post.authorId, allProfiles) : '';
             const typeLabel = post.sector?.trim() || copy.opportunityTypeUrgent;
+            const cardBody = (
+              <>
+                <div className="line-clamp-3 min-w-0 break-words text-sm font-semibold leading-snug text-stone-900">
+                  <AiTranslatedFreeText
+                    lang={lang}
+                    t={t}
+                    text={post.text}
+                    as="span"
+                    omitAiDisclaimer
+                    className="font-semibold leading-snug"
+                  />
+                </div>
+                <p className="mt-2 text-xs font-medium uppercase tracking-wide text-stone-400">
+                  {activityCategoryLabel(typeLabel, lang) || typeLabel}
+                </p>
+                {user ? (
+                  <p className="mt-2 text-xs text-stone-600">
+                    {post.authorName
+                      ? `${post.authorName}${post.authorCompany ? ` · ${post.authorCompany}` : ''}`
+                      : '—'}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-xs text-stone-500">{t('opportunityAuthorHiddenGuest')}</p>
+                )}
+                {city ? <p className="mt-1 text-xs text-stone-500">{city}</p> : null}
+              </>
+            );
             return (
               <li
                 key={post.id}
-                className="flex flex-col rounded-xl border border-stone-100 bg-stone-50/60 p-3 transition-colors hover:border-stone-200 hover:bg-stone-50"
+                className={cn(
+                  'flex flex-col rounded-xl border border-stone-100 bg-stone-50/60 p-3 transition-colors',
+                  canOpenProfile && 'hover:border-stone-200 hover:bg-stone-50'
+                )}
               >
-                <button
-                  type="button"
-                  onClick={() => onOpenPost(post)}
-                  className="flex flex-col text-left"
-                >
-                  <p className="text-sm font-semibold leading-snug text-stone-900 break-words">
-                    {titleFromPost(post.text)}
-                  </p>
-                  <p className="mt-2 text-xs font-medium uppercase tracking-wide text-stone-400">
-                    {activityCategoryLabel(typeLabel, lang) || typeLabel}
-                  </p>
-                  <p className="mt-2 text-xs text-stone-600">
-                    {post.authorName}
-                    {post.authorCompany ? ` · ${post.authorCompany}` : ''}
-                  </p>
-                  {city ? <p className="mt-1 text-xs text-stone-500">{city}</p> : null}
-                </button>
+                {canOpenProfile ? (
+                  <button
+                    type="button"
+                    onClick={() => onOpenPost(post)}
+                    className="flex flex-col text-left"
+                  >
+                    {cardBody}
+                  </button>
+                ) : (
+                  <div className="flex flex-col text-left cursor-default">{cardBody}</div>
+                )}
               </li>
             );
           })}

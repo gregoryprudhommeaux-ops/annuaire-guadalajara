@@ -15,6 +15,7 @@ import { Users, Target, Factory, Zap } from 'lucide-react';
 import type { UserProfile, Language, UrgentPost } from '../../types';
 import type { User } from 'firebase/auth';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
+import AiTranslatedFreeText from '../AiTranslatedFreeText';
 import { sanitizeHighlightedNeeds, NEED_OPTION_VALUE_SET } from '../../needOptions';
 import { sanitizePassionIds } from '../../lib/passionConfig';
 const DONUT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316', '#6B7280'];
@@ -48,12 +49,6 @@ function truncateLabel(s: string, max = 30): string {
   const x = s.trim();
   if (x.length <= max) return x;
   return `${x.slice(0, max - 1)}…`;
-}
-
-function titleFromPost(text: string, max = 72): string {
-  const s = text.replace(/\s+/g, ' ').trim();
-  if (s.length <= max) return s;
-  return `${s.slice(0, max - 1)}…`;
 }
 
 export default function NetworkRadarSection({
@@ -404,26 +399,52 @@ export default function NetworkRadarSection({
           </div>
         ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {recentOpportunities.map((post) => (
-              <li key={post.id}>
-                <button
-                  type="button"
-                  onClick={() => onOpportunityClick(post)}
-                  className="flex h-full w-full flex-col rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4 text-left transition-colors hover:border-[#D1D5DB] hover:bg-white"
-                >
-                  <p className="line-clamp-3 text-[13px] font-medium leading-snug text-[#1F2937] break-words">
-                    {titleFromPost(post.text, 100)}
-                  </p>
-                  <p className="mt-2 text-[11px] text-[#6B7280]">
-                    {post.authorName}
-                    {post.authorCompany ? ` · ${post.authorCompany}` : ''}
-                  </p>
+            {recentOpportunities.map((post) => {
+              const canOpen = !!user && !!post.authorId;
+              const cardInner = (
+                <>
+                  <div className="line-clamp-3 break-words text-[13px] font-medium leading-snug text-[#1F2937]">
+                    <AiTranslatedFreeText
+                      lang={lang}
+                      t={t}
+                      text={post.text}
+                      as="span"
+                      omitAiDisclaimer
+                      className="font-medium leading-snug"
+                    />
+                  </div>
+                  {user ? (
+                    <p className="mt-2 text-[11px] text-[#6B7280]">
+                      {post.authorName
+                        ? `${post.authorName}${post.authorCompany ? ` · ${post.authorCompany}` : ''}`
+                        : '—'}
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-[11px] text-[#6B7280]">{t('opportunityAuthorHiddenGuest')}</p>
+                  )}
                   <span className="mt-2 inline-flex w-fit rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#6B7280] ring-1 ring-[#E5E7EB]">
                     {activityCategoryLabel(post.sector, lang)}
                   </span>
-                </button>
-              </li>
-            ))}
+                </>
+              );
+              return (
+                <li key={post.id}>
+                  {canOpen ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpportunityClick(post)}
+                      className="flex h-full w-full flex-col rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4 text-left transition-colors hover:border-[#D1D5DB] hover:bg-white"
+                    >
+                      {cardInner}
+                    </button>
+                  ) : (
+                    <div className="flex h-full w-full cursor-default flex-col rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4 text-left">
+                      {cardInner}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
