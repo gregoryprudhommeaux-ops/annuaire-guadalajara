@@ -34,6 +34,7 @@ import {
   Timestamp,
   getDocs,
   deleteDoc,
+  deleteField,
   getDocFromServer,
   updateDoc,
   where,
@@ -47,6 +48,8 @@ import {
   Role,
   GENDER_STAT_VALUES,
   type GenderStat,
+  type CommunityCompanyKind,
+  type CommunityMemberStatus,
   MatchSuggestion,
   UrgentPost,
   Recommendation,
@@ -107,6 +110,7 @@ import InviteNetworkModal from './components/home/InviteNetworkModal';
 import NewMembersStrip from './components/home/NewMembersStrip';
 import OpportunitiesSection from './components/home/OpportunitiesSection';
 import NetworkRadarSection from './components/home/NetworkRadarSection';
+import DashboardPage from './components/dashboard/DashboardPage';
 import { homeLanding } from './copy/homeLanding';
 import AffinityScore from './components/AffinityScore';
 import { profileMatchesSearchQuery } from './profileSearch';
@@ -136,6 +140,7 @@ import {
   Share2,
   Trophy,
   Activity,
+  LayoutDashboard,
   Target,
   MessageSquare,
   Star,
@@ -1699,7 +1704,9 @@ const MainApp = () => {
   const [membersSortRecent, setMembersSortRecent] = useState(false);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'companies' | 'members' | 'activities' | 'radar'>('members');
+  const [viewMode, setViewMode] = useState<
+    'companies' | 'members' | 'activities' | 'radar' | 'dashboard'
+  >('members');
   /** Masque « Nouveaux membres » et « Opportunités » après interaction avec les onglets du listing (remonte le bloc principal). */
   const [directoryDiscoveryStripsHidden, setDirectoryDiscoveryStripsHidden] = useState(false);
   const [matches, setMatches] = useState<MatchSuggestion[]>([]);
@@ -2251,12 +2258,83 @@ const MainApp = () => {
       return;
     }
 
+    const COMMUNITY_COMPANY_KINDS: readonly CommunityCompanyKind[] = [
+      'startup',
+      'pme',
+      'corporate',
+      'independent',
+    ];
+    const COMMUNITY_MEMBER_STATUSES: readonly CommunityMemberStatus[] = [
+      'freelance',
+      'employee',
+      'owner',
+    ];
+
+    const cckRaw = getTrimmed('communityCompanyKind');
+    let communityCompanyKind: CommunityCompanyKind | ReturnType<typeof deleteField>;
+    if (cckRaw === '') {
+      communityCompanyKind = deleteField();
+    } else if ((COMMUNITY_COMPANY_KINDS as readonly string[]).includes(cckRaw)) {
+      communityCompanyKind = cckRaw as CommunityCompanyKind;
+    } else {
+      setProfileSaveError(
+        pickLang(
+          'La taille d’entreprise (tableau de bord) sélectionnée est invalide.',
+          'El tamaño de empresa (panel) seleccionado no es válido.',
+          'The selected company size (dashboard) is invalid.',
+          lang
+        )
+      );
+      setProfileSaveBusy(false);
+      return;
+    }
+
+    const cmsRaw = getTrimmed('communityMemberStatus');
+    let communityMemberStatus: CommunityMemberStatus | ReturnType<typeof deleteField>;
+    if (cmsRaw === '') {
+      communityMemberStatus = deleteField();
+    } else if ((COMMUNITY_MEMBER_STATUSES as readonly string[]).includes(cmsRaw)) {
+      communityMemberStatus = cmsRaw as CommunityMemberStatus;
+    } else {
+      setProfileSaveError(
+        pickLang(
+          'Le statut professionnel (tableau de bord) sélectionné est invalide.',
+          'El estatus profesional (panel) seleccionado no es válido.',
+          'The selected professional status (dashboard) is invalid.',
+          lang
+        )
+      );
+      setProfileSaveBusy(false);
+      return;
+    }
+
+    const cyRaw = getTrimmed('communityYearsInGdl');
+    let communityYearsInGdl: number | ReturnType<typeof deleteField>;
+    if (cyRaw === '') {
+      communityYearsInGdl = deleteField();
+    } else {
+      const n = Number(cyRaw);
+      if (!Number.isFinite(n) || n < 0 || n > 80) {
+        setProfileSaveError(
+          pickLang(
+            'Les années à Guadalajara (tableau de bord) doivent être un nombre entre 0 et 80.',
+            'Los años en Guadalajara (panel) deben ser un número entre 0 y 80.',
+            'Years in Guadalajara (dashboard) must be a number between 0 and 80.',
+            lang
+          )
+        );
+        setProfileSaveBusy(false);
+        return;
+      }
+      communityYearsInGdl = Math.floor(n);
+    }
+
     const baseProfile = isSelf ? profile : editingProfile;
     const computedCompanySize: UserProfile['companySize'] = employeeCountVal
       ? companySizeFromEmployeeRange(employeeCountVal)
       : (baseProfile?.companySize ?? 'solo');
 
-    const newProfile: Partial<UserProfile> = {
+    const newProfile = {
       uid: targetUid,
       fullName: getTrimmed('fullName'),
       companyName: getTrimmed('companyName'),
@@ -2284,22 +2362,28 @@ const MainApp = () => {
       role: (targetUid === user.uid && user.email === ADMIN_EMAIL) ? 'admin' : (editingProfile?.role || profile?.role || 'user') as Role,
       createdAt: (isSelf ? profile?.createdAt : editingProfile?.createdAt) || Timestamp.now(),
       isValidated: isSelf ? (profile?.isValidated ?? false) : (editingProfile?.isValidated ?? true),
-    };
+      communityYearsInGdl,
+      communityCompanyKind,
+      communityMemberStatus,
+    } as Record<string, unknown> & Partial<UserProfile>;
     const sanitizedProfile = Object.fromEntries(
       Object.entries(newProfile).filter(([, value]) => value !== undefined)
-    ) as Partial<UserProfile>;
+    );
 
     const delegationFlag = formData.get('acceptsDelegationVisits') === 'on';
 
     try {
-      await setDoc(doc(db, 'users', targetUid), sanitizedProfile, { merge: true });
+      await setDoc(doc(db, 'users', targetUid), sanitizedProfile as Partial<UserProfile>, {
+        merge: true,
+      });
       await saveUserAdminPrivate(targetUid, {
         genderStat,
         nationality,
         acceptsDelegationVisits: delegationFlag,
       });
       if (isSelf) {
-        setProfile(sanitizedProfile as UserProfile);
+        const fresh = await getDoc(doc(db, 'users', targetUid));
+        if (fresh.exists()) setProfile(fresh.data() as UserProfile);
         setFormAdminPrivate({
           genderStat,
           nationality,
@@ -2990,6 +3074,95 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </div>
                           </div>
 
+                          <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 md:p-5 space-y-4">
+                            <div>
+                              <p className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                                {pickLang(
+                                  'Données communauté (tableau de bord)',
+                                  'Datos comunidad (panel)',
+                                  'Community data (dashboard)',
+                                  lang
+                                )}
+                              </p>
+                              <p className="text-[10px] text-indigo-800/80 mt-1 leading-relaxed">
+                                {pickLang(
+                                  'Optionnel : alimente les graphiques « Vue d’ensemble » avec des valeurs explicites. Laisser vide = l’app continue d’estimer à partir du reste du profil.',
+                                  'Opcional: alimenta los gráficos del panel con valores explícitos. Vacío = la app sigue estimando desde el perfil.',
+                                  'Optional: feeds the overview charts with explicit values. Leave blank = the app keeps inferring from the rest of your profile.',
+                                  lang
+                                )}
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-xs font-semibold text-stone-600">
+                                  {pickLang(
+                                    'Années sur Guadalajara (métropole)',
+                                    'Años en Guadalajara (área metropolitana)',
+                                    'Years in Guadalajara (metro area)',
+                                    lang
+                                  )}
+                                </label>
+                                <input
+                                  type="number"
+                                  name="communityYearsInGdl"
+                                  min={0}
+                                  max={80}
+                                  placeholder={pickLang('ex. 5', 'ej. 5', 'e.g. 5', lang)}
+                                  defaultValue={
+                                    editingProfile?.communityYearsInGdl ??
+                                    profile?.communityYearsInGdl ??
+                                    ''
+                                  }
+                                  className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-xs font-semibold text-stone-600">
+                                  {pickLang('Type d’entreprise (analytics)', 'Tipo de empresa (analytics)', 'Company type (analytics)', lang)}
+                                </label>
+                                <select
+                                  name="communityCompanyKind"
+                                  defaultValue={
+                                    editingProfile?.communityCompanyKind ??
+                                    profile?.communityCompanyKind ??
+                                    ''
+                                  }
+                                  className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                >
+                                  <option value="">
+                                    {pickLang('— Auto (depuis effectifs) —', '— Auto (desde plantilla) —', '— Auto (from headcount) —', lang)}
+                                  </option>
+                                  <option value="startup">Startup</option>
+                                  <option value="pme">PME / SME</option>
+                                  <option value="corporate">Corporate</option>
+                                  <option value="independent">{pickLang('Indépendant', 'Independiente', 'Independent', lang)}</option>
+                                </select>
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-xs font-semibold text-stone-600">
+                                  {pickLang('Statut pro (analytics)', 'Estatus profesional (analytics)', 'Professional status (analytics)', lang)}
+                                </label>
+                                <select
+                                  name="communityMemberStatus"
+                                  defaultValue={
+                                    editingProfile?.communityMemberStatus ??
+                                    profile?.communityMemberStatus ??
+                                    ''
+                                  }
+                                  className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                >
+                                  <option value="">
+                                    {pickLang('— Auto (depuis fonction) —', '— Auto (desde función) —', '— Auto (from role) —', lang)}
+                                  </option>
+                                  <option value="freelance">Freelance</option>
+                                  <option value="employee">{pickLang('Salarié', 'Asalariado', 'Employee', lang)}</option>
+                                  <option value="owner">{pickLang('Dirigeant / fondateur', 'Director / fundador', 'Owner / founder', lang)}</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-1">
                               <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('linkedin')}</label>
@@ -3580,6 +3753,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     { id: 'members' as const, icon: Users, label: t('members') },
                     { id: 'activities' as const, icon: Briefcase, label: t('activities') },
                     { id: 'radar' as const, icon: Activity, label: t('radarTitle') },
+                    { id: 'dashboard' as const, icon: LayoutDashboard, label: t('dashboardTab') },
                   ] as const
                 ).map((tab) => (
                   <button
@@ -3817,7 +3991,27 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 />
               )}
 
-            {filteredProfiles.length === 0 && (
+              {viewMode === 'dashboard' && (
+                <DashboardPage
+                  lang={lang}
+                  t={t}
+                  registeredWithProfile={!!user && !!profile}
+                  onUnlockRadar={() => {
+                    setAuthError(null);
+                    if (!user) {
+                      setShowAuthModal(true);
+                    } else {
+                      setShowOnboarding(true);
+                    }
+                  }}
+                  user={user}
+                />
+              )}
+
+            {filteredProfiles.length === 0 &&
+              (viewMode === 'companies' ||
+                viewMode === 'members' ||
+                viewMode === 'activities') && (
               <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-stone-300">
                 <Search size={48} className="mx-auto text-stone-200 mb-4" />
                 <p className="text-stone-400 font-medium">{t('noSearchResults')}</p>

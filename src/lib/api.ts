@@ -2,10 +2,26 @@
  * Accès données côté client (Firebase). Pour Vite/React : appeler depuis un composant
  * (useEffect) ou un loader client — pas équivalent direct à une Server Component Next.js.
  */
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import {
+  addDoc,
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  Timestamp,
+} from 'firebase/firestore';
 import { db } from '@/firebase';
 import { sanitizePassionIds } from '@/lib/passionConfig';
 import type { ExplorerMember, CompanySize } from '@/lib/explorerProfilsCompute';
+import type {
+  CompanyKind,
+  MemberExtended,
+  MemberNeed,
+  MemberStatus,
+  NeedCategory,
+} from '@/lib/communityMemberExtended';
+import { isNeedCategory } from '@/lib/communityMemberExtended';
 import { sanitizeHighlightedNeeds } from '@/needOptions';
 import type { UserProfile } from '@/types';
 
@@ -129,14 +145,70 @@ function radarScoresFromProfile(p: UserProfile): Pick<
   };
 }
 
+function profileSector(p: UserProfile): string {
+  return (
+    (p.activityCategory && p.activityCategory.trim()) ||
+    (p.targetSectors && String(p.targetSectors).split(',')[0]?.trim()) ||
+    '—'
+  );
+}
+
+function profileToCompanyKind(p: UserProfile): CompanyKind {
+  if (p.communityCompanyKind) return p.communityCompanyKind;
+  if (p.companySize === 'solo') return 'independent';
+  if (p.companySize === '50+') return 'corporate';
+  return 'pme';
+}
+
+function profileToMemberStatus(p: UserProfile): MemberStatus {
+  if (p.communityMemberStatus) return p.communityMemberStatus;
+  if (p.companySize === 'solo') return 'freelance';
+  return 'owner';
+}
+
+function profileToYearsInGdl(p: UserProfile): number {
+  if (
+    typeof p.communityYearsInGdl === 'number' &&
+    Number.isFinite(p.communityYearsInGdl) &&
+    p.communityYearsInGdl >= 0
+  ) {
+    return Math.min(50, Math.floor(p.communityYearsInGdl));
+  }
+  const y = p.arrivalYear;
+  const nowY = new Date().getFullYear();
+  if (typeof y === 'number' && y >= 1990 && y <= nowY) {
+    return Math.max(0, nowY - y);
+  }
+  const seed = p.uid || p.email || 'x';
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (h * 31 + seed.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h) % 6;
+}
+
+/**
+ * Profil `users` → `MemberExtended` (dashboard, heatmaps).
+ * Champs optionnels : `communityYearsInGdl`, `communityCompanyKind`, `communityMemberStatus`.
+ * Sinon : `arrivalYear`, `companySize`, hash stable sur `uid`.
+ */
+export function userProfileToMemberExtended(p: UserProfile): MemberExtended {
+  return {
+    id: p.uid,
+    sector: profileSector(p),
+    companySize: profileToCompanyKind(p),
+    yearsInGDL: profileToYearsInGdl(p),
+    status: profileToMemberStatus(p),
+    city: (p.city ?? '').trim() || '—',
+    country: (p.country ?? '').trim() || 'Mexique',
+  };
+}
+
 /**
  * Mappe un profil annuaire (`users`) vers le modèle utilisé par `ExplorerProfils`.
  */
 export function userProfileToExplorerMember(p: UserProfile): ExplorerMember {
-  const sector =
-    (p.activityCategory && p.activityCategory.trim()) ||
-    (p.targetSectors && String(p.targetSectors).split(',')[0]?.trim()) ||
-    '—';
+  const sector = profileSector(p);
 
   const tags = interestTagsForVenn(p);
   const radar = radarScoresFromProfile(p);
@@ -161,4 +233,66 @@ export async function getMembers(): Promise<ExplorerMember[]> {
   const q = query(collection(db, 'users'), orderBy('fullName', 'asc'));
   const snap = await getDocs(q);
   return snap.docs.map((d) => userProfileToExplorerMember(d.data() as UserProfile));
+}
+
+/**
+ * Profils `users` → `MemberExtended` (dashboard communauté / heatmap besoins).
+ * Utilise les champs communauté optionnels sur la fiche quand ils sont renseignés.
+ */
+export async function getMembersExtended(): Promise<MemberExtended[]> {
+  const q = query(collection(db, 'users'), orderBy('fullName', 'asc'));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => userProfileToMemberExtended(d.data() as UserProfile));
+}
+
+function firestoreDateToIsoDate(v: unknown): string {
+  if (v instanceof Timestamp) {
+    return v.toDate().toISOString().slice(0, 10);
+  }
+  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) {
+    return v.slice(0, 10);
+  }
+  if (typeof v === 'number' && Number.isFinite(v)) {
+    return new Date(v).toISOString().slice(0, 10);
+  }
+  return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Besoins analytics : collection `member_needs` (lecture publique).
+ * Documents : `{ memberId, sector, need, createdAt }` avec `need` ∈ NeedCategory.
+ */
+export async function getNeeds(): Promise<MemberNeed[]> {
+  const snap = await getDocs(collection(db, 'member_needs'));
+  const out: MemberNeed[] = [];
+  snap.forEach((docSnap) => {
+    const d = docSnap.data();
+    const memberId = typeof d.memberId === 'string' ? d.memberId : '';
+    const sector = typeof d.sector === 'string' ? d.sector : '';
+    const needRaw = typeof d.need === 'string' ? d.need : '';
+    if (!memberId || !sector || !isNeedCategory(needRaw)) return;
+    out.push({
+      memberId,
+      sector,
+      need: needRaw,
+      createdAt: firestoreDateToIsoDate(d.createdAt),
+    });
+  });
+  return out.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+/**
+ * Enregistre un besoin analytics pour le membre connecté (`memberId` = uid).
+ */
+export async function addMemberNeed(input: {
+  memberId: string;
+  sector: string;
+  need: NeedCategory;
+}): Promise<void> {
+  await addDoc(collection(db, 'member_needs'), {
+    memberId: input.memberId,
+    sector: input.sector.trim(),
+    need: input.need,
+    createdAt: serverTimestamp(),
+  });
 }

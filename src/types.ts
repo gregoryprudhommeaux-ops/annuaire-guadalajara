@@ -25,6 +25,12 @@ export const EMPLOYEE_COUNT_RANGES = [
 
 export type EmployeeCountRange = (typeof EMPLOYEE_COUNT_RANGES)[number];
 
+/** Taille d’entreprise pour analytics dashboard (optionnel sur `users`). */
+export type CommunityCompanyKind = 'startup' | 'pme' | 'corporate' | 'independent';
+
+/** Statut pro pour analytics dashboard (optionnel sur `users`). */
+export type CommunityMemberStatus = 'freelance' | 'employee' | 'owner';
+
 export interface OptimizationSuggestion {
   bioSuggested: string;
   /** Anciennes fiches uniquement (plus généré après suppression du champ libre « ce que je cherche »). */
@@ -110,6 +116,12 @@ export interface UserProfile {
   accountType?: 'local' | 'foreign';
   country?: string;
   optimizationSuggestion?: OptimizationSuggestion;
+  /** Années sur la métropole de Guadalajara (dashboard communauté). */
+  communityYearsInGdl?: number;
+  /** Remplace l’inférence depuis `companySize` pour les graphiques « taille ». */
+  communityCompanyKind?: CommunityCompanyKind;
+  /** Remplace l’inférence freelance / owner pour les graphiques « statut ». */
+  communityMemberStatus?: CommunityMemberStatus;
 }
 
 export interface MatchSuggestion {

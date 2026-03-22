@@ -61,6 +61,15 @@ service cloud.firestore {
         && data.createdAt is number;
     }
 
+    /** Besoins analytics (dashboard) : création par le membre concerné uniquement. */
+    function isValidMemberNeed(data) {
+      return data.keys().hasAll(['memberId', 'sector', 'need', 'createdAt'])
+        && data.memberId is string
+        && data.sector is string && data.sector.size() >= 1 && data.sector.size() <= 200
+        && data.need in ['sourcing', 'partners', 'recruitment', 'visibility', 'softlanding', 'legal']
+        && data.createdAt is timestamp;
+    }
+
     /** Données non publiques (genre, nationalité, délégations) : propriétaire + admin uniquement. */
     function isValidUserAdminPrivate(data, userId) {
       return data.uid == userId
@@ -114,6 +123,15 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidRecommendation(request.resource.data);
       allow delete: if isAuthenticated()
         && (request.auth.uid == resource.data.authorId || isAdmin());
+    }
+
+    match /member_needs/{docId} {
+      allow read: if true;
+      allow create: if isAuthenticated()
+        && isValidMemberNeed(request.resource.data)
+        && request.resource.data.memberId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && (resource.data.memberId == request.auth.uid || isAdmin());
     }
   }
 }

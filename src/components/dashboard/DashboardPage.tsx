@@ -1,0 +1,120 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import type { User } from 'firebase/auth';
+import type { Language } from '@/types';
+import ExplorerProfils from '@/components/matching/ExplorerProfils';
+import VueEnsemble from '@/components/dashboard/VueEnsemble';
+import { NeedsDashboard } from '@/components/dashboard/NeedsDashboard';
+import { getMembersExtended, getNeeds } from '@/lib/api';
+import type { MemberExtended, MemberNeed } from '@/lib/communityMemberExtended';
+import { mockNeeds } from '@/lib/communityMemberExtended';
+import { memberExtendedToExplorerMember } from '@/lib/vueEnsembleCompute';
+
+type TFn = (key: string) => string;
+
+export type DashboardPageProps = {
+  lang: Language;
+  t: TFn;
+  registeredWithProfile: boolean;
+  onUnlockRadar: () => void;
+  user: User | null;
+  className?: string;
+};
+
+/**
+ * Page tableau de bord (Vite/React). Équivalent client d’un fichier Next
+ * `src/app/dashboard/page.tsx` : pas de Server Component — données chargées ici.
+ *
+ * Doit être rendu sous le `LanguageProvider` de l’app pour recevoir `t` et `lang`.
+ */
+export default function DashboardPage({
+  lang,
+  t,
+  registeredWithProfile,
+  onUnlockRadar,
+  user,
+  className,
+}: DashboardPageProps) {
+  const [membersExtended, setMembersExtended] = useState<MemberExtended[] | null>(null);
+  const [needs, setNeeds] = useState<MemberNeed[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!registeredWithProfile) {
+      setMembersExtended(null);
+      setNeeds(null);
+      setLoadError(null);
+      return;
+    }
+    let cancelled = false;
+    setLoadError(null);
+    Promise.all([getMembersExtended(), getNeeds()])
+      .then(([m, n]) => {
+        if (!cancelled) {
+          setMembersExtended(m);
+          setNeeds(n);
+        }
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) {
+          setLoadError(e instanceof Error ? e.message : String(e));
+          setMembersExtended([]);
+          setNeeds([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [registeredWithProfile]);
+
+  const explorerMembers = useMemo(
+    () => (membersExtended ?? []).map(memberExtendedToExplorerMember),
+    [membersExtended]
+  );
+
+  const loading =
+    lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
+
+  if (registeredWithProfile && membersExtended === null && !loadError) {
+    return (
+      <div className={className}>
+        <p className="text-sm text-gray-500">{loading}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`flex w-full flex-col gap-8 p-4 md:p-6 lg:p-8 ${className ?? ''}`}
+    >
+      {loadError && (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+          {loadError}
+        </p>
+      )}
+
+      <VueEnsemble
+        lang={lang}
+        t={t}
+        registeredWithProfile={registeredWithProfile}
+        onUnlockRadar={onUnlockRadar}
+        user={user}
+        membersExtended={registeredWithProfile ? (membersExtended ?? []) : undefined}
+        communityNeeds={registeredWithProfile ? (needs ?? mockNeeds) : undefined}
+        includeNeedsDashboard={false}
+      />
+
+      {registeredWithProfile && membersExtended !== null && (
+        <NeedsDashboard
+          needs={needs ?? mockNeeds}
+          members={membersExtended}
+          lang={lang}
+          t={t}
+        />
+      )}
+
+      {registeredWithProfile && membersExtended !== null && (
+        <ExplorerProfils members={explorerMembers} lang={lang} showPageHeader />
+      )}
+    </div>
+  );
+}
