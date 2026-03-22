@@ -1,0 +1,120 @@
+import type { Language } from '../types';
+
+/**
+ * Textes dédiés au bandeau d’accueil (hero, nouveaux membres, opportunités).
+ * FR + ES actifs via `lang` ; EN prêt pour une future couche i18n (non branchée).
+ */
+export type HomeLandingCopy = {
+  heroTitle: string;
+  heroSubtitle: string;
+  ctaPrimary: string;
+  ctaPrimaryBusy: string;
+  ctaSecondary: string;
+  steps: [string, string, string];
+  newMembersTitle: string;
+  newMembersBadge: string;
+  newMembersSeeAll: string;
+  newMembersEmpty: string;
+  opportunitiesTitle: string;
+  opportunitiesSeeAll: string;
+  opportunitiesPost: string;
+  opportunitiesMembersOnly: string;
+  opportunityTypeUrgent: string;
+  opportunitiesEmpty: string;
+  membersSortBanner: string;
+  membersSortReset: string;
+};
+
+const HOME_LANDING: Record<'fr' | 'en' | 'es', HomeLandingCopy> = {
+  fr: {
+    heroTitle: 'Annuaire d’affaires francophones à Guadalajara',
+    heroSubtitle:
+      'Voyez en un coup d’œil qui fait quoi sur la zone, trouvez les bons contacts et rejoignez la communauté.',
+    ctaPrimary: 'Créer mon profil',
+    ctaPrimaryBusy: 'Connexion…',
+    ctaSecondary: 'Explorer les membres',
+    steps: [
+      'Créez votre profil.',
+      'Soyez trouvable par la communauté.',
+      'Recevez des opportunités ciblées.',
+    ],
+    newMembersTitle: 'Nouveaux membres cette semaine',
+    newMembersBadge: '{{n}} nouveaux membres cette semaine',
+    newMembersSeeAll: 'Voir tous les derniers inscrits',
+    newMembersEmpty: 'Aucun nouvel inscrit sur les 7 derniers jours.',
+    opportunitiesTitle: 'Opportunités du réseau',
+    opportunitiesSeeAll: 'Voir toutes les opportunités',
+    opportunitiesPost: 'Poster une opportunité',
+    opportunitiesMembersOnly: 'Réservé aux membres',
+    opportunityTypeUrgent: 'Besoin urgent',
+    opportunitiesEmpty: 'Aucune opportunité publiée pour le moment. Revenez bientôt ou publiez la vôtre.',
+    membersSortBanner: 'Affichage : plus récents en premier',
+    membersSortReset: 'Réinitialiser le tri',
+  },
+  en: {
+    heroTitle: 'Francophone business directory in Guadalajara',
+    heroSubtitle:
+      'See at a glance who does what in the area, find the right contacts, and join the community.',
+    ctaPrimary: 'Create my profile',
+    ctaPrimaryBusy: 'Signing in…',
+    ctaSecondary: 'Browse members',
+    steps: [
+      'Create your profile.',
+      'Be discoverable by the community.',
+      'Receive targeted opportunities.',
+    ],
+    newMembersTitle: 'New members this week',
+    newMembersBadge: '{{n}} new members this week',
+    newMembersSeeAll: 'See all recent sign-ups',
+    newMembersEmpty: 'No new sign-ups in the last 7 days.',
+    opportunitiesTitle: 'Network opportunities',
+    opportunitiesSeeAll: 'See all opportunities',
+    opportunitiesPost: 'Post an opportunity',
+    opportunitiesMembersOnly: 'Members only',
+    opportunityTypeUrgent: 'Urgent need',
+    opportunitiesEmpty: 'No opportunities yet. Check back soon or post your own.',
+    membersSortBanner: 'Sorted by: newest first',
+    membersSortReset: 'Reset sort order',
+  },
+  es: {
+    heroTitle: 'Directorio de negocios francófonos en Guadalajara',
+    heroSubtitle:
+      'Ve de un vistazo quién hace qué en la zona, encuentra los contactos adecuados y únete a la comunidad.',
+    ctaPrimary: 'Crear mi perfil',
+    ctaPrimaryBusy: 'Conectando…',
+    ctaSecondary: 'Explorar miembros',
+    steps: [
+      'Crea tu perfil.',
+      'Sé visible para la comunidad.',
+      'Recibe oportunidades relevantes.',
+    ],
+    newMembersTitle: 'Nuevos miembros esta semana',
+    newMembersBadge: '{{n}} nuevos miembros esta semana',
+    newMembersSeeAll: 'Ver todos los últimos registros',
+    newMembersEmpty: 'No hay nuevos registros en los últimos 7 días.',
+    opportunitiesTitle: 'Oportunidades de la red',
+    opportunitiesSeeAll: 'Ver todas las oportunidades',
+    opportunitiesPost: 'Publicar una oportunidad',
+    opportunitiesMembersOnly: 'Solo miembros',
+    opportunityTypeUrgent: 'Necesidad urgente',
+    opportunitiesEmpty:
+      'Aún no hay oportunidades publicadas. Vuelve pronto o publica la tuya.',
+    membersSortBanner: 'Orden: más recientes primero',
+    membersSortReset: 'Restablecer orden',
+  },
+};
+
+export function homeLanding(lang: Language): HomeLandingCopy {
+  return lang === 'fr' ? HOME_LANDING.fr : HOME_LANDING.es;
+}
+
+/** Pour une future langue `en` sans toucher au type `Language` aujourd’hui. */
+export function homeLandingAny(lang: string): HomeLandingCopy {
+  if (lang === 'en') return HOME_LANDING.en;
+  if (lang === 'es') return HOME_LANDING.es;
+  return HOME_LANDING.fr;
+}
+
+export function formatHomeBadge(template: string, n: number): string {
+  return template.replace(/\{\{n\}\}/g, String(n));
+}

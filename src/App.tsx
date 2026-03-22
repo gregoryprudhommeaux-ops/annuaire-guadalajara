@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo, useCallback, createContext, useContext } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, createContext, useContext } from 'react';
 import { 
   BrowserRouter, 
   Routes, 
@@ -80,6 +80,11 @@ import {
   sanitizePassionIds,
 } from './lib/passionConfig';
 import PassionPicker from './components/PassionPicker';
+import HeroSection from './components/home/HeroSection';
+import WelcomeContextCard from './components/home/WelcomeContextCard';
+import NewMembersStrip from './components/home/NewMembersStrip';
+import OpportunitiesSection from './components/home/OpportunitiesSection';
+import { homeLanding } from './copy/homeLanding';
 import AffinityScore from './components/AffinityScore';
 import { profileMatchesSearchQuery } from './profileSearch';
 import { 
@@ -94,7 +99,6 @@ import {
   Briefcase, 
   LogOut, 
   User as UserIcon, 
-  UserPlus,
   Linkedin,
   Download,
   Plus,
@@ -110,7 +114,6 @@ import {
   Trophy,
   Activity,
   Target,
-  Clock,
   MessageSquare,
   Star,
   Send,
@@ -599,47 +602,6 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
         </div>
       </div>
     </motion.div>
-  );
-};
-
-const UrgentPostCard = ({ p, onContact, lang }: { p: UrgentPost; onContact: (p: UrgentPost) => void; lang: Language }) => {
-  const daysLeft = Math.ceil((p.expiresAt - Date.now()) / 86400000);
-  
-  return (
-    <div className="min-w-[280px] bg-white rounded-2xl border border-stone-200 p-4 shadow-sm hover:shadow-md transition-all flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-stone-100 overflow-hidden border border-stone-200">
-            {p.authorPhoto ? (
-              <img src={p.authorPhoto} alt={p.authorName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-            ) : (
-              <UserIcon size={16} className="m-auto mt-2 text-stone-400" />
-            )}
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-stone-900 truncate max-w-[120px]">{p.authorName}</span>
-            <span className="text-[10px] text-stone-500 truncate max-w-[120px]">{p.authorCompany}</span>
-          </div>
-        </div>
-        <div className="px-2 py-1 bg-amber-50 text-amber-700 rounded-lg text-[10px] font-bold flex items-center gap-1">
-          <Clock size={10} />
-          {daysLeft}j
-        </div>
-      </div>
-      <p className="text-sm text-stone-600 line-clamp-3 leading-relaxed">
-        {p.text}
-      </p>
-      <div className="mt-auto flex items-center justify-between pt-2 border-t border-stone-50">
-        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">{activityCategoryLabel(p.sector, lang)}</span>
-        <button 
-          onClick={() => onContact(p)}
-          className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-        >
-          Contacter
-          <ChevronRight size={12} />
-        </button>
-      </div>
-    </div>
   );
 };
 
@@ -1535,6 +1497,7 @@ function parseMatchmakerResponse(raw: string, validUids: Set<string>): MatchSugg
 
 const MainApp = () => {
   const { lang, setLang, t } = useLanguage();
+  const h = homeLanding(lang);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
@@ -1547,11 +1510,11 @@ const MainApp = () => {
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
-  const [showLastRegistrants, setShowLastRegistrants] = useState(false);
-  const [showAllNewThisWeek, setShowAllNewThisWeek] = useState(false);
+  const directoryMainRef = useRef<HTMLDivElement>(null);
+  const [membersSortRecent, setMembersSortRecent] = useState(false);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'companies' | 'members' | 'activities' | 'opportunities'>('companies');
+  const [viewMode, setViewMode] = useState<'companies' | 'members' | 'activities' | 'opportunities'>('members');
   const [matches, setMatches] = useState<MatchSuggestion[]>([]);
   const [matchLoading, setMatchLoading] = useState(false);
   const [matchBlockReason, setMatchBlockReason] = useState<AiMatchBlockReason>(null);
@@ -2046,6 +2009,29 @@ const MainApp = () => {
       return matchesSearch && matchesCategory;
     });
   }, [allProfiles, searchTerm, filterCategory, profile]);
+
+  const membersFiltered = useMemo(() => {
+    return filteredProfiles.filter((p) => {
+      if (highlightedNeedFilter && !(p.highlightedNeeds || []).includes(highlightedNeedFilter)) {
+        return false;
+      }
+      if (
+        passionIdFilter &&
+        !sanitizePassionIds(p.passionIds).includes(passionIdFilter)
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [filteredProfiles, highlightedNeedFilter, passionIdFilter]);
+
+  const membersDisplayList = useMemo(() => {
+    const list = [...membersFiltered];
+    if (membersSortRecent) {
+      list.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    }
+    return list;
+  }, [membersFiltered, membersSortRecent]);
 
   const profilesSortedForCompanies = useMemo(() => {
     return [...filteredProfiles].sort((a, b) => {
@@ -2800,40 +2786,37 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Sidebar */}
-          <div className="lg:col-span-4 space-y-6">
-            {!user ? (
-              <section className="relative flex min-h-[17rem] flex-col overflow-hidden rounded-2xl bg-stone-900 p-5 text-white shadow-xl sm:min-h-[20rem] sm:p-8 lg:min-h-[clamp(31rem,52vh,38rem)]">
-                <div className="pointer-events-none absolute top-0 right-0 h-32 w-32 rounded-full bg-white/5 blur-2xl -mr-16 -mt-16" />
-                <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-                  <h2 className="mb-3 shrink-0 text-base font-bold leading-snug tracking-tight sm:mb-4 sm:text-xl lg:text-2xl">
-                    {t('welcome')}
-                  </h2>
-                  <p className="mb-4 flex-1 text-xs leading-relaxed text-stone-300/95 sm:mb-6 sm:text-sm lg:mb-8">
-                    {t('welcomeIntro')}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthError(null);
-                      setShowAuthModal(true);
-                    }}
-                    disabled={authProviderBusy !== null}
-                    className="mt-auto w-full shrink-0 rounded-xl bg-white py-2.5 text-center text-xs font-bold text-stone-900 shadow-lg transition-all hover:bg-stone-100 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:py-3 sm:text-sm"
-                  >
-                    {authProviderBusy !== null
-                      ? lang === 'fr'
-                        ? 'Connexion...'
-                        : 'Conectando...'
-                      : t('login')}
-                  </button>
-                </div>
-              </section>
-            ) : null}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
+          {/* Ligne 1 (desktop) : Bienvenue | Hero — même hauteur de ligne */}
+          {!user && (
+            <>
+              <div className="order-5 h-full min-h-0 lg:order-none lg:col-span-4">
+                <WelcomeContextCard title={t('welcome')} body={t('welcomeIntro')} />
+              </div>
+              <div className="order-1 h-full min-h-0 lg:order-none lg:col-span-8">
+                <HeroSection
+                  copy={h}
+                  authBusy={authProviderBusy !== null}
+                  onCreateProfile={() => {
+                    setAuthError(null);
+                    setShowAuthModal(true);
+                  }}
+                  onExploreMembers={() => {
+                    setViewMode('members');
+                    setMembersSortRecent(false);
+                    requestAnimationFrame(() =>
+                      directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    );
+                  }}
+                  className="h-full w-full"
+                />
+              </div>
+            </>
+          )}
 
+          {/* Colonne gauche — recherche + stats */}
+          <div className="order-6 space-y-6 lg:order-none lg:col-span-4">
             {/* Search & Filter in Sidebar */}
             <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-sm space-y-6">
               <div className="space-y-1">
@@ -2868,71 +2851,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </div>
             </div>
 
-            {/* New Registrants Block */}
-            <div className="bg-white rounded-2xl border border-stone-200 p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-stone-50 rounded-lg flex items-center justify-center text-stone-900">
-                    <UserPlus size={16} />
-                  </div>
-                  <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{t('newThisWeek')}</p>
-                </div>
-                <p className="text-lg font-bold text-stone-900">{stats.newThisWeekCount}</p>
-              </div>
-
-              <div className="mt-2 border-t border-stone-100 pt-2">
-                <button 
-                  onClick={() => setShowLastRegistrants(!showLastRegistrants)}
-                  className="flex items-center gap-2 text-xs font-bold text-stone-900 hover:text-stone-600 transition-colors"
-                >
-                  {showLastRegistrants ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                  {t('showLastRegistrants')}
-                </button>
-
-                <AnimatePresence>
-                  {showLastRegistrants && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="mt-4 space-y-2">
-                        {(showAllNewThisWeek ? stats.newThisWeekProfiles : stats.last10).map((p) => (
-                          <div key={p.uid} className="flex items-center justify-between p-2 bg-stone-50 rounded-lg">
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-white rounded-md flex items-center justify-center text-stone-400 overflow-hidden shrink-0">
-                                {p.photoURL ? (
-                                  <img src={p.photoURL} alt={p.fullName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                ) : (
-                                  <UserIcon size={12} />
-                                )}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-[11px] font-bold text-stone-900 truncate">{p.fullName}</p>
-                                <p className="text-[9px] text-stone-500 truncate">{p.companyName}</p>
-                              </div>
-                            </div>
-                            <span className="text-[8px] text-stone-400 font-medium shrink-0">
-                              {p.createdAt.toDate().toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'es-MX')}
-                            </span>
-                          </div>
-                        ))}
-                        {stats.newThisWeekCount > 10 && !showAllNewThisWeek && (
-                          <button 
-                            onClick={() => setShowAllNewThisWeek(true)}
-                            className="w-full py-1 text-[10px] font-bold text-stone-500 hover:text-stone-900 transition-colors"
-                          >
-                            {t('seeMore')}
-                          </button>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-
             {/* Total Members Block (Smaller) */}
             <div className="bg-white rounded-2xl border border-stone-200 p-4 shadow-sm flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -2945,8 +2863,50 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
           </div>
 
-          {/* Directory Section */}
-          <div className="lg:col-span-8 space-y-8">
+          {/* Colonne droite — nouveaux membres, opportunités, onglets, listes */}
+          <div
+            ref={directoryMainRef}
+            id="directory-main"
+            className="order-2 scroll-mt-24 space-y-6 lg:order-none lg:col-span-8"
+          >
+            <NewMembersStrip
+              copy={h}
+              lang={lang}
+              profiles={stats.newThisWeekProfiles}
+              totalNewThisWeek={stats.newThisWeekCount}
+              onSeeAll={() => {
+                setViewMode('members');
+                setMembersSortRecent(true);
+                requestAnimationFrame(() =>
+                  directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                );
+              }}
+            />
+
+            {/* Opportunités du réseau (données = besoins urgents) */}
+            <OpportunitiesSection
+              copy={h}
+              lang={lang}
+              posts={urgentPosts}
+              allProfiles={allProfiles}
+              user={user}
+              onSeeAll={() => {
+                setViewMode('opportunities');
+                requestAnimationFrame(() =>
+                  directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                );
+              }}
+              onPost={() => setShowUrgentPostModal(true)}
+              onCreateProfile={() => {
+                setAuthError(null);
+                setShowAuthModal(true);
+              }}
+              onOpenPost={(post) => {
+                const author = allProfiles.find((ap) => ap.uid === post.authorId);
+                if (author) setSelectedProfile(author);
+              }}
+            />
+
             {/* View Mode Tabs */}
             <div className="flex bg-white p-1 rounded-2xl border border-stone-200 shadow-sm overflow-x-auto no-scrollbar">
               {[
@@ -2970,41 +2930,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </button>
               ))}
             </div>
-
-            {/* Urgent Needs Section */}
-            {urgentPosts.length > 0 && (
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-amber-500 fill-amber-500" />
-                    <h2 className="text-lg font-bold text-stone-900">{t('urgentNeeds')}</h2>
-                  </div>
-                  {user && (
-                    <button 
-                      onClick={() => setShowUrgentPostModal(true)}
-                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-                    >
-                      <Plus size={14} />
-                      {t('postUrgentNeed')}
-                    </button>
-                  )}
-                </div>
-                <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-                  {urgentPosts.map(post => (
-                    <React.Fragment key={post.id}>
-                      <UrgentPostCard 
-                        p={post} 
-                        lang={lang}
-                        onContact={(p) => {
-                          const author = allProfiles.find(ap => ap.uid === p.authorId);
-                          if (author) setSelectedProfile(author);
-                        }} 
-                      />
-                    </React.Fragment>
-                  ))}
-                </div>
-              </section>
-            )}
 
             {/* Recommendations Section */}
             {user && profile && (
@@ -3094,6 +3019,18 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
               {viewMode === 'members' && (
                 <div className="space-y-6">
+                  {membersSortRecent && (
+                    <div className="flex flex-col gap-2 rounded-2xl border border-blue-100 bg-blue-50/80 p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-sm font-medium text-blue-950">{h.membersSortBanner}</p>
+                      <button
+                        type="button"
+                        onClick={() => setMembersSortRecent(false)}
+                        className="text-sm font-semibold text-blue-800 underline-offset-2 hover:underline"
+                      >
+                        {h.membersSortReset}
+                      </button>
+                    </div>
+                  )}
                   {highlightedNeedFilter && (
                     <div className="flex items-center justify-between bg-violet-50 p-4 rounded-2xl border border-violet-100">
                       <div className="flex items-center gap-3">
@@ -3132,31 +3069,18 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     </div>
                   )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
-                    {filteredProfiles
-                      .filter((p) => {
-                        if (highlightedNeedFilter && !(p.highlightedNeeds || []).includes(highlightedNeedFilter)) {
-                          return false;
-                        }
-                        if (
-                          passionIdFilter &&
-                          !sanitizePassionIds(p.passionIds).includes(passionIdFilter)
-                        ) {
-                          return false;
-                        }
-                        return true;
-                      })
-                      .map((p) => (
-                        <React.Fragment key={p.uid}>
-                          <ProfileCard 
-                            p={p} 
-                            onSelect={setSelectedProfile}
-                            onEdit={startEditing}
-                            onDelete={setProfileToDelete}
-                            user={user}
-                            profile={profile}
-                          />
-                        </React.Fragment>
-                      ))}
+                    {membersDisplayList.map((p) => (
+                      <React.Fragment key={p.uid}>
+                        <ProfileCard 
+                          p={p} 
+                          onSelect={setSelectedProfile}
+                          onEdit={startEditing}
+                          onDelete={setProfileToDelete}
+                          user={user}
+                          profile={profile}
+                        />
+                      </React.Fragment>
+                    ))}
                   </div>
                 </div>
               )}
