@@ -3030,17 +3030,27 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       <header className="sticky top-0 z-50 border-b border-stone-200 bg-white">
         <div className="mx-auto flex min-w-0 max-w-7xl flex-col gap-2 px-3 py-2 sm:h-16 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-0 lg:px-8">
           <div className="flex w-full min-w-0 items-start gap-2 sm:w-auto sm:flex-1 sm:items-center sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 shrink-0 bg-stone-900 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-md sm:shadow-lg">
-              <Building2 className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2} />
-            </div>
-            <div className="min-w-0 flex-1 pr-1">
-              <h1 className="text-[10px] font-medium leading-snug tracking-tight text-stone-900 break-words sm:text-[11px] sm:font-semibold md:text-sm lg:text-base xl:text-lg">
-                {t('title')}
-              </h1>
-              <p className="text-[9px] leading-snug text-stone-500 mt-0.5 line-clamp-2 sm:text-[10px] sm:mt-1 md:text-xs md:line-clamp-none">
-                {t('subtitle')}
-              </p>
-            </div>
+            <a
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.assign('/');
+              }}
+              className="flex min-w-0 flex-1 cursor-pointer items-start gap-2 rounded-lg pr-1 outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 sm:items-center sm:gap-3"
+              aria-label={pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-stone-900 text-white shadow-md sm:h-10 sm:w-10 sm:rounded-xl sm:shadow-lg">
+                <Building2 className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2} aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <h1 className="text-[10px] font-medium leading-snug tracking-tight text-stone-900 break-words sm:text-[11px] sm:font-semibold md:text-sm lg:text-base xl:text-lg">
+                  {t('title')}
+                </h1>
+                <p className="mt-0.5 line-clamp-2 text-[9px] leading-snug text-stone-500 sm:mt-1 sm:text-[10px] md:text-xs md:line-clamp-none">
+                  {t('subtitle')}
+                </p>
+              </div>
+            </a>
             {/* Langues alignées avec le titre sur mobile uniquement */}
             <div className="ml-auto shrink-0 self-start pt-0.5 sm:hidden">
               <div className="flex bg-stone-100 p-0.5 rounded-lg border border-stone-200">
