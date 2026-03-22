@@ -70,12 +70,13 @@ service cloud.firestore {
         && data.createdAt is timestamp;
     }
 
-    /** Données non publiques (genre, nationalité, délégations) : propriétaire + admin uniquement. */
+    /** Données non publiques (genre, nationalité, délégations, sponsoring) : propriétaire + admin uniquement. */
     function isValidUserAdminPrivate(data, userId) {
       return data.uid == userId
         && (!('genderStat' in data) || data.genderStat in ['male', 'female', 'other', 'prefer_not_say'])
         && (!('nationality' in data) || (data.nationality is string && data.nationality.size() >= 2 && data.nationality.size() <= 3))
-        && (!('acceptsDelegationVisits' in data) || data.acceptsDelegationVisits is bool);
+        && (!('acceptsDelegationVisits' in data) || data.acceptsDelegationVisits is bool)
+        && (!('openToEventSponsoring' in data) || data.openToEventSponsoring is bool);
     }
 
     match /user_admin_private/{userId} {

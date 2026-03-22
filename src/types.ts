@@ -125,7 +125,7 @@ export interface UserProfile {
   accountType?: 'local' | 'foreign';
   country?: string;
   optimizationSuggestion?: OptimizationSuggestion;
-  /** Années sur la métropole de Guadalajara (dashboard communauté). */
+  /** @deprecated Plus saisi en UI ; retiré à l’enregistrement. L’ancienneté dashboard vient de `arrivalYear`. */
   communityYearsInGdl?: number;
   /** Remplace l’inférence depuis `companySize` pour les graphiques « taille ». */
   communityCompanyKind?: CommunityCompanyKind;

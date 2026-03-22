@@ -10,7 +10,7 @@ export const PUBLICATION_BIO_MIN_LEN = 15;
 /** Seuil d’optimisation IA (aligné sur `getProfileAiRecommendationReadiness`). */
 export const AI_OPTIMIZATION_READINESS_TARGET = 0.8;
 
-function hasEmployeeInfo(p: Partial<UserProfile>): boolean {
+export function hasEmployeeInfo(p: Partial<UserProfile>): boolean {
   if (p.companySize) return true;
   const ec = p.employeeCount;
   if (typeof ec === 'string' && isEmployeeCountRange(ec)) return true;

@@ -18,6 +18,8 @@ export type UserAdminPrivateDoc = {
   genderStat?: GenderStat;
   nationality?: string;
   acceptsDelegationVisits?: boolean;
+  /** Non publié sur la fiche annuaire (préférence communauté). */
+  openToEventSponsoring?: boolean;
 };
 
 /** Anciennes fiches : ces clés pouvaient être sur `users/{uid}` avant la séparation. */
@@ -56,6 +58,8 @@ export async function saveUserAdminPrivate(
     genderStat: GenderStat | undefined;
     nationality: string | undefined;
     acceptsDelegationVisits: boolean;
+    /** Si `undefined`, le champ Firestore n’est pas modifié. */
+    openToEventSponsoring?: boolean | undefined;
   }
 ): Promise<void> {
   const ref = doc(db, USER_ADMIN_PRIVATE_COLLECTION, uid);
@@ -73,6 +77,9 @@ export async function saveUserAdminPrivate(
     payload.nationality = fields.nationality;
   } else {
     payload.nationality = deleteField();
+  }
+  if (fields.openToEventSponsoring !== undefined) {
+    payload.openToEventSponsoring = fields.openToEventSponsoring;
   }
   await setDoc(ref, payload, { merge: true });
 }

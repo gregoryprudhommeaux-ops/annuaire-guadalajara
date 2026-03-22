@@ -62,6 +62,7 @@ export const EN_STRINGS: Record<string, string> = {
   adminFieldGender: "Gender (stats)",
   adminFieldNationality: "Nationality",
   adminFieldDelegation: "Delegation visits",
+  adminFieldEventSponsoring: "Event sponsoring",
   adminDelegationYes: "Yes",
   adminDelegationNo: "No",
   adminDelegationUnknown: "Not specified",
@@ -166,6 +167,15 @@ export const EN_STRINGS: Record<string, string> = {
   profileBannerAi:
     "Consider optimizing your profile by filling in fields that power AI matching (sector, needs, bio, role, company size, interests or sector keywords).",
   profileBannerDismiss: "Hide for this session",
+  profileCoachPrefix: "Tip: prioritize filling in",
+  profileCoachSeparator: " · ",
+  profileCoachMoreSuffix: "…",
+  profileCoachAllGood:
+    "Your profile looks solid. You can still refine your bio or contact preferences to get more responses.",
+  coachGapHighlightedNeeds: "at least one highlighted need",
+  coachGapKeywordsPassions: "interests or target keywords",
+  profileCoachRefreshAi: "Refresh AI tip",
+  profileCoachAiHint: "AI suggestion (session preview)",
   newProfiles: "New profiles",
   validate: "Approve",
   reject: "Reject",
@@ -239,6 +249,9 @@ export const EN_STRINGS: Record<string, string> = {
   contactPrefsOpenMentoring: "Mentoring / sharing experience",
   contactPrefsOpenTalks: "Talks / speaking engagements",
   contactPrefsOpenEvents: "Co-organizing events",
+  contactPrefsOpenEventSponsoring: "Event sponsoring",
+  contactPrefsOpenEventSponsoringPrivateHint:
+    "Stored in your non-public data (same as gender and delegation preferences).",
   highlightedNeedsTitle: "Current needs (max. 3)",
   highlightedNeedsHint: "Select up to 3 representative needs; they will appear on your directory profile.",
   highlightedNeedsCount: "selected",

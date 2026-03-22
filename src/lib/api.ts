@@ -174,17 +174,10 @@ function profileToMemberStatus(p: UserProfile): MemberStatus {
 }
 
 function profileToYearsInGdl(p: UserProfile): number {
-  if (
-    typeof p.communityYearsInGdl === 'number' &&
-    Number.isFinite(p.communityYearsInGdl) &&
-    p.communityYearsInGdl >= 0
-  ) {
-    return Math.min(50, Math.floor(p.communityYearsInGdl));
-  }
   const y = p.arrivalYear;
   const nowY = new Date().getFullYear();
   if (typeof y === 'number' && y >= 1990 && y <= nowY) {
-    return Math.max(0, nowY - y);
+    return Math.min(50, Math.max(0, nowY - y));
   }
   const seed = p.uid || p.email || 'x';
   let h = 0;
@@ -196,8 +189,8 @@ function profileToYearsInGdl(p: UserProfile): number {
 
 /**
  * Profil `users` → `MemberExtended` (dashboard, heatmaps).
- * Champs optionnels : `communityYearsInGdl`, `communityCompanyKind`, `communityMemberStatus`.
- * Sinon : `arrivalYear`, `companySize`, hash stable sur `uid`.
+ * Ancienneté affichée : dérivée de `arrivalYear` (année d’arrivée au Mexique), sinon hash stable sur `uid`.
+ * Champs optionnels : `communityCompanyKind`, `communityMemberStatus`.
  */
 export function userProfileToMemberExtended(p: UserProfile): MemberExtended {
   return {
@@ -337,7 +330,7 @@ export async function addMemberNeed(input: {
  * collection `users`, filtre depuis le **lundi 00:00 (heure locale)**.
  *
  * Mapping → `MemberForFun` : `hobbies` = libellés des `passionIds`, `languages` = heuristique profil,
- * `yearsInGDL` = champ communauté ou dérivé (voir `userProfileToMemberExtended`).
+ * `yearsInGDL` = dérivé de `arrivalYear` (voir `userProfileToMemberExtended`).
  *
  * `lang` : libellés des passions ; défaut `fr`. Côté client : `useEffect` ; côté Next : RSC / route API.
  */

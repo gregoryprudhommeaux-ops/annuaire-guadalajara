@@ -11,7 +11,7 @@ export type MemberExtended = {
   id: string;
   sector: string;
   companySize: CompanyKind;
-  /** Ancienneté sur Guadalajara (années entières ou valeur dérivée). */
+  /** Ancienneté affichée (dérivée de l’année d’arrivée au Mexique côté profil, ou valeur de secours). */
   yearsInGDL: number;
   status: MemberStatus;
   city: string;

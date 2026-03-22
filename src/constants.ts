@@ -245,6 +245,7 @@ export const TRANSLATIONS: Translations = {
   adminFieldGender: { fr: "Genre (stat.)", es: "Género (estad.)" },
   adminFieldNationality: { fr: "Nationalité", es: "Nacionalidad" },
   adminFieldDelegation: { fr: "Visites de délégations", es: "Visitas de delegaciones" },
+  adminFieldEventSponsoring: { fr: "Sponsoring d’événements", es: "Patrocinio de eventos" },
   adminDelegationYes: { fr: "Oui", es: "Sí" },
   adminDelegationNo: { fr: "Non", es: "No" },
   adminDelegationUnknown: { fr: "Non renseigné", es: "Sin indicar" },
@@ -395,6 +396,32 @@ export const TRANSLATIONS: Translations = {
     es: 'Optimiza tu perfil completando los campos útiles para el emparejamiento por IA (sector, necesidades, bio, función, tamaño, pasiones o palabras clave).',
   },
   profileBannerDismiss: { fr: 'Masquer pour cette session', es: 'Ocultar esta sesión' },
+  profileCoachPrefix: {
+    fr: 'Conseil : complétez notamment',
+    es: 'Consejo: complete sobre todo',
+  },
+  profileCoachSeparator: { fr: ' · ', es: ' · ' },
+  profileCoachMoreSuffix: { fr: '…', es: '…' },
+  profileCoachAllGood: {
+    fr: 'Votre fiche est bien renseignée. Vous pouvez encore affiner la bio ou vos préférences de contact pour plus de réponses.',
+    es: 'Tu ficha está bien completa. Aún puedes afinar la bio o tus preferencias de contacto para más respuestas.',
+  },
+  coachGapHighlightedNeeds: {
+    fr: 'au moins un besoin mis en avant',
+    es: 'al menos una necesidad destacada',
+  },
+  coachGapKeywordsPassions: {
+    fr: 'passions ou mots-clés cibles',
+    es: 'pasiones o palabras clave',
+  },
+  profileCoachRefreshAi: {
+    fr: 'Actualiser le conseil IA',
+    es: 'Actualizar consejo IA',
+  },
+  profileCoachAiHint: {
+    fr: 'Suggestion IA (aperçu de session)',
+    es: 'Sugerencia IA (vista de sesión)',
+  },
   newProfiles: { fr: "Nouveaux Profils", es: "Nuevos Perfiles" },
   validate: { fr: "Valider", es: "Validar" },
   reject: { fr: "Rejeter", es: "Rechazar" },
@@ -580,6 +607,14 @@ export const TRANSLATIONS: Translations = {
   contactPrefsOpenEvents: {
     fr: 'Co-organisation d’événements',
     es: 'Coorganización de eventos',
+  },
+  contactPrefsOpenEventSponsoring: {
+    fr: 'Sponsoring d’événements',
+    es: 'Patrocinio de eventos',
+  },
+  contactPrefsOpenEventSponsoringPrivateHint: {
+    fr: 'Enregistré dans vos données non publiées (comme le genre et les délégations).',
+    es: 'Se guarda en tus datos no publicados (como género y delegaciones).',
   },
   highlightedNeedsTitle: {
     fr: "Besoins actuels (max. 3)",

@@ -113,6 +113,11 @@ import {
   profileMeetsPublicationRequirements,
   AI_OPTIMIZATION_READINESS_TARGET,
 } from './lib/profilePublicationRules';
+import {
+  profileCoachFingerprint,
+  formatLocalProfileCoachLine,
+  fetchAiProfileCoachLine,
+} from './lib/profileCoach';
 import IceBreakerInterests from './components/profile/IceBreakerInterests';
 import HeroSection from './components/home/HeroSection';
 import WelcomeContextCard from './components/home/WelcomeContextCard';
@@ -161,7 +166,8 @@ import {
   Copy,
   RefreshCw,
   ArrowLeft,
-  UserCog
+  UserCog,
+  Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as XLSX from 'xlsx';
@@ -1744,6 +1750,9 @@ const MainApp = () => {
   const [profileReminderDismissed, setProfileReminderDismissed] = useState(false);
   const [optimizationBusy, setOptimizationBusy] = useState(false);
   const [optimizationError, setOptimizationError] = useState<string | null>(null);
+  const [profileCoachLine, setProfileCoachLine] = useState('');
+  const [profileCoachSource, setProfileCoachSource] = useState<'local' | 'ai' | null>(null);
+  const [profileCoachLoading, setProfileCoachLoading] = useState(false);
 
   const getAuthErrorMessage = (code: string) => {
     const host = typeof window !== 'undefined' ? window.location.host : '';
@@ -1929,6 +1938,103 @@ const MainApp = () => {
       ai: pubOk && readiness < AI_OPTIMIZATION_READINESS_TARGET,
     };
   }, [profile]);
+
+  const refreshProfileCoachAi = useCallback(() => {
+    if (!profile || isEditing) return;
+    const cacheKey = `profile_coach_ai_v1_${profile.uid}_${lang}`;
+    sessionStorage.removeItem(cacheKey);
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) {
+      setProfileCoachLine(formatLocalProfileCoachLine(profile, t));
+      setProfileCoachSource('local');
+      return;
+    }
+    setProfileCoachLoading(true);
+    fetchAiProfileCoachLine(apiKey, profile, lang)
+      .then((text) => {
+        if (text) {
+          setProfileCoachLine(text);
+          setProfileCoachSource('ai');
+          try {
+            sessionStorage.setItem(
+              cacheKey,
+              JSON.stringify({ text, fp: profileCoachFingerprint(profile) })
+            );
+          } catch {
+            /* storage full */
+          }
+        }
+      })
+      .finally(() => setProfileCoachLoading(false));
+  }, [profile, isEditing, lang, t]);
+
+  useEffect(() => {
+    if (!profile) {
+      setProfileCoachLine('');
+      setProfileCoachSource(null);
+      setProfileCoachLoading(false);
+      return;
+    }
+
+    const fp = profileCoachFingerprint(profile);
+    const cacheKey = `profile_coach_ai_v1_${profile.uid}_${lang}`;
+
+    if (isEditing) {
+      setProfileCoachLine(formatLocalProfileCoachLine(profile, t));
+      setProfileCoachSource('local');
+      setProfileCoachLoading(false);
+      return;
+    }
+
+    try {
+      const raw = sessionStorage.getItem(cacheKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { text?: string; fp?: string };
+        if (parsed?.text && parsed?.fp === fp) {
+          setProfileCoachLine(parsed.text);
+          setProfileCoachSource('ai');
+          setProfileCoachLoading(false);
+          return;
+        }
+      }
+    } catch {
+      sessionStorage.removeItem(cacheKey);
+    }
+
+    const local = formatLocalProfileCoachLine(profile, t);
+    setProfileCoachLine(local);
+    setProfileCoachSource('local');
+
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) {
+      setProfileCoachLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setProfileCoachLoading(true);
+    fetchAiProfileCoachLine(apiKey, profile, lang)
+      .then((text) => {
+        if (cancelled || !text) return;
+        setProfileCoachLine(text);
+        setProfileCoachSource('ai');
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify({ text, fp }));
+        } catch {
+          /* ignore */
+        }
+      })
+      .catch(() => {
+        /* garder le message local */
+      })
+      .finally(() => {
+        if (!cancelled) setProfileCoachLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile, isEditing, lang, t]);
 
   useEffect(() => {
     const testConnection = async () => {
@@ -2323,27 +2429,6 @@ const MainApp = () => {
       return;
     }
 
-    const cyRaw = getTrimmed('communityYearsInGdl');
-    let communityYearsInGdl: number | ReturnType<typeof deleteField>;
-    if (cyRaw === '') {
-      communityYearsInGdl = deleteField();
-    } else {
-      const n = Number(cyRaw);
-      if (!Number.isFinite(n) || n < 0 || n > 80) {
-        setProfileSaveError(
-          pickLang(
-            'Les années à Guadalajara (tableau de bord) doivent être un nombre entre 0 et 80.',
-            'Los años en Guadalajara (panel) deben ser un número entre 0 y 80.',
-            'Years in Guadalajara (dashboard) must be a number between 0 and 80.',
-            lang
-          )
-        );
-        setProfileSaveBusy(false);
-        return;
-      }
-      communityYearsInGdl = Math.floor(n);
-    }
-
     const tcsRaw = getTrimmed('typicalClientSize');
     let typicalClientSize: TypicalClientSize | ReturnType<typeof deleteField>;
     if (tcsRaw === '') {
@@ -2405,15 +2490,17 @@ const MainApp = () => {
       role: (targetUid === user.uid && user.email === ADMIN_EMAIL) ? 'admin' : (editingProfile?.role || profile?.role || 'user') as Role,
       createdAt: (isSelf ? profile?.createdAt : editingProfile?.createdAt) || Timestamp.now(),
       isValidated: isSelf ? (profile?.isValidated ?? false) : (editingProfile?.isValidated ?? true),
-      communityYearsInGdl,
+      communityYearsInGdl: deleteField(),
       communityCompanyKind,
       communityMemberStatus,
-    } as Record<string, unknown> & Partial<UserProfile>;
+    } as Record<string, unknown>;
     const sanitizedProfile = Object.fromEntries(
       Object.entries(newProfile).filter(([, value]) => value !== undefined)
     );
 
     const delegationFlag = formData.get('acceptsDelegationVisits') === 'on';
+    const openToEventSponsoring =
+      formAdminPrivateReady && formData.get('openToEventSponsoring') === 'on';
 
     try {
       await setDoc(doc(db, 'users', targetUid), sanitizedProfile as Partial<UserProfile>, {
@@ -2423,15 +2510,18 @@ const MainApp = () => {
         genderStat,
         nationality,
         acceptsDelegationVisits: delegationFlag,
+        openToEventSponsoring: formAdminPrivateReady ? openToEventSponsoring : undefined,
       });
       if (isSelf) {
         const fresh = await getDoc(doc(db, 'users', targetUid));
         if (fresh.exists()) setProfile(fresh.data() as UserProfile);
-        setFormAdminPrivate({
+        setFormAdminPrivate((prev) => ({
+          ...(prev ?? {}),
           genderStat,
           nationality,
           acceptsDelegationVisits: delegationFlag,
-        });
+          ...(formAdminPrivateReady ? { openToEventSponsoring } : {}),
+        }));
       }
       setIsEditing(false);
       setEditingProfile(null);
@@ -2943,18 +3033,55 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   </div>
                 )}
               <div 
-                className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors"
+                className="flex items-center justify-between gap-3 p-4 cursor-pointer hover:bg-stone-50 transition-colors"
                 onClick={() => setIsProfileExpanded(!isProfileExpanded)}
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 bg-stone-100 rounded-lg flex items-center justify-center text-stone-600">
+                <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-stone-600 sm:mt-0">
                     <UserIcon size={16} />
                   </div>
-                  <div className="flex items-baseline gap-3">
+                  <div className="min-w-0 flex-1 space-y-1">
                     <h2 className="text-lg font-semibold tracking-tight">{t('myProfile')}</h2>
-                    {!isProfileExpanded && profile && (
-                      <p className="text-stone-500 text-sm font-medium">{profile.fullName} • {profile.companyName}</p>
-                    )}
+                    {profile ? (
+                      <div className="flex items-start gap-2">
+                        {profileCoachSource === 'ai' ? (
+                          <Sparkles
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-600"
+                            aria-hidden
+                          />
+                        ) : null}
+                        {profileCoachLoading && profileCoachSource !== 'ai' ? (
+                          <RefreshCw
+                            className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-stone-400"
+                            aria-hidden
+                          />
+                        ) : null}
+                        <p
+                          className="min-w-0 flex-1 text-xs leading-snug text-stone-500 sm:text-sm line-clamp-2"
+                          title={profileCoachLine}
+                        >
+                          {profileCoachLine}
+                        </p>
+                        {profileCoachSource === 'ai' && getGeminiApiKey() ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              refreshProfileCoachAi();
+                            }}
+                            disabled={profileCoachLoading}
+                            className="mt-0.5 shrink-0 rounded-md p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 disabled:opacity-40"
+                            title={t('profileCoachRefreshAi')}
+                            aria-label={t('profileCoachRefreshAi')}
+                          >
+                            <RefreshCw className={`h-3.5 w-3.5 ${profileCoachLoading ? 'animate-spin' : ''}`} />
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {profile && profileCoachSource === 'ai' ? (
+                      <p className="text-[10px] text-stone-400">{t('profileCoachAiHint')}</p>
+                    ) : null}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -3196,53 +3323,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </div>
                             <div className="space-y-1">
                               <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('arrivalYear')}</label>
+                              <p className="text-[10px] text-stone-400 leading-snug">
+                                {pickLang(
+                                  'Sert au tableau de bord pour estimer l’ancienneté sur la région (à partir de l’année d’arrivée au Mexique).',
+                                  'Alimenta el panel para estimar la antigüedad en la región (año de llegada a México).',
+                                  'Feeds the dashboard seniority estimate from your year of arrival in Mexico.',
+                                  lang
+                                )}
+                              </p>
                               <input type="number" name="arrivalYear" defaultValue={editingProfile?.arrivalYear || profile?.arrivalYear} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
                             </div>
                           </div>
 
-                          <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 md:p-5 space-y-4">
-                            <div>
-                              <p className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
-                                {pickLang(
-                                  'Données communauté (tableau de bord)',
-                                  'Datos comunidad (panel)',
-                                  'Community data (dashboard)',
-                                  lang
-                                )}
-                              </p>
-                              <p className="text-[10px] text-indigo-800/80 mt-1 leading-relaxed">
-                                {pickLang(
-                                  'Optionnel : alimente les graphiques « Vue d’ensemble » avec des valeurs explicites. Laisser vide = l’app continue d’estimer à partir du reste du profil.',
-                                  'Opcional: alimenta los gráficos del panel con valores explícitos. Vacío = la app sigue estimando desde el perfil.',
-                                  'Optional: feeds the overview charts with explicit values. Leave blank = the app keeps inferring from the rest of your profile.',
-                                  lang
-                                )}
-                              </p>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-600">
-                                  {pickLang(
-                                    'Années sur Guadalajara (métropole)',
-                                    'Años en Guadalajara (área metropolitana)',
-                                    'Years in Guadalajara (metro area)',
-                                    lang
-                                  )}
-                                </label>
-                                <input
-                                  type="number"
-                                  name="communityYearsInGdl"
-                                  min={0}
-                                  max={80}
-                                  placeholder={pickLang('ex. 5', 'ej. 5', 'e.g. 5', lang)}
-                                  defaultValue={
-                                    editingProfile?.communityYearsInGdl ??
-                                    profile?.communityYearsInGdl ??
-                                    ''
-                                  }
-                                  className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                                />
-                              </div>
+                          <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 md:p-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-1">
                                 <label className="text-xs font-semibold text-stone-600">
                                   {pickLang('Type d’entreprise (analytics)', 'Tipo de empresa (analytics)', 'Company type (analytics)', lang)}
@@ -3492,6 +3586,24 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   />
                                   <span className="text-sm text-stone-700">{t('contactPrefsOpenEvents')}</span>
                                 </label>
+                                {formAdminPrivateReady && formAdminPrivate !== null && (
+                                  <label className="flex cursor-pointer items-start gap-3 rounded-lg p-1 hover:bg-stone-50">
+                                    <input
+                                      type="checkbox"
+                                      name="openToEventSponsoring"
+                                      defaultChecked={formAdminPrivate.openToEventSponsoring === true}
+                                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                    />
+                                    <span className="min-w-0">
+                                      <span className="block text-sm text-stone-700">
+                                        {t('contactPrefsOpenEventSponsoring')}
+                                      </span>
+                                      <span className="mt-0.5 block text-[10px] text-stone-400 leading-snug">
+                                        {t('contactPrefsOpenEventSponsoringPrivateHint')}
+                                      </span>
+                                    </span>
+                                  </label>
+                                )}
                               </div>
                             </div>
                           </section>
@@ -4788,6 +4900,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 : t('adminDelegationUnknown')}
                           </dd>
                         </div>
+                        <div className="flex flex-wrap justify-between gap-2">
+                          <dt className="text-stone-500 shrink-0">{t('adminFieldEventSponsoring')}</dt>
+                          <dd className="font-medium text-right">
+                            {adminModalPrivate?.openToEventSponsoring === true
+                              ? t('adminDelegationYes')
+                              : adminModalPrivate?.openToEventSponsoring === false
+                                ? t('adminDelegationNo')
+                                : t('adminDelegationUnknown')}
+                          </dd>
+                        </div>
                       </dl>
                     )}
                   </div>
@@ -4866,7 +4988,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     const showPriv =
                       !!priv.genderStat ||
                       !!priv.nationality ||
-                      priv.acceptsDelegationVisits !== undefined;
+                      priv.acceptsDelegationVisits !== undefined ||
+                      priv.openToEventSponsoring !== undefined;
                     return (
                     <div key={p.uid} className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -4909,6 +5032,18 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   >
                                     {t('adminFieldDelegation')}:{' '}
                                     {priv.acceptsDelegationVisits
+                                      ? t('adminDelegationYes')
+                                      : t('adminDelegationNo')}
+                                  </p>
+                                ) : null}
+                                {priv.openToEventSponsoring !== undefined ? (
+                                  <p
+                                    className={
+                                      priv.openToEventSponsoring ? 'font-semibold text-emerald-800' : ''
+                                    }
+                                  >
+                                    {t('adminFieldEventSponsoring')}:{' '}
+                                    {priv.openToEventSponsoring
                                       ? t('adminDelegationYes')
                                       : t('adminDelegationNo')}
                                   </p>
