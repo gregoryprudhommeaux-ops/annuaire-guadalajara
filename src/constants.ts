@@ -150,6 +150,11 @@ export const TRANSLATIONS: Translations = {
   title: { fr: "Annuaire d'Affaires de Guadalajara", es: "Directorio de Negocios de Guadalajara" },
   subtitle: { fr: "Communauté d'affaires francophone", es: "Comunidad de negocios francohablante" },
   login: { fr: "Se connecter", es: "Iniciar sesión" },
+  /** Libellé du bouton header sur mobile (plus explicite) */
+  loginMobile: {
+    fr: "CRÉER UN PROFIL / LOGIN",
+    es: "CREAR PERFIL / LOGIN",
+  },
   continueGoogle: { fr: "Continuer avec Google", es: "Continuar con Google" },
   continueMicrosoft: { fr: "Continuer avec Microsoft", es: "Continuar con Microsoft" },
   continueApple: { fr: "Continuer avec Apple", es: "Continuar con Apple" },

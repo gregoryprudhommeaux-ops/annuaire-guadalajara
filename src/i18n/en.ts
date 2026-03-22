@@ -6,6 +6,7 @@ export const EN_STRINGS: Record<string, string> = {
   title: "Guadalajara Business Directory",
   subtitle: "French-speaking business community",
   login: "Sign in",
+  loginMobile: "CREATE PROFILE / LOGIN",
   continueGoogle: "Continue with Google",
   continueMicrosoft: "Continue with Microsoft",
   continueApple: "Continue with Apple",

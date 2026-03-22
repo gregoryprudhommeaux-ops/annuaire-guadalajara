@@ -3088,11 +3088,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 setShowAuthModal(true);
               }}
               disabled={authProviderBusy !== null}
-              className="whitespace-nowrap rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-2 sm:text-sm"
+              className="whitespace-nowrap rounded-lg bg-blue-600 px-2 py-1.5 text-center text-[11px] font-semibold leading-tight text-white shadow-sm transition-all hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-2 sm:text-sm"
             >
-              {authProviderBusy !== null
-                ? pickLang('Connexion...', 'Conectando...', 'Signing in...', lang)
-                : t('login')}
+              {authProviderBusy !== null ? (
+                pickLang('Connexion...', 'Conectando...', 'Signing in...', lang)
+              ) : (
+                <>
+                  <span className="sm:hidden">{t('loginMobile')}</span>
+                  <span className="hidden sm:inline">{t('login')}</span>
+                </>
+              )}
             </button>
           )
         }
