@@ -129,7 +129,6 @@ export const EN_STRINGS: Record<string, string> = {
   statsOpportunities: "opportunities",
   tagNewMember: "New",
   tagUrgentNeed: "Urgent need",
-  profileCardTapForMore: "Tap for full profile",
   tagsMore: "+{{count}} more",
   tagsCollapse: "Show less",
   details: "Details",

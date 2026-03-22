@@ -354,10 +354,6 @@ export const TRANSLATIONS: Translations = {
   statsOpportunities: { fr: "opportunités", es: "oportunidades" },
   tagNewMember: { fr: "Nouveau", es: "Nuevo" },
   tagUrgentNeed: { fr: "Besoin urgent", es: "Necesidad urgente" },
-  profileCardTapForMore: {
-    fr: "Toucher pour la fiche complète",
-    es: "Toca para ver la ficha completa",
-  },
   tagsMore: { fr: "+{{count}} autres", es: "+{{count}} más" },
   tagsCollapse: { fr: "Réduire", es: "Mostrar menos" },
   details: { fr: "Détails", es: "Detalles" },

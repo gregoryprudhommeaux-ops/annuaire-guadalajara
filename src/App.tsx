@@ -181,7 +181,8 @@ import {
   ArrowLeft,
   UserCog,
   Sparkles,
-  ImageUp
+  ImageUp,
+  Maximize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as XLSX from 'xlsx';
@@ -785,8 +786,11 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
           </div>
         </div>
       </div>
-      <div className="mt-auto w-full shrink-0 border-t border-stone-100 pt-2.5 sm:hidden">
-        <p className="text-center text-[11px] font-semibold leading-snug text-blue-700">{t('profileCardTapForMore')}</p>
+      <div
+        className="pointer-events-none absolute bottom-2 right-2 z-[1] text-stone-400 sm:hidden"
+        aria-hidden
+      >
+        <Maximize2 size={15} strokeWidth={2} className="opacity-75" />
       </div>
     </motion.div>
   );
