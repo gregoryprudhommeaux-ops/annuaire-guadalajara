@@ -414,13 +414,9 @@ export const TRANSLATIONS: Translations = {
     fr: 'passions ou mots-clés cibles',
     es: 'pasiones o palabras clave',
   },
-  profileCoachRefreshAi: {
-    fr: 'Actualiser le conseil IA',
-    es: 'Actualizar consejo IA',
-  },
   profileCoachAiHint: {
-    fr: 'Suggestion IA (aperçu de session)',
-    es: 'Sugerencia IA (vista de sesión)',
+    fr: 'Une suggestion IA par session (aucune nouvelle requête tant que votre profil ne change pas).',
+    es: 'Una sugerencia IA por sesión (sin nuevas peticiones mientras tu perfil no cambie).',
   },
   newProfiles: { fr: "Nouveaux Profils", es: "Nuevos Perfiles" },
   validate: { fr: "Valider", es: "Validar" },

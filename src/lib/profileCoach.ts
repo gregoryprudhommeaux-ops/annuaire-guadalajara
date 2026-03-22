@@ -70,6 +70,23 @@ export function formatLocalProfileCoachLine(
   return `${t('profileCoachPrefix')} ${labels.join(t('profileCoachSeparator'))}${more}`;
 }
 
+/**
+ * Une seule phrase / un seul conseil ; pas de troncature arbitraire côté application.
+ * Si le modèle renvoie plusieurs phrases, on conserve la première complète.
+ */
+export function normalizeAiCoachToSingleTip(raw: string): string {
+  let s = raw.replace(/\s+/g, ' ').trim();
+  if (!s) return s;
+  s = s.replace(/\s*…\s*$/u, '').replace(/\s*\.\.\.\s*$/u, '');
+  const sentences = s.split(/(?<=[.!?])\s+/u).filter(Boolean);
+  if (sentences.length > 1) {
+    let first = sentences[0].trim();
+    if (!/[.!?]$/u.test(first)) first += '.';
+    return first;
+  }
+  return s;
+}
+
 function pickLang<L extends string>(lang: Language, fr: L, es: L, en: L): L {
   if (lang === 'en') return en;
   if (lang === 'es') return es;
@@ -104,7 +121,7 @@ function summarizeProfileForPrompt(p: UserProfile): string {
 }
 
 /**
- * Court conseil personnalisé (2 phrases max, ton pro B2B).
+ * Un seul conseil IA (une phrase), ton pro B2B — pas de troncature dans la réponse.
  */
 export async function fetchAiProfileCoachLine(
   apiKey: string,
@@ -115,9 +132,9 @@ export async function fetchAiProfileCoachLine(
   const facts = summarizeProfileForPrompt(profile);
   const prompt = pickLang(
     lang,
-    `Tu coaches un membre d'un annuaire B2B à Guadalajara. Données du profil (interne, une ligne par champ) :\n${facts}\n\nRédige EXACTEMENT 2 phrases courtes en français (max 320 caractères au total). Conseils concrets : présentation entreprise/bio, champs vides à remplir, crédibilité. Pas de liste à puces, pas de guillemets, pas de "Bonjour".`,
-    `Entrenas a un miembro de un directorio B2B en Guadalajara. Datos del perfil (interno, una línea por campo):\n${facts}\n\nEscribe EXACTAMENTE 2 frases cortas en español (máx. 320 caracteres en total). Consejos concretos: presentación de la empresa/bio, campos vacíos, credibilidad. Sin viñetas, sin comillas, sin "Hola".`,
-    `You coach a member of a B2B directory in Guadalajara. Profile facts (internal, one field per line):\n${facts}\n\nWrite EXACTLY 2 short sentences in English (max 320 characters total). Concrete tips: company pitch/bio, empty fields to fill, credibility. No bullet points, no quotes, no "Hello".`
+    `Tu coaches un membre d'un annuaire B2B à Guadalajara. Données du profil (interne, une ligne par champ) :\n${facts}\n\nRéponds par UNE SEULE phrase en français : le conseil d'amélioration le plus utile (présentation, bio, ou champ manquant prioritaire). Phrase complète, 200 caractères maximum, pas de liste, pas de guillemets, pas de "Bonjour", pas de point d'exclamation multiple.`,
+    `Entrenas a un miembro de un directorio B2B en Guadalajara. Datos del perfil (interno, una línea por campo):\n${facts}\n\nResponde con UNA SOLA frase en español: el consejo de mejora más útil (presentación, bio o campo faltante prioritario). Frase completa, máximo 200 caracteres, sin listas, sin comillas, sin "Hola", sin varios signos de exclamación.`,
+    `You coach a member of a B2B directory in Guadalajara. Profile facts (internal, one field per line):\n${facts}\n\nReply with EXACTLY ONE English sentence: the single most useful improvement tip (pitch, bio, or top missing field). Complete sentence, max 200 characters, no bullet list, no quotes, no "Hello", no multiple exclamation marks.`
   );
   const res = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -125,5 +142,5 @@ export async function fetchAiProfileCoachLine(
   });
   const text = (res.text || '').replace(/\s+/g, ' ').trim();
   if (!text) return null;
-  return text.length > 400 ? `${text.slice(0, 397)}…` : text;
+  return normalizeAiCoachToSingleTip(text);
 }

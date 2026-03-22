@@ -174,8 +174,8 @@ export const EN_STRINGS: Record<string, string> = {
     "Your profile looks solid. You can still refine your bio or contact preferences to get more responses.",
   coachGapHighlightedNeeds: "at least one highlighted need",
   coachGapKeywordsPassions: "interests or target keywords",
-  profileCoachRefreshAi: "Refresh AI tip",
-  profileCoachAiHint: "AI suggestion (session preview)",
+  profileCoachAiHint:
+    "One AI suggestion per session (no extra requests until your profile changes).",
   newProfiles: "New profiles",
   validate: "Approve",
   reject: "Reject",

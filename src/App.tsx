@@ -117,6 +117,7 @@ import {
   profileCoachFingerprint,
   formatLocalProfileCoachLine,
   fetchAiProfileCoachLine,
+  normalizeAiCoachToSingleTip,
 } from './lib/profileCoach';
 import IceBreakerInterests from './components/profile/IceBreakerInterests';
 import HeroSection from './components/home/HeroSection';
@@ -1939,35 +1940,6 @@ const MainApp = () => {
     };
   }, [profile]);
 
-  const refreshProfileCoachAi = useCallback(() => {
-    if (!profile || isEditing) return;
-    const cacheKey = `profile_coach_ai_v1_${profile.uid}_${lang}`;
-    sessionStorage.removeItem(cacheKey);
-    const apiKey = getGeminiApiKey();
-    if (!apiKey) {
-      setProfileCoachLine(formatLocalProfileCoachLine(profile, t));
-      setProfileCoachSource('local');
-      return;
-    }
-    setProfileCoachLoading(true);
-    fetchAiProfileCoachLine(apiKey, profile, lang)
-      .then((text) => {
-        if (text) {
-          setProfileCoachLine(text);
-          setProfileCoachSource('ai');
-          try {
-            sessionStorage.setItem(
-              cacheKey,
-              JSON.stringify({ text, fp: profileCoachFingerprint(profile) })
-            );
-          } catch {
-            /* storage full */
-          }
-        }
-      })
-      .finally(() => setProfileCoachLoading(false));
-  }, [profile, isEditing, lang, t]);
-
   useEffect(() => {
     if (!profile) {
       setProfileCoachLine('');
@@ -1977,7 +1949,7 @@ const MainApp = () => {
     }
 
     const fp = profileCoachFingerprint(profile);
-    const cacheKey = `profile_coach_ai_v1_${profile.uid}_${lang}`;
+    const cacheKey = `profile_coach_ai_v2_${profile.uid}_${lang}`;
 
     if (isEditing) {
       setProfileCoachLine(formatLocalProfileCoachLine(profile, t));
@@ -1991,7 +1963,7 @@ const MainApp = () => {
       if (raw) {
         const parsed = JSON.parse(raw) as { text?: string; fp?: string };
         if (parsed?.text && parsed?.fp === fp) {
-          setProfileCoachLine(parsed.text);
+          setProfileCoachLine(normalizeAiCoachToSingleTip(parsed.text));
           setProfileCoachSource('ai');
           setProfileCoachLoading(false);
           return;
@@ -3056,27 +3028,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             aria-hidden
                           />
                         ) : null}
-                        <p
-                          className="min-w-0 flex-1 text-xs leading-snug text-stone-500 sm:text-sm line-clamp-2"
-                          title={profileCoachLine}
-                        >
+                        <p className="min-w-0 flex-1 text-xs leading-relaxed text-stone-500 sm:text-sm break-words">
                           {profileCoachLine}
                         </p>
-                        {profileCoachSource === 'ai' && getGeminiApiKey() ? (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              refreshProfileCoachAi();
-                            }}
-                            disabled={profileCoachLoading}
-                            className="mt-0.5 shrink-0 rounded-md p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 disabled:opacity-40"
-                            title={t('profileCoachRefreshAi')}
-                            aria-label={t('profileCoachRefreshAi')}
-                          >
-                            <RefreshCw className={`h-3.5 w-3.5 ${profileCoachLoading ? 'animate-spin' : ''}`} />
-                          </button>
-                        ) : null}
                       </div>
                     ) : null}
                     {profile && profileCoachSource === 'ai' ? (
