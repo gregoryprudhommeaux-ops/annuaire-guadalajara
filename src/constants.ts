@@ -129,6 +129,9 @@ export const CITIES = [
   'Autre'
 ];
 
+/** Seuil d’affichage : bloc « lancement » vs stats complètes (homepage). */
+export const MEMBERS_THRESHOLD = 20;
+
 export const TRANSLATIONS: Translations = {
   title: { fr: "Annuaire d'Affaires de Guadalajara", es: "Directorio de Negocios de Guadalajara" },
   subtitle: { fr: "Communauté d'affaires francophone", es: "Comunidad de negocios francohablante" },
@@ -202,6 +205,48 @@ export const TRANSLATIONS: Translations = {
     fr: "Nom, secteur, besoin, mot-clé…",
     es: "Nombre, sector, necesidad, palabra clave…",
   },
+  searchBlockTitle: { fr: "Rechercher dans l'annuaire", es: "Buscar en el directorio" },
+  searchDirectoryPlaceholder: {
+    fr: "Rechercher un membre, une entreprise, un besoin…",
+    es: "Buscar un miembro, empresa o necesidad…",
+  },
+  searchButton: { fr: "Rechercher", es: "Buscar" },
+  filterSectorLabel: { fr: "Secteur", es: "Sector" },
+  filterSectorDefault: { fr: "Secteur", es: "Sector" },
+  filterTypeLabel: { fr: "Type de profil", es: "Tipo de perfil" },
+  filterTypeDefault: { fr: "Profil", es: "Perfil" },
+  filterTypeCompany: { fr: "Entreprise", es: "Empresa" },
+  filterTypeMember: { fr: "Membre", es: "Miembro" },
+  filterLocationLabel: { fr: "Localisation", es: "Ubicación" },
+  filterLocationDefault: { fr: "Localisation", es: "Ubicación" },
+  filterLocationCentro: { fr: "Guadalajara Centre", es: "Guadalajara Centro" },
+  filterLocationZapopan: { fr: "Zapopan", es: "Zapopan" },
+  filterLocationProvidencia: { fr: "Providencia", es: "Providencia" },
+  filterLocationOther: { fr: "Autre", es: "Otro" },
+  clearFilters: { fr: "Effacer les filtres", es: "Borrar filtros" },
+  randomProfile: {
+    fr: "🎲 Découvrir un profil au hasard",
+    es: "🎲 Descubrir un perfil al azar",
+  },
+  randomProfileEmpty: {
+    fr: "Aucun profil disponible",
+    es: "Ningún perfil disponible",
+  },
+  launchTitle: {
+    fr: "Communauté en cours de lancement",
+    es: "Comunidad en lanzamiento",
+  },
+  launchSubtitle: {
+    fr: "Soyez parmi les premiers membres francophones à Guadalajara.",
+    es: "Sé de los primeros miembros francófonos en Guadalajara.",
+  },
+  launchCta: {
+    fr: "Créer mon profil maintenant →",
+    es: "Crear mi perfil ahora →",
+  },
+  statsMembers: { fr: "membres", es: "miembros" },
+  statsSectors: { fr: "secteurs", es: "sectores" },
+  statsOpportunities: { fr: "opportunités", es: "oportunidades" },
   details: { fr: "Détails", es: "Detalles" },
   restrictedInfo: { fr: "Connectez-vous pour voir", es: "Inicia sesión para ver" },
   registerPrompt: { fr: "Pour accéder à l'ensemble du profil, veuillez vous enregistrer sur l'annuaire", es: "Para ver el perfil completo, regístrate en el directorio" },

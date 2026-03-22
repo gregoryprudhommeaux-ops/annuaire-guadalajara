@@ -60,6 +60,7 @@ import {
   ACTIVITY_CATEGORIES,
   CITIES,
   WORK_FUNCTION_OPTIONS,
+  MEMBERS_THRESHOLD,
   isEmployeeCountRange,
   companySizeFromEmployeeRange,
   formatEmployeeCountDisplay,
@@ -67,6 +68,11 @@ import {
   activityCategoryLabel,
   workFunctionLabel,
 } from './constants';
+import {
+  profileMatchesLocationFilter,
+  type LocationFilterKey,
+  type ProfileTypeFilterKey,
+} from './lib/directoryFilters';
 import {
   NEED_OPTIONS,
   NEED_OPTION_VALUE_SET,
@@ -82,6 +88,8 @@ import {
 import PassionPicker from './components/PassionPicker';
 import HeroSection from './components/home/HeroSection';
 import WelcomeContextCard from './components/home/WelcomeContextCard';
+import SearchBlock from './components/home/SearchBlock';
+import MembersCountBlock from './components/home/MembersCountBlock';
 import NewMembersStrip from './components/home/NewMembersStrip';
 import OpportunitiesSection from './components/home/OpportunitiesSection';
 import { homeLanding } from './copy/homeLanding';
@@ -288,7 +296,7 @@ function LanguageProvider({ children }: { children: React.ReactNode }) {
 
 type ProfileCardVariant = 'default' | 'company' | 'activity';
 
-const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profile, variant = 'default' }: { 
+const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profile, variant = 'default', highlightUid = null }: { 
   p: UserProfile, 
   isOwn?: boolean, 
   onEdit?: (p: UserProfile) => void, 
@@ -296,7 +304,8 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
   onSelect: (p: UserProfile) => void,
   user: any,
   profile: UserProfile | null,
-  variant?: ProfileCardVariant
+  variant?: ProfileCardVariant,
+  highlightUid?: string | null,
 }) => {
   const isActive = Date.now() - (p.lastSeen ?? 0) < 2592000000; // 30 days
   const { lang, t } = useLanguage();
@@ -310,6 +319,8 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
     return unsubscribe;
   }, [p.uid]);
 
+  const isRandomHighlight = highlightUid != null && highlightUid === p.uid;
+
   return (
     <motion.div 
       layout
@@ -317,8 +328,12 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       key={p.uid}
+      id={`profile-card-${p.uid}`}
       onClick={() => onSelect(p)}
-      className="flex h-full min-h-0 flex-col bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-sm hover:shadow-md transition-all group cursor-pointer relative"
+      className={cn(
+        'relative flex h-full min-h-0 cursor-pointer flex-col rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition-all group hover:shadow-md sm:p-5',
+        isRandomHighlight && 'z-10 ring-2 ring-blue-600 ring-offset-2'
+      )}
     >
       <div className="mb-2 flex shrink-0 justify-between items-start gap-2">
         <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -1507,6 +1522,9 @@ const MainApp = () => {
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [filterLocation, setFilterLocation] = useState<LocationFilterKey>('');
+  const [filterProfileType, setFilterProfileType] = useState<ProfileTypeFilterKey>('');
+  const [randomHighlightUid, setRandomHighlightUid] = useState<string | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
@@ -2005,10 +2023,68 @@ const MainApp = () => {
 
       const matchesSearch = profileMatchesSearchQuery(p, searchTerm);
       const matchesCategory = filterCategory === '' || p.activityCategory === filterCategory;
-      
-      return matchesSearch && matchesCategory;
+      const matchesLocation = profileMatchesLocationFilter(p, filterLocation);
+
+      return matchesSearch && matchesCategory && matchesLocation;
     });
-  }, [allProfiles, searchTerm, filterCategory, profile]);
+  }, [allProfiles, searchTerm, filterCategory, filterLocation, profile]);
+
+  const distinctSectorCount = useMemo(() => {
+    const s = new Set<string>();
+    allProfiles.forEach((p) => {
+      if (profile?.role !== 'admin' && p.isValidated === false) return;
+      const c = (p.activityCategory || '').trim();
+      if (c) s.add(c);
+    });
+    return s.size;
+  }, [allProfiles, profile]);
+
+  const showDirectoryClearFilters = useMemo(() => {
+    return (
+      searchTerm.trim() !== '' ||
+      filterCategory !== '' ||
+      filterLocation !== '' ||
+      filterProfileType !== ''
+    );
+  }, [searchTerm, filterCategory, filterLocation, filterProfileType]);
+
+  const clearDirectoryFilters = useCallback(() => {
+    setSearchTerm('');
+    setFilterCategory('');
+    setFilterLocation('');
+    setFilterProfileType('');
+    setViewMode('members');
+  }, []);
+
+  const scrollDirectoryIntoView = useCallback(() => {
+    requestAnimationFrame(() =>
+      directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    );
+  }, []);
+
+  const handleFilterProfileTypeChange = useCallback((v: ProfileTypeFilterKey) => {
+    setFilterProfileType(v);
+    if (v === 'company') setViewMode('companies');
+    else if (v === 'member') setViewMode('members');
+  }, []);
+
+  const handleRandomProfile = useCallback(() => {
+    if (filteredProfiles.length === 0) return;
+    const pick = filteredProfiles[Math.floor(Math.random() * filteredProfiles.length)];
+    if (viewMode !== 'companies' && viewMode !== 'members') {
+      setViewMode(filterProfileType === 'company' ? 'companies' : 'members');
+    }
+    setRandomHighlightUid(pick.uid);
+    const runScroll = () => {
+      document.getElementById(`profile-card-${pick.uid}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    };
+    setTimeout(runScroll, 80);
+    setTimeout(runScroll, 320);
+    window.setTimeout(() => setRandomHighlightUid(null), 2000);
+  }, [filteredProfiles, filterProfileType, viewMode]);
 
   const membersFiltered = useMemo(() => {
     return filteredProfiles.filter((p) => {
@@ -2817,50 +2893,36 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
           {/* Colonne gauche — recherche + stats */}
           <div className="order-6 space-y-6 lg:order-none lg:col-span-4">
-            {/* Search & Filter in Sidebar */}
-            <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-sm space-y-6">
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{t('search')}</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
-                  <input 
-                    type="text" 
-                    placeholder={t('searchPlaceholder')} 
-                    value={searchTerm}
-                    aria-label={t('searchPlaceholder')}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all text-sm"
-                  />
-                </div>
-              </div>
+            <SearchBlock
+              lang={lang}
+              t={t}
+              searchTerm={searchTerm}
+              onSearchTermChange={setSearchTerm}
+              filterCategory={filterCategory}
+              onFilterCategoryChange={setFilterCategory}
+              filterProfileType={filterProfileType}
+              onFilterProfileTypeChange={handleFilterProfileTypeChange}
+              filterLocation={filterLocation}
+              onFilterLocationChange={setFilterLocation}
+              onSearchSubmit={scrollDirectoryIntoView}
+              onClearFilters={clearDirectoryFilters}
+              onRandomProfile={handleRandomProfile}
+              randomDisabled={filteredProfiles.length === 0}
+              showClearFilters={showDirectoryClearFilters}
+            />
 
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{t('activityCategory')}</label>
-                <select 
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all text-sm font-medium"
-                >
-                  <option value="">{t('allIndustries')}</option>
-                  {ACTIVITY_CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {activityCategoryLabel(c, lang)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Total Members Block (Smaller) */}
-            <div className="bg-white rounded-2xl border border-stone-200 p-4 shadow-sm flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-stone-50 rounded-lg flex items-center justify-center text-stone-900">
-                  <Users size={16} />
-                </div>
-                <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{t('memberCount')}</p>
-              </div>
-              <p className="text-lg font-bold text-stone-900">{stats.total}</p>
-            </div>
+            {/* [MEMBERS-COUNT] Bloc lancement / compteur dynamique */}
+            <MembersCountBlock
+              t={t}
+              memberCount={stats.total}
+              sectorCount={distinctSectorCount}
+              opportunitiesCount={urgentPosts.length}
+              threshold={MEMBERS_THRESHOLD}
+              onCreateProfile={() => {
+                setAuthError(null);
+                setShowAuthModal(true);
+              }}
+            />
           </div>
 
           {/* Colonne droite — nouveaux membres, opportunités, onglets, listes */}
@@ -2869,43 +2931,47 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             id="directory-main"
             className="order-2 scroll-mt-24 space-y-6 lg:order-none lg:col-span-8"
           >
-            <NewMembersStrip
-              copy={h}
-              lang={lang}
-              profiles={stats.newThisWeekProfiles}
-              totalNewThisWeek={stats.newThisWeekCount}
-              onSeeAll={() => {
-                setViewMode('members');
-                setMembersSortRecent(true);
-                requestAnimationFrame(() =>
-                  directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                );
-              }}
-            />
+            {/* Bandeaux découverte masqués dès qu’une recherche / filtre est actif : les fiches remontent visuellement */}
+            {!showDirectoryClearFilters && (
+              <>
+                <NewMembersStrip
+                  copy={h}
+                  lang={lang}
+                  profiles={stats.newThisWeekProfiles}
+                  totalNewThisWeek={stats.newThisWeekCount}
+                  onSeeAll={() => {
+                    setViewMode('members');
+                    setMembersSortRecent(true);
+                    requestAnimationFrame(() =>
+                      directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    );
+                  }}
+                />
 
-            {/* Opportunités du réseau (données = besoins urgents) */}
-            <OpportunitiesSection
-              copy={h}
-              lang={lang}
-              posts={urgentPosts}
-              allProfiles={allProfiles}
-              user={user}
-              onSeeAll={() => {
-                setViewMode('opportunities');
-                requestAnimationFrame(() =>
-                  directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                );
-              }}
-              onPost={() => setShowUrgentPostModal(true)}
-              onCreateProfile={() => {
-                setAuthError(null);
-                setShowAuthModal(true);
-              }}
-              onOpenPost={(post) => {
-                const author = allProfiles.find((ap) => ap.uid === post.authorId);
-                if (author) setSelectedProfile(author);
-              }}
-            />
+                <OpportunitiesSection
+                  copy={h}
+                  lang={lang}
+                  posts={urgentPosts}
+                  allProfiles={allProfiles}
+                  user={user}
+                  onSeeAll={() => {
+                    setViewMode('opportunities');
+                    requestAnimationFrame(() =>
+                      directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    );
+                  }}
+                  onPost={() => setShowUrgentPostModal(true)}
+                  onCreateProfile={() => {
+                    setAuthError(null);
+                    setShowAuthModal(true);
+                  }}
+                  onOpenPost={(post) => {
+                    const author = allProfiles.find((ap) => ap.uid === post.authorId);
+                    if (author) setSelectedProfile(author);
+                  }}
+                />
+              </>
+            )}
 
             {/* View Mode Tabs */}
             <div className="flex bg-white p-1 rounded-2xl border border-stone-200 shadow-sm overflow-x-auto no-scrollbar">
@@ -3011,6 +3077,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         onDelete={setProfileToDelete}
                         user={user}
                         profile={profile}
+                        highlightUid={randomHighlightUid}
                       />
                     </React.Fragment>
                   ))}
@@ -3078,6 +3145,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           onDelete={setProfileToDelete}
                           user={user}
                           profile={profile}
+                          highlightUid={randomHighlightUid}
                         />
                       </React.Fragment>
                     ))}
@@ -3151,6 +3219,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             onDelete={setProfileToDelete}
                             user={user}
                             profile={profile}
+                            highlightUid={randomHighlightUid}
                           />
                         </React.Fragment>
                       ))}
