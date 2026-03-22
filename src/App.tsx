@@ -2198,10 +2198,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               <Building2 className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2} />
             </div>
             <div className="min-w-0 flex-1 pr-1">
-              <h1 className="text-sm sm:text-lg font-semibold tracking-tight leading-snug text-stone-900">
+              <h1 className="text-[10px] font-medium leading-snug tracking-tight text-stone-900 break-words sm:text-[11px] sm:font-semibold md:text-sm lg:text-base xl:text-lg">
                 {t('title')}
               </h1>
-              <p className="text-[10px] sm:text-xs text-stone-500 mt-0.5 sm:mt-1 leading-snug line-clamp-2 sm:line-clamp-none">
+              <p className="text-[9px] leading-snug text-stone-500 mt-0.5 line-clamp-2 sm:text-[10px] sm:mt-1 md:text-xs md:line-clamp-none">
                 {t('subtitle')}
               </p>
             </div>
@@ -2787,11 +2787,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           {/* Sidebar */}
           <div className="lg:col-span-4 space-y-6">
             {!user ? (
-              <section className="relative flex min-h-[20rem] flex-col overflow-hidden rounded-2xl bg-stone-900 p-8 text-white shadow-xl lg:min-h-[clamp(31rem,52vh,38rem)]">
+              <section className="relative flex min-h-[17rem] flex-col overflow-hidden rounded-2xl bg-stone-900 p-5 text-white shadow-xl sm:min-h-[20rem] sm:p-8 lg:min-h-[clamp(31rem,52vh,38rem)]">
                 <div className="pointer-events-none absolute top-0 right-0 h-32 w-32 rounded-full bg-white/5 blur-2xl -mr-16 -mt-16" />
                 <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-                  <h2 className="mb-4 shrink-0 text-2xl font-bold tracking-tight">{t('welcome')}</h2>
-                  <p className="mb-6 flex-1 text-sm leading-relaxed text-stone-300/95 lg:mb-8">
+                  <h2 className="mb-3 shrink-0 text-base font-bold leading-snug tracking-tight sm:mb-4 sm:text-xl lg:text-2xl">
+                    {t('welcome')}
+                  </h2>
+                  <p className="mb-4 flex-1 text-xs leading-relaxed text-stone-300/95 sm:mb-6 sm:text-sm lg:mb-8">
                     {t('welcomeIntro')}
                   </p>
                   <button
@@ -2801,7 +2803,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       setShowAuthModal(true);
                     }}
                     disabled={authProviderBusy !== null}
-                    className="mt-auto w-full shrink-0 rounded-xl bg-white py-3 text-center text-sm font-bold text-stone-900 shadow-lg transition-all hover:bg-stone-100 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mt-auto w-full shrink-0 rounded-xl bg-white py-2.5 text-center text-xs font-bold text-stone-900 shadow-lg transition-all hover:bg-stone-100 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:py-3 sm:text-sm"
                   >
                     {authProviderBusy !== null
                       ? lang === 'fr'
