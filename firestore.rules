@@ -20,10 +20,11 @@ service cloud.firestore {
     // Validation minimale : champs obligatoires uniquement
     // Les champs optionnels (positionCategory, keywords, highlightedNeeds, etc.)
     // sont acceptés sans restriction pour ne pas bloquer l'enregistrement du profil.
-    function isValidUser(data) {
+    /** uid dans le document doit correspondre à l’id du doc users/{userId} (propriétaire ou admin qui édite). */
+    function isValidUser(data, userId) {
       return data.keys().hasAll(['uid', 'fullName', 'companyName', 'email', 'role', 'createdAt'])
         && data.uid is string
-        && data.uid == request.auth.uid
+        && data.uid == userId
         && data.fullName is string && data.fullName.size() >= 1
         && data.companyName is string && data.companyName.size() >= 1
         && data.email is string
@@ -80,12 +81,12 @@ service cloud.firestore {
 
       allow create: if isAuthenticated()
         && isOwner(userId)
-        && isValidUser(request.resource.data)
+        && isValidUser(request.resource.data, userId)
         && (request.resource.data.role == 'user' || isAdmin());
 
       allow update: if isAuthenticated()
         && (isOwner(userId) || isAdmin())
-        && isValidUser(request.resource.data)
+        && isValidUser(request.resource.data, userId)
         && request.resource.data.uid == resource.data.uid;
 
       allow delete: if isOwner(userId) || isAdmin();

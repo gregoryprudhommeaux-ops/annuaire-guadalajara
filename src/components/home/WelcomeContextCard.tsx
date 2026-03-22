@@ -12,7 +12,7 @@ export default function WelcomeContextCard({ title, body, className }: Props) {
   return (
     <section
       className={cn(
-        'relative flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-stone-900 p-5 text-white shadow-sm sm:p-6',
+        'relative flex flex-col overflow-hidden rounded-2xl bg-stone-900 p-5 text-white shadow-sm sm:p-6',
         className
       )}
       aria-labelledby="welcome-context-title"

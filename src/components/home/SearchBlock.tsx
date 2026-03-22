@@ -51,13 +51,13 @@ export default function SearchBlock({
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-[#F7F7F9] p-4 shadow-sm lg:p-5">
+    <div className="min-w-0 rounded-xl border border-gray-200 bg-[#F7F7F9] p-4 shadow-sm lg:p-5">
       {/* [SEARCH] Titre du bloc */}
       <h2 className="mb-4 text-sm font-semibold text-gray-700">{t('searchBlockTitle')}</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* [SEARCH] Ligne 1 - Input + bouton */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-0">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
           <div className="relative min-w-0 flex-1 sm:flex sm:min-h-[44px]">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-gray-400"

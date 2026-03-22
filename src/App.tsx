@@ -2285,7 +2285,7 @@ const MainApp = () => {
     const delegationFlag = formData.get('acceptsDelegationVisits') === 'on';
 
     try {
-      await setDoc(doc(db, 'users', targetUid), sanitizedProfile);
+      await setDoc(doc(db, 'users', targetUid), sanitizedProfile, { merge: true });
       await saveUserAdminPrivate(targetUid, {
         genderStat,
         nationality,
@@ -2307,9 +2307,9 @@ const MainApp = () => {
       if (code === 'permission-denied') {
         setProfileSaveError(
           pickLang(
-            "Enregistrement refusé par les règles Firestore (permission-denied). Vérifie les règles 'users'.",
-            "Guardado rechazado por reglas de Firestore (permission-denied). Revisa las reglas de 'users'.",
-            "Save denied by Firestore rules (permission-denied). Check your 'users' rules.",
+            "Enregistrement refusé par Firestore (permission-denied). Vérifie les règles des collections « users » et « user_admin_private », et qu’elles sont publiées sur la bonne base Firestore (y compris base nommée, pas seulement « default »).",
+            "Guardado rechazado por Firestore (permission-denied). Revisa las reglas de « users » y « user_admin_private » y que estén publicadas en la base correcta (incl. bases con nombre, no solo « default »).",
+            "Save denied by Firestore (permission-denied). Check rules for “users” and “user_admin_private”, and that they are published on the correct database (including named DBs, not only “default”).",
             lang
           )
         );
@@ -3304,19 +3304,19 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
+      <main className="mx-auto max-w-7xl min-w-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+        <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
           {/* Ligne 1 (desktop) : Bienvenue | Hero — même hauteur de ligne */}
           {!user && (
             <>
-              <div className="order-5 h-full min-h-0 lg:order-none lg:col-span-4">
+              <div className="order-5 h-full min-h-0 min-w-0 lg:order-none lg:col-span-4">
                 <WelcomeContextCard
                   title={t('welcome')}
                   body={t('welcomeIntro')}
                   className="h-full"
                 />
               </div>
-              <div className="order-1 h-full min-h-0 lg:order-none lg:col-span-8">
+              <div className="order-1 h-full min-h-0 min-w-0 lg:order-none lg:col-span-8">
                 <HeroSection
                   copy={h}
                   authBusy={authProviderBusy !== null}
@@ -3341,20 +3341,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           {/* Connecté : Bienvenue | Nouveaux membres — même hauteur de ligne (pas de hero) */}
           {user && showDiscoveryStrips && (
             <>
-              <div className="order-1 flex h-full min-h-0 lg:order-none lg:col-span-4">
+              <div className="order-1 w-full min-w-0 self-start lg:order-none lg:col-span-4">
                 <WelcomeContextCard
                   title={t('welcome')}
                   body={t('welcomeIntro')}
-                  className="h-full w-full min-h-[200px]"
+                  className="w-full"
                 />
               </div>
-              <div className="order-2 flex h-full min-h-0 lg:order-none lg:col-span-8">
+              <div className="order-2 min-h-0 w-full min-w-0 lg:order-none lg:col-span-8">
                 <NewMembersStrip
                   copy={h}
                   lang={lang}
                   profiles={stats.newThisWeekProfiles}
                   totalNewThisWeek={stats.newThisWeekCount}
-                  className="h-full min-h-[200px] w-full"
+                  className="w-full"
                   onSeeAll={() => {
                     setDirectoryDiscoveryStripsHidden(true);
                     setViewMode('members');
@@ -3371,7 +3371,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           {/* Colonne gauche — recherche (+ opportunités si connecté), stats */}
           <div
             className={cn(
-              'space-y-6 lg:order-none lg:col-span-4',
+              'min-w-0 w-full space-y-6 lg:order-none lg:col-span-4 lg:self-start',
               user ? 'order-3' : 'order-6'
             )}
           >
@@ -3443,7 +3443,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             ref={directoryMainRef}
             id="directory-main"
             className={cn(
-              'scroll-mt-24 space-y-6 lg:order-none lg:col-span-8',
+              'min-w-0 w-full scroll-mt-24 space-y-6 lg:order-none lg:col-span-8',
               user ? 'order-4' : 'order-2'
             )}
           >
@@ -3494,8 +3494,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
             {/* Recommendations Section */}
             {user && profile && (
-              <section className="space-y-4">
-                <div className="flex items-center gap-2">
+              <section className="min-w-0 space-y-4">
+                <div className="flex min-w-0 items-center gap-2">
                   <Trophy className="w-5 h-5 text-indigo-500" />
                   <h2 className="text-lg font-bold text-stone-900">{t('recommendedForYou')}</h2>
                 </div>
@@ -3559,7 +3559,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             )}
 
             {/* View Mode Tabs — seule barre d’onglets, collée au listing ; sticky sous le header (z-50) */}
-            <div className="sticky top-24 z-40 -mx-4 bg-stone-50 px-4 py-2 sm:top-16 sm:mx-0 sm:px-0">
+            <div className="sticky top-24 z-40 bg-stone-50 py-2 sm:top-16">
               <div className="flex w-full gap-1 rounded-2xl border border-stone-200 bg-white p-1 shadow-sm">
                 {(
                   [
