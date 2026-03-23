@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   PieChart,
   Pie,
@@ -71,6 +71,7 @@ export default function NetworkRadarSection({
   registeredWithProfile,
   onUnlockRadar,
 }: Props) {
+  const [activeRadarChart, setActiveRadarChart] = useState<null | 'sectors' | 'needs'>(null);
   const radarLocked = !registeredWithProfile;
   const profilesForStats = useMemo(() => {
     return allProfiles.filter((p) => {
@@ -220,9 +221,18 @@ export default function NetworkRadarSection({
       <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
         {/* Donut — Secteurs */}
         <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm sm:p-6">
-          <h3 className="mb-4 text-[15px] font-semibold leading-snug text-[#1F2937] break-words">
-            {t('chartSectorsTitle')}
-          </h3>
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <h3 className="text-[15px] font-semibold leading-snug text-[#1F2937] break-words">
+              {t('chartSectorsTitle')}
+            </h3>
+            <button
+              type="button"
+              onClick={() => setActiveRadarChart('sectors')}
+              className="rounded-md border border-[#E5E7EB] px-2 py-1 text-[11px] font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+            >
+              Agrandir
+            </button>
+          </div>
           {sectorPieData.length === 0 ? (
             <p className="text-[13px] text-[#6B7280]">{t('chartSectorsEmpty')}</p>
           ) : (
@@ -252,6 +262,7 @@ export default function NetworkRadarSection({
                           const pct = sectorTotalMembers ? Math.round((v / sectorTotalMembers) * 100) : 0;
                           return [`${v} (${pct}%)`, payload?.name ?? ''];
                         }}
+                        contentStyle={{ fontSize: 11 }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -288,9 +299,18 @@ export default function NetworkRadarSection({
 
         {/* Bar — Top besoins */}
         <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm sm:p-6">
-          <h3 className="mb-4 text-[15px] font-semibold leading-snug text-[#1F2937] break-words">
-            {t('chartNeedsTitle')}
-          </h3>
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <h3 className="text-[15px] font-semibold leading-snug text-[#1F2937] break-words">
+              {t('chartNeedsTitle')}
+            </h3>
+            <button
+              type="button"
+              onClick={() => setActiveRadarChart('needs')}
+              className="rounded-md border border-[#E5E7EB] px-2 py-1 text-[11px] font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+            >
+              Agrandir
+            </button>
+          </div>
           {needsBarData.length === 0 ? (
             <p className="text-[13px] text-[#6B7280]">{t('typedNeedsRadarEmpty')}</p>
           ) : (
@@ -311,7 +331,7 @@ export default function NetworkRadarSection({
                     type="category"
                     dataKey="label"
                     width={108}
-                    tick={{ fill: '#374151', fontSize: 11 }}
+                    tick={{ fill: '#374151', fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                     reversed
@@ -325,7 +345,7 @@ export default function NetworkRadarSection({
                     contentStyle={{
                       borderRadius: 8,
                       border: '1px solid #E5E7EB',
-                      fontSize: 13,
+                      fontSize: 11,
                     }}
                   />
                   <Bar
@@ -341,7 +361,7 @@ export default function NetworkRadarSection({
                     {needsBarData.map((_, i) => (
                       <Cell key={i} fill="#3B82F6" fillOpacity={Math.max(0.45, 1 - i * 0.12)} />
                     ))}
-                    <LabelList dataKey="count" position="right" fill="#6B7280" fontSize={12} fontWeight={600} />
+                    <LabelList dataKey="count" position="right" fill="#6B7280" fontSize={10} fontWeight={600} />
                   </Bar>
                 </BarChart>
                 </ResponsiveContainer>
@@ -475,6 +495,104 @@ export default function NetworkRadarSection({
           </div>
         )}
       </div>
+
+      {activeRadarChart && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-stone-900/60 p-4">
+          <div className="w-full max-w-5xl rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-stone-900">
+                {activeRadarChart === 'sectors' ? t('chartSectorsTitle') : t('chartNeedsTitle')}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setActiveRadarChart(null)}
+                className="rounded-md border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+              >
+                Fermer
+              </button>
+            </div>
+            <div className="h-[65vh] min-h-[420px] w-full">
+              {activeRadarChart === 'sectors' ? (
+                <div className="flex h-full flex-col gap-4 md:flex-row md:items-center">
+                  <div className="h-full min-h-[320px] w-full md:w-1/2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={sectorPieData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={90}
+                          outerRadius={150}
+                          paddingAngle={sectorPieData.length > 1 ? 2 : 0}
+                          label
+                        >
+                          {sectorPieData.map((_, idx) => (
+                            <Cell key={idx} fill={DONUT_COLORS[idx % DONUT_COLORS.length]} stroke="#fff" strokeWidth={1} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ fontSize: 12 }} />
+                        <Legend wrapperStyle={{ fontSize: 12 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <ul className="w-full space-y-2 text-sm md:w-1/2">
+                    {sectorPieData.map((row, idx) => (
+                      <li key={row.raw} className="flex items-center gap-2">
+                        <span
+                          className="h-3 w-3 shrink-0 rounded-full"
+                          style={{ backgroundColor: DONUT_COLORS[idx % DONUT_COLORS.length] }}
+                          aria-hidden
+                        />
+                        <span className="min-w-0 flex-1 truncate text-[#374151]">
+                          {row.name}
+                        </span>
+                        <span className="text-xs font-semibold text-[#6B7280]">{row.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    layout="vertical"
+                    data={needsBarData}
+                    margin={{ top: 8, right: 40, left: 8, bottom: 8 }}
+                    barCategoryGap={14}
+                  >
+                    <XAxis type="number" hide domain={[0, maxNeedCount]} />
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      width={200}
+                      tick={{ fill: '#374151', fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                      reversed
+                    />
+                    <Tooltip
+                      formatter={(v: number) => [v, t('chartNeedsTitle')]}
+                      labelFormatter={(_, payload) => {
+                        const p = payload?.[0]?.payload as { fullLabel?: string };
+                        return p?.fullLabel ?? '';
+                      }}
+                      contentStyle={{ borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 12 }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={28}>
+                      {needsBarData.map((_, i) => (
+                        <Cell key={i} fill="#3B82F6" fillOpacity={Math.max(0.45, 1 - i * 0.12)} />
+                      ))}
+                      <LabelList dataKey="count" position="right" fill="#6B7280" fontSize={12} fontWeight={600} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

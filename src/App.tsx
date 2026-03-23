@@ -2947,6 +2947,7 @@ const MainApp = () => {
   }, [searchTerm, filterCategory, filterLocation, filterProfileType]);
 
   const showDiscoveryStrips = !showDirectoryClearFilters && !directoryDiscoveryStripsHidden;
+  const isAdminDashboard = viewMode === 'dashboard' && profile?.role === 'admin';
 
   const directoryViewTabs = useMemo(
     () =>
@@ -4342,10 +4343,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         </div>
       )}
 
-      <main className="mx-auto max-w-7xl min-w-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+      <main
+        className={cn(
+          'mx-auto min-w-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8',
+          isAdminDashboard ? 'max-w-none' : 'max-w-7xl'
+        )}
+      >
         <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
           {/* Ligne 1 (desktop) : Bienvenue | Hero — même hauteur de ligne */}
-          {!user && (
+          {!user && !isAdminDashboard && (
             <>
               <div className="order-1 h-full min-h-0 min-w-0 lg:order-none lg:col-span-4">
                 <WelcomeContextCard
@@ -4380,7 +4386,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           )}
 
           {/* Connecté : Bienvenue | Nouveaux membres — même hauteur de ligne (pas de hero) */}
-          {user && showDiscoveryStrips && (
+          {user && showDiscoveryStrips && !isAdminDashboard && (
             <>
               <div className="order-1 h-full min-h-0 min-w-0 lg:order-none lg:col-span-4">
                 <WelcomeContextCard
@@ -4427,7 +4433,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           )}
 
           {/* Colonne gauche — recherche (+ opportunités si connecté), stats */}
-          <div className="order-4 min-w-0 w-full space-y-6 lg:order-none lg:col-span-4 lg:self-start">
+          <div
+            className={cn(
+              'order-4 min-w-0 w-full space-y-6 lg:order-none lg:col-span-4 lg:self-start',
+              isAdminDashboard && 'hidden'
+            )}
+          >
             {user && !showDiscoveryStrips && (
               <div className="h-fit shrink-0">
                 <WelcomeContextCard
@@ -4547,7 +4558,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           <div
             ref={directoryMainRef}
             id="directory-main"
-            className="order-5 min-w-0 w-full scroll-mt-24 space-y-6 lg:order-none lg:col-span-8"
+            className={cn(
+              'order-5 min-w-0 w-full scroll-mt-24 space-y-6 lg:order-none',
+              isAdminDashboard ? 'lg:col-span-12' : 'lg:col-span-8'
+            )}
           >
             {/* Bandeaux découverte : visiteurs uniquement (connectés : ligne du haut + colonne gauche) */}
             {!user && showDiscoveryStrips && (
@@ -4595,7 +4609,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             )}
 
             {/* Recommendations Section */}
-            {user && profile && (
+            {user && profile && !isAdminDashboard && (
               <section className="min-w-0 space-y-4">
                 <div className="flex min-w-0 items-center gap-2">
                   <Trophy className="h-5 w-5 shrink-0 text-indigo-500" />
