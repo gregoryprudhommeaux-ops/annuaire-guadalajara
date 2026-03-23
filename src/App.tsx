@@ -3275,18 +3275,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   );
                 })}
               </div>
-              <div className="sm:hidden">
-                <LanguageDropdownMobile lang={lang} onLangChange={setLang} />
-              </div>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
+                className="hidden rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600 sm:inline-flex"
                 title={t('logout')}
               >
                 <LogOut size={18} />
               </button>
-              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200">
+              <div className="hidden h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200 sm:block">
                 <ProfileAvatar
                   photoURL={user.photoURL}
                   fullName={user.displayName || user.email || ''}
@@ -3307,7 +3304,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-slate-100 px-1 py-1.5 text-slate-800 transition-colors hover:bg-slate-200 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
               >
                 <Users className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                <span className="max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                <span className="hidden max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
                   {t('newProfiles')}
                 </span>
                 {pendingProfiles.length > 0 && (
@@ -3323,7 +3320,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 title={t('adminOAuthLeadsTitle')}
               >
                 <LogIn className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                <span className="line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
                   {t('adminOAuthLeadsTitle')}
                 </span>
                 {oauthLeadsWithoutProfileCount > 0 && (
@@ -3338,7 +3335,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-amber-50 px-1 py-1.5 text-amber-900 transition-colors hover:bg-amber-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
               >
                 <Zap className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                <span className="line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
                   {t('opportunitiesModerationTitle')}
                 </span>
                 {pendingUrgentForAdmin.length > 0 && (
@@ -3353,7 +3350,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-50 px-1 py-1.5 text-emerald-800 transition-colors hover:bg-emerald-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
               >
                 <Download className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                <span className="line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
                   {t('exportData')}
                 </span>
               </button>

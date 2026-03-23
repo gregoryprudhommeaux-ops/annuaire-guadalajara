@@ -130,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className={pageHeaderInner}>
         {adminHeroLayout ? (
           <div className="flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-3">
+            <div className="hidden items-start justify-between gap-3 sm:flex">
               <div
                 className={cn(
                   'relative min-w-0 flex-1',
