@@ -103,7 +103,7 @@ export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
           <select
             value={sectorFilter}
             onChange={(e) => setSectorFilter(e.target.value)}
-            className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 md:text-sm"
+            className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-700 md:text-sm"
           >
             <option value="">{t('filterNeedSector')}</option>
             {sectors.map((s) => (
@@ -116,7 +116,7 @@ export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
           <select
             value={sizeFilter}
             onChange={(e) => setSizeFilter(e.target.value as CompanyKind | '')}
-            className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 md:text-sm"
+            className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-700 md:text-sm"
           >
             <option value="">{t('filterNeedSize')}</option>
             {SIZE_OPTIONS.map((k) => (

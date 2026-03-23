@@ -118,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({
             <a
               href="/"
               onClick={onHomeClick}
-              className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg pr-[4.25rem] outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:pr-1"
+              className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg pr-[4.25rem] outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:pr-1"
               aria-label={homeAriaLabel}
             >
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white shadow-md sm:h-10 sm:w-10 sm:rounded-xl">
@@ -158,7 +158,7 @@ export const Header: React.FC<HeaderProps> = ({
                     className={cn(
                       'px-3 py-1.5 text-xs font-semibold transition-colors',
                       isActive
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-blue-700 text-white'
                         : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
                     )}
                   >
@@ -172,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className={cn(
                   'min-w-0 sm:flex sm:items-center',
                   guestMobileFullWidthCta &&
-                    '-mx-4 flex w-[calc(100%+2rem)] justify-center border-t border-blue-700/25 bg-blue-600 px-4 py-2.5 sm:mx-0 sm:w-auto sm:border-0 sm:bg-transparent sm:p-0',
+                    '-mx-4 flex w-[calc(100%+2rem)] justify-center border-t border-blue-800/25 bg-blue-700 px-3 py-1 sm:mx-0 sm:w-auto sm:border-0 sm:bg-transparent sm:p-0',
                   !guestMobileFullWidthCta &&
                     'flex flex-wrap items-center justify-end gap-2 pt-0.5 sm:justify-start sm:pt-0'
                 )}

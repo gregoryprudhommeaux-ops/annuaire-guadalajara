@@ -31,7 +31,7 @@ Also add your deployment domain under **Authentication** → **Settings** → **
 
 ## Design system (`src/design-system.tsx`)
 
-Reusable UI primitives aligned with a minimal palette: **slate** neutrals, **blue-600** primary CTA, **emerald** / **amber** accents. **Inter** is loaded in `src/index.css`.
+Reusable UI primitives aligned with a minimal palette: **slate** neutrals, **blue-700** primary CTA, **emerald** / **amber** accents. **Inter** is loaded in `src/index.css`.
 
 - Components: `Button`, `Heading`, `BodyText`, `Tag`, `Card`, `MemberCard`, `OpportunityCard`, `SearchInput`, `SectorSelect`.
 - `DirectoryExampleSection` is a static demo layout for reference; import it only if you need a playground page.

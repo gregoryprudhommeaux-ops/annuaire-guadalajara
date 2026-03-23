@@ -25,7 +25,7 @@ type Props = {
 };
 
 const selectClass =
-  'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 outline-none transition-shadow focus:ring-2 focus:ring-blue-600 focus:ring-offset-0';
+  'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 outline-none transition-shadow focus:ring-2 focus:ring-blue-700 focus:ring-offset-0';
 
 /** [SEARCH] Bloc recherche + filtres (colonne annuaire). */
 export default function SearchBlock({
@@ -72,12 +72,12 @@ export default function SearchBlock({
               onChange={(e) => onSearchTermChange(e.target.value)}
               placeholder={t('searchDirectoryPlaceholder')}
               aria-label={t('searchDirectoryPlaceholder')}
-              className="min-h-[44px] w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-700 outline-none transition-shadow focus:ring-2 focus:ring-blue-600 sm:min-h-0 sm:rounded-r-none sm:border-r-0 sm:py-2"
+              className="min-h-[44px] w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-700 outline-none transition-shadow focus:ring-2 focus:ring-blue-700 sm:min-h-0 sm:rounded-r-none sm:border-r-0 sm:py-2"
             />
           </div>
           <button
             type="submit"
-            className="min-h-[44px] shrink-0 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700 sm:rounded-l-none sm:px-4"
+            className="min-h-[44px] shrink-0 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-800 sm:rounded-l-none sm:px-4"
           >
             {t('searchButton')}
           </button>
@@ -148,7 +148,7 @@ export default function SearchBlock({
           type="button"
           onClick={onRandomProfile}
           disabled={randomDisabled}
-          className="flex min-h-[44px] w-full items-center justify-center rounded-lg border border-gray-300 bg-transparent px-4 text-sm font-medium text-gray-700 transition-colors hover:border-blue-600 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex min-h-[44px] w-full items-center justify-center rounded-lg border border-gray-300 bg-transparent px-4 text-sm font-medium text-gray-700 transition-colors hover:border-blue-700 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {randomDisabled ? t('randomProfileEmpty') : t('randomProfile')}
         </button>

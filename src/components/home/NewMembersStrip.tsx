@@ -89,7 +89,7 @@ export default function NewMembersStrip({
                   <button
                     type="button"
                     onClick={() => onOpenProfile(p)}
-                    className="flex w-full min-h-[4.5rem] items-start gap-3 rounded-xl border border-stone-100 bg-stone-50/80 p-3 text-left transition-colors hover:border-stone-200 hover:bg-stone-100/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:min-h-[4.75rem]"
+                    className="flex w-full min-h-[4.5rem] items-start gap-3 rounded-xl border border-stone-100 bg-stone-50/80 p-3 text-left transition-colors hover:border-stone-200 hover:bg-stone-100/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:min-h-[4.75rem]"
                     aria-label={pickLang(
                       `Ouvrir la fiche de ${p.fullName}`,
                       `Abrir la ficha de ${p.fullName}`,

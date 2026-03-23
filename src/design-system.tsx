@@ -1,6 +1,6 @@
 /**
  * Design system minimaliste — annuaire Guadalajara.
- * Palette : fond slate-50, texte slate-900, CTA blue-600, secondaires emerald / amber.
+ * Palette : fond slate-50, texte slate-900, CTA blue-700, secondaires emerald / amber.
  * Typo : Inter (déjà chargée dans index.css).
  */
 
@@ -22,9 +22,9 @@ export const Button: React.FC<ButtonProps> = ({
   const base =
     'inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
   const variants = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
+    primary: 'bg-blue-700 text-white hover:bg-blue-800 focus:ring-blue-700',
     secondary:
-      'border border-blue-600 text-blue-600 bg-transparent hover:bg-blue-50 focus:ring-blue-500',
+      'border border-blue-700 text-blue-700 bg-transparent hover:bg-blue-50 focus:ring-blue-700',
   };
 
   return (
@@ -184,7 +184,7 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
 export const SearchInput: React.FC<InputProps> = ({ className = '', ...props }) => (
   <input
     type="search"
-    className={`w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${className}`}
+    className={`w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-1 ${className}`}
     {...props}
   />
 );
@@ -197,7 +197,7 @@ export const SectorSelect: React.FC<SelectProps> = ({
   ...props
 }) => (
   <select
-    className={`w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${className}`}
+    className={`w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-1 ${className}`}
     {...props}
   >
     {children}

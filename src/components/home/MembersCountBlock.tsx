@@ -59,7 +59,7 @@ export default function MembersCountBlock({
       <div className="min-w-0 rounded-[10px] border border-blue-100 bg-blue-50/90 p-3.5 sm:p-4">
         <div className="flex min-w-0 gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-lg shadow-sm" aria-hidden>
-            <Sparkles className="h-5 w-5 text-blue-600" strokeWidth={1.75} />
+            <Sparkles className="h-5 w-5 text-blue-700" strokeWidth={1.75} />
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-800 break-words">{t('launchTitle')}</p>

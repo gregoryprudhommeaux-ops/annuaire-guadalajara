@@ -77,9 +77,9 @@ export const OpportunityActions: React.FC<{
       type="button"
       onClick={onPost}
       className={cn(
-        'flex min-h-0 flex-1 items-center justify-center rounded-lg bg-blue-600 px-2 py-2 text-center text-[11px] font-medium leading-snug text-white transition-colors',
+        'flex min-h-0 flex-1 items-center justify-center rounded-lg bg-blue-700 px-2 py-2 text-center text-[11px] font-medium leading-snug text-white transition-colors',
         'break-words hyphens-auto',
-        'hover:bg-blue-700',
+        'hover:bg-blue-800',
         'sm:h-10 sm:px-3 sm:py-0 sm:text-sm sm:leading-normal'
       )}
     >

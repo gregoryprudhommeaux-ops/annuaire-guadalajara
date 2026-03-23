@@ -37,7 +37,7 @@ export function ProfileCardBio({
             e.stopPropagation();
             setExpanded((v) => !v);
           }}
-          className="mt-1 text-xs font-medium text-blue-600 hover:underline"
+          className="mt-1 text-xs font-medium text-blue-700 hover:underline"
         >
           {expanded ? t('cardBioSeeLess') : t('seeMore')}
         </button>
@@ -78,7 +78,7 @@ export function ProfileCardEmailContact({
       <a
         href={`mailto:${email}`}
         onClick={(e) => e.stopPropagation()}
-        className="flex w-full min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-slate-50 hover:underline"
+        className="flex w-full min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-slate-50 hover:underline"
       >
         <Mail size={16} className="shrink-0" strokeWidth={1.75} />
         <span className="truncate">{email}</span>

@@ -658,7 +658,7 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
           <div className="hidden flex-col items-center gap-2 pb-0.5 sm:flex">
             {recCount > 0 && (
               <div
-                className="relative mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm ring-1 ring-blue-600/20"
+                className="relative mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-700 text-white shadow-sm ring-1 ring-blue-700/20"
                 title={
                   pickLang(
                     `${recCount} recommandation(s)`,
@@ -670,7 +670,7 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
                 onClick={(e) => e.stopPropagation()}
               >
                 <Star size={16} className="fill-white text-white" strokeWidth={1.5} />
-                <span className="absolute -bottom-1.5 left-1/2 min-w-[15px] -translate-x-1/2 rounded-full bg-white px-0.5 py-px text-center text-[8px] font-black leading-tight text-blue-600 shadow-sm ring-1 ring-blue-100">
+                <span className="absolute -bottom-1.5 left-1/2 min-w-[15px] -translate-x-1/2 rounded-full bg-white px-0.5 py-px text-center text-[8px] font-black leading-tight text-blue-700 shadow-sm ring-1 ring-blue-100">
                   {recCount > 99 ? '99+' : recCount}
                 </span>
               </div>
@@ -3090,10 +3090,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               }}
               disabled={authProviderBusy !== null}
               className={cn(
-                'w-full border-0 py-3.5 text-center text-xs font-semibold leading-snug text-white transition-colors',
-                'rounded-none bg-transparent hover:bg-blue-700/35 active:bg-blue-800/45',
+                'w-full border-0 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-white transition-colors',
+                'rounded-none bg-transparent hover:bg-blue-800/35 active:bg-blue-900/40',
                 'disabled:cursor-not-allowed disabled:opacity-60',
-                'sm:w-auto sm:rounded-lg sm:bg-blue-600 sm:px-4 sm:py-2 sm:text-sm sm:leading-normal sm:shadow-sm sm:hover:bg-blue-700 sm:active:scale-[0.98]'
+                'sm:rounded-lg sm:bg-blue-700 sm:px-4 sm:py-2 sm:text-sm sm:leading-normal sm:shadow-sm sm:hover:bg-blue-800 sm:active:scale-[0.98]'
               )}
             >
               {authProviderBusy !== null ? (
@@ -3917,7 +3917,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               </div>
                               <p className="text-stone-500 text-sm">{profile.companyName}</p>
                               {profile.linkedin && (
-                                <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="text-stone-400 hover:text-blue-600 transition-colors mt-1 inline-block">
+                                <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="text-stone-400 hover:text-blue-700 transition-colors mt-1 inline-block">
                                   <Linkedin size={16} />
                                 </a>
                               )}
@@ -5541,7 +5541,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </button>
 
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-700">
                   <Linkedin size={24} />
                 </div>
                 <h3 className="text-xl font-bold text-stone-900">{t('linkedinPhotoHelperTitle')}</h3>
