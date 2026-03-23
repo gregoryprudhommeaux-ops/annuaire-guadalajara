@@ -6,6 +6,7 @@ import { activityCategoryLabel } from '../../constants';
 import { cn } from '../../cn';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
 import { OpportunityActions } from '../DirectoryUi';
+import { cardPad } from '../../lib/pageLayout';
 
 type TFn = (key: string) => string;
 
@@ -54,7 +55,7 @@ export default function OpportunitiesSection({
       className={cn(
         'min-w-0 shadow-sm',
         sidebarEmptyStyle
-          ? 'rounded-xl border border-gray-200 bg-[#F7F7F9] p-4 lg:p-5'
+          ? cn('rounded-xl border border-slate-200 bg-slate-50/95 shadow-sm', cardPad)
           : hasPosts
             ? 'rounded-2xl border border-stone-200 bg-white px-4 py-5 sm:px-6'
             : 'rounded-2xl border border-stone-200 bg-white p-5'
@@ -66,7 +67,7 @@ export default function OpportunitiesSection({
         className={cn(
           'break-words hyphens-auto',
           sidebarEmptyStyle
-            ? 'mb-4 text-sm font-semibold text-gray-700'
+            ? 'mb-4 text-sm font-semibold text-slate-700'
             : 'text-base font-bold tracking-tight text-stone-900 sm:text-lg'
         )}
       >
@@ -135,7 +136,7 @@ export default function OpportunitiesSection({
           })}
         </ul>
       ) : sidebarEmptyStyle ? (
-        <p className="text-[13px] leading-snug text-gray-600 break-words hyphens-auto">
+        <p className="text-[13px] leading-snug text-slate-600 break-words hyphens-auto">
           {t('opportunitiesEmpty')}
         </p>
       ) : (
@@ -159,7 +160,6 @@ export default function OpportunitiesSection({
           <span
             className={cn(
               'block text-[10px] leading-snug text-slate-500 sm:text-xs',
-              sidebarEmptyStyle && 'text-gray-500',
               !sidebarEmptyStyle && (compactLayout ? 'text-left' : 'text-center sm:text-left')
             )}
           >

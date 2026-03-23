@@ -51,6 +51,18 @@ function sizeOptionLabel(kind: CompanyKind, lang: Language): string {
   }
 }
 
+function compactLabel(label: string, max = 14): string {
+  const text = String(label ?? '').trim();
+  if (!text) return '';
+  if (text.length <= max) return text;
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length > 1) {
+    const strong = words.find((w) => w.length >= 4);
+    if (strong) return strong.length <= max ? strong : `${strong.slice(0, max - 1)}…`;
+  }
+  return `${text.slice(0, max - 1)}…`;
+}
+
 export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
   needs = mockNeeds,
   members = mockMembersExtended,
@@ -91,19 +103,48 @@ export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
     heatmapRaw.length > 0 && heatmapRaw.some((row) => row.data.some((d) => d.value > 0));
   const hasLine = (timeseries[0]?.data?.length ?? 0) > 0;
 
+  const topNeedsBarData = useMemo(
+    () =>
+      topNeedsData.map((d) => {
+        const full = labelNeed(lang, d.need, t);
+        return { need: compactLabel(full, 18), needFull: full, count: d.count };
+      }),
+    [topNeedsData, lang, t]
+  );
+
+  const needCompactToFullBar = useMemo(() => {
+    const m = new Map<string, string>();
+    topNeedsBarData.forEach((r) => m.set(r.need, r.needFull));
+    return m;
+  }, [topNeedsBarData]);
+
+  const { heatmapNivoData, heatmapXToFull } = useMemo(() => {
+    const xToFull = new Map<string, string>();
+    const data = heatmapRaw.map((row) => ({
+      id: row.sector,
+      data: row.data.map((d) => {
+        const full = labelNeed(lang, d.need, t);
+        const x = compactLabel(full, 14);
+        xToFull.set(x, full);
+        return { x, y: d.value };
+      }),
+    }));
+    return { heatmapNivoData: data, heatmapXToFull: xToFull };
+  }, [heatmapRaw, lang, t]);
+
   return (
     <div className={`mt-6 flex w-full flex-col gap-4 ${className ?? ''}`}>
       <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 md:text-2xl">{t('needsTitle')}</h2>
-          <p className="mt-1 max-w-xl text-sm text-gray-600">{t('needsSubtitle')}</p>
+          <h2 className="text-xl font-semibold text-slate-900 md:text-2xl">{t('needsTitle')}</h2>
+          <p className="mt-1 max-w-xl text-sm text-slate-600">{t('needsSubtitle')}</p>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <select
             value={sectorFilter}
             onChange={(e) => setSectorFilter(e.target.value)}
-            className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-700 md:text-sm"
+            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-700 md:text-sm"
           >
             <option value="">{t('filterNeedSector')}</option>
             {sectors.map((s) => (
@@ -116,7 +157,7 @@ export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
           <select
             value={sizeFilter}
             onChange={(e) => setSizeFilter(e.target.value as CompanyKind | '')}
-            className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-700 md:text-sm"
+            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-700 md:text-sm"
           >
             <option value="">{t('filterNeedSize')}</option>
             {SIZE_OPTIONS.map((k) => (
@@ -129,18 +170,15 @@ export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
       </header>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <section className="flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-gray-900">{t('cardTopNeeds')}</h3>
+        <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <h3 className="mb-3 text-sm font-semibold text-slate-900">{t('cardTopNeeds')}</h3>
           {!hasBar ? (
-            <div className="flex h-64 items-center justify-center text-sm text-gray-500">—</div>
+            <div className="flex h-64 items-center justify-center text-sm text-slate-500">—</div>
           ) : (
             <div className="h-64 w-full min-w-0">
               <ResponsiveBar
                 theme={chartTheme}
-                data={topNeedsData.map((d) => ({
-                  need: labelNeed(lang, d.need, t),
-                  count: d.count,
-                }))}
+                data={topNeedsBarData}
                 keys={['count']}
                 indexBy="need"
                 margin={{ top: 10, right: 10, bottom: 60, left: 40 }}
@@ -153,7 +191,24 @@ export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
                 axisBottom={{
                   tickSize: 3,
                   tickPadding: 4,
-                  tickRotation: -30,
+                  tickRotation: 0,
+                  renderTick: (tick: { x: number; y: number; value: string | number; opacity: number }) => {
+                    const compact = String(tick.value ?? '');
+                    const full = needCompactToFullBar.get(compact) ?? compact;
+                    return (
+                      <g transform={`translate(${tick.x},${tick.y})`} opacity={tick.opacity}>
+                        <title>{full}</title>
+                        <line y2="3" stroke="#9ca3af" />
+                        <text
+                          textAnchor="middle"
+                          dominantBaseline="hanging"
+                          style={{ fill: '#78716c', fontSize: 10, pointerEvents: 'none' }}
+                        >
+                          {compact}
+                        </text>
+                      </g>
+                    );
+                  },
                 }}
                 axisLeft={{
                   tickSize: 3,
@@ -167,20 +222,14 @@ export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
           )}
         </section>
 
-        <section className="flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-gray-900">{t('cardNeedsHeatmap')}</h3>
+        <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <h3 className="mb-3 text-sm font-semibold text-slate-900">{t('cardNeedsHeatmap')}</h3>
           {!hasHeatmap ? (
-            <div className="flex h-64 items-center justify-center text-sm text-gray-500">—</div>
+            <div className="flex h-64 items-center justify-center text-sm text-slate-500">—</div>
           ) : (
             <div className="h-64 w-full min-w-0">
               <ResponsiveHeatMap
-                data={heatmapRaw.map((row) => ({
-                  id: row.sector,
-                  data: row.data.map((d) => ({
-                    x: labelNeed(lang, d.need, t),
-                    y: d.value,
-                  })),
-                }))}
+                data={heatmapNivoData}
                 margin={{ top: 20, right: 10, bottom: 40, left: 70 }}
                 valueFormat=">-.0f"
                 axisTop={null}
@@ -188,7 +237,24 @@ export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
                 axisBottom={{
                   tickSize: 3,
                   tickPadding: 4,
-                  tickRotation: -30,
+                  tickRotation: 0,
+                  renderTick: (tick: { x: number; y: number; value: string | number; opacity: number }) => {
+                    const compact = String(tick.value ?? '');
+                    const full = heatmapXToFull.get(compact) ?? compact;
+                    return (
+                      <g transform={`translate(${tick.x},${tick.y})`} opacity={tick.opacity}>
+                        <title>{full}</title>
+                        <line y2="3" stroke="#9ca3af" />
+                        <text
+                          textAnchor="middle"
+                          dominantBaseline="hanging"
+                          style={{ fill: '#78716c', fontSize: 10, pointerEvents: 'none' }}
+                        >
+                          {compact}
+                        </text>
+                      </g>
+                    );
+                  },
                 }}
                 axisLeft={{
                   tickSize: 3,
@@ -208,10 +274,10 @@ export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
           )}
         </section>
 
-        <section className="flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-gray-900">{t('cardNeedsTimeseries')}</h3>
+        <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <h3 className="mb-3 text-sm font-semibold text-slate-900">{t('cardNeedsTimeseries')}</h3>
           {!hasLine ? (
-            <div className="flex h-64 items-center justify-center text-sm text-gray-500">—</div>
+            <div className="flex h-64 items-center justify-center text-sm text-slate-500">—</div>
           ) : (
             <div className="h-64 w-full min-w-0">
               <ResponsiveLine

@@ -121,7 +121,7 @@ export function IceBreakerInterestsWithSave({
         onChange={handleChange}
         maxSelected={maxSelected}
       />
-      {saving && <p className="mt-2 text-xs text-gray-400">{t.saving}</p>}
+      {saving && <p className="mt-2 text-xs text-slate-400">{t.saving}</p>}
       {error && !saving && <p className="mt-2 text-xs text-red-500">{error}</p>}
     </div>
   );

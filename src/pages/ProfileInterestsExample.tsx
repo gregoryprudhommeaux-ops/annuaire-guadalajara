@@ -6,6 +6,8 @@ import React, { useState } from 'react';
 import type { Language } from '@/types';
 import { IceBreakerInterests } from '@/components/profile/IceBreakerInterests';
 import { sanitizePassionIds } from '@/lib/passionConfig';
+import { cn } from '@/cn';
+import { pagePadX } from '@/lib/pageLayout';
 
 const LANGS: Language[] = ['fr', 'en', 'es'];
 
@@ -18,16 +20,19 @@ const ProfileInterestsExample: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6">
+    <div className={cn('mx-auto max-w-4xl py-6', pagePadX)}>
       <div className="mb-4 flex gap-2">
         {LANGS.map((code) => (
           <button
             key={code}
             type="button"
             onClick={() => setLang(code)}
-            className={`rounded-full px-3 py-1 text-xs ${
-              lang === code ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500'
-            }`}
+            className={cn(
+              'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+              lang === code
+                ? 'bg-slate-900 text-white'
+                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
+            )}
           >
             {code.toUpperCase()}
           </button>

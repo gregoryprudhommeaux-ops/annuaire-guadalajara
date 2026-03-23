@@ -6,6 +6,7 @@ import {
   PASSIONS_CATEGORIES,
   type PassionLocale,
 } from '@/lib/passionConfig';
+import { cardPad } from '@/lib/pageLayout';
 
 export type IceBreakerInterestsProps = {
   lang: Language;
@@ -136,10 +137,15 @@ export function IceBreakerInterests({
   };
 
   return (
-    <section className="mt-6 min-w-0 rounded-2xl border border-gray-100 bg-white p-4 md:p-5">
+    <section
+      className={cn(
+        'mt-6 min-w-0 rounded-2xl border border-slate-100 bg-white shadow-sm',
+        cardPad
+      )}
+    >
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold text-gray-900 break-words">
+          <h3 className="text-base font-semibold text-slate-900 break-words">
             {header.title}
             {markRequired ? (
               <span className="ml-0.5 text-red-500 font-semibold" aria-hidden>
@@ -147,14 +153,14 @@ export function IceBreakerInterests({
               </span>
             ) : null}
           </h3>
-          <p className="mt-1 text-xs text-gray-500 md:text-sm break-words hyphens-auto">
+          <p className="mt-1 text-xs text-slate-500 md:text-sm break-words hyphens-auto">
             {header.subtitle}
           </p>
         </div>
         <div
           className={cn(
             'inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-medium',
-            isMax ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'
+            isMax ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
           )}
         >
           {count}/{maxSelected} — {header.counter}
@@ -164,7 +170,7 @@ export function IceBreakerInterests({
       <div className="mt-4 flex flex-col gap-4">
         {PASSIONS_CATEGORIES.map((cat) => (
           <div key={cat.id} className="flex flex-col gap-2">
-            <p className="flex min-w-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            <p className="flex min-w-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
               <span aria-hidden>{cat.emoji}</span>
               <span className="min-w-0 break-words">{cat.label[locale]}</span>
             </p>
@@ -185,8 +191,8 @@ export function IceBreakerInterests({
                       active
                         ? 'scale-[1.02] border-violet-500 bg-violet-600 text-white shadow-sm'
                         : disabled
-                          ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-violet-300 hover:bg-violet-50'
+                          ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-violet-300 hover:bg-violet-50'
                     )}
                   >
                     <span aria-hidden>{icon}</span>
@@ -202,7 +208,7 @@ export function IceBreakerInterests({
       <p
         className={cn(
           'mt-3 text-xs md:text-sm',
-          isMax ? 'text-emerald-600' : 'text-gray-500'
+          isMax ? 'text-emerald-600' : 'text-slate-500'
         )}
       >
         {getIceBreakerText(lang, count)}

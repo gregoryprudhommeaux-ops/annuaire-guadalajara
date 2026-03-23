@@ -1,6 +1,7 @@
 import React from 'react';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
 import { cn } from '../../cn';
+import { pagePadX } from '../../lib/pageLayout';
 
 type Props = {
   copy: HomeLandingCopy;
@@ -21,7 +22,8 @@ export default function HeroSection({
   return (
     <section
       className={cn(
-        'flex h-full min-h-0 flex-col rounded-2xl border border-stone-200/80 bg-stone-50/80 px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7',
+        'flex h-full min-h-0 flex-col rounded-2xl border border-stone-200/80 bg-stone-50/80 py-5 sm:py-6 lg:py-7',
+        pagePadX,
         className
       )}
       aria-labelledby="home-hero-title"

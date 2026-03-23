@@ -7,6 +7,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Building2, ChevronDown } from 'lucide-react';
 import { cn } from '../cn';
+import { guestCtaFullBleed, pageHeaderInner } from '../lib/pageLayout';
 import type { Language } from '../types';
 
 const LANGUAGES: { code: Language; label: string }[] = [
@@ -111,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
         'shadow-sm'
       )}
     >
-      <div className="mx-auto min-w-0 max-w-7xl px-4 py-3 md:px-6 lg:px-8">
+      <div className={pageHeaderInner}>
         {/* sm:flex-wrap : si la barre admin + langue dépassent, passage à la ligne sans écraser le titre.
             Compte admin : ne pas mettre min-w-0 sur ce bloc — sinon flex-1 le comprime à ~0 et break-words casse lettre par lettre. */}
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-3">
@@ -173,7 +174,11 @@ export const Header: React.FC<HeaderProps> = ({
                 className={cn(
                   'min-w-0 sm:flex sm:items-center',
                   guestMobileFullWidthCta &&
-                    '-mx-4 flex w-[calc(100%+2rem)] justify-center border-t border-blue-800/25 bg-blue-700 px-3 py-1 sm:mx-0 sm:w-auto sm:border-0 sm:bg-transparent sm:p-0',
+                    cn(
+                      'flex justify-center border-t border-blue-800/25 bg-blue-700 px-3 py-1',
+                      guestCtaFullBleed,
+                      'sm:mx-0 sm:w-auto sm:border-0 sm:bg-transparent sm:p-0'
+                    ),
                   !guestMobileFullWidthCta &&
                     'flex flex-wrap items-center justify-end gap-2 pt-0.5 sm:justify-start sm:pt-0'
                 )}

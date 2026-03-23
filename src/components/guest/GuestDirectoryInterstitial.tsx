@@ -18,7 +18,7 @@ export function GuestDirectoryInterstitial({ hiddenCount, onJoin, t, className }
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-b from-white to-blue-50/90 p-6 text-center shadow-sm',
+        'relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-b from-white to-blue-50/90 p-4 text-center shadow-sm sm:p-6',
         className
       )}
     >

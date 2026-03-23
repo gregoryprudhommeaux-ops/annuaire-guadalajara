@@ -207,6 +207,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import * as XLSX from 'xlsx';
 import { GoogleGenAI } from "@google/genai";
 import { cn } from './cn';
+import { cardPad, pageMainPad, pageSectionPad } from './lib/pageLayout';
 
 type SocialAuthProvider = 'google' | 'microsoft' | 'apple';
 
@@ -1248,7 +1249,7 @@ const ProfilePage = () => {
         {profile.photoURL && <meta property="og:image" content={profile.photoURL} />}
       </Helmet>
 
-      <div className="max-w-4xl mx-auto px-4 pt-8">
+      <div className="mx-auto max-w-4xl px-4 pt-8 sm:px-6 lg:px-8">
         <button onClick={() => navigate('/')} className="mb-6 flex items-center gap-2 text-stone-500 hover:text-stone-900 font-bold transition-colors">
           <ArrowLeft size={20} />
           {pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
@@ -1256,7 +1257,7 @@ const ProfilePage = () => {
 
         <div className="bg-white rounded-[2.5rem] shadow-xl border border-stone-200 overflow-hidden">
           <div className="h-48 bg-gradient-to-r from-indigo-600 to-violet-600 relative">
-            <div className="absolute -bottom-16 left-8 p-2 bg-white rounded-3xl shadow-lg">
+            <div className="absolute -bottom-16 left-4 p-2 bg-white rounded-3xl shadow-lg sm:left-8">
               <div className="h-32 w-32 overflow-hidden rounded-2xl border-4 border-white bg-stone-100">
                 <ProfileAvatar
                   photoURL={profile.photoURL}
@@ -1269,13 +1270,13 @@ const ProfilePage = () => {
             </div>
             <button 
               onClick={handleShare}
-              className="absolute top-6 right-6 p-3 bg-white/20 backdrop-blur-md text-white rounded-2xl hover:bg-white/30 transition-all border border-white/30 shadow-lg"
+              className="absolute right-4 top-4 rounded-2xl border border-white/30 bg-white/20 p-3 text-white shadow-lg backdrop-blur-md transition-all hover:bg-white/30 sm:right-6 sm:top-6"
             >
               <Share2 size={20} />
             </button>
           </div>
 
-          <div className="pt-20 pb-10 px-8">
+          <div className="px-4 pb-8 pt-20 sm:px-6 sm:pb-10 md:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
               <div>
                 <div className="mb-2">
@@ -1710,14 +1711,14 @@ const NeedPage = () => {
         />
       </Helmet>
 
-      <div className="max-w-3xl mx-auto px-4 pt-8">
+      <div className="mx-auto max-w-3xl px-4 pt-8 sm:px-6 lg:px-8">
         <button onClick={() => navigate('/')} className="mb-6 flex items-center gap-2 text-stone-500 hover:text-stone-900 font-bold transition-colors">
           <ArrowLeft size={20} />
           {pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
         </button>
 
         <div className="bg-white rounded-[2.5rem] shadow-xl border border-stone-200 overflow-hidden mb-8">
-          <div className="p-8">
+          <div className="p-4 sm:p-8">
             <div className="flex items-center gap-4 mb-8">
               <div className="h-16 w-16 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
                 <ProfileAvatar
@@ -3399,7 +3400,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
       {user && (
         <div className="bg-stone-50 border-b border-stone-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className={pageSectionPad}>
             <section className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden relative">
               {profile &&
                 !profileReminderDismissed &&
@@ -3484,7 +3485,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   transition={{ duration: 0.3, ease: 'easeInOut' }}
                   className="overflow-hidden"
                 >
-                  <div className="p-6 pt-0 border-t border-stone-100">
+                  <div className="border-t border-stone-100 p-4 pt-0 sm:p-6 sm:pt-0">
                     {profile?.isValidated === false && (
                       <div className="mt-6 p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-center gap-3">
                         <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg shrink-0">
@@ -4344,10 +4345,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       )}
 
       <main
-        className={cn(
-          'mx-auto min-w-0 px-4 py-5 sm:px-6 sm:py-6 lg:px-8',
-          isAdminDashboard ? 'max-w-none' : 'max-w-7xl'
-        )}
+        className={cn(pageMainPad, isAdminDashboard ? 'max-w-none' : 'max-w-7xl')}
       >
         <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
           {/* Ligne 1 (desktop) : Bienvenue | Hero — même hauteur de ligne */}
@@ -4452,7 +4450,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </div>
             )}
             {viewMode === 'activities' ? (
-              <div className="min-w-0 rounded-xl border border-gray-200 bg-[#F7F7F9] p-4 shadow-sm lg:p-5">
+              <div
+                className={cn(
+                  'min-w-0 rounded-xl border border-slate-200 bg-slate-50/95 shadow-sm',
+                  cardPad
+                )}
+              >
                 <DirectoryRandomProfileButton
                   t={t}
                   onRandomProfile={handleRandomProfile}

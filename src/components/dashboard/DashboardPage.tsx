@@ -119,14 +119,14 @@ export default function DashboardPage({
   if (registeredWithProfile && profiles === null && !loadError) {
     return (
       <div className={className}>
-        <p className="text-sm text-gray-500">{loading}</p>
+        <p className="text-sm text-slate-500">{loading}</p>
       </div>
     );
   }
 
   return (
     <div
-      className={`flex w-full flex-col gap-8 p-4 md:p-6 lg:p-8 ${className ?? ''}`}
+      className={`flex w-full flex-col gap-6 py-4 md:gap-8 md:py-6 ${className ?? ''}`}
     >
       {loadError && (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">

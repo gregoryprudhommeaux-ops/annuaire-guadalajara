@@ -14,6 +14,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { Maximize2 } from 'lucide-react';
 import { useAdminStats, type PeriodKey } from '@/hooks/useAdminStats';
 import type { Language } from '@/types';
 
@@ -26,24 +27,122 @@ type AdminDashboardProps = {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex min-h-[124px] flex-col justify-between rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-stone-500">{label}</p>
-      <p className="text-2xl font-bold leading-none text-stone-900">{value}</p>
+    <div className="flex min-h-[44px] w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm sm:min-h-[40px] sm:px-4 sm:py-2">
+      <p className="min-w-0 flex-1 truncate text-[9px] font-semibold uppercase leading-tight tracking-wide text-stone-500 sm:text-[11px]" title={label}>
+        {label}
+      </p>
+      <p className="shrink-0 text-base font-bold tabular-nums leading-none text-stone-900 sm:text-lg">{value}</p>
     </div>
+  );
+}
+
+const legendProps = {
+  verticalAlign: 'bottom' as const,
+  layout: 'horizontal' as const,
+  wrapperStyle: {
+    fontSize: 10,
+    paddingTop: 4,
+    width: '100%',
+    maxWidth: '100%',
+    lineHeight: 1.2,
+  },
+  iconSize: 8,
+};
+
+function compactLabel(label: string, max = 14): string {
+  const text = String(label ?? '').trim();
+  if (!text) return '';
+  if (text.length <= max) return text;
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length > 1) {
+    const strong = words.find((w) => w.length >= 4);
+    if (strong) return strong.length <= max ? strong : `${strong.slice(0, max - 1)}…`;
+  }
+  return `${text.slice(0, max - 1)}…`;
+}
+
+/** Ticks X Recharts : texte compact + tooltip natif (SVG title) avec libellé complet. */
+function AdminXAxisTickCompactAngled({
+  x,
+  y,
+  payload,
+  maxChars,
+  fontSize,
+  fill,
+}: {
+  x: number;
+  y: number;
+  payload?: { value?: string | number };
+  maxChars: number;
+  fontSize: number;
+  fill: string;
+}) {
+  const full = String(payload?.value ?? '');
+  const short = compactLabel(full, maxChars);
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <title>{full}</title>
+      <text textAnchor="end" dominantBaseline="hanging" fill={fill} fontSize={fontSize} transform="rotate(-20)">
+        {short}
+      </text>
+    </g>
+  );
+}
+
+function AdminXAxisTickCompactFlat({
+  x,
+  y,
+  payload,
+  maxChars,
+  fontSize,
+  fill,
+}: {
+  x: number;
+  y: number;
+  payload?: { value?: string | number };
+  maxChars: number;
+  fontSize: number;
+  fill: string;
+}) {
+  const full = String(payload?.value ?? '');
+  const short = compactLabel(full, maxChars);
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <title>{full}</title>
+      <text textAnchor="middle" dominantBaseline="hanging" fill={fill} fontSize={fontSize}>
+        {short}
+      </text>
+    </g>
   );
 }
 
 function ChartCard({
   title,
+  onExpand,
+  expandLabel,
   children,
 }: {
   title: string;
+  onExpand?: () => void;
+  expandLabel: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-stone-900">{title}</h3>
-      <div className="mt-4 h-72 w-full">{children}</div>
+    <div className="relative flex min-h-0 flex-col rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+      {onExpand ? (
+        <button
+          type="button"
+          onClick={onExpand}
+          className="absolute right-2 top-2 z-10 rounded-md p-1.5 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+          aria-label={expandLabel}
+          title={expandLabel}
+        >
+          <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+        </button>
+      ) : null}
+      <h3 className="min-w-0 pr-10 text-sm font-semibold leading-snug text-stone-900">{title}</h3>
+      {/* Zone graphique dédiée : overflow hidden pour que rien ne dépasse du cadre */}
+      <div className="mt-3 h-72 w-full min-h-0 overflow-hidden">{children}</div>
     </div>
   );
 }
@@ -80,6 +179,24 @@ export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
   const COLORS = ['#1d4ed8', '#16a34a', '#0284c7', '#7c3aed', '#ea580c', '#334155'];
   const chartTick = { fontSize: 10, fill: '#64748b' };
   const modalTick = { fontSize: 12, fill: '#475569' };
+  const xTickCardAngled = (props: { x: number; y: number; payload?: { value?: string | number } }) => (
+    <AdminXAxisTickCompactAngled {...props} maxChars={14} fontSize={10} fill="#64748b" />
+  );
+  const xTickCardFlat = (props: { x: number; y: number; payload?: { value?: string | number } }) => (
+    <AdminXAxisTickCompactFlat {...props} maxChars={14} fontSize={10} fill="#64748b" />
+  );
+  const xTickModalAngled = (props: { x: number; y: number; payload?: { value?: string | number } }) => (
+    <AdminXAxisTickCompactAngled {...props} maxChars={18} fontSize={12} fill="#475569" />
+  );
+  const xTickModalFlat = (props: { x: number; y: number; payload?: { value?: string | number } }) => (
+    <AdminXAxisTickCompactFlat {...props} maxChars={18} fontSize={12} fill="#475569" />
+  );
+  const expandChartLabel =
+    lang === 'en'
+      ? 'Open chart in large view'
+      : lang === 'es'
+        ? 'Ampliar el gráfico'
+        : 'Agrandir le graphique';
 
   if (stats.loading) {
     return <p className="text-sm text-stone-500">{loadingLabel}</p>;
@@ -112,7 +229,7 @@ export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
         ))}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid w-full grid-cols-4 gap-2 sm:gap-3">
         <StatCard label={t('members') || 'Membres'} value={stats.totalProfiles} />
         <StatCard label="Nouveaux inscrits (periode)" value={stats.newProfilesInPeriod} />
         <StatCard label="Profils incomplets" value={stats.incompleteProfiles} />
@@ -120,131 +237,132 @@ export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-        <ChartCard title="Repartition profils (type)">
-          <div className="mb-2 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setActiveChart('type')}
-              className="rounded-md border border-stone-200 px-2 py-1 text-[11px] font-medium text-stone-600 hover:bg-stone-50"
-            >
-              Agrandir
-            </button>
-          </div>
+        <ChartCard
+          title="Repartition profils (type)"
+          expandLabel={expandChartLabel}
+          onExpand={() => setActiveChart('type')}
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={byTypeData} dataKey="value" nameKey="name" outerRadius={100} label>
+            <PieChart margin={{ top: 4, right: 8, bottom: 32, left: 8 }}>
+              <Pie
+                data={byTypeData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="42%"
+                innerRadius={0}
+                outerRadius="62%"
+                paddingAngle={2}
+                label={{ fontSize: 10, fill: '#475569' }}
+              >
                 {byTypeData.map((entry, index) => (
                   <Cell key={`${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip contentStyle={{ fontSize: 11 }} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Legend {...legendProps} />
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Profils par statut">
-          <div className="mb-2 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setActiveChart('status')}
-              className="rounded-md border border-stone-200 px-2 py-1 text-[11px] font-medium text-stone-600 hover:bg-stone-50"
-            >
-              Agrandir
-            </button>
-          </div>
+        <ChartCard
+          title="Profils par statut"
+          expandLabel={expandChartLabel}
+          onExpand={() => setActiveChart('status')}
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={byStatusData}>
+            <BarChart data={byStatusData} margin={{ top: 8, right: 8, bottom: 64, left: 4 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={chartTick} interval={0} angle={-20} textAnchor="end" height={70} />
-              <YAxis allowDecimals={false} tick={chartTick} />
+              <XAxis
+                dataKey="name"
+                tick={xTickCardAngled}
+                interval={0}
+                angle={-20}
+                textAnchor="end"
+                height={56}
+              />
+              <YAxis allowDecimals={false} tick={chartTick} width={28} />
               <Tooltip contentStyle={{ fontSize: 11 }} />
               <Bar dataKey="value" fill="#1d4ed8" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Profils par ville">
-          <div className="mb-2 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setActiveChart('city')}
-              className="rounded-md border border-stone-200 px-2 py-1 text-[11px] font-medium text-stone-600 hover:bg-stone-50"
-            >
-              Agrandir
-            </button>
-          </div>
+        <ChartCard
+          title="Profils par ville"
+          expandLabel={expandChartLabel}
+          onExpand={() => setActiveChart('city')}
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={byCityData}>
+            <BarChart data={byCityData} margin={{ top: 8, right: 8, bottom: 64, left: 4 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={chartTick} interval={0} angle={-20} textAnchor="end" height={70} />
-              <YAxis allowDecimals={false} tick={chartTick} />
+              <XAxis
+                dataKey="name"
+                tick={xTickCardAngled}
+                interval={0}
+                angle={-20}
+                textAnchor="end"
+                height={56}
+              />
+              <YAxis allowDecimals={false} tick={chartTick} width={28} />
               <Tooltip contentStyle={{ fontSize: 11 }} />
               <Bar dataKey="value" fill="#0284c7" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Profils par secteur">
-          <div className="mb-2 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setActiveChart('sector')}
-              className="rounded-md border border-stone-200 px-2 py-1 text-[11px] font-medium text-stone-600 hover:bg-stone-50"
-            >
-              Agrandir
-            </button>
-          </div>
+        <ChartCard
+          title="Profils par secteur"
+          expandLabel={expandChartLabel}
+          onExpand={() => setActiveChart('sector')}
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={bySectorData}>
+            <BarChart data={bySectorData} margin={{ top: 8, right: 8, bottom: 64, left: 4 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={chartTick} interval={0} angle={-20} textAnchor="end" height={70} />
-              <YAxis allowDecimals={false} tick={chartTick} />
+              <XAxis
+                dataKey="name"
+                tick={xTickCardAngled}
+                interval={0}
+                angle={-20}
+                textAnchor="end"
+                height={56}
+              />
+              <YAxis allowDecimals={false} tick={chartTick} width={28} />
               <Tooltip contentStyle={{ fontSize: 11 }} />
               <Bar dataKey="value" fill="#7c3aed" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Croissance profils (30 jours)">
-          <div className="mb-2 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setActiveChart('growth')}
-              className="rounded-md border border-stone-200 px-2 py-1 text-[11px] font-medium text-stone-600 hover:bg-stone-50"
-            >
-              Agrandir
-            </button>
-          </div>
+        <ChartCard
+          title="Croissance profils (30 jours)"
+          expandLabel={expandChartLabel}
+          onExpand={() => setActiveChart('growth')}
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={stats.growthCurve}>
+            <LineChart data={stats.growthCurve} margin={{ top: 8, right: 8, bottom: 8, left: 4 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tick={chartTick} />
-              <YAxis allowDecimals={false} tick={chartTick} />
+              <XAxis dataKey="date" tick={chartTick} height={28} />
+              <YAxis allowDecimals={false} tick={chartTick} width={28} />
               <Tooltip contentStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="count" stroke="#16a34a" strokeWidth={3} dot={{ r: 2 }} />
+              <Line type="monotone" dataKey="count" stroke="#16a34a" strokeWidth={2} dot={{ r: 2 }} name="Profils cumulés" />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Clics de contact par canal">
-          <div className="mb-2 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setActiveChart('clicks')}
-              className="rounded-md border border-stone-200 px-2 py-1 text-[11px] font-medium text-stone-600 hover:bg-stone-50"
-            >
-              Agrandir
-            </button>
-          </div>
+        <ChartCard
+          title="Clics de contact par canal"
+          expandLabel={expandChartLabel}
+          onExpand={() => setActiveChart('clicks')}
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={stats.clicksByType}>
+            <BarChart data={stats.clicksByType} margin={{ top: 8, right: 8, bottom: 36, left: 4 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={chartTick} />
-              <YAxis allowDecimals={false} tick={chartTick} />
+              <XAxis dataKey="name" tick={xTickCardFlat} height={28} />
+              <YAxis allowDecimals={false} tick={chartTick} width={28} />
               <Tooltip contentStyle={{ fontSize: 11 }} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="value" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
+              <Legend {...legendProps} />
+              <Bar dataKey="value" name="Clics" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -270,24 +388,44 @@ export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
                 Fermer
               </button>
             </div>
-            <div className="h-[65vh] min-h-[420px] w-full">
+            <div className="h-[65vh] min-h-[420px] w-full overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <>
                   {activeChart === 'type' && (
-                    <PieChart>
-                      <Pie data={byTypeData} dataKey="value" nameKey="name" outerRadius={150} label>
+                    <PieChart margin={{ top: 8, right: 16, bottom: 40, left: 16 }}>
+                      <Pie
+                        data={byTypeData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="44%"
+                        outerRadius="68%"
+                        label={{ fontSize: 11, fill: '#475569' }}
+                      >
                         {byTypeData.map((entry, index) => (
                           <Cell key={`${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip contentStyle={{ fontSize: 12 }} />
-                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Legend
+                        verticalAlign="bottom"
+                        layout="horizontal"
+                        wrapperStyle={{ fontSize: 12, width: '100%', paddingTop: 8 }}
+                        iconSize={10}
+                      />
                     </PieChart>
                   )}
                   {activeChart === 'status' && (
-                    <BarChart data={byStatusData} margin={{ top: 10, right: 16, bottom: 70, left: 8 }}>
+                    <BarChart data={byStatusData} margin={{ top: 10, right: 16, bottom: 72, left: 8 }}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={modalTick} interval={0} angle={-20} textAnchor="end" height={80} />
+                      <XAxis
+                        dataKey="name"
+                        tick={xTickModalAngled}
+                        interval={0}
+                        angle={-20}
+                        textAnchor="end"
+                        height={80}
+                      />
                       <YAxis allowDecimals={false} tick={modalTick} />
                       <Tooltip contentStyle={{ fontSize: 12 }} />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -295,9 +433,16 @@ export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
                     </BarChart>
                   )}
                   {activeChart === 'city' && (
-                    <BarChart data={byCityData} margin={{ top: 10, right: 16, bottom: 70, left: 8 }}>
+                    <BarChart data={byCityData} margin={{ top: 10, right: 16, bottom: 72, left: 8 }}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={modalTick} interval={0} angle={-20} textAnchor="end" height={80} />
+                      <XAxis
+                        dataKey="name"
+                        tick={xTickModalAngled}
+                        interval={0}
+                        angle={-20}
+                        textAnchor="end"
+                        height={80}
+                      />
                       <YAxis allowDecimals={false} tick={modalTick} />
                       <Tooltip contentStyle={{ fontSize: 12 }} />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -305,9 +450,16 @@ export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
                     </BarChart>
                   )}
                   {activeChart === 'sector' && (
-                    <BarChart data={bySectorData} margin={{ top: 10, right: 16, bottom: 70, left: 8 }}>
+                    <BarChart data={bySectorData} margin={{ top: 10, right: 16, bottom: 72, left: 8 }}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={modalTick} interval={0} angle={-20} textAnchor="end" height={80} />
+                      <XAxis
+                        dataKey="name"
+                        tick={xTickModalAngled}
+                        interval={0}
+                        angle={-20}
+                        textAnchor="end"
+                        height={80}
+                      />
                       <YAxis allowDecimals={false} tick={modalTick} />
                       <Tooltip contentStyle={{ fontSize: 12 }} />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -315,23 +467,39 @@ export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
                     </BarChart>
                   )}
                   {activeChart === 'growth' && (
-                    <LineChart data={stats.growthCurve}>
+                    <LineChart data={stats.growthCurve} margin={{ top: 12, right: 16, bottom: 16, left: 12 }}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" tick={modalTick} />
                       <YAxis allowDecimals={false} tick={modalTick} />
                       <Tooltip contentStyle={{ fontSize: 12 }} />
-                      <Legend wrapperStyle={{ fontSize: 12 }} />
-                      <Line type="monotone" dataKey="count" stroke="#16a34a" strokeWidth={3} dot={{ r: 3 }} />
+                      <Legend
+                        verticalAlign="bottom"
+                        wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+                        iconSize={10}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="count"
+                        name="Profils cumulés"
+                        stroke="#16a34a"
+                        strokeWidth={3}
+                        dot={{ r: 3 }}
+                      />
                     </LineChart>
                   )}
                   {activeChart === 'clicks' && (
-                    <BarChart data={stats.clicksByType}>
+                    <BarChart data={stats.clicksByType} margin={{ top: 12, right: 16, bottom: 40, left: 12 }}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={modalTick} />
+                      <XAxis dataKey="name" tick={xTickModalFlat} />
                       <YAxis allowDecimals={false} tick={modalTick} />
                       <Tooltip contentStyle={{ fontSize: 12 }} />
-                      <Legend wrapperStyle={{ fontSize: 12 }} />
-                      <Bar dataKey="value" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
+                      <Legend
+                        verticalAlign="bottom"
+                        layout="horizontal"
+                        wrapperStyle={{ fontSize: 12, width: '100%', paddingTop: 8 }}
+                        iconSize={10}
+                      />
+                      <Bar dataKey="value" name="Clics" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   )}
                 </>

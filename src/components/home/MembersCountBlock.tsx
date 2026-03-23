@@ -1,5 +1,7 @@
 import React from 'react';
 import { Share2, Sparkles } from 'lucide-react';
+import { cn } from '../../cn';
+import { cardPad } from '../../lib/pageLayout';
 
 type TFn = (key: string) => string;
 
@@ -38,8 +40,8 @@ export default function MembersCountBlock({
               <Share2 className="h-5 w-5 text-emerald-700" strokeWidth={1.75} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-gray-900 break-words">{t('inviteNetworkTitle')}</p>
-              <p className="mt-1 text-[13px] leading-snug text-gray-600 break-words hyphens-auto">
+              <p className="text-sm font-semibold text-slate-900 break-words">{t('inviteNetworkTitle')}</p>
+              <p className="mt-1 text-[13px] leading-snug text-slate-600 break-words hyphens-auto">
                 {t('inviteNetworkSubtitle')}
               </p>
               <button
@@ -62,8 +64,8 @@ export default function MembersCountBlock({
             <Sparkles className="h-5 w-5 text-blue-700" strokeWidth={1.75} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-800 break-words">{t('launchTitle')}</p>
-            <p className="mt-1 text-[13px] leading-snug text-gray-500 break-words hyphens-auto">
+            <p className="text-sm font-semibold text-slate-800 break-words">{t('launchTitle')}</p>
+            <p className="mt-1 text-[13px] leading-snug text-slate-500 break-words hyphens-auto">
               {t('launchSubtitle')}
             </p>
             <button
@@ -95,11 +97,16 @@ export default function MembersCountBlock({
   }
 
   return (
-    <div className="min-w-0 rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm text-gray-700 shadow-sm">
+    <div
+      className={cn(
+        'min-w-0 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 shadow-sm',
+        cardPad
+      )}
+    >
       <p className="hyphens-auto break-words leading-relaxed">
         {parts.map((segment, i) => (
           <React.Fragment key={i}>
-            {i > 0 && <span className="text-gray-400"> · </span>}
+            {i > 0 && <span className="text-slate-400"> · </span>}
             {segment}
           </React.Fragment>
         ))}

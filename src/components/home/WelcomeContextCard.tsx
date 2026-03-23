@@ -28,7 +28,7 @@ export default function WelcomeContextCard({
   return (
     <section
       className={cn(
-        'relative flex h-fit w-full shrink-0 flex-col overflow-hidden rounded-2xl bg-stone-900 p-5 text-white shadow-sm sm:p-6',
+        'relative flex h-fit w-full shrink-0 flex-col overflow-hidden rounded-2xl bg-stone-900 p-4 text-white shadow-sm sm:p-6',
         className
       )}
       aria-labelledby="welcome-context-title"

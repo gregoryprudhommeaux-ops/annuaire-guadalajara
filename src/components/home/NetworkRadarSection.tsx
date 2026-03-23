@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   PieChart,
   Pie,
@@ -11,13 +11,15 @@ import {
   ResponsiveContainer,
   LabelList,
 } from 'recharts';
-import { Users, Target, Factory, Zap } from 'lucide-react';
+import { Users, Target, Factory, Zap, Maximize2 } from 'lucide-react';
 import type { UserProfile, Language, UrgentPost } from '../../types';
 import type { User } from 'firebase/auth';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
 import { sanitizeHighlightedNeeds, NEED_OPTION_VALUE_SET } from '../../needOptions';
 import { sanitizePassionIds } from '../../lib/passionConfig';
+import { cn } from '../../cn';
+import { cardPad } from '../../lib/pageLayout';
 const DONUT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316', '#6B7280'];
 
 type TFn = (key: string) => string;
@@ -145,6 +147,46 @@ export default function NetworkRadarSection({
 
   const maxNeedCount = needsBarData.reduce((m, d) => Math.max(m, d.count), 0) || 1;
 
+  const needsShortToFullLabel = useMemo(() => {
+    const m = new Map<string, string>();
+    needsBarData.forEach((d) => m.set(d.label, d.fullLabel));
+    return m;
+  }, [needsBarData]);
+
+  const renderNeedsYAxisTickSmall = useCallback(
+    (props: { x: number; y: number; payload?: { value?: string } }) => {
+      const { x, y, payload } = props;
+      const short = String(payload?.value ?? '');
+      const full = needsShortToFullLabel.get(short) ?? short;
+      return (
+        <g transform={`translate(${x},${y})`}>
+          <title>{full}</title>
+          <text textAnchor="end" dy={4} className="fill-slate-700" fontSize={10}>
+            {short}
+          </text>
+        </g>
+      );
+    },
+    [needsShortToFullLabel]
+  );
+
+  const renderNeedsYAxisTickLarge = useCallback(
+    (props: { x: number; y: number; payload?: { value?: string } }) => {
+      const { x, y, payload } = props;
+      const short = String(payload?.value ?? '');
+      const full = needsShortToFullLabel.get(short) ?? short;
+      return (
+        <g transform={`translate(${x},${y})`}>
+          <title>{full}</title>
+          <text textAnchor="end" dy={4} className="fill-slate-700" fontSize={12}>
+            {short}
+          </text>
+        </g>
+      );
+    },
+    [needsShortToFullLabel]
+  );
+
   const passionEntries = useMemo(() => {
     const counts: Record<string, number> = {};
     profilesForStats.forEach((p) => {
@@ -157,18 +199,25 @@ export default function NetworkRadarSection({
 
   const recentOpportunities = urgentPosts.slice(0, 3);
 
+  const expandChartLabel =
+    lang === 'en'
+      ? 'Open chart in large view'
+      : lang === 'es'
+        ? 'Ampliar el gráfico'
+        : 'Agrandir le graphique';
+
   return (
-    <div className="min-w-0 space-y-4 rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4 sm:p-5 md:space-y-4">
+    <div className={cn('min-w-0 space-y-4 rounded-xl border border-slate-200 bg-slate-50 md:space-y-4', cardPad)}>
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight text-[#1F2937] break-words hyphens-auto sm:text-xl">
+          <h2 className="text-lg font-semibold tracking-tight text-slate-800 break-words hyphens-auto sm:text-xl">
             <span className="mr-1.5" aria-hidden>
               📡
             </span>
             {t('radarTitle')}
           </h2>
-          <p className="mt-1 text-[13px] leading-snug text-[#6B7280] break-words hyphens-auto">
+          <p className="mt-1 text-[13px] leading-snug text-slate-500 break-words hyphens-auto">
             {t('radarSubtitle')}
           </p>
         </div>
@@ -178,7 +227,7 @@ export default function NetworkRadarSection({
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
-            <span className="max-w-[min(100%,12rem)] text-right text-[11px] font-medium leading-snug text-[#6B7280] break-words sm:max-w-none sm:text-left">
+            <span className="max-w-[min(100%,12rem)] text-right text-[11px] font-medium leading-snug text-slate-500 break-words sm:max-w-none sm:text-left">
               {t('radarLive')}
             </span>
           </div>
@@ -195,7 +244,7 @@ export default function NetworkRadarSection({
           aria-hidden={radarLocked}
         >
       {/* KPI bar */}
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#E5E7EB] shadow-sm md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 shadow-sm md:grid-cols-4">
         {(
           [
             { icon: Users, value: activeMembersCount, labelKey: 'kpiMembers' },
@@ -208,9 +257,9 @@ export default function NetworkRadarSection({
             key={labelKey}
             className="flex min-w-0 flex-col items-center justify-center bg-white px-2 py-4 text-center md:px-3 md:py-5"
           >
-            <Icon className="h-6 w-6 shrink-0 text-[#6B7280]" strokeWidth={1.75} aria-hidden />
-            <p className="mt-2 text-[32px] font-semibold leading-none text-[#1F2937]">{value}</p>
-            <p className="mt-1 max-w-full hyphens-auto text-[10px] font-normal uppercase leading-tight tracking-wide text-[#6B7280] break-words sm:text-xs">
+            <Icon className="h-6 w-6 shrink-0 text-slate-500" strokeWidth={1.75} aria-hidden />
+            <p className="mt-2 text-[32px] font-semibold leading-none text-slate-800">{value}</p>
+            <p className="mt-1 max-w-full hyphens-auto text-[10px] font-normal uppercase leading-tight tracking-wide text-slate-500 break-words sm:text-xs">
               {t(labelKey)}
             </p>
           </div>
@@ -220,21 +269,21 @@ export default function NetworkRadarSection({
       {/* Charts grid */}
       <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
         {/* Donut — Secteurs */}
-        <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm sm:p-6">
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <h3 className="text-[15px] font-semibold leading-snug text-[#1F2937] break-words">
-              {t('chartSectorsTitle')}
-            </h3>
-            <button
-              type="button"
-              onClick={() => setActiveRadarChart('sectors')}
-              className="rounded-md border border-[#E5E7EB] px-2 py-1 text-[11px] font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
-            >
-              Agrandir
-            </button>
-          </div>
+        <div className={cn('relative rounded-xl border border-slate-200 bg-white shadow-sm', cardPad)}>
+          <button
+            type="button"
+            onClick={() => setActiveRadarChart('sectors')}
+            className="absolute right-3 top-3 z-10 rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:right-4 sm:top-4"
+            aria-label={expandChartLabel}
+            title={expandChartLabel}
+          >
+            <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+          </button>
+          <h3 className="mb-4 pr-10 text-[15px] font-semibold leading-snug text-slate-800 break-words">
+            {t('chartSectorsTitle')}
+          </h3>
           {sectorPieData.length === 0 ? (
-            <p className="text-[13px] text-[#6B7280]">{t('chartSectorsEmpty')}</p>
+            <p className="text-[13px] text-slate-500">{t('chartSectorsEmpty')}</p>
           ) : (
             <>
               <div className="flex flex-col items-stretch gap-6 md:flex-row md:items-center">
@@ -268,8 +317,8 @@ export default function NetworkRadarSection({
                   </ResponsiveContainer>
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center pr-1 pt-1">
                     <div className="text-center">
-                      <p className="text-2xl font-semibold text-[#1F2937]">{sectorTotalMembers}</p>
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-[#6B7280]">
+                      <p className="text-2xl font-semibold text-slate-800">{sectorTotalMembers}</p>
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
                         {t('chartCenter')}
                       </p>
                     </div>
@@ -283,7 +332,7 @@ export default function NetworkRadarSection({
                         style={{ backgroundColor: DONUT_COLORS[idx % DONUT_COLORS.length] }}
                         aria-hidden
                       />
-                      <span className="min-w-0 flex-1 truncate text-[#374151]">
+                      <span className="min-w-0 flex-1 truncate text-slate-700">
                         {row.name} · {row.value}
                       </span>
                     </li>
@@ -291,28 +340,28 @@ export default function NetworkRadarSection({
                 </ul>
               </div>
               {sectorPieData.length === 1 && (
-                <p className="mt-4 text-center text-[12px] text-[#6B7280]">{t('chartSectorsEmpty')}</p>
+                <p className="mt-4 text-center text-[12px] text-slate-500">{t('chartSectorsEmpty')}</p>
               )}
             </>
           )}
         </div>
 
         {/* Bar — Top besoins */}
-        <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm sm:p-6">
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <h3 className="text-[15px] font-semibold leading-snug text-[#1F2937] break-words">
-              {t('chartNeedsTitle')}
-            </h3>
-            <button
-              type="button"
-              onClick={() => setActiveRadarChart('needs')}
-              className="rounded-md border border-[#E5E7EB] px-2 py-1 text-[11px] font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
-            >
-              Agrandir
-            </button>
-          </div>
+        <div className={cn('relative rounded-xl border border-slate-200 bg-white shadow-sm', cardPad)}>
+          <button
+            type="button"
+            onClick={() => setActiveRadarChart('needs')}
+            className="absolute right-3 top-3 z-10 rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:right-4 sm:top-4"
+            aria-label={expandChartLabel}
+            title={expandChartLabel}
+          >
+            <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+          </button>
+          <h3 className="mb-4 pr-10 text-[15px] font-semibold leading-snug text-slate-800 break-words">
+            {t('chartNeedsTitle')}
+          </h3>
           {needsBarData.length === 0 ? (
-            <p className="text-[13px] text-[#6B7280]">{t('typedNeedsRadarEmpty')}</p>
+            <p className="text-[13px] text-slate-500">{t('typedNeedsRadarEmpty')}</p>
           ) : (
             <div
               className="min-w-0 w-full overflow-x-auto"
@@ -331,7 +380,7 @@ export default function NetworkRadarSection({
                     type="category"
                     dataKey="label"
                     width={108}
-                    tick={{ fill: '#374151', fontSize: 10 }}
+                    tick={renderNeedsYAxisTickSmall}
                     axisLine={false}
                     tickLine={false}
                     reversed
@@ -344,7 +393,7 @@ export default function NetworkRadarSection({
                     }}
                     contentStyle={{
                       borderRadius: 8,
-                      border: '1px solid #E5E7EB',
+                      border: '1px solid rgb(226 232 240)',
                       fontSize: 11,
                     }}
                   />
@@ -361,7 +410,7 @@ export default function NetworkRadarSection({
                     {needsBarData.map((_, i) => (
                       <Cell key={i} fill="#3B82F6" fillOpacity={Math.max(0.45, 1 - i * 0.12)} />
                     ))}
-                    <LabelList dataKey="count" position="right" fill="#6B7280" fontSize={10} fontWeight={600} />
+                    <LabelList dataKey="count" position="right" fill="#64748b" fontSize={10} fontWeight={600} />
                   </Bar>
                 </BarChart>
                 </ResponsiveContainer>
@@ -372,12 +421,12 @@ export default function NetworkRadarSection({
       </div>
 
       {/* Passions */}
-      <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm sm:p-6">
-        <h3 className="mb-4 text-[15px] font-semibold leading-snug text-[#1F2937] break-words">
+      <div className={cn('rounded-xl border border-slate-200 bg-white shadow-sm', cardPad)}>
+        <h3 className="mb-4 text-[15px] font-semibold leading-snug text-slate-800 break-words">
           {t('chartPassionsTitle')}
         </h3>
         {passionEntries.length === 0 ? (
-          <p className="text-[13px] text-[#6B7280]">{t('chartPassionsEmpty')}</p>
+          <p className="text-[13px] text-slate-500">{t('chartPassionsEmpty')}</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {passionEntries.map(([id, count]) => (
@@ -385,11 +434,11 @@ export default function NetworkRadarSection({
                 key={id}
                 type="button"
                 onClick={() => onPassionClick(id)}
-                className="inline-flex max-w-full min-w-0 items-center gap-2 rounded-full border border-transparent bg-[#F3F4F6] px-3 py-1.5 text-left text-[13px] text-[#374151] transition-colors hover:bg-[#E5E7EB]"
+                className="inline-flex max-w-full min-w-0 items-center gap-2 rounded-full border border-transparent bg-slate-100 px-3 py-1.5 text-left text-[13px] text-slate-700 transition-colors hover:bg-slate-200"
               >
                 <span aria-hidden>{getPassionEmoji(id)}</span>
                 <span className="min-w-0 break-words">{getPassionLabel(id, lang)}</span>
-                <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-white px-1 text-[11px] font-semibold text-[#6B7280] ring-1 ring-[#E5E7EB]">
+                <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-white px-1 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200">
                   {count}
                 </span>
               </button>
@@ -399,13 +448,13 @@ export default function NetworkRadarSection({
       </div>
 
       {/* Opportunités récentes */}
-      <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm sm:p-6">
-        <h3 className="mb-4 text-[15px] font-semibold leading-snug text-[#1F2937] break-words">
+      <div className={cn('rounded-xl border border-slate-200 bg-white shadow-sm', cardPad)}>
+        <h3 className="mb-4 text-[15px] font-semibold leading-snug text-slate-800 break-words">
           {t('radarRecentOpportunitiesTitle')}
         </h3>
         {recentOpportunities.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-[#E5E7EB] bg-[#FAFAFA] px-4 py-8 text-center">
-            <p className="text-[13px] text-[#6B7280]">{t('radarRecentOpportunitiesEmpty')}</p>
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+            <p className="text-[13px] text-slate-500">{t('radarRecentOpportunitiesEmpty')}</p>
             <button
               type="button"
               onClick={user ? onPostOpportunity : onCreateProfile}
@@ -414,7 +463,7 @@ export default function NetworkRadarSection({
               {copy.opportunitiesPost}
             </button>
             {!user && (
-              <span className="text-[11px] text-[#6B7280]">{copy.opportunitiesMembersOnly}</span>
+              <span className="text-[11px] text-slate-500">{copy.opportunitiesMembersOnly}</span>
             )}
           </div>
         ) : (
@@ -423,7 +472,7 @@ export default function NetworkRadarSection({
               const canOpen = !!user && !!post.authorId;
               const cardInner = (
                 <>
-                  <div className="line-clamp-3 break-words text-[13px] font-medium leading-snug text-[#1F2937]">
+                  <div className="line-clamp-3 break-words text-[13px] font-medium leading-snug text-slate-800">
                     <AiTranslatedFreeText
                       lang={lang}
                       t={t}
@@ -434,15 +483,15 @@ export default function NetworkRadarSection({
                     />
                   </div>
                   {user ? (
-                    <p className="mt-2 text-[11px] text-[#6B7280]">
+                    <p className="mt-2 text-[11px] text-slate-500">
                       {post.authorName
                         ? `${post.authorName}${post.authorCompany ? ` · ${post.authorCompany}` : ''}`
                         : '—'}
                     </p>
                   ) : (
-                    <p className="mt-2 text-[11px] text-[#6B7280]">{t('opportunityAuthorHiddenGuest')}</p>
+                    <p className="mt-2 text-[11px] text-slate-500">{t('opportunityAuthorHiddenGuest')}</p>
                   )}
-                  <span className="mt-2 inline-flex w-fit rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#6B7280] ring-1 ring-[#E5E7EB]">
+                  <span className="mt-2 inline-flex w-fit rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">
                     {activityCategoryLabel(post.sector, lang)}
                   </span>
                 </>
@@ -453,12 +502,12 @@ export default function NetworkRadarSection({
                     <button
                       type="button"
                       onClick={() => onOpportunityClick(post)}
-                      className="flex h-full w-full flex-col rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4 text-left transition-colors hover:border-[#D1D5DB] hover:bg-white"
+                      className="flex h-full w-full flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition-colors hover:border-slate-300 hover:bg-white"
                     >
                       {cardInner}
                     </button>
                   ) : (
-                    <div className="flex h-full w-full cursor-default flex-col rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-4 text-left">
+                    <div className="flex h-full w-full cursor-default flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 text-left">
                       {cardInner}
                     </div>
                   )}
@@ -545,10 +594,10 @@ export default function NetworkRadarSection({
                           style={{ backgroundColor: DONUT_COLORS[idx % DONUT_COLORS.length] }}
                           aria-hidden
                         />
-                        <span className="min-w-0 flex-1 truncate text-[#374151]">
+                        <span className="min-w-0 flex-1 truncate text-slate-700">
                           {row.name}
                         </span>
-                        <span className="text-xs font-semibold text-[#6B7280]">{row.value}</span>
+                        <span className="text-xs font-semibold text-slate-500">{row.value}</span>
                       </li>
                     ))}
                   </ul>
@@ -566,7 +615,7 @@ export default function NetworkRadarSection({
                       type="category"
                       dataKey="label"
                       width={200}
-                      tick={{ fill: '#374151', fontSize: 12 }}
+                      tick={renderNeedsYAxisTickLarge}
                       axisLine={false}
                       tickLine={false}
                       reversed
@@ -577,14 +626,14 @@ export default function NetworkRadarSection({
                         const p = payload?.[0]?.payload as { fullLabel?: string };
                         return p?.fullLabel ?? '';
                       }}
-                      contentStyle={{ borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 12 }}
+                      contentStyle={{ borderRadius: 8, border: '1px solid rgb(226 232 240)', fontSize: 12 }}
                     />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
                     <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={28}>
                       {needsBarData.map((_, i) => (
                         <Cell key={i} fill="#3B82F6" fillOpacity={Math.max(0.45, 1 - i * 0.12)} />
                       ))}
-                      <LabelList dataKey="count" position="right" fill="#6B7280" fontSize={12} fontWeight={600} />
+                      <LabelList dataKey="count" position="right" fill="#64748b" fontSize={12} fontWeight={600} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>

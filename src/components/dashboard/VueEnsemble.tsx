@@ -64,6 +64,46 @@ function barRowsForNivo(data: BarDatum[]): { label: string; value: number }[] {
   return data.map((d) => ({ label: d.label, value: d.value }));
 }
 
+function characteristicWord(label: string): string {
+  const words = label
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length === 0) return label;
+  const candidate = words.find((w) => w.length >= 4);
+  return candidate ?? words[0];
+}
+
+function toTwoLinesLabel(label: string, maxPerLine = 12): [string, string?] {
+  const clean = label.trim();
+  if (clean.length <= maxPerLine) return [clean];
+
+  const words = clean.split(/\s+/).filter(Boolean);
+  if (words.length <= 1) {
+    const first = clean.slice(0, maxPerLine);
+    const second = clean.slice(maxPerLine, maxPerLine * 2 - 1);
+    return [first, second.length > 0 ? `${second}…` : undefined];
+  }
+
+  let line1 = '';
+  let idx = 0;
+  while (idx < words.length) {
+    const next = line1 ? `${line1} ${words[idx]}` : words[idx];
+    if (next.length > maxPerLine) break;
+    line1 = next;
+    idx += 1;
+  }
+  if (!line1) {
+    line1 = words[0].slice(0, maxPerLine);
+    idx = 1;
+  }
+
+  const remaining = words.slice(idx).join(' ');
+  if (!remaining) return [line1];
+  if (remaining.length <= maxPerLine) return [line1, remaining];
+  return [line1, `${remaining.slice(0, Math.max(1, maxPerLine - 1))}…`];
+}
+
 function MiniBarCard({
   title,
   kpiLabel,
@@ -79,16 +119,16 @@ function MiniBarCard({
   const hasData = rows.length > 0 && rows.some((r) => r.value > 0);
 
   return (
-    <section className="flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+    <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
         <div className="min-w-0 shrink-0 text-right">
-          <p className="text-[11px] uppercase tracking-wide text-gray-500">{kpiLabel}</p>
-          <p className="text-sm font-semibold text-gray-900">{kpiValue}</p>
+          <p className="text-[11px] uppercase tracking-wide text-slate-500">{kpiLabel}</p>
+          <p className="text-sm font-semibold text-slate-900">{kpiValue}</p>
         </div>
       </div>
       {!hasData ? (
-        <p className="text-sm text-gray-500">—</p>
+        <p className="text-sm text-slate-500">—</p>
       ) : (
         <div className="h-40 w-full min-w-0">
           <ResponsiveBar
@@ -96,7 +136,7 @@ function MiniBarCard({
             data={rows}
             keys={['value']}
             indexBy="label"
-            margin={{ top: 10, right: 10, bottom: 40, left: 40 }}
+            margin={{ top: 10, right: 10, bottom: 56, left: 40 }}
             padding={0.3}
             layout="vertical"
             valueScale={{ type: 'linear', min: 0 }}
@@ -109,7 +149,32 @@ function MiniBarCard({
             axisBottom={{
               tickSize: 3,
               tickPadding: 4,
-              tickRotation: -30,
+              tickRotation: 0,
+              renderTick: (tick: { x: number; y: number; value: string; opacity: number }) => {
+                const raw = String(tick.value ?? '');
+                const compact = raw.length > 24 ? characteristicWord(raw) : raw;
+                const [line1, line2] = toTwoLinesLabel(compact, 11);
+                return (
+                  <g transform={`translate(${tick.x},${tick.y})`} opacity={tick.opacity}>
+                    <title>{raw}</title>
+                    <line y2="3" stroke="#9ca3af" />
+                    <text
+                      textAnchor="middle"
+                      dominantBaseline="hanging"
+                      style={{ fill: '#6b7280', fontSize: 10, pointerEvents: 'none' }}
+                    >
+                      <tspan x="0" dy="6">
+                        {line1}
+                      </tspan>
+                      {line2 ? (
+                        <tspan x="0" dy="11">
+                          {line2}
+                        </tspan>
+                      ) : null}
+                    </text>
+                  </g>
+                );
+              },
             }}
             axisLeft={{
               tickSize: 3,
@@ -175,8 +240,8 @@ function CommunityDashboard({
     <div className={`flex w-full flex-col gap-4 ${className ?? ''}`}>
       <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 md:text-2xl">{t('vueTitle')}</h2>
-          <p className="mt-1 max-w-xl text-sm text-gray-600">{t('vueSubtitle')}</p>
+          <h2 className="text-xl font-semibold text-slate-900 md:text-2xl">{t('vueTitle')}</h2>
+          <p className="mt-1 max-w-xl text-sm text-slate-600">{t('vueSubtitle')}</p>
         </div>
       </header>
 

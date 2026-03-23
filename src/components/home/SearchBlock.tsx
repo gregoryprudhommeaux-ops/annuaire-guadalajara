@@ -3,6 +3,8 @@ import { Search } from 'lucide-react';
 import { ACTIVITY_CATEGORIES, activityCategoryLabel } from '../../constants';
 import type { Language } from '../../types';
 import type { LocationFilterKey, ProfileTypeFilterKey } from '../../lib/directoryFilters';
+import { cardPad } from '../../lib/pageLayout';
+import { cn } from '../../cn';
 
 type TFn = (key: string) => string;
 
@@ -27,7 +29,7 @@ type Props = {
 };
 
 const randomBtnClass =
-  'flex min-h-[44px] w-full items-center justify-center rounded-lg border border-gray-300 bg-transparent px-4 text-sm font-medium text-gray-700 transition-colors hover:border-blue-700 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40';
+  'flex min-h-[44px] w-full items-center justify-center rounded-lg border border-slate-300 bg-transparent px-4 text-sm font-medium text-slate-700 transition-colors hover:border-blue-700 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40';
 
 /** Bouton isolé pour la colonne gauche quand le bloc recherche est affiché au centre (onglet Secteurs). */
 export function DirectoryRandomProfileButton({
@@ -47,7 +49,7 @@ export function DirectoryRandomProfileButton({
 }
 
 const selectClass =
-  'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 outline-none transition-shadow focus:ring-2 focus:ring-blue-700 focus:ring-offset-0';
+  'h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition-shadow focus:ring-2 focus:ring-blue-700 focus:ring-offset-0';
 
 /** [SEARCH] Bloc recherche + filtres (colonne annuaire). */
 export default function SearchBlock({
@@ -74,9 +76,14 @@ export default function SearchBlock({
   };
 
   return (
-    <div className="min-w-0 rounded-xl border border-gray-200 bg-[#F7F7F9] p-4 shadow-sm lg:p-5">
+    <div
+      className={cn(
+        'min-w-0 rounded-xl border border-slate-200 bg-slate-50/95 shadow-sm',
+        cardPad
+      )}
+    >
       {/* [SEARCH] Titre du bloc */}
-      <h2 className="mb-4 hyphens-auto text-sm font-semibold text-gray-700 break-words">
+      <h2 className="mb-4 hyphens-auto break-words text-sm font-semibold text-slate-700">
         {t('searchBlockTitle')}
       </h2>
 
@@ -85,7 +92,7 @@ export default function SearchBlock({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
           <div className="relative min-w-0 flex-1 sm:flex sm:min-h-[44px]">
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-gray-400"
+              className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400"
               size={18}
               aria-hidden
             />
@@ -95,7 +102,7 @@ export default function SearchBlock({
               onChange={(e) => onSearchTermChange(e.target.value)}
               placeholder={t('searchDirectoryPlaceholder')}
               aria-label={t('searchDirectoryPlaceholder')}
-              className="min-h-[44px] w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-700 outline-none transition-shadow focus:ring-2 focus:ring-blue-700 sm:min-h-0 sm:rounded-r-none sm:border-r-0 sm:py-2"
+              className="min-h-[44px] w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition-shadow focus:ring-2 focus:ring-blue-700 sm:min-h-0 sm:rounded-r-none sm:border-r-0 sm:py-2"
             />
           </div>
           <button
@@ -159,7 +166,7 @@ export default function SearchBlock({
             <button
               type="button"
               onClick={onClearFilters}
-              className="text-xs text-gray-500 underline-offset-2 hover:text-gray-700 hover:underline"
+              className="text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline"
             >
               {t('clearFilters')}
             </button>

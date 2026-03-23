@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { cardPad } from './lib/pageLayout';
 
 // ——— Button ———
 
@@ -117,9 +118,7 @@ type CardProps = {
 };
 
 export const Card: React.FC<CardProps> = ({ children, className = '' }) => (
-  <div
-    className={`rounded-lg border border-slate-200 bg-white p-4 shadow-sm ${className}`}
-  >
+  <div className={`rounded-xl border border-slate-200 bg-white shadow-sm ${cardPad} ${className}`}>
     {children}
   </div>
 );
