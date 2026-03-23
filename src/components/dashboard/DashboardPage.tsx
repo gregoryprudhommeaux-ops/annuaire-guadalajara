@@ -84,7 +84,7 @@ export default function DashboardPage({
       setProfile(null);
       return;
     }
-    getDoc(doc(db, 'profiles', user.uid))
+    getDoc(doc(db, 'users', user.uid))
       .then((snap) => {
         if (cancelled) return;
         if (snap.exists()) {

@@ -4414,7 +4414,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           )}
 
           {/* Mobile : fun fact entre le hero (ou bandeau connecté) et recherche / onglets */}
-          {(!user || (user && showDiscoveryStrips)) && (
+          {(!user || (user && showDiscoveryStrips)) &&
+            !(viewMode === 'dashboard' && profile?.role === 'admin') && (
             <div className="order-3 min-w-0 w-full sm:hidden">
               <HomeFunFactStrip
                 lang={lang}
@@ -4467,7 +4468,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               />
             )}
 
-            <div className={cn((!user || showDiscoveryStrips) && 'hidden sm:block')}>
+            <div
+              className={cn(
+                (!user || showDiscoveryStrips) && 'hidden sm:block',
+                viewMode === 'dashboard' && profile?.role === 'admin' && 'hidden'
+              )}
+            >
               <HomeFunFactStrip lang={lang} />
             </div>
 

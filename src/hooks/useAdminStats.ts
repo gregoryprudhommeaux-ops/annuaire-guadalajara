@@ -86,7 +86,7 @@ export function useAdminStats(period: PeriodKey): AdminStats {
 
     async function fetchStats() {
       try {
-        const profilesSnap = await getDocs(collection(db, 'profiles'));
+        const profilesSnap = await getDocs(collection(db, 'users'));
         const allProfiles = profilesSnap.docs.map((d) => ({
           id: d.id,
           ...(d.data() as Record<string, unknown>),
@@ -123,7 +123,7 @@ export function useAdminStats(period: PeriodKey): AdminStats {
           const city = (p.city as string) || 'Autre';
           byCity[city] = (byCity[city] || 0) + 1;
 
-          const sector = (p.sector as string) || 'Autre';
+          const sector = (p.activityCategory as string) || (p.sector as string) || 'Autre';
           bySector[sector] = (bySector[sector] || 0) + 1;
 
           const hasContact =
@@ -244,12 +244,15 @@ export function useAdminStats(period: PeriodKey): AdminStats {
             error: null,
           });
         }
-      } catch {
+      } catch (err) {
         if (!cancelled) {
           setStats((prev) => ({
             ...prev,
             loading: false,
-            error: 'Erreur lors du chargement des stats.',
+            error:
+              err instanceof Error && err.message
+                ? `Erreur lors du chargement des stats: ${err.message}`
+                : 'Erreur lors du chargement des stats.',
           }));
         }
       }
