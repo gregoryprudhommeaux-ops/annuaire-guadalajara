@@ -3020,6 +3020,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         }}
         lang={lang}
         onLangChange={setLang}
+        guestMobileFullWidthCta={!user}
         trailing={
           user ? (
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
@@ -3088,7 +3089,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 setShowAuthModal(true);
               }}
               disabled={authProviderBusy !== null}
-              className="whitespace-nowrap rounded-lg bg-blue-600 px-2 py-1.5 text-center text-[11px] font-semibold leading-tight text-white shadow-sm transition-all hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-2 sm:text-sm"
+              className={cn(
+                'w-full border-0 py-3.5 text-center text-xs font-semibold leading-snug text-white transition-colors',
+                'rounded-none bg-transparent hover:bg-blue-700/35 active:bg-blue-800/45',
+                'disabled:cursor-not-allowed disabled:opacity-60',
+                'sm:w-auto sm:rounded-lg sm:bg-blue-600 sm:px-4 sm:py-2 sm:text-sm sm:leading-normal sm:shadow-sm sm:hover:bg-blue-700 sm:active:scale-[0.98]'
+              )}
             >
               {authProviderBusy !== null ? (
                 pickLang('Connexion...', 'Conectando...', 'Signing in...', lang)

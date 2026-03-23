@@ -1,10 +1,12 @@
 /**
- * Header annuaire — DA : ombre légère, bordure basse, séparateur logo / texte,
- * switcher de langue à contraste élevé (actif blue-600).
+ * Header annuaire — DA : ombre légère, bordure basse.
+ * Mobile : langue = menu déroulant coin haut droite ; CTA invité = bandeau bleu pleine largeur (sticky avec le logo).
+ * Desktop (sm+) : switch FR | ES | EN segmenté + trailing inline.
  */
 
-import React from 'react';
-import { Building2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Building2, ChevronDown } from 'lucide-react';
+import { cn } from '../cn';
 import type { Language } from '../types';
 
 const LANGUAGES: { code: Language; label: string }[] = [
@@ -12,6 +14,68 @@ const LANGUAGES: { code: Language; label: string }[] = [
   { code: 'es', label: 'ES' },
   { code: 'en', label: 'EN' },
 ];
+
+function LanguageDropdownMobile({
+  lang,
+  onLangChange,
+}: {
+  lang: Language;
+  onLangChange: (lang: Language) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const current = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
+  const others = LANGUAGES.filter((l) => l.code !== lang);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+      >
+        {current.label}
+        <ChevronDown
+          className={cn('h-3.5 w-3.5 text-slate-500 transition-transform', open && 'rotate-180')}
+          strokeWidth={2}
+          aria-hidden
+        />
+      </button>
+      {open ? (
+        <ul
+          role="listbox"
+          className="absolute right-0 z-[60] mt-1 min-w-[5.5rem] overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+        >
+          {others.map(({ code, label }) => (
+            <li key={code} role="option">
+              <button
+                type="button"
+                className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                onClick={() => {
+                  onLangChange(code);
+                  setOpen(false);
+                }}
+              >
+                {label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
 
 export type HeaderProps = {
   title: string;
@@ -21,8 +85,12 @@ export type HeaderProps = {
   onHomeClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   lang: Language;
   onLangChange: (lang: Language) => void;
-  /** Zone à droite du switcher : connexion, actions admin, déconnexion, avatar… */
+  /** Connexion, actions admin, déconnexion, avatar… */
   trailing?: React.ReactNode;
+  /**
+   * Visiteur : sur mobile, bandeau bleu pleine largeur autour de `trailing` (sticky avec le logo).
+   */
+  guestMobileFullWidthCta?: boolean;
 };
 
 export const Header: React.FC<HeaderProps> = ({
@@ -33,61 +101,86 @@ export const Header: React.FC<HeaderProps> = ({
   lang,
   onLangChange,
   trailing,
+  guestMobileFullWidthCta = false,
 }) => {
   return (
     <header
-      className={[
+      className={cn(
         'sticky top-0 z-50',
         'border-b border-slate-200 bg-white',
-        'shadow-sm',
-      ].join(' ')}
+        'shadow-sm'
+      )}
     >
-      <div className="mx-auto flex min-w-0 max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 md:px-6 lg:px-8">
-        {/* Logo + titre */}
-        <a
-          href="/"
-          onClick={onHomeClick}
-          className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg pr-1 outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          aria-label={homeAriaLabel}
-        >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white shadow-md sm:h-10 sm:w-10 sm:rounded-xl">
-            <Building2 className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2} aria-hidden />
+      <div className="mx-auto min-w-0 max-w-7xl px-4 py-3 md:px-6 lg:px-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          {/* Logo + titre */}
+          <div className="relative min-w-0 flex-1">
+            <a
+              href="/"
+              onClick={onHomeClick}
+              className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg pr-[4.25rem] outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:pr-1"
+              aria-label={homeAriaLabel}
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white shadow-md sm:h-10 sm:w-10 sm:rounded-xl">
+                <Building2 className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2} aria-hidden />
+              </div>
+              <div className="h-7 w-px shrink-0 bg-slate-200 sm:h-8" aria-hidden />
+              <div className="min-w-0 flex-1 leading-tight text-left">
+                <p className="text-sm font-semibold leading-snug tracking-tight text-slate-900 break-words sm:text-base md:text-lg">
+                  {title}
+                </p>
+                <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-slate-500 sm:line-clamp-none md:text-sm">
+                  {subtitle}
+                </p>
+              </div>
+            </a>
+            <div className="absolute right-0 top-0 sm:hidden">
+              <LanguageDropdownMobile lang={lang} onLangChange={onLangChange} />
+            </div>
           </div>
-          <div className="h-7 w-px shrink-0 bg-slate-200 sm:h-8" aria-hidden />
-          <div className="min-w-0 flex-1 leading-tight text-left">
-            <p className="text-sm font-semibold leading-snug tracking-tight text-slate-900 break-words sm:text-base md:text-lg">
-              {title}
-            </p>
-            <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-slate-500 sm:line-clamp-none md:text-sm">
-              {subtitle}
-            </p>
-          </div>
-        </a>
 
-        {/* Langue + actions */}
-        <div className="flex min-w-0 flex-wrap items-center justify-end gap-3 sm:shrink-0">
-          <div className="flex items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200">
-            {LANGUAGES.map(({ code, label }) => {
-              const isActive = lang === code;
-              return (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => onLangChange(code)}
-                  aria-pressed={isActive}
-                  className={[
-                    'px-3 py-1.5 text-xs font-semibold transition-colors',
-                    isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800',
-                  ].join(' ')}
-                >
-                  {label}
-                </button>
-              );
-            })}
+          {/* Langue + trailing : une seule zone pour éviter les doublons */}
+          <div
+            className={cn(
+              'flex min-w-0 w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3',
+              !guestMobileFullWidthCta && trailing && 'sm:shrink-0'
+            )}
+          >
+            <div className="hidden items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
+              {LANGUAGES.map(({ code, label }) => {
+                const isActive = lang === code;
+                return (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => onLangChange(code)}
+                    aria-pressed={isActive}
+                    className={cn(
+                      'px-3 py-1.5 text-xs font-semibold transition-colors',
+                      isActive
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            {trailing ? (
+              <div
+                className={cn(
+                  'min-w-0 sm:flex sm:items-center',
+                  guestMobileFullWidthCta &&
+                    '-mx-4 flex w-[calc(100%+2rem)] justify-center border-t border-blue-700/25 bg-blue-600 px-4 py-2.5 sm:mx-0 sm:w-auto sm:border-0 sm:bg-transparent sm:p-0',
+                  !guestMobileFullWidthCta &&
+                    'flex flex-wrap items-center justify-end gap-2 pt-0.5 sm:justify-start sm:pt-0'
+                )}
+              >
+                {trailing}
+              </div>
+            ) : null}
           </div>
-          {trailing}
         </div>
       </div>
     </header>
