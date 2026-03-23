@@ -202,7 +202,7 @@ export const EN_STRINGS: Record<string, string> = {
   adminOAuthLeadsProvider: "Provider",
   adminOAuthLeadsEmailVerified: "verified email",
   guestOverlayTitle: "Full profile available to registered members",
-  guestJoinCta: "Join the directory for free",
+  guestJoinCta: "Join the directory",
   guestInterstitialHeadline: "{{count}} more member(s) in the directory",
   guestInterstitialBody:
     "Create your free profile to see every member, contact details, and network opportunities.",

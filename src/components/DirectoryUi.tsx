@@ -64,26 +64,30 @@ export const OpportunityActions: React.FC<{
     <button
       type="button"
       onClick={onSeeAll}
+      title={seeAllLabel}
       className={cn(
-        'flex min-h-0 flex-1 items-center justify-center rounded-lg border border-slate-300 bg-white px-2 py-2 text-center text-[11px] font-medium leading-snug text-slate-700 transition-colors',
-        'break-words hyphens-auto',
-        'hover:border-slate-400 hover:bg-slate-100',
-        'sm:h-10 sm:px-3 sm:py-0 sm:text-sm sm:leading-normal'
+        'flex min-h-9 min-w-0 flex-1 items-center justify-center rounded-lg border border-slate-300 bg-white px-1.5 py-2 text-center font-medium text-slate-700 transition-colors',
+        'sm:min-h-10 sm:px-2',
+        'hover:border-slate-400 hover:bg-slate-100'
       )}
     >
-      {seeAllLabel}
+      <span className="block w-full min-w-0 truncate text-[10px] leading-none sm:text-[11px] md:text-xs">
+        {seeAllLabel}
+      </span>
     </button>
     <button
       type="button"
       onClick={onPost}
+      title={postLabel}
       className={cn(
-        'flex min-h-0 flex-1 items-center justify-center rounded-lg bg-blue-700 px-2 py-2 text-center text-[11px] font-medium leading-snug text-white transition-colors',
-        'break-words hyphens-auto',
-        'hover:bg-blue-800',
-        'sm:h-10 sm:px-3 sm:py-0 sm:text-sm sm:leading-normal'
+        'flex min-h-9 min-w-0 flex-1 items-center justify-center rounded-lg bg-blue-700 px-1.5 py-2 text-center font-medium text-white transition-colors',
+        'sm:min-h-10 sm:px-2',
+        'hover:bg-blue-800'
       )}
     >
-      {postLabel}
+      <span className="block w-full min-w-0 truncate text-[10px] leading-none sm:text-[11px] md:text-xs">
+        {postLabel}
+      </span>
     </button>
   </div>
 );

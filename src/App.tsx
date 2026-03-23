@@ -136,7 +136,7 @@ import { getGeminiApiKey } from './lib/geminiEnv';
 import IceBreakerInterests from './components/profile/IceBreakerInterests';
 import HeroSection from './components/home/HeroSection';
 import WelcomeContextCard from './components/home/WelcomeContextCard';
-import SearchBlock from './components/home/SearchBlock';
+import SearchBlock, { DirectoryRandomProfileButton } from './components/home/SearchBlock';
 import MembersCountBlock from './components/home/MembersCountBlock';
 import InviteNetworkModal from './components/home/InviteNetworkModal';
 import NewMembersStrip from './components/home/NewMembersStrip';
@@ -596,7 +596,10 @@ const ProfileCard = ({
       key={p.uid}
       id={`profile-card-${p.uid}`}
       onClick={() => onSelect(p)}
-      className="relative flex h-full min-h-0 cursor-pointer flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow group hover:shadow-md sm:p-5"
+      className={cn(
+        'relative flex min-h-0 cursor-pointer flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow group hover:shadow-md sm:p-5',
+        guestDirectoryTeaser ? 'h-auto' : 'h-full'
+      )}
     >
       <div className="mb-2 flex shrink-0 justify-between items-start gap-2">
         <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -845,22 +848,22 @@ const ProfileCard = ({
       </div>
 
       {guestDirectoryTeaser ? (
-        <div className="relative mt-2 flex min-h-[130px] flex-1 flex-col">
+        <div className="relative mt-1.5 h-[100px] w-full shrink-0 sm:h-[104px]">
           <div
-            className="pointer-events-none flex flex-1 flex-col justify-end space-y-2 pb-1 opacity-50 blur-sm select-none"
+            className="pointer-events-none absolute inset-0 flex flex-col justify-end space-y-1.5 pb-0.5 opacity-50 blur-sm select-none"
             aria-hidden
           >
             <div className="flex flex-wrap gap-1.5">
               <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-400">······</span>
               <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-xs text-amber-200">······</span>
             </div>
-            <div className="h-3 w-3/4 max-w-[12rem] rounded bg-slate-100" />
-            <div className="h-3 w-1/2 max-w-[9rem] rounded bg-slate-100" />
-            <div className="h-9 w-full rounded-lg bg-slate-100" />
-            <div className="h-9 w-full rounded-lg bg-emerald-50" />
+            <div className="h-2.5 w-3/4 max-w-[12rem] rounded bg-slate-100" />
+            <div className="h-2.5 w-1/2 max-w-[9rem] rounded bg-slate-100" />
+            <div className="h-7 w-full rounded-lg bg-slate-100" />
+            <div className="h-7 w-full rounded-lg bg-emerald-50" />
           </div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/85 px-3 py-4 text-center backdrop-blur-[2px]">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-white/85 px-3 py-2 text-center backdrop-blur-[2px]">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium leading-tight text-slate-600 sm:text-xs">
               <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
               {t('guestOverlayTitle')}
             </div>
@@ -870,7 +873,7 @@ const ProfileCard = ({
                 e.stopPropagation();
                 onGuestJoin?.();
               }}
-              className="w-full max-w-[16rem] rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-800"
+              className="w-full max-w-[16rem] rounded-lg bg-blue-700 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-blue-800"
             >
               {t('guestJoinCta')}
             </button>
@@ -4347,23 +4350,33 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 />
               </div>
             )}
-            <SearchBlock
-              lang={lang}
-              t={t}
-              searchTerm={searchTerm}
-              onSearchTermChange={setSearchTerm}
-              filterCategory={filterCategory}
-              onFilterCategoryChange={setFilterCategory}
-              filterProfileType={filterProfileType}
-              onFilterProfileTypeChange={handleFilterProfileTypeChange}
-              filterLocation={filterLocation}
-              onFilterLocationChange={setFilterLocation}
-              onSearchSubmit={scrollDirectoryIntoView}
-              onClearFilters={clearDirectoryFilters}
-              onRandomProfile={handleRandomProfile}
-              randomDisabled={filteredProfiles.length === 0}
-              showClearFilters={showDirectoryClearFilters}
-            />
+            {viewMode === 'activities' ? (
+              <div className="min-w-0 rounded-xl border border-gray-200 bg-[#F7F7F9] p-4 shadow-sm lg:p-5">
+                <DirectoryRandomProfileButton
+                  t={t}
+                  onRandomProfile={handleRandomProfile}
+                  randomDisabled={filteredProfiles.length === 0}
+                />
+              </div>
+            ) : (
+              <SearchBlock
+                lang={lang}
+                t={t}
+                searchTerm={searchTerm}
+                onSearchTermChange={setSearchTerm}
+                filterCategory={filterCategory}
+                onFilterCategoryChange={setFilterCategory}
+                filterProfileType={filterProfileType}
+                onFilterProfileTypeChange={handleFilterProfileTypeChange}
+                filterLocation={filterLocation}
+                onFilterLocationChange={setFilterLocation}
+                onSearchSubmit={scrollDirectoryIntoView}
+                onClearFilters={clearDirectoryFilters}
+                onRandomProfile={handleRandomProfile}
+                randomDisabled={filteredProfiles.length === 0}
+                showClearFilters={showDirectoryClearFilters}
+              />
+            )}
 
             <div className={cn((!user || showDiscoveryStrips) && 'hidden sm:block')}>
               <HomeFunFactStrip lang={lang} />
@@ -4685,26 +4698,24 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
               {viewMode === 'activities' && (
                 <div className="space-y-6">
-                  <div className="flex min-w-0 flex-col gap-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-5 lg:flex-row lg:items-end">
-                    <div className="min-w-0 w-full flex-1 space-y-1 lg:max-w-md">
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-400">
-                        {t('activityCategory')}
-                      </label>
-                      <select
-                        value={filterCategory}
-                        onChange={(e) => setFilterCategory(e.target.value)}
-                        className="w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                      >
-                        <option value="">{t('allIndustries')}</option>
-                        {ACTIVITY_CATEGORIES.map((c) => (
-                          <option key={c} value={c}>
-                            {activityCategoryLabel(c, lang)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <p className="min-w-0 text-xs leading-relaxed text-stone-500 lg:max-w-md">{t('filterSectorHint')}</p>
-                  </div>
+                  <SearchBlock
+                    lang={lang}
+                    t={t}
+                    searchTerm={searchTerm}
+                    onSearchTermChange={setSearchTerm}
+                    filterCategory={filterCategory}
+                    onFilterCategoryChange={setFilterCategory}
+                    filterProfileType={filterProfileType}
+                    onFilterProfileTypeChange={handleFilterProfileTypeChange}
+                    filterLocation={filterLocation}
+                    onFilterLocationChange={setFilterLocation}
+                    onSearchSubmit={scrollDirectoryIntoView}
+                    onClearFilters={clearDirectoryFilters}
+                    onRandomProfile={handleRandomProfile}
+                    randomDisabled={filteredProfiles.length === 0}
+                    showClearFilters={showDirectoryClearFilters}
+                    hideRandomButton
+                  />
                   {activityCategoryPopularity.filter(([cat]) => cat).length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {activityCategoryPopularity

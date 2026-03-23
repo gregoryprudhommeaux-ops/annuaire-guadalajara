@@ -22,7 +22,29 @@ type Props = {
   onRandomProfile: () => void;
   randomDisabled: boolean;
   showClearFilters: boolean;
+  /** Masquer « Découvrir un profil au hasard » (ex. bloc centré onglet Secteurs — bouton reste dans la colonne gauche). */
+  hideRandomButton?: boolean;
 };
+
+const randomBtnClass =
+  'flex min-h-[44px] w-full items-center justify-center rounded-lg border border-gray-300 bg-transparent px-4 text-sm font-medium text-gray-700 transition-colors hover:border-blue-700 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40';
+
+/** Bouton isolé pour la colonne gauche quand le bloc recherche est affiché au centre (onglet Secteurs). */
+export function DirectoryRandomProfileButton({
+  t,
+  onRandomProfile,
+  randomDisabled,
+}: {
+  t: TFn;
+  onRandomProfile: () => void;
+  randomDisabled: boolean;
+}) {
+  return (
+    <button type="button" onClick={onRandomProfile} disabled={randomDisabled} className={randomBtnClass}>
+      {randomDisabled ? t('randomProfileEmpty') : t('randomProfile')}
+    </button>
+  );
+}
 
 const selectClass =
   'h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 outline-none transition-shadow focus:ring-2 focus:ring-blue-700 focus:ring-offset-0';
@@ -44,6 +66,7 @@ export default function SearchBlock({
   onRandomProfile,
   randomDisabled,
   showClearFilters,
+  hideRandomButton = false,
 }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,14 +167,13 @@ export default function SearchBlock({
         )}
 
         {/* [SEARCH] Découvrir un profil au hasard */}
-        <button
-          type="button"
-          onClick={onRandomProfile}
-          disabled={randomDisabled}
-          className="flex min-h-[44px] w-full items-center justify-center rounded-lg border border-gray-300 bg-transparent px-4 text-sm font-medium text-gray-700 transition-colors hover:border-blue-700 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {randomDisabled ? t('randomProfileEmpty') : t('randomProfile')}
-        </button>
+        {!hideRandomButton && (
+          <DirectoryRandomProfileButton
+            t={t}
+            onRandomProfile={onRandomProfile}
+            randomDisabled={randomDisabled}
+          />
+        )}
       </form>
     </div>
   );

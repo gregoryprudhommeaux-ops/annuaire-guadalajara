@@ -476,8 +476,8 @@ export const TRANSLATIONS: Translations = {
     es: "Perfil completo reservado a miembros registrados",
   },
   guestJoinCta: {
-    fr: "Rejoindre l'annuaire gratuitement",
-    es: "Unirse al directorio gratis",
+    fr: "Rejoindre l'annuaire",
+    es: "Unirse al directorio",
   },
   guestInterstitialHeadline: {
     fr: "{{count}} autre(s) membre(s) dans l'annuaire",
