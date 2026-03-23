@@ -86,6 +86,9 @@ export function useAdminStats(period: PeriodKey): AdminStats {
 
     async function fetchStats() {
       try {
+        if (!cancelled) {
+          setStats((prev) => ({ ...prev, loading: true, error: null }));
+        }
         const profilesSnap = await getDocs(collection(db, 'users'));
         const allProfiles = profilesSnap.docs.map((d) => ({
           id: d.id,
@@ -166,17 +169,24 @@ export function useAdminStats(period: PeriodKey): AdminStats {
           return !ua || Math.abs((ua || 0) - (ca || 0)) < 60;
         }).length;
 
-        let eventsQuery;
-        if (startDate) {
-          eventsQuery = query(
-            collection(db, 'events_log'),
-            where('createdAt', '>=', Timestamp.fromDate(startDate))
-          );
-        } else {
-          eventsQuery = query(collection(db, 'events_log'));
+        let events: Record<string, unknown>[] = [];
+        try {
+          let eventsQuery;
+          if (startDate) {
+            eventsQuery = query(
+              collection(db, 'events_log'),
+              where('createdAt', '>=', Timestamp.fromDate(startDate))
+            );
+          } else {
+            eventsQuery = query(collection(db, 'events_log'));
+          }
+          const eventsSnap = await getDocs(eventsQuery);
+          events = eventsSnap.docs.map((d) => d.data() as Record<string, unknown>);
+        } catch (eventsErr) {
+          // Non bloquant : le dashboard reste utile même sans accès events_log.
+          console.warn('[useAdminStats] events_log read failed:', eventsErr);
+          events = [];
         }
-        const eventsSnap = await getDocs(eventsQuery);
-        const events = eventsSnap.docs.map((d) => d.data() as Record<string, unknown>);
 
         let linkedin = 0;
         let email = 0;
