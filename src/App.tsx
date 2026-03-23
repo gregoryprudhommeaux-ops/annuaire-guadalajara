@@ -151,7 +151,7 @@ import {
   ProfileCardEmailContact,
   ProfileCardWhatsappContactFooter,
 } from './components/profile/ProfileCardUi';
-import { Header as AppHeader } from './components/Header';
+import { Header as AppHeader, LanguageDropdownMobile } from './components/Header';
 import { DirectoryTabBar } from './components/DirectoryUi';
 import HomeFunFactStrip from './components/home/HomeFunFactStrip';
 import DashboardPage from './components/dashboard/DashboardPage';
@@ -3235,6 +3235,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
     );
   }
 
+  const headerAdminLayout = Boolean(user && profile?.role === 'admin');
+
   return (
     <div className="min-h-screen min-w-0 bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
       <AppHeader
@@ -3248,127 +3250,140 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         lang={lang}
         onLangChange={setLang}
         guestMobileFullWidthCta={!user}
-        hideDesktopLanguageSwitch={Boolean(user && profile?.role === 'admin')}
+        hideDesktopLanguageSwitch={headerAdminLayout}
+        topRight={
+          headerAdminLayout && user ? (
+            <>
+              <div className="hidden items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
+                {(['fr', 'es', 'en'] as const).map((code) => {
+                  const isActive = lang === code;
+                  return (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => setLang(code)}
+                      aria-pressed={isActive}
+                      className={cn(
+                        'px-3 py-1.5 text-xs font-semibold transition-colors',
+                        isActive
+                          ? 'bg-blue-700 text-white'
+                          : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                      )}
+                    >
+                      {code.toUpperCase()}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="sm:hidden">
+                <LanguageDropdownMobile lang={lang} onLangChange={setLang} />
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
+                title={t('logout')}
+              >
+                <LogOut size={18} />
+              </button>
+              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200">
+                <ProfileAvatar
+                  photoURL={user.photoURL}
+                  fullName={user.displayName || user.email || ''}
+                  className="h-full w-full"
+                  initialsClassName="text-[10px] font-bold text-slate-600"
+                  iconSize={16}
+                />
+              </div>
+            </>
+          ) : undefined
+        }
+        fullWidthRow={
+          headerAdminLayout ? (
+            <div className="flex w-full min-w-0 flex-row items-stretch gap-1 sm:gap-3">
+              <button
+                type="button"
+                onClick={() => setShowValidationPanel(true)}
+                className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-slate-100 px-1 py-1.5 text-slate-800 transition-colors hover:bg-slate-200 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
+              >
+                <Users className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
+                <span className="max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                  {t('newProfiles')}
+                </span>
+                {pendingProfiles.length > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:w-5 sm:text-[10px]">
+                    {pendingProfiles.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAuthLeadsPanel(true)}
+                className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-blue-50 px-1 py-1.5 text-blue-900 transition-colors hover:bg-blue-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
+                title={t('adminOAuthLeadsTitle')}
+              >
+                <LogIn className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
+                <span className="line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                  {t('adminOAuthLeadsTitle')}
+                </span>
+                {oauthLeadsWithoutProfileCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-blue-700 px-0.5 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:min-w-5 sm:text-[10px]">
+                    {oauthLeadsWithoutProfileCount > 99 ? '99+' : oauthLeadsWithoutProfileCount}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowOpportunitiesModerationPanel(true)}
+                className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-amber-50 px-1 py-1.5 text-amber-900 transition-colors hover:bg-amber-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
+              >
+                <Zap className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
+                <span className="line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                  {t('opportunitiesModerationTitle')}
+                </span>
+                {pendingUrgentForAdmin.length > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-amber-600 px-0.5 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:min-w-5 sm:text-[10px]">
+                    {pendingUrgentForAdmin.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={exportToExcel}
+                className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-50 px-1 py-1.5 text-emerald-800 transition-colors hover:bg-emerald-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
+              >
+                <Download className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
+                <span className="line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                  {t('exportData')}
+                </span>
+              </button>
+            </div>
+          ) : undefined
+        }
         trailing={
           user ? (
-            <div className="flex min-w-0 w-full flex-wrap items-center justify-end gap-2 sm:gap-3">
-              {profile?.role === 'admin' && (
-                <div className="flex min-w-0 w-full items-center gap-2 sm:gap-3">
-                  <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowValidationPanel(true)}
-                    className="relative flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-200"
-                  >
-                    <Users size={16} />
-                    <span className="truncate">{t('newProfiles')}</span>
-                    {pendingProfiles.length > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 text-[10px] font-bold text-white">
-                        {pendingProfiles.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowAuthLeadsPanel(true)}
-                    className="relative flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900 transition-colors hover:bg-blue-100"
-                    title={t('adminOAuthLeadsTitle')}
-                  >
-                    <LogIn size={16} />
-                    <span className="truncate">{t('adminOAuthLeadsTitle')}</span>
-                    {oauthLeadsWithoutProfileCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-blue-700 px-1 text-[10px] font-bold text-white">
-                        {oauthLeadsWithoutProfileCount > 99 ? '99+' : oauthLeadsWithoutProfileCount}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowOpportunitiesModerationPanel(true)}
-                    className="relative flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100"
-                  >
-                    <Zap size={16} />
-                    <span className="truncate">{t('opportunitiesModerationTitle')}</span>
-                    {pendingUrgentForAdmin.length > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-amber-600 px-1 text-[10px] font-bold text-white">
-                        {pendingUrgentForAdmin.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={exportToExcel}
-                    className="relative flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
-                  >
-                    <Download size={16} />
-                    <span className="truncate">{t('exportData')}</span>
-                  </button>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <div className="hidden items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
-                      {(['fr', 'es', 'en'] as const).map((code) => {
-                        const isActive = lang === code;
-                        return (
-                          <button
-                            key={code}
-                            type="button"
-                            onClick={() => setLang(code)}
-                            aria-pressed={isActive}
-                            className={cn(
-                              'px-3 py-1.5 text-xs font-semibold transition-colors',
-                              isActive
-                                ? 'bg-blue-700 text-white'
-                                : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                            )}
-                          >
-                            {code.toUpperCase()}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
-                      title={t('logout')}
-                    >
-                      <LogOut size={18} />
-                    </button>
-                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200">
-                      <ProfileAvatar
-                        photoURL={user.photoURL}
-                        fullName={user.displayName || user.email || ''}
-                        className="h-full w-full"
-                        initialsClassName="text-[10px] font-bold text-slate-600"
-                        iconSize={16}
-                      />
-                    </div>
-                  </div>
+            headerAdminLayout ? null : (
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
+                <div className="hidden h-8 w-px bg-slate-200 sm:block" aria-hidden />
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
+                  title={t('logout')}
+                >
+                  <LogOut size={18} />
+                </button>
+                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200">
+                  <ProfileAvatar
+                    photoURL={user.photoURL}
+                    fullName={user.displayName || user.email || ''}
+                    className="h-full w-full"
+                    initialsClassName="text-[10px] font-bold text-slate-600"
+                    iconSize={16}
+                  />
                 </div>
-              )}
-              {profile?.role !== 'admin' && (
-                <>
-                  <div className="hidden h-8 w-px bg-slate-200 sm:block" aria-hidden />
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
-                    title={t('logout')}
-                  >
-                    <LogOut size={18} />
-                  </button>
-                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200">
-                    <ProfileAvatar
-                      photoURL={user.photoURL}
-                      fullName={user.displayName || user.email || ''}
-                      className="h-full w-full"
-                      initialsClassName="text-[10px] font-bold text-slate-600"
-                      iconSize={16}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+              </div>
+            )
           ) : (
             <button
               type="button"

@@ -16,7 +16,7 @@ const LANGUAGES: { code: Language; label: string }[] = [
   { code: 'en', label: 'EN' },
 ];
 
-function LanguageDropdownMobile({
+export function LanguageDropdownMobile({
   lang,
   onLangChange,
 }: {
@@ -94,6 +94,14 @@ export type HeaderProps = {
    * Visiteur : sur mobile, bandeau bleu pleine largeur autour de `trailing` (sticky avec le logo).
    */
   guestMobileFullWidthCta?: boolean;
+  /**
+   * Aligné en haut à droite sur la même ligne que le titre (ex. admin : langues + logout + avatar).
+   */
+  topRight?: React.ReactNode;
+  /**
+   * Barre pleine largeur sous la ligne titre (ex. admin : 4 boutons sur toute la largeur du bandeau).
+   */
+  fullWidthRow?: React.ReactNode;
 };
 
 export const Header: React.FC<HeaderProps> = ({
@@ -106,7 +114,11 @@ export const Header: React.FC<HeaderProps> = ({
   trailing,
   guestMobileFullWidthCta = false,
   hideDesktopLanguageSwitch = false,
+  topRight,
+  fullWidthRow,
 }) => {
+  const adminHeroLayout = Boolean(fullWidthRow);
+
   return (
     <header
       className={cn(
@@ -116,84 +128,126 @@ export const Header: React.FC<HeaderProps> = ({
       )}
     >
       <div className={pageHeaderInner}>
-        {/* sm:flex-wrap : si la barre admin + langue dépassent, passage à la ligne sans écraser le titre.
-            Compte admin : ne pas mettre min-w-0 sur ce bloc — sinon flex-1 le comprime à ~0 et break-words casse lettre par lettre. */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-3">
-          <div className="relative w-full flex-1 min-w-[12rem] sm:min-w-[14rem] md:min-w-[16rem]">
-            <a
-              href="/"
-              onClick={onHomeClick}
-              className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg pr-[4.25rem] outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:pr-1"
-              aria-label={homeAriaLabel}
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white shadow-md sm:h-10 sm:w-10 sm:rounded-xl">
-                <Building2 className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2} aria-hidden />
-              </div>
-              <div className="h-7 w-px shrink-0 bg-slate-200 sm:h-8" aria-hidden />
-              <div className="min-w-0 flex-1 leading-tight text-left">
-                <p className="text-sm font-semibold leading-snug tracking-tight text-slate-900 break-words sm:text-base md:text-lg">
-                  {title}
-                </p>
-                <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-slate-500 sm:line-clamp-none md:text-sm">
-                  {subtitle}
-                </p>
-              </div>
-            </a>
-            <div className="absolute right-0 top-0 sm:hidden">
-              <LanguageDropdownMobile lang={lang} onLangChange={onLangChange} />
-            </div>
-          </div>
-
-          {/* Langue + trailing : une seule zone pour éviter les doublons */}
-          <div
-            className={cn(
-              'flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-3',
-              !hideDesktopLanguageSwitch && 'sm:w-auto',
-              !guestMobileFullWidthCta && trailing && !hideDesktopLanguageSwitch && 'sm:shrink-0'
-            )}
-          >
-            {!hideDesktopLanguageSwitch ? (
-              <div className="hidden items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
-              {LANGUAGES.map(({ code, label }) => {
-                const isActive = lang === code;
-                return (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => onLangChange(code)}
-                    aria-pressed={isActive}
-                    className={cn(
-                      'px-3 py-1.5 text-xs font-semibold transition-colors',
-                      isActive
-                        ? 'bg-blue-700 text-white'
-                        : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                    )}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-              </div>
-            ) : null}
-            {trailing ? (
+        {adminHeroLayout ? (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-3">
               <div
                 className={cn(
-                  'min-w-0 sm:flex sm:items-center',
-                  guestMobileFullWidthCta &&
-                    cn(
-                      'flex justify-center border-t border-blue-800/25 bg-blue-700 px-3 py-1',
-                      guestCtaFullBleed,
-                      'sm:mx-0 sm:w-auto sm:border-0 sm:bg-transparent sm:p-0'
-                    ),
-                  !guestMobileFullWidthCta &&
-                    'flex flex-wrap items-center justify-end gap-2 pt-0.5 sm:justify-start sm:pt-0'
+                  'relative min-w-0 flex-1',
+                  !topRight && 'min-w-[12rem] sm:min-w-[14rem] md:min-w-[16rem]'
                 )}
               >
-                {trailing}
+                <a
+                  href="/"
+                  onClick={onHomeClick}
+                  className={cn(
+                    'flex min-w-0 cursor-pointer items-center gap-3 rounded-lg outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2',
+                    !topRight ? 'pr-[4.25rem] sm:pr-1' : 'pr-1 sm:pr-1'
+                  )}
+                  aria-label={homeAriaLabel}
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white shadow-md sm:h-10 sm:w-10 sm:rounded-xl">
+                    <Building2 className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2} aria-hidden />
+                  </div>
+                  <div className="h-7 w-px shrink-0 bg-slate-200 sm:h-8" aria-hidden />
+                  <div className="min-w-0 flex-1 leading-tight text-left">
+                    <p className="text-sm font-semibold leading-snug tracking-tight text-slate-900 break-words sm:text-base md:text-lg">
+                      {title}
+                    </p>
+                    <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-slate-500 sm:line-clamp-none md:text-sm">
+                      {subtitle}
+                    </p>
+                  </div>
+                </a>
+                {!topRight ? (
+                  <div className="absolute right-0 top-0 sm:hidden">
+                    <LanguageDropdownMobile lang={lang} onLangChange={onLangChange} />
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+              {topRight ? (
+                <div className="flex shrink-0 items-center gap-2 self-start pt-0.5">{topRight}</div>
+              ) : null}
+            </div>
+            <div className="w-full min-w-0">{fullWidthRow}</div>
           </div>
-        </div>
+        ) : (
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-3">
+            <div className="relative w-full flex-1 min-w-[12rem] sm:min-w-[14rem] md:min-w-[16rem]">
+              <a
+                href="/"
+                onClick={onHomeClick}
+                className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg pr-[4.25rem] outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:pr-1"
+                aria-label={homeAriaLabel}
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white shadow-md sm:h-10 sm:w-10 sm:rounded-xl">
+                  <Building2 className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2} aria-hidden />
+                </div>
+                <div className="h-7 w-px shrink-0 bg-slate-200 sm:h-8" aria-hidden />
+                <div className="min-w-0 flex-1 leading-tight text-left">
+                  <p className="text-sm font-semibold leading-snug tracking-tight text-slate-900 break-words sm:text-base md:text-lg">
+                    {title}
+                  </p>
+                  <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-slate-500 sm:line-clamp-none md:text-sm">
+                    {subtitle}
+                  </p>
+                </div>
+              </a>
+              <div className="absolute right-0 top-0 sm:hidden">
+                <LanguageDropdownMobile lang={lang} onLangChange={onLangChange} />
+              </div>
+            </div>
+
+            <div
+              className={cn(
+                'flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-3',
+                !hideDesktopLanguageSwitch && 'sm:w-auto',
+                !guestMobileFullWidthCta && trailing && !hideDesktopLanguageSwitch && 'sm:shrink-0'
+              )}
+            >
+              {!hideDesktopLanguageSwitch ? (
+                <div className="hidden items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
+                  {LANGUAGES.map(({ code, label }) => {
+                    const isActive = lang === code;
+                    return (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => onLangChange(code)}
+                        aria-pressed={isActive}
+                        className={cn(
+                          'px-3 py-1.5 text-xs font-semibold transition-colors',
+                          isActive
+                            ? 'bg-blue-700 text-white'
+                            : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                        )}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+              {trailing ? (
+                <div
+                  className={cn(
+                    'min-w-0 sm:flex sm:items-center',
+                    guestMobileFullWidthCta &&
+                      cn(
+                        'flex justify-center border-t border-blue-800/25 bg-blue-700 px-3 py-1',
+                        guestCtaFullBleed,
+                        'sm:mx-0 sm:w-auto sm:border-0 sm:bg-transparent sm:p-0'
+                      ),
+                    !guestMobileFullWidthCta &&
+                      'flex flex-wrap items-center justify-end gap-2 pt-0.5 sm:justify-start sm:pt-0'
+                  )}
+                >
+                  {trailing}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
