@@ -91,6 +91,11 @@ import {
   type UserAdminPrivateDoc,
 } from './lib/userAdminPrivate';
 import {
+  AUTH_LEADS_COLLECTION,
+  upsertAuthLeadFromFirebaseUser,
+  type AuthLeadDoc,
+} from './lib/authLeads';
+import {
   NEED_OPTIONS,
   NEED_OPTION_VALUE_SET,
   formatHighlightedNeedsForText,
@@ -146,13 +151,16 @@ import {
 } from './components/profile/ProfileCardUi';
 import { Header as AppHeader } from './components/Header';
 import { DirectoryTabBar } from './components/DirectoryUi';
-import { uploadProfileAvatar } from './lib/uploadProfileAvatar';
-import { isLikelyNonEmbeddablePhotoUrl } from './lib/profilePhotoUrl';
 import HomeFunFactStrip from './components/home/HomeFunFactStrip';
 import DashboardPage from './components/dashboard/DashboardPage';
 import { homeLanding } from './copy/homeLanding';
 import AffinityScore from './components/AffinityScore';
 import { profileMatchesSearchQuery } from './profileSearch';
+import {
+  GUEST_DIRECTORY_PREVIEW_LIMIT,
+  isGuestDirectoryRestricted,
+} from './lib/guestDirectory';
+import { GuestDirectoryInterstitial } from './components/guest/GuestDirectoryInterstitial';
 import { 
   Search, 
   Globe, 
@@ -189,8 +197,9 @@ import {
   ArrowLeft,
   UserCog,
   Sparkles,
-  ImageUp,
-  Maximize2
+  Maximize2,
+  LogIn,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as XLSX from 'xlsx';
@@ -496,16 +505,31 @@ function ProfileCardTagsBlock({
 
 type ProfileCardVariant = 'default' | 'company' | 'activity';
 
-const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profile, variant = 'default', urgentAuthorIds = EMPTY_URGENT_AUTHOR_IDS }: { 
-  p: UserProfile, 
-  isOwn?: boolean, 
-  onEdit?: (p: UserProfile) => void, 
-  onDelete?: (uid: string) => void,
-  onSelect: (p: UserProfile) => void,
-  user: any,
-  profile: UserProfile | null,
-  variant?: ProfileCardVariant,
-  urgentAuthorIds?: ReadonlySet<string>,
+const ProfileCard = ({
+  p,
+  isOwn = false,
+  onEdit,
+  onDelete,
+  onSelect,
+  user,
+  profile,
+  variant = 'default',
+  urgentAuthorIds = EMPTY_URGENT_AUTHOR_IDS,
+  guestDirectoryTeaser = false,
+  onGuestJoin,
+}: {
+  p: UserProfile;
+  isOwn?: boolean;
+  onEdit?: (p: UserProfile) => void;
+  onDelete?: (uid: string) => void;
+  onSelect: (p: UserProfile) => void;
+  user: any;
+  profile: UserProfile | null;
+  variant?: ProfileCardVariant;
+  urgentAuthorIds?: ReadonlySet<string>;
+  /** Aperçu visiteur : bio courte + zone basse masquée par CTA */
+  guestDirectoryTeaser?: boolean;
+  onGuestJoin?: () => void;
 }) => {
   const isActive = Date.now() - (p.lastSeen ?? 0) < 2592000000; // 30 days
   const { lang, t } = useLanguage();
@@ -583,7 +607,13 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
                     {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
                   </span>
                 </div>
-                {p.bio?.trim() ? <ProfileCardBio text={p.bio} t={t} /> : null}
+                {p.bio?.trim() ? (
+                  guestDirectoryTeaser ? (
+                    <p className="mt-1.5 text-sm leading-snug text-slate-600 line-clamp-1">{p.bio.trim()}</p>
+                  ) : (
+                    <ProfileCardBio text={p.bio} t={t} />
+                  )
+                ) : null}
               </>
             )}
             {variant === 'activity' && (
@@ -617,7 +647,13 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
                     {[p.city, p.neighborhood, p.state || 'Jalisco'].filter(Boolean).join(', ')}
                   </span>
                 </div>
-                {p.bio?.trim() ? <ProfileCardBio text={p.bio} t={t} /> : null}
+                {p.bio?.trim() ? (
+                  guestDirectoryTeaser ? (
+                    <p className="mt-1.5 text-sm leading-snug text-slate-600 line-clamp-1">{p.bio.trim()}</p>
+                  ) : (
+                    <ProfileCardBio text={p.bio} t={t} />
+                  )
+                ) : null}
               </>
             )}
             {variant === 'default' && (
@@ -649,13 +685,24 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
                     {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
                   </span>
                 </div>
-                {p.bio?.trim() ? <ProfileCardBio text={p.bio} t={t} /> : null}
+                {p.bio?.trim() ? (
+                  guestDirectoryTeaser ? (
+                    <p className="mt-1.5 text-sm leading-snug text-slate-600 line-clamp-1">{p.bio.trim()}</p>
+                  ) : (
+                    <ProfileCardBio text={p.bio} t={t} />
+                  )
+                ) : null}
               </>
             )}
           </div>
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <div className="hidden flex-col items-center gap-2 pb-0.5 sm:flex">
+          <div
+            className={cn(
+              'hidden flex-col items-center gap-2 pb-0.5 sm:flex',
+              guestDirectoryTeaser && 'sm:hidden'
+            )}
+          >
             {recCount > 0 && (
               <div
                 className="relative mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-700 text-white shadow-sm ring-1 ring-blue-700/20"
@@ -739,30 +786,66 @@ const ProfileCard = ({ p, isOwn = false, onEdit, onDelete, onSelect, user, profi
         </div>
       </div>
 
-      <ProfileCardTagsBlock profile={p} urgentAuthorIds={urgentAuthorIds} />
-
-      <div className="mt-auto w-full shrink-0">
-        <div className="flex w-full shrink-0 flex-col gap-1.5 border-t border-slate-100 pt-2.5">
-          <div className="flex min-h-[2.25rem] w-full items-stretch">
-            <ProfileCardEmailContact
-              email={p.email}
-              canView={Boolean(p.isEmailPublic || (user && profile?.isValidated))}
-              t={t}
-            />
+      {guestDirectoryTeaser ? (
+        <div className="relative mt-2 flex min-h-[130px] flex-1 flex-col">
+          <div
+            className="pointer-events-none flex flex-1 flex-col justify-end space-y-2 pb-1 opacity-50 blur-sm select-none"
+            aria-hidden
+          >
+            <div className="flex flex-wrap gap-1.5">
+              <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-400">······</span>
+              <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-xs text-amber-200">······</span>
+            </div>
+            <div className="h-3 w-3/4 max-w-[12rem] rounded bg-slate-100" />
+            <div className="h-3 w-1/2 max-w-[9rem] rounded bg-slate-100" />
+            <div className="h-9 w-full rounded-lg bg-slate-100" />
+            <div className="h-9 w-full rounded-lg bg-emerald-50" />
           </div>
-          <div className="flex min-h-[2.25rem] w-full items-stretch">
-            {p.whatsapp ? (
-              <ProfileCardWhatsappContactFooter
-                whatsapp={p.whatsapp}
-                canView={Boolean(p.isWhatsappPublic || (user && profile?.isValidated))}
-                t={t}
-              />
-            ) : (
-              <div className="min-h-[2.25rem] w-full rounded-lg border border-transparent bg-transparent px-3 py-2" aria-hidden />
-            )}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/85 px-3 py-4 text-center backdrop-blur-[2px]">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+              <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
+              {t('guestOverlayTitle')}
+            </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onGuestJoin?.();
+              }}
+              className="w-full max-w-[16rem] rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-800"
+            >
+              {t('guestJoinCta')}
+            </button>
           </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <ProfileCardTagsBlock profile={p} urgentAuthorIds={urgentAuthorIds} />
+
+          <div className="mt-auto w-full shrink-0">
+            <div className="flex w-full shrink-0 flex-col gap-1.5 border-t border-slate-100 pt-2.5">
+              <div className="flex min-h-[2.25rem] w-full items-stretch">
+                <ProfileCardEmailContact
+                  email={p.email}
+                  canView={Boolean(p.isEmailPublic || (user && profile?.isValidated))}
+                  t={t}
+                />
+              </div>
+              <div className="flex min-h-[2.25rem] w-full items-stretch">
+                {p.whatsapp ? (
+                  <ProfileCardWhatsappContactFooter
+                    whatsapp={p.whatsapp}
+                    canView={Boolean(p.isWhatsappPublic || (user && profile?.isValidated))}
+                    t={t}
+                  />
+                ) : (
+                  <div className="min-h-[2.25rem] w-full rounded-lg border border-transparent bg-transparent px-3 py-2" aria-hidden />
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
       <div
         className="pointer-events-none absolute bottom-2 right-2 z-[1] text-stone-400 sm:hidden"
         aria-hidden
@@ -1782,6 +1865,7 @@ const MainApp = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
+  const profileUidSet = useMemo(() => new Set(allProfiles.map((p) => p.uid)), [allProfiles]);
   const [isEditing, setIsEditing] = useState(false);
   const [isShareNeedsModalOpen, setIsShareNeedsModalOpen] = useState(false);
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
@@ -1802,6 +1886,8 @@ const MainApp = () => {
   const directoryMainRef = useRef<HTMLDivElement>(null);
   const [membersSortRecent, setMembersSortRecent] = useState(false);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
+  const [showAuthLeadsPanel, setShowAuthLeadsPanel] = useState(false);
+  const [authLeads, setAuthLeads] = useState<AuthLeadDoc[]>([]);
   const [showOpportunitiesModerationPanel, setShowOpportunitiesModerationPanel] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<
@@ -1837,9 +1923,6 @@ const MainApp = () => {
   const [profileCoachLine, setProfileCoachLine] = useState('');
   const [profileCoachSource, setProfileCoachSource] = useState<'local' | 'ai' | null>(null);
   const [profileCoachLoading, setProfileCoachLoading] = useState(false);
-  const photoUrlInputRef = useRef<HTMLInputElement | null>(null);
-  const [profilePhotoUploading, setProfilePhotoUploading] = useState(false);
-  const [profilePhotoUploadError, setProfilePhotoUploadError] = useState<string | null>(null);
 
   const getAuthErrorMessage = (code: string) => {
     const host = typeof window !== 'undefined' ? window.location.host : '';
@@ -1879,6 +1962,11 @@ const MainApp = () => {
   const pendingUidsKey = useMemo(
     () => pendingProfiles.map((p) => p.uid).sort().join(','),
     [pendingProfiles]
+  );
+
+  const oauthLeadsWithoutProfileCount = useMemo(
+    () => authLeads.filter((l) => !profileUidSet.has(l.uid)).length,
+    [authLeads, profileUidSet]
   );
 
   useEffect(() => {
@@ -2119,10 +2207,6 @@ const MainApp = () => {
   }, [profile, isEditing, lang, t]);
 
   useEffect(() => {
-    if (isEditing) setProfilePhotoUploadError(null);
-  }, [isEditing]);
-
-  useEffect(() => {
     const testConnection = async () => {
       try {
         await getDocFromServer(doc(db, 'test', 'connection'));
@@ -2138,6 +2222,9 @@ const MainApp = () => {
       setUser(u);
       if (u) setAuthError(null);
       if (u) {
+        void upsertAuthLeadFromFirebaseUser(db, u).catch((err) => {
+          console.warn('[auth_leads]', err);
+        });
         const docRef = doc(db, 'users', u.uid);
         const docSnap = await getDoc(docRef);
         
@@ -2179,6 +2266,26 @@ const MainApp = () => {
       unsubscribeUrgent();
     };
   }, []);
+
+  useEffect(() => {
+    if (profile?.role !== 'admin') {
+      setAuthLeads([]);
+      return;
+    }
+    const q = query(
+      collection(db, AUTH_LEADS_COLLECTION),
+      orderBy('lastConnectedAt', 'desc'),
+      limit(400)
+    );
+    const unsub = onSnapshot(
+      q,
+      (snapshot) => {
+        setAuthLeads(snapshot.docs.map((d) => d.data() as AuthLeadDoc));
+      },
+      (error) => handleFirestoreError(error, OperationType.LIST, AUTH_LEADS_COLLECTION)
+    );
+    return () => unsub();
+  }, [profile?.role]);
 
   useEffect(() => {
     if (!user) {
@@ -2354,39 +2461,6 @@ const MainApp = () => {
   };
 
   const handleLogout = () => signOut(auth);
-
-  const handleProfileAvatarFile = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      e.target.value = '';
-      if (!file || !user) return;
-      const targetUid = editingProfile?.uid ?? user.uid;
-      if (targetUid !== user.uid) {
-        setProfilePhotoUploadError(t('photoUploadWrongAccount'));
-        return;
-      }
-      setProfilePhotoUploading(true);
-      setProfilePhotoUploadError(null);
-      try {
-        const url = await uploadProfileAvatar(targetUid, file);
-        const input = photoUrlInputRef.current;
-        if (input) input.value = url;
-      } catch (err: unknown) {
-        const code = (err as { code?: string })?.code;
-        const msg = (err as Error)?.message;
-        if (msg === 'INVALID_TYPE' || msg === 'TOO_LARGE') {
-          setProfilePhotoUploadError(t('photoUploadInvalidFile'));
-        } else if (code === 'storage/unauthorized') {
-          setProfilePhotoUploadError(t('photoUploadStorageRules'));
-        } else {
-          setProfilePhotoUploadError(t('photoUploadError'));
-        }
-      } finally {
-        setProfilePhotoUploading(false);
-      }
-    },
-    [user, editingProfile, t]
-  );
 
   const handleSaveProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -2590,13 +2664,6 @@ const MainApp = () => {
     const computedCompanySize: UserProfile['companySize'] = employeeCountVal
       ? companySizeFromEmployeeRange(employeeCountVal)
       : (baseProfile?.companySize ?? 'solo');
-
-    const photoUrlForSave = getTrimmed('photoURL');
-    if (photoUrlForSave && isLikelyNonEmbeddablePhotoUrl(photoUrlForSave)) {
-      setProfileSaveError(t('profilePhotoUrlBlockedHost'));
-      setProfileSaveBusy(false);
-      return;
-    }
 
     const newProfile = {
       uid: targetUid,
@@ -2865,6 +2932,48 @@ const MainApp = () => {
     });
   }, [filteredProfiles, activityCategoryPopularity, lang]);
 
+  const viewerIsAdmin = profile?.role === 'admin';
+  const guestDirectoryRestricted = useMemo(
+    () => isGuestDirectoryRestricted(user, profile, Boolean(viewerIsAdmin)),
+    [user, profile, viewerIsAdmin]
+  );
+
+  const onGuestDirectoryJoin = useCallback(() => {
+    setAuthError(null);
+    if (!user) {
+      setShowAuthModal(true);
+    } else {
+      setShowOnboarding(true);
+    }
+  }, [user]);
+
+  const companiesDirectoryList = useMemo(() => {
+    if (!guestDirectoryRestricted) return profilesSortedForCompanies;
+    return profilesSortedForCompanies.slice(0, GUEST_DIRECTORY_PREVIEW_LIMIT);
+  }, [guestDirectoryRestricted, profilesSortedForCompanies]);
+
+  const companiesDirectoryHiddenCount = guestDirectoryRestricted
+    ? Math.max(0, profilesSortedForCompanies.length - GUEST_DIRECTORY_PREVIEW_LIMIT)
+    : 0;
+
+  const membersDirectoryList = useMemo(() => {
+    if (!guestDirectoryRestricted) return membersDisplayList;
+    return membersDisplayList.slice(0, GUEST_DIRECTORY_PREVIEW_LIMIT);
+  }, [guestDirectoryRestricted, membersDisplayList]);
+
+  const membersDirectoryHiddenCount = guestDirectoryRestricted
+    ? Math.max(0, membersDisplayList.length - GUEST_DIRECTORY_PREVIEW_LIMIT)
+    : 0;
+
+  const activitiesDirectoryList = useMemo(() => {
+    if (!guestDirectoryRestricted) return profilesSortedForActivities;
+    return profilesSortedForActivities.slice(0, GUEST_DIRECTORY_PREVIEW_LIMIT);
+  }, [guestDirectoryRestricted, profilesSortedForActivities]);
+
+  const activitiesDirectoryHiddenCount = guestDirectoryRestricted
+    ? Math.max(0, profilesSortedForActivities.length - GUEST_DIRECTORY_PREVIEW_LIMIT)
+    : 0;
+
   const handleValidateProfile = async (uid: string, isValid: boolean) => {
     try {
       await setDoc(doc(db, 'users', uid), { isValidated: isValid }, { merge: true });
@@ -3036,6 +3145,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     {pendingProfiles.length > 0 && (
                       <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 text-[10px] font-bold text-white">
                         {pendingProfiles.length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAuthLeadsPanel(true)}
+                    className="relative flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900 transition-colors hover:bg-blue-100"
+                    title={t('adminOAuthLeadsTitle')}
+                  >
+                    <LogIn size={16} />
+                    <span className="hidden sm:inline">{t('adminOAuthLeadsTitle')}</span>
+                    {oauthLeadsWithoutProfileCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-blue-700 px-1 text-[10px] font-bold text-white">
+                        {oauthLeadsWithoutProfileCount > 99 ? '99+' : oauthLeadsWithoutProfileCount}
                       </span>
                     )}
                   </button>
@@ -3538,37 +3661,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </div>
                             <div className="space-y-1 md:col-span-2">
                               <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('photoURL')}</label>
-                              <p className="text-[10px] text-stone-400 leading-snug">{t('photoUploadHint')}</p>
-                              <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
-                                <input
-                                  ref={photoUrlInputRef}
-                                  name="photoURL"
-                                  id="profile-photo-url-input"
-                                  defaultValue={editingProfile?.photoURL || profile?.photoURL}
-                                  placeholder="https://..."
-                                  className="w-full flex-1 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                                <label
-                                  className={cn(
-                                    'inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-stone-200 bg-stone-100 px-3 py-2 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-200 sm:shrink-0',
-                                    (profilePhotoUploading || (editingProfile && editingProfile.uid !== user?.uid)) &&
-                                      'pointer-events-none opacity-50'
-                                  )}
-                                >
-                                  <ImageUp size={14} />
-                                  {profilePhotoUploading ? t('photoUploading') : t('photoUploadFromDevice')}
-                                  <input
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp,image/gif"
-                                    className="sr-only"
-                                    onChange={handleProfileAvatarFile}
-                                    disabled={profilePhotoUploading || !!(editingProfile && editingProfile.uid !== user?.uid)}
-                                  />
-                                </label>
-                              </div>
-                              {profilePhotoUploadError ? (
-                                <p className="text-xs text-red-600">{profilePhotoUploadError}</p>
-                              ) : null}
+                              <p className="text-[10px] text-stone-400 leading-snug">{t('photoUrlHint')}</p>
+                              <input
+                                name="photoURL"
+                                id="profile-photo-url-input"
+                                defaultValue={editingProfile?.photoURL || profile?.photoURL}
+                                placeholder="https://media.licdn.com/..."
+                                className="mt-1 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                              />
                             </div>
                           </div>
 
@@ -4434,7 +4534,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             <div className="space-y-6">
               {viewMode === 'companies' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
-                  {profilesSortedForCompanies.map((p) => (
+                  {companiesDirectoryList.map((p) => (
                     <React.Fragment key={p.uid}>
                       <ProfileCard 
                         variant="company"
@@ -4445,9 +4545,19 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         user={user}
                         profile={profile}
                         urgentAuthorIds={urgentAuthorIdSet}
+                        guestDirectoryTeaser={guestDirectoryRestricted}
+                        onGuestJoin={onGuestDirectoryJoin}
                       />
                     </React.Fragment>
                   ))}
+                  {guestDirectoryRestricted && companiesDirectoryHiddenCount > 0 && (
+                    <GuestDirectoryInterstitial
+                      hiddenCount={companiesDirectoryHiddenCount}
+                      onJoin={onGuestDirectoryJoin}
+                      t={t}
+                      className="md:col-span-2"
+                    />
+                  )}
                 </div>
               )}
 
@@ -4505,7 +4615,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     </div>
                   )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
-                    {membersDisplayList.map((p) => (
+                    {membersDirectoryList.map((p) => (
                       <React.Fragment key={p.uid}>
                         <ProfileCard 
                           p={p} 
@@ -4515,10 +4625,19 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           user={user}
                           profile={profile}
                           urgentAuthorIds={urgentAuthorIdSet}
+                          guestDirectoryTeaser={guestDirectoryRestricted}
+                          onGuestJoin={onGuestDirectoryJoin}
                         />
                       </React.Fragment>
                     ))}
                   </div>
+                  {guestDirectoryRestricted && membersDirectoryHiddenCount > 0 && (
+                    <GuestDirectoryInterstitial
+                      hiddenCount={membersDirectoryHiddenCount}
+                      onJoin={onGuestDirectoryJoin}
+                      t={t}
+                    />
+                  )}
                 </div>
               )}
 
@@ -4580,22 +4699,33 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
-                      {profilesSortedForActivities.map((p) => (
-                        <React.Fragment key={p.uid}>
-                          <ProfileCard
-                            variant="activity"
-                            p={p}
-                            onSelect={setSelectedProfile}
-                            onEdit={startEditing}
-                            onDelete={setProfileToDelete}
-                            user={user}
-                            profile={profile}
-                            urgentAuthorIds={urgentAuthorIdSet}
-                          />
-                        </React.Fragment>
-                      ))}
-                    </div>
+                    <>
+                      <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
+                        {activitiesDirectoryList.map((p) => (
+                          <React.Fragment key={p.uid}>
+                            <ProfileCard
+                              variant="activity"
+                              p={p}
+                              onSelect={setSelectedProfile}
+                              onEdit={startEditing}
+                              onDelete={setProfileToDelete}
+                              user={user}
+                              profile={profile}
+                              urgentAuthorIds={urgentAuthorIdSet}
+                              guestDirectoryTeaser={guestDirectoryRestricted}
+                              onGuestJoin={onGuestDirectoryJoin}
+                            />
+                          </React.Fragment>
+                        ))}
+                      </div>
+                      {guestDirectoryRestricted && activitiesDirectoryHiddenCount > 0 && (
+                        <GuestDirectoryInterstitial
+                          hiddenCount={activitiesDirectoryHiddenCount}
+                          onJoin={onGuestDirectoryJoin}
+                          t={t}
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -5259,6 +5389,113 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         </div>
                       </div>
                     </div>
+                    );
+                  })
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAuthLeadsPanel && profile?.role === 'admin' && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAuthLeadsPanel(false)}
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-stone-100 p-6">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
+                    <LogIn size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-bold leading-tight">{t('adminOAuthLeadsTitle')}</h3>
+                    <p className="mt-1 text-xs leading-snug text-stone-500">{t('adminOAuthLeadsSubtitle')}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAuthLeadsPanel(false)}
+                  className="shrink-0 rounded-full p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-900"
+                >
+                  <Plus size={24} className="rotate-45" />
+                </button>
+              </div>
+              <div className="flex-1 space-y-3 overflow-y-auto p-6">
+                {authLeads.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <LogIn size={48} className="mx-auto mb-4 text-stone-100" />
+                    <p className="font-medium text-stone-400">{t('adminOAuthLeadsEmpty')}</p>
+                  </div>
+                ) : (
+                  authLeads.map((lead) => {
+                    const hasProfile = profileUidSet.has(lead.uid);
+                    const last =
+                      lead.lastConnectedAt && typeof lead.lastConnectedAt.toDate === 'function'
+                        ? lead.lastConnectedAt.toDate().toLocaleString(uiLocale(lang))
+                        : '—';
+                    const first =
+                      lead.firstConnectedAt && typeof lead.firstConnectedAt.toDate === 'function'
+                        ? lead.firstConnectedAt.toDate().toLocaleString(uiLocale(lang))
+                        : '—';
+                    return (
+                      <div
+                        key={lead.uid}
+                        className="rounded-2xl border border-stone-100 bg-stone-50/80 p-4"
+                      >
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-stone-900">
+                              {lead.displayName?.trim() || '—'}
+                            </p>
+                            <p className="mt-0.5 break-all text-xs text-stone-600">{lead.email || '—'}</p>
+                            <p className="mt-2 text-[10px] text-stone-400">
+                              <span className="font-medium text-stone-500">{t('adminOAuthLeadsProvider')}:</span>{' '}
+                              {lead.primaryProvider || '—'}
+                              {lead.emailVerified ? ` · ${t('adminOAuthLeadsEmailVerified')}` : null}
+                            </p>
+                            <p className="mt-1 text-[10px] text-stone-400">
+                              {t('adminOAuthLeadsFirstSeen')}: {first} · {t('adminOAuthLeadsLastSeen')}: {last}
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                            <span
+                              className={`inline-flex rounded-full px-2.5 py-0.5 text-center text-[10px] font-semibold ${
+                                hasProfile
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-amber-100 text-amber-900'
+                              }`}
+                            >
+                              {hasProfile ? t('adminOAuthLeadsHasProfile') : t('adminOAuthLeadsNoProfile')}
+                            </span>
+                            {lead.email ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  void navigator.clipboard.writeText(lead.email);
+                                  alert(pickLang('Copié !', '¡Copiado!', 'Copied!', lang));
+                                }}
+                                className="inline-flex items-center justify-center gap-1 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50"
+                              >
+                                <Copy size={12} />
+                                Email
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
                     );
                   })
                 )}

@@ -74,21 +74,11 @@ export const EN_STRINGS: Record<string, string> = {
   linkedinPhotoHelperStep2: "2. Right-click your profile photo.",
   linkedinPhotoHelperStep3: "3. Choose “Copy image address”.",
   linkedinPhotoHelperStep4:
-    "4. On this directory that link won’t work: use “Upload a photo” (JPEG/PNG file) instead, or host the image elsewhere and paste that URL.",
+    "4. Paste that link into the “Photo URL” field below and save your profile.",
   openLinkedin: "Open LinkedIn",
   photoURL: "Photo URL",
-  photoUploadFromDevice: "Upload a photo",
-  photoUploading: "Uploading…",
-  photoUploadHint:
-    "LinkedIn image URLs (linkedin.com, media.licdn.com, etc.) cannot be saved: LinkedIn blocks showing them off-site. Use “Upload a photo” or an image on your own site / an image host.",
-  profilePhotoUrlBlockedHost:
-    "This image URL is from LinkedIn: it cannot display in the directory (LinkedIn blocks third-party embedding). Clear the field or use “Upload a photo”, or a URL hosted elsewhere.",
-  photoUploadWrongAccount:
-    "File upload is only available on your own profile (not when editing another member).",
-  photoUploadInvalidFile: "Unsupported format or file too large (JPEG, PNG, WebP, or GIF, max 5 MB).",
-  photoUploadStorageRules:
-    "Firebase Storage denied access: check your rules (deploy storage.rules) and that you’re signed in.",
-  photoUploadError: "Could not upload the photo. Try again or paste a URL from stable hosting.",
+  photoUrlHint:
+    "Paste your LinkedIn profile photo image address (use “Import LinkedIn photo” for step-by-step). Uploading a file from your device is not available.",
   save: "Save",
   cancel: "Cancel",
   search: "Search",
@@ -200,6 +190,23 @@ export const EN_STRINGS: Record<string, string> = {
   validate: "Approve",
   reject: "Reject",
   noPendingProfiles: "No profiles pending validation",
+  adminOAuthLeadsTitle: "OAuth sign-ins (no directory profile)",
+  adminOAuthLeadsSubtitle:
+    "Emails and providers to follow up with people who signed in but haven’t created their directory profile yet.",
+  adminOAuthLeadsEmpty: "No sign-ins recorded yet.",
+  adminOAuthLeadsHasProfile: "Directory profile",
+  adminOAuthLeadsNoProfile: "No profile",
+  adminOAuthLeadsLastSeen: "Last sign-in",
+  adminOAuthLeadsFirstSeen: "First sign-in",
+  adminOAuthLeadsProvider: "Provider",
+  adminOAuthLeadsEmailVerified: "verified email",
+  guestOverlayTitle: "Full profile available to registered members",
+  guestJoinCta: "Join the directory for free",
+  guestInterstitialHeadline: "{{count}} more member(s) in the directory",
+  guestInterstitialBody:
+    "Create your free profile to see every member, contact details, and network opportunities.",
+  guestInterstitialCta: "Join the community",
+  guestInterstitialFinePrint: "Free · French-speaking community · Guadalajara",
   bio: "Bio / description",
   companyDescription: "Company description",
   needsSought: "Needs sought",

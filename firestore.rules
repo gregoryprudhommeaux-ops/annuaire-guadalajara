@@ -103,6 +103,22 @@ service cloud.firestore {
         && data.createdAt is timestamp;
     }
 
+    /** Connexions OAuth sans obligation de fiche annuaire — écriture par le propriétaire, lecture admin. */
+    function isValidAuthLead(data, userId) {
+      return data.keys().hasOnly([
+          'uid', 'email', 'displayName', 'photoURL', 'primaryProvider',
+          'emailVerified', 'firstConnectedAt', 'lastConnectedAt'
+        ])
+        && data.uid is string && data.uid == userId
+        && data.email is string && data.email.size() <= 320
+        && data.displayName is string && data.displayName.size() <= 300
+        && data.photoURL is string && data.photoURL.size() <= 2048
+        && data.primaryProvider is string && data.primaryProvider.size() <= 64
+        && data.emailVerified is bool
+        && data.firstConnectedAt is timestamp
+        && data.lastConnectedAt is timestamp;
+    }
+
     /** Données non publiques (genre, nationalité, délégations, sponsoring) : propriétaire + admin uniquement. */
     function isValidUserAdminPrivate(data, userId) {
       return data.uid == userId
@@ -189,6 +205,12 @@ service cloud.firestore {
         && request.resource.data.memberId == request.auth.uid;
       allow update, delete: if isAuthenticated()
         && (resource.data.memberId == request.auth.uid || isAdmin());
+    }
+
+    match /auth_leads/{userId} {
+      allow read: if isAdmin();
+      allow create, update: if isOwner(userId) && isValidAuthLead(request.resource.data, userId);
+      allow delete: if isAdmin();
     }
   }
 }

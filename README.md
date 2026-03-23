@@ -29,6 +29,10 @@ The app supports **Google**, **Microsoft**, and **Apple** sign-in. In [Firebase 
 
 Also add your deployment domain under **Authentication** → **Settings** → **Authorized domains**.
 
+### OAuth leads (`auth_leads` in Firestore)
+
+On each successful sign-in, the client upserts a document `auth_leads/{uid}` (email, display name, main provider, first/last connection). This is **separate** from the directory profile `users/{uid}`. Only **admins** can read this collection (see `firestore.rules`). After changing rules, deploy them to your Firebase project (`firebase deploy --only firestore:rules` or the Console). Admins open **Connexions OAuth (sans fiche)** from the header to copy emails for follow-up. **Apple** may supply a private relay address or no email on first sign-in — Firebase Auth remains the source of truth.
+
 ## Design system (`src/design-system.tsx`)
 
 Reusable UI primitives aligned with a minimal palette: **slate** neutrals, **blue-700** primary CTA, **emerald** / **amber** accents. **Inter** is loaded in `src/index.css`.

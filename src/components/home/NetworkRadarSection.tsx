@@ -467,7 +467,7 @@ export default function NetworkRadarSection({
               <button
                 type="button"
                 onClick={onUnlockRadar}
-                className="mt-5 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 sm:w-auto sm:min-w-[200px]"
+                className="mt-5 w-full rounded-xl bg-blue-700 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-800 sm:w-auto sm:min-w-[200px]"
               >
                 {!user ? t('radarLockedCtaGuest') : t('radarLockedCtaProfile')}
               </button>

@@ -261,36 +261,14 @@ export const TRANSLATIONS: Translations = {
   linkedinPhotoHelperStep2: { fr: "2. Faites un clic droit sur votre photo de profil.", es: "2. Haz clic derecho en tu foto de perfil." },
   linkedinPhotoHelperStep3: { fr: "3. Choisissez 'Copier l'adresse de l'image'.", es: "3. Elige « Copiar dirección de la imagen »." },
   linkedinPhotoHelperStep4: {
-    fr: "4. Sur cet annuaire, ce lien ne fonctionnera pas : utilisez plutôt « Envoyer une photo » (fichier JPEG/PNG…), ou hébergez l’image ailleurs et collez cette URL.",
-    es: "4. En este directorio ese enlace no funciona: usa « Subir una foto » (archivo JPEG/PNG…), o sube la imagen a otro sitio y pega esa URL.",
+    fr: "4. Collez ce lien dans le champ « URL de la photo » ci-dessous et enregistrez votre fiche.",
+    es: "4. Pega ese enlace en el campo « URL de la foto » de abajo y guarda tu ficha.",
   },
   openLinkedin: { fr: "Ouvrir LinkedIn", es: "Abrir LinkedIn" },
   photoURL: { fr: "URL de la photo", es: "URL de la foto" },
-  photoUploadFromDevice: { fr: "Envoyer une photo", es: "Subir una foto" },
-  photoUploading: { fr: "Envoi…", es: "Subiendo…" },
-  photoUploadHint: {
-    fr: "Les URL LinkedIn (linkedin.com, media.licdn.com…) ne peuvent pas être enregistrées : le site bloque l’affichage ailleurs. Utilisez « Envoyer une photo » ou une image hébergée sur votre site / un service d’images.",
-    es: "Las URL de LinkedIn (linkedin.com, media.licdn.com…) no se pueden guardar: el sitio bloquea mostrarlas fuera. Usa « Subir una foto » o una imagen en tu web / un servicio de hosting.",
-  },
-  profilePhotoUrlBlockedHost: {
-    fr: "Cette URL d’image provient de LinkedIn : elle ne peut pas s’afficher dans l’annuaire (blocage côté LinkedIn). Videz le champ ou utilisez « Envoyer une photo », ou une URL hébergée ailleurs.",
-    es: "Esta URL de imagen es de LinkedIn: no puede mostrarse en el directorio (bloqueo de LinkedIn). Borra el campo o usa « Subir una foto », u otra URL alojada fuera de LinkedIn.",
-  },
-  photoUploadWrongAccount: {
-    fr: "L’envoi de fichier n’est disponible que sur votre propre fiche (pas en édition d’un autre membre).",
-    es: "La subida solo está disponible en tu propia ficha (no al editar a otro miembro).",
-  },
-  photoUploadInvalidFile: {
-    fr: "Format non pris en charge ou fichier trop volumineux (JPEG, PNG, WebP ou GIF, max 5 Mo).",
-    es: "Formato no admitido o archivo demasiado grande (JPEG, PNG, WebP o GIF, máx. 5 MB).",
-  },
-  photoUploadStorageRules: {
-    fr: "Accès refusé par Firebase Storage : vérifiez les règles (déploiement de storage.rules) et que vous êtes connecté.",
-    es: "Acceso denegado en Firebase Storage: revisa las reglas (despliega storage.rules) y que hayas iniciado sesión.",
-  },
-  photoUploadError: {
-    fr: "Impossible d’envoyer la photo. Réessayez ou collez une URL hébergée de façon stable.",
-    es: "No se pudo subir la foto. Inténtalo de nuevo o pega una URL alojada de forma estable.",
+  photoUrlHint: {
+    fr: "Collez l’adresse de l’image de votre photo LinkedIn (bouton « Récupérer la photo LinkedIn » pour la marche à suivre). Pas d’envoi de fichier depuis l’appareil.",
+    es: "Pega la dirección de la imagen de tu foto de LinkedIn (el botón « Importar foto de LinkedIn » explica los pasos). No se admite subir archivo desde el dispositivo.",
   },
   save: { fr: "Enregistrer", es: "Guardar" },
   cancel: { fr: "Annuler", es: "Cancelar" },
@@ -477,6 +455,42 @@ export const TRANSLATIONS: Translations = {
   validate: { fr: "Valider", es: "Validar" },
   reject: { fr: "Rejeter", es: "Rechazar" },
   noPendingProfiles: { fr: "Aucun profil en attente de validation", es: "No hay perfiles pendientes de validación" },
+  adminOAuthLeadsTitle: {
+    fr: "Connexions OAuth (sans fiche)",
+    es: "Conexiones OAuth (sin ficha)",
+  },
+  adminOAuthLeadsSubtitle: {
+    fr: "E-mails et fournisseurs pour relancer les personnes connectées qui n’ont pas encore créé leur fiche annuaire.",
+    es: "Correos y proveedores para dar seguimiento a quienes iniciaron sesión sin crear su ficha.",
+  },
+  adminOAuthLeadsEmpty: { fr: "Aucune connexion enregistrée.", es: "No hay conexiones registradas." },
+  adminOAuthLeadsHasProfile: { fr: "Fiche annuaire", es: "Ficha en el directorio" },
+  adminOAuthLeadsNoProfile: { fr: "Pas de fiche", es: "Sin ficha" },
+  adminOAuthLeadsLastSeen: { fr: "Dernière connexion", es: "Última conexión" },
+  adminOAuthLeadsFirstSeen: { fr: "Première connexion", es: "Primera conexión" },
+  adminOAuthLeadsProvider: { fr: "Fournisseur", es: "Proveedor" },
+  adminOAuthLeadsEmailVerified: { fr: "e-mail vérifié", es: "correo verificado" },
+  guestOverlayTitle: {
+    fr: "Profil complet réservé aux membres inscrits",
+    es: "Perfil completo reservado a miembros registrados",
+  },
+  guestJoinCta: {
+    fr: "Rejoindre l'annuaire gratuitement",
+    es: "Unirse al directorio gratis",
+  },
+  guestInterstitialHeadline: {
+    fr: "{{count}} autre(s) membre(s) dans l'annuaire",
+    es: "{{count}} miembro(s) más en el directorio",
+  },
+  guestInterstitialBody: {
+    fr: "Créez votre profil gratuitement pour accéder à toutes les fiches, aux coordonnées et aux opportunités du réseau.",
+    es: "Crea tu perfil gratis para acceder a todas las fichas, datos de contacto y oportunidades de la red.",
+  },
+  guestInterstitialCta: { fr: "Rejoindre la communauté", es: "Unirse a la comunidad" },
+  guestInterstitialFinePrint: {
+    fr: "Gratuit · Communauté francophone · Guadalajara",
+    es: "Gratis · Comunidad francófona · Guadalajara",
+  },
   bio: { fr: "Bio / Description", es: "PRESENTACIÓN / BIO" },
   companyDescription: {
     fr: "Description de l'entreprise",
