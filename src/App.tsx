@@ -378,6 +378,43 @@ const EMPTY_URGENT_AUTHOR_IDS: ReadonlySet<string> = new Set();
 const PROFILE_CARD_TAG_GROUP_LIMIT = 3;
 const PROFILE_CARD_NEW_MS = 7 * 24 * 60 * 60 * 1000;
 
+function trimProfileWebsite(website: string | undefined | null): { href: string; label: string } | null {
+  const w = website?.trim();
+  if (!w) return null;
+  const href = /^https?:\/\//i.test(w) ? w : `https://${w}`;
+  const label = w.replace(/^https?:\/\//i, '');
+  return { href, label };
+}
+
+/** Site web sous le nom de société : une ligne, domaine tronqué (évite le retour laid dans la colonne Contact). */
+function ProfileWebsiteInlineLink({
+  website,
+  className,
+  onClick,
+}: {
+  website: string | undefined | null;
+  className?: string;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+}) {
+  const ws = trimProfileWebsite(website);
+  if (!ws) return null;
+  return (
+    <a
+      href={ws.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onClick}
+      className={cn(
+        'inline-flex min-w-0 max-w-full items-center gap-1.5 font-medium text-blue-700 transition-colors hover:text-blue-900 hover:underline',
+        className
+      )}
+    >
+      <Globe size={14} className="shrink-0 text-blue-600" strokeWidth={2} aria-hidden />
+      <span className="min-w-0 truncate">{ws.label}</span>
+    </a>
+  );
+}
+
 /** Tags listing (passions + besoins structurés), style unifié, max 3 + « +X » par groupe. */
 function ProfileCardTagsBlock({
   profile: p,
@@ -580,6 +617,13 @@ const ProfileCard = ({
                     {p.companyName}
                   </h3>
                 </div>
+                {!guestDirectoryTeaser ? (
+                  <ProfileWebsiteInlineLink
+                    website={p.website}
+                    className="mb-1 w-full text-xs sm:text-sm"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : null}
                 <p className="text-sm text-stone-600 font-medium flex items-center gap-1.5 flex-wrap">
                   <UserIcon size={14} className="text-stone-400 shrink-0" />
                   <span className="truncate">{p.fullName}</span>
@@ -627,6 +671,13 @@ const ProfileCard = ({
                   </h3>
                 </div>
                 <p className="text-sm font-semibold text-stone-800 truncate">{p.companyName}</p>
+                {!guestDirectoryTeaser ? (
+                  <ProfileWebsiteInlineLink
+                    website={p.website}
+                    className="mt-0.5 w-full text-xs sm:text-sm"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : null}
                 <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-stone-500">
                   <span className="truncate">{p.fullName}</span>
                 </p>
@@ -662,6 +713,13 @@ const ProfileCard = ({
                   {p.fullName}
                 </h3>
                 <p className="text-xs text-stone-500 font-medium truncate mt-0.5">{p.companyName}</p>
+                {!guestDirectoryTeaser ? (
+                  <ProfileWebsiteInlineLink
+                    website={p.website}
+                    className="mt-0.5 w-full text-[11px] sm:text-xs"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : null}
                 {mobileSummaryLine ? (
                   <p className="mt-0.5 truncate text-xs text-stone-500 sm:hidden">{mobileSummaryLine}</p>
                 ) : null}
@@ -1166,9 +1224,6 @@ const ProfilePage = () => {
 
   const hasAlreadyRecommended = recs.some(r => r.authorId === currentUser?.uid);
   const tp = t;
-  const websiteDisplay = profile.website?.trim()
-    ? profile.website.replace(/^https?:\/\//i, '')
-    : '';
 
   return (
     <div className="min-h-screen bg-stone-50 pb-20">
@@ -1240,6 +1295,7 @@ const ProfilePage = () => {
                   <Building2 size={20} className="text-stone-400" />
                   {profile.companyName}
                 </p>
+                <ProfileWebsiteInlineLink website={profile.website} className="mt-1 w-full max-w-xl text-base" />
                 {profile.positionCategory && (
                   <p className="text-base text-stone-600 mt-2 flex items-center gap-2">
                     <UserCog size={18} className="text-stone-400 shrink-0" />
@@ -1249,25 +1305,27 @@ const ProfilePage = () => {
               </div>
 
               {currentUser && (
-                <div className="flex gap-3">
-                  <a 
-                    href={`mailto:${profile.email}`}
-                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
-                  >
-                    <Mail size={18} />
-                    {pickLang('Message', 'Mensaje', 'Message', lang)}
-                  </a>
-                  {profile.whatsapp && (
-                    <a 
-                      href={`https://wa.me/${profile.whatsapp.replace(/\D/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-2xl font-bold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200"
-                    >
-                      <Phone size={18} />
-                      WhatsApp
-                    </a>
-                  )}
+                <div className="flex w-full max-w-xl flex-col gap-2 sm:max-w-2xl sm:flex-row sm:items-stretch sm:gap-3">
+                  <div className="min-w-0 flex-1">
+                    <ProfileCardEmailContact
+                      email={profile.email}
+                      canView={Boolean(
+                        profile.isEmailPublic || (currentUser && currentProfile?.isValidated)
+                      )}
+                      t={t}
+                    />
+                  </div>
+                  {profile.whatsapp ? (
+                    <div className="min-w-0 flex-1">
+                      <ProfileCardWhatsappContactFooter
+                        whatsapp={profile.whatsapp}
+                        canView={Boolean(
+                          profile.isWhatsappPublic || (currentUser && currentProfile?.isValidated)
+                        )}
+                        t={t}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               )}
             </div>
@@ -1471,63 +1529,22 @@ const ProfilePage = () => {
 
                 <div className="bg-stone-50 p-6 rounded-3xl border border-stone-200">
                   <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">{tp('contactLinks')}</h2>
-                  <div className="space-y-3">
-                    {(profile.isEmailPublic || currentUser) ? (
-                      <a href={`mailto:${profile.email}`} className="flex items-start gap-3 p-3 rounded-2xl hover:bg-white transition-colors border border-transparent hover:border-stone-100">
-                        <div className="w-10 h-10 rounded-xl bg-stone-900 flex items-center justify-center text-white shrink-0">
-                          <Mail size={18} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{tp('email')}</p>
-                          <p className="text-sm font-medium text-stone-900 break-all">{profile.email}</p>
-                        </div>
-                      </a>
-                    ) : (
-                      <div className="flex items-start gap-3 p-3 rounded-2xl bg-stone-100/50">
-                        <div className="w-10 h-10 rounded-xl bg-stone-200 flex items-center justify-center text-stone-500 shrink-0">
-                          <Mail size={18} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{tp('email')}</p>
-                          <p className="text-sm text-stone-500">{tp('restrictedInfo')}</p>
-                        </div>
-                      </div>
-                    )}
-
+                  <div className="space-y-2">
+                    <ProfileCardEmailContact
+                      email={profile.email}
+                      canView={Boolean(
+                        profile.isEmailPublic || (currentUser && currentProfile?.isValidated)
+                      )}
+                      t={t}
+                    />
                     {profile.whatsapp ? (
-                      (profile.isWhatsappPublic || currentUser) ? (
-                        <a href={`https://wa.me/${profile.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 p-3 rounded-2xl hover:bg-emerald-50/80 transition-colors border border-transparent hover:border-emerald-100">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0">
-                            <Phone size={18} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[10px] uppercase tracking-widest text-emerald-600/70 font-bold">{tp('whatsapp')}</p>
-                            <p className="text-sm font-medium text-stone-900">{profile.whatsapp}</p>
-                          </div>
-                        </a>
-                      ) : (
-                        <div className="flex items-start gap-3 p-3 rounded-2xl bg-stone-100/50">
-                          <div className="w-10 h-10 rounded-xl bg-stone-200 flex items-center justify-center text-stone-500 shrink-0">
-                            <Phone size={18} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{tp('whatsapp')}</p>
-                            <p className="text-sm text-stone-500">{tp('restrictedInfo')}</p>
-                          </div>
-                        </div>
-                      )
-                    ) : null}
-
-                    {profile.website?.trim() ? (
-                      <a href={profile.website.trim()} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 p-3 rounded-2xl hover:bg-white transition-colors border border-transparent hover:border-stone-100">
-                        <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center text-stone-600 shrink-0">
-                          <Globe size={18} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{tp('website')}</p>
-                          <p className="text-sm font-medium text-stone-900 break-all">{websiteDisplay}</p>
-                        </div>
-                      </a>
+                      <ProfileCardWhatsappContactFooter
+                        whatsapp={profile.whatsapp}
+                        canView={Boolean(
+                          profile.isWhatsappPublic || (currentUser && currentProfile?.isValidated)
+                        )}
+                        t={t}
+                      />
                     ) : null}
                   </div>
                 </div>
@@ -2673,6 +2690,10 @@ const MainApp = () => {
       city: optionalString('city'),
       state: optionalString('state'),
       neighborhood: optionalString('neighborhood'),
+      country: (() => {
+        const v = getTrimmed('country');
+        return v === '' ? deleteField() : v;
+      })(),
       activityCategory: optionalString('activityCategory'),
       positionCategory: optionalString('positionCategory'),
       email: getTrimmed('email'),
@@ -3504,6 +3525,27 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               <div className="space-y-1">
                                 <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('state')}</label>
                                 <input name="state" defaultValue={editingProfile?.state || profile?.state || 'Jalisco'} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('country')}</label>
+                                <p className="text-[10px] leading-snug text-stone-400">
+                                  {pickLang(
+                                    'Laissez vide pour afficher « Mexique » par défaut sur la fiche.',
+                                    'Déjelo vacío para mostrar « México » por defecto en la ficha.',
+                                    'Leave empty to show “Mexico” by default on the profile.',
+                                    lang
+                                  )}
+                                </p>
+                                <input
+                                  name="country"
+                                  defaultValue={
+                                    editingProfile?.country?.trim() ||
+                                    profile?.country?.trim() ||
+                                    ''
+                                  }
+                                  placeholder={pickLang('Mexique', 'México', 'Mexico', lang)}
+                                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                />
                               </div>
                             </div>
 
@@ -4857,6 +4899,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       ) : null}
                     </h2>
                     <p className="text-xl font-medium text-stone-500">{selectedProfile.companyName}</p>
+                    <ProfileWebsiteInlineLink
+                      website={selectedProfile.website}
+                      className="mt-1 w-full text-sm"
+                      onClick={(e) => e.stopPropagation()}
+                    />
                     {selectedProfile.positionCategory && (
                       <p className="mt-2 flex items-center gap-2 text-sm text-stone-600">
                         <UserCog size={16} className="shrink-0 text-stone-400" />
@@ -5067,34 +5114,48 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                   <div>
                       <h3 className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">{t('details')}</h3>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-4 group">
-                          <div className="w-10 h-10 rounded-xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:bg-stone-100 transition-colors">
-                            <MapPin size={18} />
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-x-8">
+                        <div className="min-w-0 space-y-3">
+                          <div className="flex items-center gap-4 group">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-50 text-stone-400 transition-colors group-hover:bg-stone-100">
+                              <MapPin size={18} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{t('city')}</p>
+                              <p className="text-sm font-medium text-stone-900">{selectedProfile.city}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{t('city')}</p>
-                            <p className="text-sm font-medium text-stone-900">{selectedProfile.city}</p>
+                          <div className="flex items-center gap-4 group">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-50 text-stone-400 transition-colors group-hover:bg-stone-100">
+                              <MapPin size={18} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{t('neighborhood')}</p>
+                              <p className="text-sm font-medium text-stone-900">{selectedProfile.neighborhood || '—'}</p>
+                            </div>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-4 group">
-                          <div className="w-10 h-10 rounded-xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:bg-stone-100 transition-colors">
-                            <MapPin size={18} />
+                        <div className="min-w-0 space-y-3">
+                          <div className="flex items-center gap-4 group">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-50 text-stone-400 transition-colors group-hover:bg-stone-100">
+                              <MapPin size={18} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{t('state')}</p>
+                              <p className="text-sm font-medium text-stone-900">{selectedProfile.state || 'Jalisco'}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{t('neighborhood')}</p>
-                            <p className="text-sm font-medium text-stone-900">{selectedProfile.neighborhood || '-'}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 group">
-                          <div className="w-10 h-10 rounded-xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:bg-stone-100 transition-colors">
-                            <MapPin size={18} />
-                          </div>
-                          <div>
-                            <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{t('state')}</p>
-                            <p className="text-sm font-medium text-stone-900">{selectedProfile.state || 'Jalisco'}</p>
+                          <div className="flex items-center gap-4 group">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-50 text-stone-400 transition-colors group-hover:bg-stone-100">
+                              <MapPin size={18} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{t('country')}</p>
+                              <p className="text-sm font-medium text-stone-900">
+                                {selectedProfile.country?.trim() ||
+                                  pickLang('Mexique', 'México', 'Mexico', lang)}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -5104,70 +5165,23 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       <h3 className="text-[10px] uppercase tracking-[0.2em] text-stone-400 font-black mb-2">
                         {pickLang('Contact', 'Contacto', 'Contact', lang)}
                       </h3>
-                      <div className="space-y-4">
-                        <div className="group">
-                          {(selectedProfile.isEmailPublic || user) ? (
-                            <a href={`mailto:${selectedProfile.email}`} className="flex items-start gap-4 p-3 rounded-2xl hover:bg-stone-50 transition-all border border-transparent hover:border-stone-100">
-                              <div className="w-10 h-10 rounded-xl bg-stone-900 flex items-center justify-center text-white shrink-0">
-                                <Mail size={18} />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{t('email')}</p>
-                                <p className="text-sm font-medium text-stone-900 break-all">{selectedProfile.email}</p>
-                              </div>
-                            </a>
-                          ) : (
-                            <div className="flex items-center gap-4 p-3">
-                              <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center text-stone-400">
-                                <Mail size={18} />
-                              </div>
-                              <div className="blur-[4px] select-none">
-                                <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{t('email')}</p>
-                                <p className="text-sm font-medium text-stone-900">email@example.com</p>
-                              </div>
-                            </div>
+                      <div className="space-y-2">
+                        <ProfileCardEmailContact
+                          email={selectedProfile.email}
+                          canView={Boolean(
+                            selectedProfile.isEmailPublic || (user && profile?.isValidated)
                           )}
-                        </div>
-
-                        {selectedProfile.whatsapp && (
-                          <div className="group">
-                            {(selectedProfile.isWhatsappPublic || user) ? (
-                              <a href={`https://wa.me/${selectedProfile.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-start gap-4 p-3 rounded-2xl hover:bg-emerald-50 transition-all border border-transparent hover:border-emerald-100">
-                                <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0">
-                                  <Phone size={18} />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-[10px] uppercase tracking-widest text-emerald-600/50 font-bold">{t('whatsapp')}</p>
-                                  <p className="text-sm font-medium text-stone-900">{selectedProfile.whatsapp}</p>
-                                </div>
-                              </a>
-                            ) : (
-                              <div className="flex items-center gap-4 p-3">
-                                <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center text-stone-400">
-                                  <Phone size={18} />
-                                </div>
-                                <div className="blur-[4px] select-none">
-                                  <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{t('whatsapp')}</p>
-                                  <p className="text-sm font-medium text-stone-900">+52 33 0000 0000</p>
-                                </div>
-                              </div>
+                          t={t}
+                        />
+                        {selectedProfile.whatsapp ? (
+                          <ProfileCardWhatsappContactFooter
+                            whatsapp={selectedProfile.whatsapp}
+                            canView={Boolean(
+                              selectedProfile.isWhatsappPublic || (user && profile?.isValidated)
                             )}
-                          </div>
-                        )}
-
-                        {selectedProfile.website && (
-                          <div className="group">
-                            <a href={selectedProfile.website} target="_blank" rel="noopener noreferrer" className="flex items-start gap-4 p-3 rounded-2xl hover:bg-stone-50 transition-all border border-transparent hover:border-stone-100">
-                              <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center text-stone-600 shrink-0">
-                                <Globe size={18} />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">{t('website')}</p>
-                                <p className="text-sm font-medium text-stone-900 break-words break-all">{selectedProfile.website.replace(/^https?:\/\//, '')}</p>
-                              </div>
-                            </a>
-                          </div>
-                        )}
+                            t={t}
+                          />
+                        ) : null}
                       </div>
                   </div>
                 </div>

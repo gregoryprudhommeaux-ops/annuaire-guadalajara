@@ -2,7 +2,7 @@ import React from 'react';
 import type { UserProfile } from '../../types';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
 import { formatHomeBadge } from '../../copy/homeLanding';
-import { activityCategoryLabel } from '../../constants';
+import { activityCategoryLabel, CITIES, cityOptionLabel } from '../../constants';
 import type { Language } from '../../types';
 import { cn } from '../../cn';
 import { pickLang } from '../../lib/uiLocale';
@@ -18,6 +18,37 @@ type Props = {
   onOpenProfile?: (p: UserProfile) => void;
   className?: string;
 };
+
+/**
+ * Retire un suffixe « · Ville » si la fin correspond à une ville du répertoire ou à `profileCity`
+ * (anciennes données / chaînes concaténées). Même logique mobile & desktop.
+ */
+function stripTrailingCityFromSectorLine(
+  label: string,
+  lang: Language,
+  profileCity?: string
+): string {
+  const t = label.trim();
+  if (!t) return t;
+  const sep = ' · ';
+  const idx = t.lastIndexOf(sep);
+  if (idx <= 0) return t;
+  const tail = t.slice(idx + sep.length).trim();
+  if (!tail) return t.slice(0, idx).trim();
+  for (const c of CITIES) {
+    if (
+      tail === c ||
+      tail === cityOptionLabel(c, 'fr') ||
+      tail === cityOptionLabel(c, 'es') ||
+      tail === cityOptionLabel(c, 'en')
+    ) {
+      return t.slice(0, idx).trim();
+    }
+  }
+  const pc = profileCity?.trim();
+  if (pc && tail === pc) return t.slice(0, idx).trim();
+  return t;
+}
 
 /** Bandeau « nouveaux membres cette semaine » — cartes compactes + lien vers liste récente. */
 export default function NewMembersStrip({
@@ -56,8 +87,19 @@ export default function NewMembersStrip({
       {display.length === 0 ? (
         <p className="mt-4 text-sm text-stone-500 break-words hyphens-auto">{copy.newMembersEmpty}</p>
       ) : (
-        <ul className="mt-4 grid min-h-0 grid-cols-1 content-start gap-3 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
+        <>
+          {/* Max 2 colonnes ; secteur sans ville (mobile + desktop) */}
+          <ul
+            className={
+              'mt-4 grid min-h-0 grid-cols-1 content-stretch gap-3 sm:grid-cols-2 sm:gap-4'
+            }
+          >
           {display.map((p) => {
+            const sectorLabel = stripTrailingCityFromSectorLine(
+              activityCategoryLabel(p.activityCategory, lang),
+              lang,
+              p.city
+            );
             const cardInner = (
               <>
                 <div className="flex h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-stone-200 sm:h-12 sm:w-12">
@@ -69,27 +111,34 @@ export default function NewMembersStrip({
                     iconSize={18}
                   />
                 </div>
-                <div className="min-w-0 flex-1 text-left">
-                  <p className="line-clamp-2 text-sm font-semibold leading-snug text-stone-900 sm:text-[15px]">
+                <div className="flex min-h-[4.25rem] min-w-0 flex-1 flex-col justify-center gap-1 text-left">
+                  <p className="truncate text-sm font-semibold leading-tight text-stone-900 sm:text-[15px]" title={p.fullName}>
                     {p.fullName}
                   </p>
-                  <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-stone-600 sm:text-sm">
+                  <p className="truncate text-xs leading-tight text-stone-600 sm:text-sm" title={p.companyName}>
                     {p.companyName}
                   </p>
-                  <p className="mt-1 line-clamp-2 text-left text-[11px] leading-snug text-stone-500 sm:text-xs">
-                    {activityCategoryLabel(p.activityCategory, lang)}
-                    {p.city ? ` · ${p.city}` : ''}
+                  <p
+                    className="truncate text-left text-[11px] leading-tight text-stone-500 sm:text-xs"
+                    title={sectorLabel || undefined}
+                  >
+                    {sectorLabel || '—'}
                   </p>
                 </div>
               </>
             );
+            const cardClass =
+              'flex h-full min-h-[5.75rem] w-full items-center gap-3 rounded-xl border border-stone-100 bg-stone-50/80 p-3 sm:min-h-[6rem] sm:p-3.5';
             return (
-              <li key={p.uid} className="min-w-0 justify-self-stretch">
+              <li key={p.uid} className="flex min-h-0 min-w-0">
                 {onOpenProfile ? (
                   <button
                     type="button"
                     onClick={() => onOpenProfile(p)}
-                    className="flex w-full min-h-[4.5rem] items-start gap-3 rounded-xl border border-stone-100 bg-stone-50/80 p-3 text-left transition-colors hover:border-stone-200 hover:bg-stone-100/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:min-h-[4.75rem]"
+                    className={cn(
+                      cardClass,
+                      'text-left transition-colors hover:border-stone-200 hover:bg-stone-100/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2'
+                    )}
                     aria-label={pickLang(
                       `Ouvrir la fiche de ${p.fullName}`,
                       `Abrir la ficha de ${p.fullName}`,
@@ -100,14 +149,13 @@ export default function NewMembersStrip({
                     {cardInner}
                   </button>
                 ) : (
-                  <div className="flex min-h-[4.5rem] items-start gap-3 rounded-xl border border-stone-100 bg-stone-50/80 p-3 sm:min-h-[4.75rem]">
-                    {cardInner}
-                  </div>
+                  <div className={cardClass}>{cardInner}</div>
                 )}
               </li>
             );
           })}
-        </ul>
+          </ul>
+        </>
       )}
 
       <div className="mt-3 border-t border-stone-100 pt-2.5 sm:mt-4 sm:pt-3">

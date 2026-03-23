@@ -175,6 +175,7 @@ export const TRANSLATIONS: Translations = {
   city: { fr: "Ville", es: "Ciudad" },
   state: { fr: "État", es: "Estado" },
   neighborhood: { fr: "Quartier", es: "Colonia" },
+  country: { fr: "Pays", es: "País" },
   activityCategory: { fr: "Secteur d'activité", es: "Sector de actividad" },
   workFunction: { fr: "Fonction dans l'entreprise", es: "Función en la empresa" },
   workFunctionHint: {

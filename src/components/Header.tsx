@@ -112,9 +112,10 @@ export const Header: React.FC<HeaderProps> = ({
       )}
     >
       <div className="mx-auto min-w-0 max-w-7xl px-4 py-3 md:px-6 lg:px-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          {/* Logo + titre */}
-          <div className="relative min-w-0 flex-1">
+        {/* sm:flex-wrap : si la barre admin + langue dépassent, passage à la ligne sans écraser le titre.
+            Compte admin : ne pas mettre min-w-0 sur ce bloc — sinon flex-1 le comprime à ~0 et break-words casse lettre par lettre. */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-3">
+          <div className="relative w-full flex-1 min-w-[12rem] sm:min-w-[14rem] md:min-w-[16rem]">
             <a
               href="/"
               onClick={onHomeClick}

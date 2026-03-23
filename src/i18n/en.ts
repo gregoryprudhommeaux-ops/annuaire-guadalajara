@@ -23,6 +23,7 @@ export const EN_STRINGS: Record<string, string> = {
   city: "City",
   state: "State",
   neighborhood: "Neighborhood",
+  country: "Country",
   activityCategory: "Industry / sector",
   workFunction: "Role in the company",
   workFunctionHint: "Operational role (not your job title on your business card).",
