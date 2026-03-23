@@ -1,23 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { User } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import type { Language } from '@/types';
 import type { UserProfile } from '@/types';
 import ExplorerProfils from '@/components/matching/ExplorerProfils';
 import VueEnsemble from '@/components/dashboard/VueEnsemble';
 import { NeedsDashboard } from '@/components/dashboard/NeedsDashboard';
-import FunFactCard from '@/components/FunFactCard';
+import AdminDashboard from '@/components/dashboard/AdminDashboard';
+import { db } from '@/firebase';
 import {
   loadDashboardFirestoreData,
   userProfileToMemberExtended,
-  userProfileToMemberForFun,
 } from '@/lib/api';
 import type { MemberExtended, MemberNeed } from '@/lib/communityMemberExtended';
 import { mockNeeds } from '@/lib/communityMemberExtended';
 import {
   filterNeedsSince,
   filterProfilesJoinedSince,
-  memberNeedsToNeedForFun,
-  startOfCurrentWeekLocal,
 } from '@/lib/funFactData';
 import { memberExtendedToExplorerMember } from '@/lib/vueEnsembleCompute';
 
@@ -49,6 +48,7 @@ export default function DashboardPage({
   const [profiles, setProfiles] = useState<UserProfile[] | null>(null);
   const [needs, setNeeds] = useState<MemberNeed[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<{ role?: 'user' | 'admin' } | null>(null);
 
   useEffect(() => {
     if (!registeredWithProfile) {
@@ -78,6 +78,30 @@ export default function DashboardPage({
     };
   }, [registeredWithProfile]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.uid) {
+      setProfile(null);
+      return;
+    }
+    getDoc(doc(db, 'profiles', user.uid))
+      .then((snap) => {
+        if (cancelled) return;
+        if (snap.exists()) {
+          const data = snap.data() as { role?: 'user' | 'admin' };
+          setProfile(data);
+        } else {
+          setProfile(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setProfile(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
+
   const membersExtended = useMemo<MemberExtended[]>(
     () => (profiles ?? []).map(userProfileToMemberExtended),
     [profiles]
@@ -88,20 +112,9 @@ export default function DashboardPage({
     [membersExtended]
   );
 
-  const funFactMembers = useMemo(() => {
-    const since = startOfCurrentWeekLocal();
-    return filterProfilesJoinedSince(profiles ?? [], since).map((p) =>
-      userProfileToMemberForFun(p, lang)
-    );
-  }, [profiles, lang]);
-
-  const funFactNeeds = useMemo(() => {
-    const since = startOfCurrentWeekLocal();
-    return memberNeedsToNeedForFun(filterNeedsSince(needs ?? [], since));
-  }, [needs]);
-
   const loading =
     lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
+  const isAdmin = profile?.role === 'admin' || user?.email === 'chinois2001@gmail.com';
 
   if (registeredWithProfile && profiles === null && !loadError) {
     return (
@@ -121,9 +134,7 @@ export default function DashboardPage({
         </p>
       )}
 
-      {registeredWithProfile && profiles !== null && (
-        <FunFactCard lang={lang} members={funFactMembers} needs={funFactNeeds} />
-      )}
+      {isAdmin ? <AdminDashboard lang={lang} t={t} /> : null}
 
       <VueEnsemble
         lang={lang}

@@ -119,6 +119,21 @@ service cloud.firestore {
         && data.lastConnectedAt is timestamp;
     }
 
+    /** Tracking de clics / interactions UI (lecture admin uniquement). */
+    function isValidEventLog(data) {
+      return data.keys().hasOnly([
+          'eventType', 'actorUid', 'actorEmail', 'targetId', 'targetType', 'source', 'metadata', 'createdAt'
+        ])
+        && data.eventType is string && data.eventType.size() >= 1 && data.eventType.size() <= 64
+        && (!('actorUid' in data) || data.actorUid is string || data.actorUid == null)
+        && (!('actorEmail' in data) || data.actorEmail is string || data.actorEmail == null)
+        && (!('targetId' in data) || data.targetId is string || data.targetId == null)
+        && (!('targetType' in data) || data.targetType is string)
+        && (!('source' in data) || data.source is string)
+        && (!('metadata' in data) || data.metadata is map)
+        && data.createdAt is timestamp;
+    }
+
     /** Données non publiques (genre, nationalité, délégations, sponsoring) : propriétaire + admin uniquement. */
     function isValidUserAdminPrivate(data, userId) {
       return data.uid == userId
@@ -211,6 +226,12 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow create, update: if isOwner(userId) && isValidAuthLead(request.resource.data, userId);
       allow delete: if isAdmin();
+    }
+
+    match /events_log/{eventId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() && isValidEventLog(request.resource.data);
+      allow update, delete: if isAdmin();
     }
   }
 }

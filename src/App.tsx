@@ -19,6 +19,8 @@ import {
   signInWithPopup, 
   signInWithRedirect,
   getRedirectResult,
+  setPersistence,
+  browserLocalPersistence,
   signOut, 
   onAuthStateChanged, 
   User 
@@ -305,6 +307,8 @@ function SocialSignInButtons({ lang, t, busy, onSignIn }: SocialSignInButtonsPro
 }
 
 const ADMIN_EMAIL = "chinois2001@gmail.com";
+const isAdminEmail = (email?: string | null) =>
+  (email || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
 enum OperationType {
   CREATE = 'create',
@@ -1972,6 +1976,14 @@ const MainApp = () => {
     if (code === 'auth/unauthorized-domain') return msg.unauthorizedDomain;
     if (code === 'auth/operation-not-allowed') return msg.providerDisabled;
     if (code === 'auth/popup-closed-by-user') return msg.popupClosed;
+    if (code === 'auth/popup-timeout') {
+      return pickLang(
+        'La popup Google prend trop de temps. Redirection automatique en cours…',
+        'La ventana de Google tarda demasiado. Redirección automática en curso…',
+        'Google popup is taking too long. Automatic redirect in progress…',
+        lang
+      );
+    }
     return msg.generic;
   };
 
@@ -2242,6 +2254,13 @@ const MainApp = () => {
       setUser(u);
       if (u) setAuthError(null);
       if (u) {
+        try {
+          sessionStorage.removeItem('oauth_redirect_pending');
+        } catch {
+          /* ignore */
+        }
+      }
+      if (u) {
         void upsertAuthLeadFromFirebaseUser(db, u).catch((err) => {
           console.warn('[auth_leads]', err);
         });
@@ -2254,7 +2273,12 @@ const MainApp = () => {
         });
 
         if (docSnap.exists()) {
-          setProfile(docSnap.data() as UserProfile);
+          const loadedProfile = docSnap.data() as UserProfile;
+          setProfile(
+            isAdminEmail(u.email)
+              ? ({ ...loadedProfile, role: 'admin' } as UserProfile)
+              : loadedProfile
+          );
         } else {
           setProfile(null);
           setShowOnboarding(true);
@@ -2433,11 +2457,50 @@ const MainApp = () => {
   }, [user]);
 
   useEffect(() => {
-    getRedirectResult(auth).catch((error) => {
-      const code = (error as { code?: string })?.code ?? '';
-      if (!code || code === 'auth/popup-closed-by-user') return;
-      setAuthError(`${getAuthErrorMessage(code)}${code ? ` (code: ${code})` : ''}`);
+    setPersistence(auth, browserLocalPersistence).catch((error) => {
+      console.warn('Failed to set auth persistence', error);
     });
+
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          setUser(result.user);
+          setAuthError(null);
+          try {
+            sessionStorage.removeItem('oauth_redirect_pending');
+          } catch {
+            /* ignore */
+          }
+          return;
+        }
+        const pendingProvider = (() => {
+          try {
+            return sessionStorage.getItem('oauth_redirect_pending');
+          } catch {
+            return null;
+          }
+        })();
+        if (pendingProvider) {
+          setAuthError(
+            pickLang(
+              "Retour Google reçu sans session. Vérifiez les cookies navigateur (autoriser cookies tiers / suivi inter-sites), puis réessayez.",
+              "Se recibió el retorno de Google pero sin sesión. Revisa cookies del navegador (permitir cookies de terceros / seguimiento entre sitios) y vuelve a intentar.",
+              "Google redirect returned but no session was created. Check browser cookies (allow third-party / cross-site tracking) and try again.",
+              lang
+            )
+          );
+          try {
+            sessionStorage.removeItem('oauth_redirect_pending');
+          } catch {
+            /* ignore */
+          }
+        }
+      })
+      .catch((error) => {
+        const code = (error as { code?: string })?.code ?? '';
+        if (!code || code === 'auth/popup-closed-by-user') return;
+        setAuthError(`${getAuthErrorMessage(code)}${code ? ` (code: ${code})` : ''}`);
+      });
   }, []);
 
   useEffect(() => {
@@ -2451,7 +2514,33 @@ const MainApp = () => {
     setAuthProviderBusy(which);
     setAuthError(null);
     try {
-      await signInWithPopup(auth, provider);
+      // In Cursor/Electron, popup auth can stall on passkey prompts.
+      // Prefer redirect there; otherwise keep popup first and fallback to redirect.
+      const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+      const shouldPreferRedirect = /Electron|Cursor/i.test(ua);
+      try {
+        sessionStorage.setItem('oauth_redirect_pending', which);
+      } catch {
+        /* ignore */
+      }
+
+      if (shouldPreferRedirect) {
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+
+      const popupWithTimeout = Promise.race([
+        signInWithPopup(auth, provider),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject({ code: 'auth/popup-timeout' }), 12000)
+        ),
+      ]);
+      await popupWithTimeout;
+      try {
+        sessionStorage.removeItem('oauth_redirect_pending');
+      } catch {
+        /* ignore */
+      }
     } catch (error) {
       console.error('Login failed', error);
       const firebaseCode = (error as { code?: string })?.code ?? '';
@@ -2460,6 +2549,7 @@ const MainApp = () => {
         'auth/popup-closed-by-user',
         'auth/cancelled-popup-request',
         'auth/operation-not-supported-in-this-environment',
+        'auth/popup-timeout',
       ].includes(firebaseCode);
 
       if (shouldFallbackToRedirect) {
@@ -2723,7 +2813,9 @@ const MainApp = () => {
       openToEvents: formData.get('openToEvents') === 'on',
       companySize: computedCompanySize,
       accountType: ((isSelf ? profile?.accountType : editingProfile?.accountType) ?? 'local') as 'local' | 'foreign',
-      role: (targetUid === user.uid && user.email === ADMIN_EMAIL) ? 'admin' : (editingProfile?.role || profile?.role || 'user') as Role,
+      role: targetUid === user.uid && isAdminEmail(user.email)
+        ? 'admin'
+        : (editingProfile?.role || profile?.role || 'user') as Role,
       createdAt: (isSelf ? profile?.createdAt : editingProfile?.createdAt) || Timestamp.now(),
       isValidated: isSelf ? (profile?.isValidated ?? false) : (editingProfile?.isValidated ?? true),
       communityYearsInGdl: deleteField(),
@@ -3357,9 +3449,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           {profileCoachLine}
                         </p>
                       </div>
-                    ) : null}
-                    {profile && profileCoachSource === 'ai' ? (
-                      <p className="text-[10px] text-stone-400">{t('profileCoachAiHint')}</p>
                     ) : null}
                   </div>
                 </div>
