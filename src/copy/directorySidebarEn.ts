@@ -3,7 +3,7 @@
  * Référence EN pour alignement avec `src/i18n/en.ts` (clés proches de `TRANSLATIONS`).
  */
 export const DIRECTORY_SIDEBAR_COPY_EN = {
-  searchBlockTitle: 'Search the directory',
+  searchBlockTitle: '🔍 Search the directory',
   searchDirectoryPlaceholder: 'Search a member, company, or need…',
   searchButton: 'Search',
   filterSectorLabel: 'Sector',
@@ -12,11 +12,10 @@ export const DIRECTORY_SIDEBAR_COPY_EN = {
   filterTypeDefault: 'Profile',
   filterTypeCompany: 'Company',
   filterTypeMember: 'Member',
-  filterLocationLabel: 'Location',
-  filterLocationDefault: 'Location',
-  filterLocationCentro: 'Guadalajara Centre',
+  filterLocationLabel: 'Places',
+  filterLocationDefault: 'Places',
+  filterLocationGuadalajara: 'Guadalajara',
   filterLocationZapopan: 'Zapopan',
-  filterLocationProvidencia: 'Providencia',
   filterLocationOther: 'Other',
   clearFilters: 'Clear filters',
   randomProfile: '🎲 Discover a random profile',

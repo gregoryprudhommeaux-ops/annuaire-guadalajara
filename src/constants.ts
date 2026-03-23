@@ -299,7 +299,10 @@ export const TRANSLATIONS: Translations = {
     fr: "Nom, secteur, besoin, mot-clé…",
     es: "Nombre, sector, necesidad, palabra clave…",
   },
-  searchBlockTitle: { fr: "Rechercher dans l'annuaire", es: "Buscar en el directorio" },
+  searchBlockTitle: {
+    fr: "🔍 Rechercher dans l'annuaire",
+    es: '🔍 Buscar en el directorio',
+  },
   searchDirectoryPlaceholder: {
     fr: "Rechercher un membre, une entreprise, un besoin…",
     es: "Buscar un miembro, empresa o necesidad…",
@@ -311,11 +314,10 @@ export const TRANSLATIONS: Translations = {
   filterTypeDefault: { fr: "Profil", es: "Perfil" },
   filterTypeCompany: { fr: "Entreprise", es: "Empresa" },
   filterTypeMember: { fr: "Membre", es: "Miembro" },
-  filterLocationLabel: { fr: "Localisation", es: "Ubicación" },
-  filterLocationDefault: { fr: "Localisation", es: "Ubicación" },
-  filterLocationCentro: { fr: "Guadalajara Centre", es: "Guadalajara Centro" },
+  filterLocationLabel: { fr: "Lieux", es: "Lugares" },
+  filterLocationDefault: { fr: "Lieux", es: "Lugares" },
+  filterLocationGuadalajara: { fr: "Guadalajara", es: "Guadalajara" },
   filterLocationZapopan: { fr: "Zapopan", es: "Zapopan" },
-  filterLocationProvidencia: { fr: "Providencia", es: "Providencia" },
   filterLocationOther: { fr: "Autre", es: "Otro" },
   clearFilters: { fr: "Effacer les filtres", es: "Borrar filtros" },
   randomProfile: {

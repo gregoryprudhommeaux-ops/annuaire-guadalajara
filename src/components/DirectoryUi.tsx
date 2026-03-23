@@ -9,7 +9,7 @@ import { cn } from '../cn';
 
 export const FunFactBlock: React.FC<{
   text: string;
-  /** Libellé du badge (i18n) */
+  /** Titre du bloc (i18n), même gabarit que le titre « lancement » (text-sm font-semibold) */
   badgeLabel?: string;
   className?: string;
   /** Ex. bouton replier sur mobile */
@@ -18,19 +18,25 @@ export const FunFactBlock: React.FC<{
   bodyClassName?: string;
   /** Pour aria-controls sur le bouton replier */
   bodyId?: string;
+  /** Id stable pour aria-labelledby (évite doublons si plusieurs blocs) */
+  titleId?: string;
 }> = ({
   text,
-  badgeLabel = 'Fun fact du réseau',
+  badgeLabel = '✨ Fun fact du réseau',
   className,
   headerRight,
   bodyClassName,
   bodyId,
+  titleId = 'home-fun-fact-title',
 }) => (
-  <div className={cn('space-y-2 rounded-xl bg-slate-900 px-4 py-4', className)}>
-    <div className="flex items-start justify-between gap-2">
-      <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-white">
+  <div className={cn('rounded-xl bg-slate-900 px-4 py-4', className)}>
+    <div className="mb-2 flex items-start justify-between gap-3">
+      <h2
+        id={titleId}
+        className="min-w-0 flex-1 text-sm font-semibold leading-snug tracking-normal text-white break-words hyphens-auto"
+      >
         {badgeLabel}
-      </span>
+      </h2>
       {headerRight}
     </div>
     <p id={bodyId} className={cn('text-sm leading-relaxed text-slate-200', bodyClassName)}>
@@ -54,13 +60,15 @@ export const OpportunityActions: React.FC<{
   postLabel = 'Poster une opportunité',
   className,
 }) => (
-  <div className={cn('mt-3 flex gap-2', className)}>
+  <div className={cn('mt-3 flex gap-2 items-stretch', className)}>
     <button
       type="button"
       onClick={onSeeAll}
       className={cn(
-        'h-10 flex-1 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 transition-colors',
-        'hover:border-slate-400 hover:bg-slate-100'
+        'flex min-h-0 flex-1 items-center justify-center rounded-lg border border-slate-300 bg-white px-2 py-2 text-center text-[11px] font-medium leading-snug text-slate-700 transition-colors',
+        'break-words hyphens-auto',
+        'hover:border-slate-400 hover:bg-slate-100',
+        'sm:h-10 sm:px-3 sm:py-0 sm:text-sm sm:leading-normal'
       )}
     >
       {seeAllLabel}
@@ -69,8 +77,10 @@ export const OpportunityActions: React.FC<{
       type="button"
       onClick={onPost}
       className={cn(
-        'h-10 flex-1 rounded-lg bg-blue-600 text-sm font-medium text-white transition-colors',
-        'hover:bg-blue-700'
+        'flex min-h-0 flex-1 items-center justify-center rounded-lg bg-blue-600 px-2 py-2 text-center text-[11px] font-medium leading-snug text-white transition-colors',
+        'break-words hyphens-auto',
+        'hover:bg-blue-700',
+        'sm:h-10 sm:px-3 sm:py-0 sm:text-sm sm:leading-normal'
       )}
     >
       {postLabel}

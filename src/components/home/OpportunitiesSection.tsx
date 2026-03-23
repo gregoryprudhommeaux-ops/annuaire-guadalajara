@@ -158,7 +158,7 @@ export default function OpportunitiesSection({
         {!user ? (
           <span
             className={cn(
-              'block text-xs text-slate-500',
+              'block text-[10px] leading-snug text-slate-500 sm:text-xs',
               sidebarEmptyStyle && 'text-gray-500',
               !sidebarEmptyStyle && (compactLayout ? 'text-left' : 'text-center sm:text-left')
             )}

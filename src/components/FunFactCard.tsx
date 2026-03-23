@@ -28,7 +28,7 @@ const funTranslations: Record<
   }
 > = {
   fr: {
-    title: 'Fun fact du réseau',
+    title: '✨ Fun fact du réseau',
     default:
       'Côté nouveaux arrivants, c’est plutôt calme cette semaine… Et toi, as-tu invité ton réseau à rejoindre cet annuaire ?',
     factTopSector:
@@ -43,7 +43,7 @@ const funTranslations: Record<
       'Le besoin qui monte le plus cette semaine : {{value}}. À creuser ensemble ?',
   },
   en: {
-    title: 'Network fun fact',
+    title: '✨ Network fun fact',
     default:
       'Pretty quiet on the “new members” front this week… Have you invited your network to join the directory yet?',
     factTopSector:
@@ -58,7 +58,7 @@ const funTranslations: Record<
       'Top need showing up this week: {{value}}. Worth a closer look?',
   },
   es: {
-    title: 'Fun fact de la red',
+    title: '✨ Fun fact de la red',
     default:
       'Poca actividad de fichas nuevas esta semana… ¿Ya invitaste a tu red a unirse a este directorio?',
     factTopSector:
@@ -189,6 +189,7 @@ export default function FunFactCard({
   const t = funTranslations[lang] ?? funTranslations.fr;
   const [mobileOpen, setMobileOpen] = useState(true);
   const bodyId = useId();
+  const titleId = useId();
 
   const message = useMemo(() => {
     const loc = funTranslations[lang] ?? funTranslations.fr;
@@ -231,11 +232,12 @@ export default function FunFactCard({
   const showToggle = collapsibleOnMobile;
 
   return (
-    <aside className={cn(className)}>
+    <aside className={cn(className)} aria-labelledby={titleId}>
       <FunFactBlock
         badgeLabel={t.title}
         text={message}
         bodyId={bodyId}
+        titleId={titleId}
         className="sm:px-5 sm:py-5"
         headerRight={
           showToggle ? (

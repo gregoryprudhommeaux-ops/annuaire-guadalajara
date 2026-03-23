@@ -123,9 +123,8 @@ export default function SearchBlock({
               aria-label={t('filterLocationLabel')}
             >
               <option value="">{t('filterLocationDefault')}</option>
-              <option value="centro">{t('filterLocationCentro')}</option>
+              <option value="guadalajara">{t('filterLocationGuadalajara')}</option>
               <option value="zapopan">{t('filterLocationZapopan')}</option>
-              <option value="providencia">{t('filterLocationProvidencia')}</option>
               <option value="other">{t('filterLocationOther')}</option>
             </select>
           </div>
