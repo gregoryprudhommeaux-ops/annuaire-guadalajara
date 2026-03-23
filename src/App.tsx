@@ -3248,18 +3248,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         lang={lang}
         onLangChange={setLang}
         guestMobileFullWidthCta={!user}
+        hideDesktopLanguageSwitch={Boolean(user && profile?.role === 'admin')}
         trailing={
           user ? (
-            <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <div className="flex min-w-0 w-full flex-wrap items-center justify-end gap-2 sm:gap-3">
               {profile?.role === 'admin' && (
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <div className="flex min-w-0 w-full items-center gap-2 sm:gap-3">
+                  <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
                   <button
                     type="button"
                     onClick={() => setShowValidationPanel(true)}
-                    className="relative flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-200"
+                    className="relative flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-200"
                   >
                     <Users size={16} />
-                    <span className="hidden sm:inline">{t('newProfiles')}</span>
+                    <span className="truncate">{t('newProfiles')}</span>
                     {pendingProfiles.length > 0 && (
                       <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 text-[10px] font-bold text-white">
                         {pendingProfiles.length}
@@ -3269,11 +3271,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   <button
                     type="button"
                     onClick={() => setShowAuthLeadsPanel(true)}
-                    className="relative flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900 transition-colors hover:bg-blue-100"
+                    className="relative flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900 transition-colors hover:bg-blue-100"
                     title={t('adminOAuthLeadsTitle')}
                   >
                     <LogIn size={16} />
-                    <span className="hidden sm:inline">{t('adminOAuthLeadsTitle')}</span>
+                    <span className="truncate">{t('adminOAuthLeadsTitle')}</span>
                     {oauthLeadsWithoutProfileCount > 0 && (
                       <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-blue-700 px-1 text-[10px] font-bold text-white">
                         {oauthLeadsWithoutProfileCount > 99 ? '99+' : oauthLeadsWithoutProfileCount}
@@ -3283,10 +3285,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   <button
                     type="button"
                     onClick={() => setShowOpportunitiesModerationPanel(true)}
-                    className="relative flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100"
+                    className="relative flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100"
                   >
                     <Zap size={16} />
-                    <span className="hidden sm:inline">{t('opportunitiesModerationTitle')}</span>
+                    <span className="truncate">{t('opportunitiesModerationTitle')}</span>
                     {pendingUrgentForAdmin.length > 0 && (
                       <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-amber-600 px-1 text-[10px] font-bold text-white">
                         {pendingUrgentForAdmin.length}
@@ -3296,31 +3298,76 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   <button
                     type="button"
                     onClick={exportToExcel}
-                    className="hidden items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 transition-colors hover:bg-emerald-100 sm:flex"
+                    className="relative flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 transition-colors hover:bg-emerald-100"
                   >
                     <Download size={16} />
-                    {t('exportData')}
+                    <span className="truncate">{t('exportData')}</span>
                   </button>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <div className="hidden items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
+                      {(['fr', 'es', 'en'] as const).map((code) => {
+                        const isActive = lang === code;
+                        return (
+                          <button
+                            key={code}
+                            type="button"
+                            onClick={() => setLang(code)}
+                            aria-pressed={isActive}
+                            className={cn(
+                              'px-3 py-1.5 text-xs font-semibold transition-colors',
+                              isActive
+                                ? 'bg-blue-700 text-white'
+                                : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                            )}
+                          >
+                            {code.toUpperCase()}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
+                      title={t('logout')}
+                    >
+                      <LogOut size={18} />
+                    </button>
+                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200">
+                      <ProfileAvatar
+                        photoURL={user.photoURL}
+                        fullName={user.displayName || user.email || ''}
+                        className="h-full w-full"
+                        initialsClassName="text-[10px] font-bold text-slate-600"
+                        iconSize={16}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
-              <div className="hidden h-8 w-px bg-slate-200 sm:block" aria-hidden />
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
-                title={t('logout')}
-              >
-                <LogOut size={18} />
-              </button>
-              <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200">
-                <ProfileAvatar
-                  photoURL={user.photoURL}
-                  fullName={user.displayName || user.email || ''}
-                  className="h-full w-full"
-                  initialsClassName="text-[10px] font-bold text-slate-600"
-                  iconSize={16}
-                />
-              </div>
+              {profile?.role !== 'admin' && (
+                <>
+                  <div className="hidden h-8 w-px bg-slate-200 sm:block" aria-hidden />
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
+                    title={t('logout')}
+                  >
+                    <LogOut size={18} />
+                  </button>
+                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200">
+                    <ProfileAvatar
+                      photoURL={user.photoURL}
+                      fullName={user.displayName || user.email || ''}
+                      className="h-full w-full"
+                      initialsClassName="text-[10px] font-bold text-slate-600"
+                      iconSize={16}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <button

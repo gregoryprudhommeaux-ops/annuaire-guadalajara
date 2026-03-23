@@ -88,6 +88,8 @@ export type HeaderProps = {
   onLangChange: (lang: Language) => void;
   /** Connexion, actions admin, déconnexion, avatar… */
   trailing?: React.ReactNode;
+  /** Si vrai, masque le switch langues desktop natif (pour le rendre dans `trailing`). */
+  hideDesktopLanguageSwitch?: boolean;
   /**
    * Visiteur : sur mobile, bandeau bleu pleine largeur autour de `trailing` (sticky avec le logo).
    */
@@ -103,6 +105,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLangChange,
   trailing,
   guestMobileFullWidthCta = false,
+  hideDesktopLanguageSwitch = false,
 }) => {
   return (
     <header
@@ -144,11 +147,13 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Langue + trailing : une seule zone pour éviter les doublons */}
           <div
             className={cn(
-              'flex min-w-0 w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3',
-              !guestMobileFullWidthCta && trailing && 'sm:shrink-0'
+              'flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-3',
+              !hideDesktopLanguageSwitch && 'sm:w-auto',
+              !guestMobileFullWidthCta && trailing && !hideDesktopLanguageSwitch && 'sm:shrink-0'
             )}
           >
-            <div className="hidden items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
+            {!hideDesktopLanguageSwitch ? (
+              <div className="hidden items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
               {LANGUAGES.map(({ code, label }) => {
                 const isActive = lang === code;
                 return (
@@ -168,7 +173,8 @@ export const Header: React.FC<HeaderProps> = ({
                   </button>
                 );
               })}
-            </div>
+              </div>
+            ) : null}
             {trailing ? (
               <div
                 className={cn(
