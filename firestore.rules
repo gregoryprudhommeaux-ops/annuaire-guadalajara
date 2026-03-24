@@ -13,14 +13,18 @@ service cloud.firestore {
     }
 
     /**
-     * Admin : 1) email exact (sans .lower() sur le token : évite une erreur d’évaluation si le type diffère)
-     *          2) puis rôle dans users/{uid}
-     * L’email est testé en premier pour ne pas dépendre de get(users) si le doc est absent ou invalide.
+     * Admin, par priorité :
+     * 1) UID Firebase Auth du compte principal (chinois2001@gmail.com)
+     * 2) Doc admin_allowlist/{auth.uid} (console / Admin SDK)
+     * 3) Email sur le token (trim)
+     * 4) users/{uid}.role == admin
      */
     function isAdmin() {
       return isAuthenticated() && (
+        request.auth.uid == 'HiSztwqyDXUZ5RaIOyqUP3BJd6Y2' ||
+        exists(/databases/$(database)/documents/admin_allowlist/$(request.auth.uid)) ||
         (request.auth.token.email is string &&
-          request.auth.token.email == 'chinois2001@gmail.com') ||
+          request.auth.token.email.trim() == 'chinois2001@gmail.com') ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
@@ -252,6 +256,14 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow create: if isAuthenticated() && isValidEventLog(request.resource.data);
       allow update, delete: if isAdmin();
+    }
+
+    /**
+     * Admins : un document par UID Firebase Auth, ID du doc = même chaîne que l’UID (création / suppression
+     * uniquement depuis la console ou Admin SDK). L’app cliente ne peut pas lire ni écrire cette collection.
+     */
+    match /admin_allowlist/{uid} {
+      allow read, write: if false;
     }
   }
 }
