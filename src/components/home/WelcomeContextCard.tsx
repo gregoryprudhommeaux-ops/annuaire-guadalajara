@@ -1,4 +1,4 @@
-import React, { useId, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '../../cn';
 
@@ -30,6 +30,10 @@ export default function WelcomeContextCard({
   const [mobileOpen, setMobileOpen] = useState(mobileDefaultOpen);
   const bodyId = useId();
   const showToggle = collapsible || collapsibleOnMobile;
+  
+  useEffect(() => {
+    setMobileOpen(mobileDefaultOpen);
+  }, [mobileDefaultOpen]);
 
   return (
     <section
@@ -81,7 +85,8 @@ export default function WelcomeContextCard({
         <p
           id={bodyId}
           className={cn(
-            'mt-3 hyphens-auto text-xs leading-relaxed text-stone-300/95 break-words sm:mt-3 sm:block sm:text-sm',
+            'mt-3 hyphens-auto text-xs leading-relaxed text-stone-300/95 break-words sm:mt-3 sm:text-sm',
+            !collapsible && 'sm:block',
             showToggle && !mobileOpen && 'hidden'
           )}
         >
