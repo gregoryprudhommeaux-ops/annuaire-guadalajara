@@ -48,6 +48,8 @@ type Props = {
   onUnlockRadar: () => void;
   canDeleteOpportunityForCurrentUser?: (post: UrgentPost) => boolean;
   onRequestDeleteOpportunity?: (post: UrgentPost) => void;
+  /** Compteur KPI « communauté » (ex. annonces publiées) ; si absent, dérivé de la longueur de `urgentPosts`. */
+  opportunityKpiCount?: number;
 };
 
 /** Découpe les libellés de besoins (souvent « a / b / c ») pour affichage multi-ligne sur l’axe Y. */
@@ -108,6 +110,7 @@ export default function NetworkRadarSection({
   onUnlockRadar,
   canDeleteOpportunityForCurrentUser,
   onRequestDeleteOpportunity,
+  opportunityKpiCount,
 }: Props) {
   const [activeRadarChart, setActiveRadarChart] = useState<null | 'sectors' | 'needs'>(null);
   const radarLocked = !registeredWithProfile;
@@ -139,7 +142,7 @@ export default function NetworkRadarSection({
     return s.size;
   }, [profilesForStats]);
 
-  const opportunitiesCount = urgentPosts.length;
+  const opportunitiesCount = opportunityKpiCount ?? urgentPosts.length;
 
   const sectorPieData = useMemo(() => {
     const map = new Map<string, number>();
@@ -260,6 +263,7 @@ export default function NetworkRadarSection({
     return (Object.entries(counts) as [string, number][]).sort((a, b) => b[1] - a[1]);
   }, [profilesForStats]);
 
+  /** Les opportunités sont déjà triées par le parent (récentes d’abord). */
   const recentOpportunities = urgentPosts.slice(0, 3);
   const canDeleteOpportunity = (post: UrgentPost): boolean =>
     Boolean(

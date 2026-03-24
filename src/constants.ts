@@ -728,8 +728,6 @@ export const TRANSLATIONS: Translations = {
     fr: "Aucune opportunité récente ni brouillon à afficher.",
     es: "No hay oportunidades recientes ni borradores que mostrar.",
   },
-  opportunityPublish: { fr: "Publier", es: "Publicar" },
-  opportunityReject: { fr: "Refuser", es: "Rechazar" },
   aiTranslationDisclaimer: {
     fr: 'Traduction générée automatiquement par IA.',
     es: 'Traducción generada automáticamente por IA.',

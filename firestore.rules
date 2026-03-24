@@ -22,7 +22,7 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && (
         request.auth.uid == 'HiSztwqyDXUZ5RalOyqUP3BJd6Y2' ||
-        exists(/databases/ai-studio-b6e23c83-eceb-4cf9-848f-8e11b8db6eb8/documents/admin_allowlist/$(request.auth.uid)) ||
+        exists(/databases/$(database)/documents/admin_allowlist/$(request.auth.uid)) ||
         (request.auth.token.email is string &&
           request.auth.token.email.trim() == 'chinois2001@gmail.com') ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
@@ -57,6 +57,7 @@ service cloud.firestore {
         && data.expiresAt > data.createdAt;
     }
 
+    /** Membres : champs stricts ; isPublished true ou false (compat anciennes règles / appli pas à jour). */
     function isValidUrgentPostPublicCreate(data) {
       return data.keys().hasOnly(['text', 'sector', 'createdAt', 'expiresAt', 'isPublished'])
         && data.text is string && data.text.size() >= 1 && data.text.size() <= 200
@@ -64,7 +65,21 @@ service cloud.firestore {
         && data.createdAt is number
         && data.expiresAt is number
         && data.expiresAt > data.createdAt
-        && data.isPublished == true;
+        && (data.isPublished == true || data.isPublished == false);
+    }
+
+    /**
+     * Admin : mêmes garde-fous sur le contenu, sans hasOnly (évite blocage si champs supplémentaires)
+     * et isPublished optionnelle / booléenne.
+     */
+    function isValidUrgentPostPublicCreateAdmin(data) {
+      return data.keys().hasAll(['text', 'sector', 'createdAt', 'expiresAt'])
+        && data.text is string && data.text.size() >= 1 && data.text.size() <= 200
+        && data.sector is string && data.sector.size() >= 1
+        && data.createdAt is number
+        && data.expiresAt is number
+        && data.expiresAt > data.createdAt
+        && (!('isPublished' in data) || data.isPublished is bool);
     }
 
     function urgentPostNonExpired(data) {
@@ -200,6 +215,7 @@ service cloud.firestore {
       allow create: if isAuthenticated() && (
         isValidUrgentPostPublicCreate(request.resource.data)
         || isValidUrgentPostLegacy(request.resource.data)
+        || (isAdmin() && isValidUrgentPostPublicCreateAdmin(request.resource.data))
       );
       allow update: if isAdmin();
       /** Suppression : admin, auteur (doc public legacy avec authorId), ou auteur format public+privé (métadonnées dans urgent_post_private). */

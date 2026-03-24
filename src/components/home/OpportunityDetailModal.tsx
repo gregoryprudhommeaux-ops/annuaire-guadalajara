@@ -23,9 +23,8 @@ type Props = {
   onClose: () => void;
   onOpenAuth: () => void;
   onViewFullProfile: () => void;
-  /** Opportunité en attente de modération : actions admin dans le pied de modale. */
+  /** Brouillon non publié (ancien format) : admin peut supprimer depuis le pied de modale. */
   showModerationActions?: boolean;
-  onModerationPublish?: () => void | Promise<void>;
   onModerationReject?: () => void | Promise<void>;
   moderationActionError?: string | null;
 };
@@ -44,7 +43,6 @@ export default function OpportunityDetailModal({
   onOpenAuth,
   onViewFullProfile,
   showModerationActions = false,
-  onModerationPublish,
   onModerationReject,
   moderationActionError = null,
 }: Props) {
@@ -238,13 +236,6 @@ export default function OpportunityDetailModal({
               ) : null}
               {showModerationActions ? (
                 <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-                  <button
-                    type="button"
-                    onClick={() => void onModerationPublish?.()}
-                    className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 sm:flex-1"
-                  >
-                    {t('opportunityPublish')}
-                  </button>
                   <button
                     type="button"
                     onClick={() => void onModerationReject?.()}

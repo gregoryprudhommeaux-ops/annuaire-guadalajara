@@ -424,9 +424,9 @@ function urgentModerationErrorMessage(
         ? ` — ${pickLang('UID : ', 'UID: ', 'UID: ', lang)}${connectedUid.trim()}`
         : '';
     const hint = pickLang(
-      ' · Vérifiez Firestore → Rules (même base que l’app) : le fichier doit contenir votre UID. Si Build → App Check → Cloud Firestore est « Enforced » sans reCAPTCHA web, désactivez l’application stricte ou définissez VITE_FIREBASE_APPCHECK_SITE_KEY.',
-      ' · Revisa Firestore → Rules (misma base). Si App Check exige Firestore sin clave web, desactiva enforcement o usa VITE_FIREBASE_APPCHECK_SITE_KEY.',
-      ' · Check Firestore → Rules (same DB as the app). If App Check enforces Firestore without a web key, turn off enforcement (Build → App Check) or set VITE_FIREBASE_APPCHECK_SITE_KEY.',
+      ' · Vérifiez les règles Firestore (même base que l’app) et que votre compte y est autorisé.',
+      ' · Revisa las reglas de Firestore (misma base) y que tu cuenta esté autorizada.',
+      ' · Check Firestore rules (same database as the app) and that your account is allowed.',
       lang
     );
     return `${base}${who}${uidPart}${hint}`;
@@ -3518,6 +3518,18 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   const showDiscoveryStrips = !showDirectoryClearFilters && !directoryDiscoveryStripsHidden;
   const viewerIsAdmin = profile?.role === 'admin' || isAdminEmail(user?.email);
+  /** Radar : les plus récentes d’abord + propres brouillons / tout si admin (Firestore renvoie déjà ce que l’utilisateur peut lire). */
+  const urgentPostsForNetworkRadar = useMemo(() => {
+    const rows = !user
+      ? urgentPostsListed
+      : urgentPosts.filter(
+          (p) =>
+            isUrgentPostListedForEveryone(p) ||
+            (p.authorId != null && p.authorId === user.uid) ||
+            viewerIsAdmin
+        );
+    return [...rows].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+  }, [urgentPosts, urgentPostsListed, user, viewerIsAdmin]);
   const isAdminDashboard = viewMode === 'dashboard' && viewerIsAdmin;
 
   const directoryViewTabs = useMemo(
@@ -3692,18 +3704,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       );
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${uid}`);
-    }
-  };
-
-  const handlePublishUrgentPost = async (postId: string): Promise<UrgentModerationMutationResult> => {
-    if (!viewerIsAdmin) return { success: false, code: 'not-admin' };
-    try {
-      await updateDoc(doc(db, 'urgent_posts', postId), { isPublished: true });
-      return { success: true };
-    } catch (error) {
-      const code = error instanceof FirebaseError ? error.code : 'unknown';
-      logFirestoreErrorQuietly(error, OperationType.WRITE, `urgent_posts/${postId}`);
-      return { success: false, code };
     }
   };
 
@@ -5744,7 +5744,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       lang={lang}
                       t={t}
                       allProfiles={allProfiles}
-                      urgentPosts={urgentPostsListed}
+                      urgentPosts={urgentPostsForNetworkRadar}
+                      opportunityKpiCount={urgentPostsListed.length}
                       viewerProfile={profile}
                       user={user}
                       copy={h}
@@ -6559,23 +6560,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         {post.authorCompany ? ` · ${post.authorCompany}` : ''}
                       </p>
                       <div className="mt-4 flex flex-wrap gap-2">
-                        {isUrgentPostPendingModeration(post) ? (
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              setOpportunitiesModerationError(null);
-                              const r = await handlePublishUrgentPost(post.id);
-                              if (!r.success) {
-                                setOpportunitiesModerationError(
-                                  urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang, user?.uid ?? null)
-                                );
-                              }
-                            }}
-                            className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
-                          >
-                            {t('opportunityPublish')}
-                          </button>
-                        ) : null}
                         <button
                           type="button"
                           onClick={async () => {
@@ -7049,17 +7033,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             opportunityDetailPost.isPublished === false
         )}
         moderationActionError={opportunityDetailModerationError}
-        onModerationPublish={async () => {
-          const p = opportunityDetailPost;
-          if (!p) return;
-          setOpportunityDetailModerationError(null);
-          const r = await handlePublishUrgentPost(p.id);
-          if (r.success) setOpportunityDetailPost(null);
-          else
-            setOpportunityDetailModerationError(
-              urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang, user?.uid ?? null)
-            );
-        }}
         onModerationReject={async () => {
           const p = opportunityDetailPost;
           if (!p) return;
