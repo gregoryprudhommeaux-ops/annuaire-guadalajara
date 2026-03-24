@@ -31,6 +31,33 @@ export type DashboardPageProps = {
   className?: string;
 };
 
+type SectionErrorBoundaryProps = {
+  fallback: React.ReactNode;
+  children: React.ReactNode;
+};
+
+type SectionErrorBoundaryState = { hasError: boolean };
+
+class SectionErrorBoundary extends React.Component<
+  SectionErrorBoundaryProps,
+  SectionErrorBoundaryState
+> {
+  state: SectionErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): SectionErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error('[DashboardPage] section render failed:', error);
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
 /**
  * Page tableau de bord (Vite/React). Équivalent client d’un fichier Next
  * `src/app/dashboard/page.tsx` : pas de Server Component — données chargées ici.
@@ -49,6 +76,15 @@ export default function DashboardPage({
   const [needs, setNeeds] = useState<MemberNeed[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [profile, setProfile] = useState<{ role?: 'user' | 'admin' } | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const update = () => setIsMobile(window.innerWidth < 640);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   useEffect(() => {
     if (!registeredWithProfile) {
@@ -115,6 +151,7 @@ export default function DashboardPage({
   const loading =
     lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
   const isAdmin = profile?.role === 'admin' || user?.email === 'chinois2001@gmail.com';
+  const mobileAdminOnly = isMobile && isAdmin;
 
   if (registeredWithProfile && profiles === null && !loadError) {
     return (
@@ -136,28 +173,66 @@ export default function DashboardPage({
 
       {isAdmin ? <AdminDashboard lang={lang} t={t} /> : null}
 
-      <VueEnsemble
-        lang={lang}
-        t={t}
-        registeredWithProfile={registeredWithProfile}
-        onUnlockRadar={onUnlockRadar}
-        user={user}
-        membersExtended={registeredWithProfile ? (membersExtended ?? []) : undefined}
-        communityNeeds={registeredWithProfile ? (needs ?? mockNeeds) : undefined}
-        includeNeedsDashboard={false}
-      />
-
-      {registeredWithProfile && profiles !== null && (
-        <NeedsDashboard
-          needs={needs ?? mockNeeds}
-          members={membersExtended}
-          lang={lang}
-          t={t}
-        />
+      {!mobileAdminOnly && (
+        <SectionErrorBoundary
+          fallback={
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              {lang === 'en'
+                ? 'Unable to render this dashboard section.'
+                : lang === 'es'
+                  ? 'No se puede mostrar esta sección del panel.'
+                  : 'Impossible d’afficher cette section du tableau de bord.'}
+            </p>
+          }
+        >
+          <VueEnsemble
+            lang={lang}
+            t={t}
+            registeredWithProfile={registeredWithProfile}
+            onUnlockRadar={onUnlockRadar}
+            user={user}
+            membersExtended={registeredWithProfile ? (membersExtended ?? []) : undefined}
+            communityNeeds={registeredWithProfile ? (needs ?? mockNeeds) : undefined}
+            includeNeedsDashboard={false}
+          />
+        </SectionErrorBoundary>
       )}
 
-      {registeredWithProfile && profiles !== null && (
-        <ExplorerProfils members={explorerMembers} lang={lang} showPageHeader />
+      {!mobileAdminOnly && registeredWithProfile && profiles !== null && (
+        <SectionErrorBoundary
+          fallback={
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              {lang === 'en'
+                ? 'Unable to render needs analytics section.'
+                : lang === 'es'
+                  ? 'No se puede mostrar la sección de analítica de necesidades.'
+                  : 'Impossible d’afficher la section analytics des besoins.'}
+            </p>
+          }
+        >
+          <NeedsDashboard
+            needs={needs ?? mockNeeds}
+            members={membersExtended}
+            lang={lang}
+            t={t}
+          />
+        </SectionErrorBoundary>
+      )}
+
+      {!mobileAdminOnly && registeredWithProfile && profiles !== null && (
+        <SectionErrorBoundary
+          fallback={
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              {lang === 'en'
+                ? 'Unable to render profiles explorer section.'
+                : lang === 'es'
+                  ? 'No se puede mostrar la sección del explorador de perfiles.'
+                  : 'Impossible d’afficher la section explorateur de profils.'}
+            </p>
+          }
+        >
+          <ExplorerProfils members={explorerMembers} lang={lang} showPageHeader />
+        </SectionErrorBoundary>
       )}
     </div>
   );

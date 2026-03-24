@@ -130,6 +130,30 @@ export const Header: React.FC<HeaderProps> = ({
       <div className={pageHeaderInner}>
         {adminHeroLayout ? (
           <div className="flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-3 sm:hidden">
+              <div className="relative min-w-0 flex-1">
+                <a
+                  href="/"
+                  onClick={onHomeClick}
+                  className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg pr-2 outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
+                  aria-label={homeAriaLabel}
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white shadow-md">
+                    <Building2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  </div>
+                  <div className="h-7 w-px shrink-0 bg-slate-200" aria-hidden />
+                  <div className="min-w-0 flex-1 leading-tight text-left">
+                    <p className="text-sm font-semibold leading-snug tracking-tight text-slate-900 break-words">
+                      {title}
+                    </p>
+                    <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-slate-500">
+                      {subtitle}
+                    </p>
+                  </div>
+                </a>
+              </div>
+              {topRight ? <div className="flex shrink-0 items-center gap-2">{topRight}</div> : null}
+            </div>
             <div className="hidden items-start justify-between gap-3 sm:flex">
               <div
                 className={cn(

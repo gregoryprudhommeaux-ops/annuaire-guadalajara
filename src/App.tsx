@@ -3585,6 +3585,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         topRight={
           headerAdminLayout && user ? (
             <div className="flex shrink-0 items-center gap-2">
+              <div className="sm:hidden">
+                <LanguageDropdownMobile lang={lang} onLangChange={setLang} />
+              </div>
               <div className="hidden shrink-0 items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
                 {(['fr', 'es', 'en'] as const).map((code) => {
                   const isActive = lang === code;
@@ -3609,12 +3612,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               <button
                 type="button"
                 onClick={handleLogout}
-                className="hidden rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600 sm:inline-flex"
+                className="inline-flex rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
                 title={t('logout')}
               >
                 <LogOut size={18} />
               </button>
-              <div className="hidden h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200 sm:block">
+              <div className="block h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200">
                 <ProfileAvatar
                   photoURL={user.photoURL}
                   fullName={user.displayName || user.email || ''}
