@@ -3623,12 +3623,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         }
         fullWidthRow={
           headerAdminLayout ? (
-            <div className="w-full min-w-0 space-y-2 sm:space-y-0">
-              <div className="rounded-2xl bg-stone-900 px-4 py-3 text-white shadow-sm sm:hidden">
-                <p className="text-sm font-semibold leading-snug">{t('welcome')}</p>
-                <p className="mt-1 text-xs leading-relaxed text-stone-200">{t('welcomeIntro')}</p>
-              </div>
-              <div className="flex w-full min-w-0 flex-row items-stretch gap-1 sm:gap-3">
+            <div className="flex w-full min-w-0 flex-row items-stretch gap-1 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setShowValidationPanel(true)}
@@ -3690,7 +3685,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     {t('exportData')}
                   </span>
                 </button>
-              </div>
             </div>
           ) : undefined
         }
