@@ -3522,6 +3522,15 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     }
   };
 
+  const canDeleteOpportunityForCurrentUser = useCallback(
+    (post: UrgentPost): boolean => {
+      if (!user) return false;
+      if (profile?.role === 'admin') return true;
+      return !!post.authorId && post.authorId === user.uid;
+    },
+    [user, profile?.role]
+  );
+
   const openOpportunityProfile = useCallback(
     (post: UrgentPost) => {
       if (!user || !post.authorId) return;
@@ -5014,6 +5023,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 user={user}
                 compactLayout
                 isAdmin={profile?.role === 'admin'}
+                canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
                 onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                 onSeeAll={() => {
                   setDirectoryDiscoveryStripsHidden(true);
@@ -5041,6 +5051,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 user={user}
                 compactLayout
                 isAdmin={profile?.role === 'admin'}
+                canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
                 onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                 onSeeAll={() => {
                   setDirectoryDiscoveryStripsHidden(true);
@@ -5137,6 +5148,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     allProfiles={allProfiles}
                     user={user}
                     isAdmin={profile?.role === 'admin'}
+                    canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
                     onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                     onSeeAll={() => {
                       setDirectoryDiscoveryStripsHidden(true);
@@ -5486,6 +5498,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     }
                   }}
                   isAdmin={profile?.role === 'admin'}
+                  canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
                   onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                 />
               )}

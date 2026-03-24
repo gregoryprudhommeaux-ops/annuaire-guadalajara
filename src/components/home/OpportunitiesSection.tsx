@@ -26,6 +26,7 @@ type Props = {
   compactLayout?: boolean;
   /** Admin ou auteur : affiche une icône pour demander la suppression (confirmation dans App). */
   isAdmin?: boolean;
+  canDeleteOpportunityForCurrentUser?: (post: UrgentPost) => boolean;
   onRequestDeleteOpportunity?: (post: UrgentPost) => void;
 };
 
@@ -49,11 +50,15 @@ export default function OpportunitiesSection({
   onOpenPost,
   compactLayout = false,
   isAdmin = false,
+  canDeleteOpportunityForCurrentUser,
   onRequestDeleteOpportunity,
 }: Props) {
   const slice = posts.slice(0, 5);
   const hasPosts = slice.length > 0;
   const canDeleteOpportunity = (post: UrgentPost): boolean => {
+    if (canDeleteOpportunityForCurrentUser) {
+      return canDeleteOpportunityForCurrentUser(post) && !!onRequestDeleteOpportunity;
+    }
     if (!onRequestDeleteOpportunity) return false;
     if (isAdmin) return true;
     return !!user && !!post.authorId && post.authorId === user.uid;
