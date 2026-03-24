@@ -4592,13 +4592,23 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </label>
                           </div>
 
-                          <div className="flex gap-3 pt-4 border-t border-stone-100">
+                          <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-stone-100">
                             <button type="submit" disabled={profileSaveBusy} className="px-8 bg-stone-900 text-white py-2 rounded-lg hover:bg-stone-800 transition-all font-medium disabled:opacity-60 disabled:cursor-not-allowed">
                               {profileSaveBusy
                                 ? pickLang('Enregistrement...', 'Guardando...', 'Saving...', lang)
                                 : t('save')}
                             </button>
                             <button type="button" onClick={() => { setIsEditing(false); setEditingProfile(null); }} className="px-8 bg-stone-100 text-stone-600 py-2 rounded-lg hover:bg-stone-200 transition-all font-medium">{t('cancel')}</button>
+                            {profile?.uid ? (
+                              <button
+                                type="button"
+                                onClick={() => setProfileToDelete(profile.uid)}
+                                className="ml-auto inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50"
+                              >
+                                <Plus size={14} className="rotate-45" aria-hidden />
+                                {t('deleteProfile')}
+                              </button>
+                            ) : null}
                           </div>
                           {profileSaveError && (
                             <p className="text-xs text-red-600">{profileSaveError}</p>
@@ -4876,6 +4886,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   title={t('welcome')}
                   body={t('welcomeIntro')}
                   className="h-full w-full"
+                  collapsible
                   collapsibleOnMobile
                   mobileDefaultOpen={false}
                   mobileShowIntroLabel={t('welcomeIntroShow')}
@@ -4931,6 +4942,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   title={t('welcome')}
                   body={t('welcomeIntro')}
                   className="w-full"
+                  collapsible
                   collapsibleOnMobile
                   mobileDefaultOpen={false}
                   mobileShowIntroLabel={t('welcomeIntroShow')}

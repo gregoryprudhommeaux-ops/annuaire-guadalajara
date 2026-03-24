@@ -6,6 +6,8 @@ type Props = {
   title: string;
   body: string;
   className?: string;
+  /** Repliable sur tous les écrans (si true). */
+  collapsible?: boolean;
   /** Sur les écrans &lt; sm : bouton pour replier le corps et libérer de la hauteur. */
   collapsibleOnMobile?: boolean;
   /** État initial mobile (ouvert par défaut si non précisé). */
@@ -19,6 +21,7 @@ export default function WelcomeContextCard({
   title,
   body,
   className,
+  collapsible = false,
   collapsibleOnMobile = false,
   mobileDefaultOpen = true,
   mobileShowIntroLabel = 'Show introduction',
@@ -26,7 +29,7 @@ export default function WelcomeContextCard({
 }: Props) {
   const [mobileOpen, setMobileOpen] = useState(mobileDefaultOpen);
   const bodyId = useId();
-  const showToggle = collapsibleOnMobile;
+  const showToggle = collapsible || collapsibleOnMobile;
 
   return (
     <section
@@ -56,7 +59,10 @@ export default function WelcomeContextCard({
             <button
               type="button"
               onClick={() => setMobileOpen((v) => !v)}
-              className="-m-1 shrink-0 rounded-lg p-1.5 text-white/85 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 sm:hidden"
+              className={cn(
+                '-m-1 shrink-0 rounded-lg p-1.5 text-white/85 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
+                !collapsible && 'sm:hidden'
+              )}
               aria-expanded={mobileOpen}
               aria-controls={bodyId}
               title={mobileOpen ? mobileHideIntroLabel : mobileShowIntroLabel}
