@@ -61,16 +61,19 @@ export function normalizedTargetKeywords(p: UserProfile): string[] {
  */
 export function getProfileAiRecommendationReadiness(p: UserProfile): number {
   const passionsOk = sanitizePassionIds(p.passionIds).length >= 1;
-  const typedNeeds = (p.highlightedNeeds?.filter(Boolean).length ?? 0) >= 1;
   const checks = [
     !!(p.fullName?.trim()),
     !!(p.companyName?.trim()),
     !!(p.email?.trim()),
     !!(p.activityCategory?.trim()),
     !!(p.bio?.trim() && p.bio.trim().length >= 15),
-    typedNeeds,
     passionsOk,
     !!(p.positionCategory?.trim()),
+    !!(p.city?.trim()),
+    !!(p.state?.trim()),
+    !!(p.country?.trim()),
+    !!p.communityCompanyKind,
+    !!p.communityMemberStatus,
   ];
   const ok = checks.filter(Boolean).length;
   return ok / checks.length;

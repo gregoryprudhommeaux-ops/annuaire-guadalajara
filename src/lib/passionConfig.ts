@@ -86,6 +86,9 @@ export const PASSIONS_CATEGORIES: PassionCategory[] = [
   },
 ];
 
+/** Minimum pour une fiche publiable (aligné sur `profilePublicationRules`). */
+export const MIN_PASSIONS = 1;
+
 export const MAX_PASSIONS = 3;
 
 const ALL_OPTION_IDS = PASSIONS_CATEGORIES.flatMap((c) => c.options.map((o) => o.id));
@@ -117,6 +120,7 @@ export function getPassionCategoryLabel(categoryId: string, lang: PassionLocale)
 
 /**
  * Garde uniquement les ids connus, sans doublons, max {@link MAX_PASSIONS} (ordre conservé).
+ * Le minimum pour publication est {@link MIN_PASSIONS} (vérifié ailleurs).
  * Les anciennes fiches avec `hobby` (texte libre) ne sont pas converties automatiquement.
  */
 export function sanitizePassionIds(raw: unknown): string[] {

@@ -43,6 +43,7 @@ export const EN_STRINGS: Record<string, string> = {
   arrivalYear: "Year of arrival in Mexico",
   yearsInMexico: "Years in Mexico",
   employeeCount: "Number of employees",
+  employeeCountOptional: "(optional)",
   isEmailPublic: "Make my email public",
   isWhatsappPublic: "Make my WhatsApp public",
   statsOnlySectionTitle: "Data not shown on your public profile",
@@ -214,6 +215,7 @@ export const EN_STRINGS: Record<string, string> = {
   noCompanyDescription: "No description provided.",
   noNeedsSpecified: "No specific needs for now.",
   targetSectors: "Keywords (industry, field, area…)",
+  targetSectorsOptional: "(optional)",
   needKeywordsHint:
     "Enter keywords separated by commas (sector, customer type, geography, technology…).",
   needKeywordsPlaceholder: "E.g. food & beverage, B2B SaaS, Zapopan, EU export…",
@@ -290,11 +292,13 @@ export const EN_STRINGS: Record<string, string> = {
   contactPrefsOpenEventSponsoring: "Event sponsoring",
   contactPrefsOpenEventSponsoringPrivateHint:
     "Stored in your non-public data (same as gender and delegation preferences).",
-  highlightedNeedsTitle: "Current needs (max. 3)",
-  highlightedNeedsHint: "Select up to 3 representative needs; they will appear on your directory profile.",
+  highlightedNeedsTitle: "Current needs (0–3)",
+  highlightedNeedsOptional: "(optional)",
+  highlightedNeedsHint:
+    "You can pick 0 to 3 needs; if you add any, they will appear on your directory profile.",
   highlightedNeedsCount: "selected",
   typedNeedsRadar: "Structured needs (network)",
-  typedNeedsRadarEmpty: "No structured needs yet. Complete your profile (max. 3).",
+  typedNeedsRadarEmpty: "No structured needs yet (optional field, up to 3).",
   filterByTypedNeed: "Filtered by structured need:",
   passionsRadarNetwork: "Interests across the network",
   filterByPassion: "Filtered by interest:",

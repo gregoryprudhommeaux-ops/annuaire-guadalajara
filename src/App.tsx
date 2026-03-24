@@ -2648,6 +2648,8 @@ const MainApp = () => {
     const targetSectorListProbe =
       (formData.get('targetSectors') as string)?.split(',').map((s) => s.trim()).filter(Boolean) || [];
 
+    const cckProbe = getTrimmed('communityCompanyKind');
+    const cmsProbe = getTrimmed('communityMemberStatus');
     const publicationProbe: Partial<UserProfile> = {
       fullName: getTrimmed('fullName'),
       companyName: getTrimmed('companyName'),
@@ -2655,6 +2657,16 @@ const MainApp = () => {
       activityCategory: getTrimmed('activityCategory'),
       positionCategory: getTrimmed('positionCategory'),
       city: getTrimmed('city'),
+      state: getTrimmed('state'),
+      country: getTrimmed('country'),
+      communityCompanyKind:
+        cckProbe === ''
+          ? undefined
+          : (cckProbe as UserProfile['communityCompanyKind']),
+      communityMemberStatus:
+        cmsProbe === ''
+          ? undefined
+          : (cmsProbe as UserProfile['communityMemberStatus']),
       website: getTrimmed('website'),
       whatsapp: getTrimmed('whatsapp'),
       bio: getTrimmed('bio'),
@@ -2683,13 +2695,6 @@ const MainApp = () => {
               'Please add a WhatsApp number for profile validation.',
               lang
             );
-          case 'needs':
-            return pickLang(
-              'Sélectionnez au moins un besoin mis en avant (section « Besoins actuels »).',
-              'Selecciona al menos una necesidad destacada (sección « Necesidades actuales »).',
-              'Select at least one highlighted need (Current needs section).',
-              lang
-            );
           case 'passions':
             return pickLang(
               'Sélectionnez au moins une passion dans « En dehors du business » (les choix sont enregistrés dans l’app, pas dans les champs texte du bas).',
@@ -2711,6 +2716,34 @@ const MainApp = () => {
               'Please choose a city.',
               lang
             );
+          case 'state':
+            return pickLang(
+              'Indiquez l’état / la région (ex. Jalisco).',
+              'Indica el estado o región (p. ej. Jalisco).',
+              'Enter the state or region (e.g. Jalisco).',
+              lang
+            );
+          case 'country':
+            return pickLang(
+              'Indiquez le pays (ex. Mexique).',
+              'Indica el país (p. ej. México).',
+              'Enter the country (e.g. Mexico).',
+              lang
+            );
+          case 'communityCompanyKind':
+            return pickLang(
+              'Choisissez un type d’entreprise (analytics) : startup, PME, corporate ou indépendant.',
+              'Elige un tipo de empresa (analytics): startup, PYME, corporate o independiente.',
+              'Choose a company type (analytics): startup, SME, corporate, or independent.',
+              lang
+            );
+          case 'communityMemberStatus':
+            return pickLang(
+              'Choisissez un statut professionnel (analytics) : freelance, salarié ou dirigeant.',
+              'Elige un estatus profesional (analytics): freelance, asalariado o director.',
+              'Choose a professional status (analytics): freelance, employee, or owner.',
+              lang
+            );
           case 'activity':
             return pickLang(
               'Renseignez le secteur d’activité et la fonction dans l’entreprise.',
@@ -2727,9 +2760,9 @@ const MainApp = () => {
             );
           default:
             return pickLang(
-              'Pour une fiche publiable et validable par l’admin, remplissez tous les champs marqués d’une astérisque (*), dont la bio (au moins 15 caractères), au moins un besoin mis en avant, et au moins une passion (jusqu’à 3 au choix).',
-              'Para un perfil publicable y validable por el admin, completa los campos marcados con asterisco (*), incluida la bio (mín. 15 caracteres), al menos una necesidad destacada y al menos una pasión (hasta 3 a elegir).',
-              'To publish and get admin validation, complete every field marked with an asterisk (*), including your bio (min. 15 characters), at least one highlighted need, and at least one interest (up to 3).',
+              'Pour une fiche publiable et validable par l’admin, remplissez tous les champs marqués d’une astérisque (*), dont la bio (au moins 15 caractères) et au moins une passion (jusqu’à 3 au choix).',
+              'Para un perfil publicable y validable por el admin, completa los campos marcados con asterisco (*), incluida la bio (mín. 15 caracteres) y al menos una pasión (hasta 3 a elegir).',
+              'To publish and get admin validation, complete every field marked with an asterisk (*), including your bio (min. 15 characters) and at least one interest (up to 3).',
               lang
             );
         }
@@ -2804,10 +2837,20 @@ const MainApp = () => {
     ];
 
     const cckRaw = getTrimmed('communityCompanyKind');
-    let communityCompanyKind: CommunityCompanyKind | ReturnType<typeof deleteField>;
+    let communityCompanyKind: CommunityCompanyKind;
     if (cckRaw === '') {
-      communityCompanyKind = deleteField();
-    } else if ((COMMUNITY_COMPANY_KINDS as readonly string[]).includes(cckRaw)) {
+      setProfileSaveError(
+        pickLang(
+          'Choisissez un type d’entreprise (analytics).',
+          'Elige un tipo de empresa (analytics).',
+          'Choose a company type (analytics).',
+          lang
+        )
+      );
+      setProfileSaveBusy(false);
+      return;
+    }
+    if ((COMMUNITY_COMPANY_KINDS as readonly string[]).includes(cckRaw)) {
       communityCompanyKind = cckRaw as CommunityCompanyKind;
     } else {
       setProfileSaveError(
@@ -2823,10 +2866,20 @@ const MainApp = () => {
     }
 
     const cmsRaw = getTrimmed('communityMemberStatus');
-    let communityMemberStatus: CommunityMemberStatus | ReturnType<typeof deleteField>;
+    let communityMemberStatus: CommunityMemberStatus;
     if (cmsRaw === '') {
-      communityMemberStatus = deleteField();
-    } else if ((COMMUNITY_MEMBER_STATUSES as readonly string[]).includes(cmsRaw)) {
+      setProfileSaveError(
+        pickLang(
+          'Choisissez un statut professionnel (analytics).',
+          'Elige un estatus profesional (analytics).',
+          'Choose a professional status (analytics).',
+          lang
+        )
+      );
+      setProfileSaveBusy(false);
+      return;
+    }
+    if ((COMMUNITY_MEMBER_STATUSES as readonly string[]).includes(cmsRaw)) {
       communityMemberStatus = cmsRaw as CommunityMemberStatus;
     } else {
       setProfileSaveError(
@@ -2871,12 +2924,9 @@ const MainApp = () => {
       companyName: getTrimmed('companyName'),
       creationYear: optionalNumber('creationYear'),
       city: optionalString('city'),
-      state: optionalString('state'),
+      state: getTrimmed('state'),
       neighborhood: optionalString('neighborhood'),
-      country: (() => {
-        const v = getTrimmed('country');
-        return v === '' ? deleteField() : v;
-      })(),
+      country: getTrimmed('country'),
       activityCategory: optionalString('activityCategory'),
       positionCategory: optionalString('positionCategory'),
       email: getTrimmed('email'),
@@ -3760,7 +3810,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 </div>
                                 <div className="space-y-1">
                                   <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
-                                    {t('employeeCount')}
+                                    {t('employeeCount')}{' '}
+                                    <span className="font-normal normal-case text-stone-400">
+                                      {t('employeeCountOptional')}
+                                    </span>
                                   </label>
                                   <select
                                     name="employeeCount"
@@ -3808,16 +3861,31 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 <input name="neighborhood" defaultValue={editingProfile?.neighborhood || profile?.neighborhood} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('state')}</label>
-                                <input name="state" defaultValue={editingProfile?.state || profile?.state || 'Jalisco'} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
+                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                  {t('state')}
+                                  <span className="text-red-500 font-semibold" aria-hidden>
+                                    {' *'}
+                                  </span>
+                                </label>
+                                <input
+                                  name="state"
+                                  defaultValue={editingProfile?.state || profile?.state || 'Jalisco'}
+                                  placeholder={pickLang('Jalisco', 'Jalisco', 'Jalisco', lang)}
+                                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('country')}</label>
+                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                  {t('country')}
+                                  <span className="text-red-500 font-semibold" aria-hidden>
+                                    {' *'}
+                                  </span>
+                                </label>
                                 <p className="text-[10px] leading-snug text-stone-400">
                                   {pickLang(
-                                    'Laissez vide pour afficher « Mexique » par défaut sur la fiche.',
-                                    'Déjelo vacío para mostrar « México » por defecto en la ficha.',
-                                    'Leave empty to show “Mexico” by default on the profile.',
+                                    'Indiquez le pays d’implantation ou de résidence pour la fiche.',
+                                    'Indica el país de implantación o residencia para la ficha.',
+                                    'Enter the country of operation or residence for your profile.',
                                     lang
                                   )}
                                 </p>
@@ -3866,7 +3934,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     {' *'}
                                   </span>
                                 </label>
-                                <input name="website" defaultValue={editingProfile?.website || profile?.website} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
+                                <input
+                                  name="website"
+                                  type="url"
+                                  inputMode="url"
+                                  autoComplete="url"
+                                  placeholder="https://..."
+                                  defaultValue={editingProfile?.website || profile?.website}
+                                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                />
                               </div>
                             </div>
                           </div>
@@ -3905,6 +3981,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </div>
                             <div className="space-y-1">
                               <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('arrivalYear')}</label>
+                              <input
+                                type="number"
+                                name="arrivalYear"
+                                defaultValue={editingProfile?.arrivalYear || profile?.arrivalYear}
+                                className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                              />
                               <p className="text-[10px] text-stone-400 leading-snug">
                                 {pickLang(
                                   'Sert au tableau de bord pour estimer l’ancienneté sur la région (à partir de l’année d’arrivée au Mexique).',
@@ -3913,7 +3995,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   lang
                                 )}
                               </p>
-                              <input type="number" name="arrivalYear" defaultValue={editingProfile?.arrivalYear || profile?.arrivalYear} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
                             </div>
                           </div>
 
@@ -3922,9 +4003,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               <div className="space-y-1">
                                 <label className="text-xs font-semibold text-stone-600">
                                   {pickLang('Type d’entreprise (analytics)', 'Tipo de empresa (analytics)', 'Company type (analytics)', lang)}
+                                  <span className="text-red-500 font-semibold" aria-hidden>
+                                    {' *'}
+                                  </span>
                                 </label>
                                 <select
                                   name="communityCompanyKind"
+                                  required
                                   defaultValue={
                                     editingProfile?.communityCompanyKind ??
                                     profile?.communityCompanyKind ??
@@ -3932,8 +4017,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   }
                                   className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                                 >
-                                  <option value="">
-                                    {pickLang('— Auto (depuis effectifs) —', '— Auto (desde plantilla) —', '— Auto (from headcount) —', lang)}
+                                  <option value="" disabled>
+                                    {pickLang('— Choisir —', '— Elegir —', '— Choose —', lang)}
                                   </option>
                                   <option value="startup">Startup</option>
                                   <option value="pme">PME / SME</option>
@@ -3944,9 +4029,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               <div className="space-y-1">
                                 <label className="text-xs font-semibold text-stone-600">
                                   {pickLang('Statut pro (analytics)', 'Estatus profesional (analytics)', 'Professional status (analytics)', lang)}
+                                  <span className="text-red-500 font-semibold" aria-hidden>
+                                    {' *'}
+                                  </span>
                                 </label>
                                 <select
                                   name="communityMemberStatus"
+                                  required
                                   defaultValue={
                                     editingProfile?.communityMemberStatus ??
                                     profile?.communityMemberStatus ??
@@ -3954,8 +4043,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   }
                                   className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                                 >
-                                  <option value="">
-                                    {pickLang('— Auto (depuis fonction) —', '— Auto (desde función) —', '— Auto (from role) —', lang)}
+                                  <option value="" disabled>
+                                    {pickLang('— Choisir —', '— Elegir —', '— Choose —', lang)}
                                   </option>
                                   <option value="freelance">Freelance</option>
                                   <option value="employee">{pickLang('Salarié', 'Asalariado', 'Employee', lang)}</option>
@@ -4085,7 +4174,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 htmlFor="targetSectors-contact"
                                 className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
                               >
-                                {t('targetSectors')}
+                                {t('targetSectors')}{' '}
+                                <span className="font-normal normal-case text-stone-400">
+                                  {t('targetSectorsOptional')}
+                                </span>
                               </label>
                               <p className="text-[10px] text-stone-400 leading-relaxed">{t('needKeywordsHint')}</p>
                               <input
@@ -4184,9 +4276,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           <div className="rounded-xl border border-stone-200 bg-stone-50/80 p-4 md:p-5 space-y-4">
                             <div>
                               <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider block">
-                                {t('highlightedNeedsTitle')}
-                                <span className="text-red-500 font-semibold" aria-hidden>
-                                  {' *'}
+                                {t('highlightedNeedsTitle')}{' '}
+                                <span className="font-normal normal-case text-stone-400">
+                                  {t('highlightedNeedsOptional')}
                                 </span>
                               </label>
                               <p className="text-[10px] text-stone-400 mt-1 leading-relaxed">{t('highlightedNeedsHint')}</p>

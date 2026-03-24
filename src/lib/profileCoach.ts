@@ -41,7 +41,6 @@ export function collectProfileCoachGapKeys(p: UserProfile): string[] {
   if (bio.length < PUBLICATION_BIO_MIN_LEN) keys.push('bio');
   if (!p.activityCategory?.trim()) keys.push('activityCategory');
   if (!p.positionCategory?.trim()) keys.push('workFunction');
-  if (sanitizeHighlightedNeeds(p.highlightedNeeds).length < 1) keys.push('coachGapHighlightedNeeds');
   const passions = sanitizePassionIds(p.passionIds);
   if (passions.length < 1) keys.push('coachGapKeywordsPassions');
 

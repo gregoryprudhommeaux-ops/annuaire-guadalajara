@@ -3,6 +3,7 @@ import type { Language } from '@/types';
 import { cn } from '../../cn';
 import {
   MAX_PASSIONS,
+  MIN_PASSIONS,
   PASSIONS_CATEGORIES,
   type PassionLocale,
 } from '@/lib/passionConfig';
@@ -61,17 +62,17 @@ const headerTexts: Record<
   fr: {
     title: 'En dehors du business : qui es-tu ?',
     subtitle:
-      'Choisis jusqu’à 3 centres d’intérêt. Parfait pour briser la glace avec les autres membres.',
+      'Choisis entre 1 et 3 centres d’intérêt. Parfait pour briser la glace avec les autres membres.',
     counter: 'sélectionné(s)',
   },
   en: {
     title: 'Beyond business: who are you?',
-    subtitle: 'Pick up to 3 interests. Perfect to break the ice with other members.',
+    subtitle: 'Pick 1 to 3 interests. Perfect to break the ice with other members.',
     counter: 'selected',
   },
   es: {
     title: 'Fuera del negocio: ¿quién eres?',
-    subtitle: 'Elige hasta 3 intereses. Perfecto para romper el hielo con otros miembros.',
+    subtitle: 'Elige entre 1 y 3 intereses. Perfecto para romper el hielo con otros miembros.',
     counter: 'seleccionado(s)',
   },
 };
@@ -81,22 +82,22 @@ const iceBreakerMessages: Record<
   { none: string; one: string; two: string; three: string }
 > = {
   fr: {
-    none: 'Choisis jusqu’à 3 centres d’intérêt.',
-    one: 'On commence à te connaître.',
+    none: 'Choisis au moins 1 centre d’intérêt (3 au maximum).',
+    one: 'On commence à te connaître — tu peux en ajouter jusqu’à 3.',
     two: 'On a déjà deux bons sujets pour lancer la discussion.',
-    three: 'Parfait, tu es prêt(e) pour le prochain afterwork.',
+    three: 'Maximum atteint (3) — parfait pour le prochain afterwork.',
   },
   en: {
-    none: 'Pick up to 3 interests.',
-    one: 'We’re starting to get to know you.',
+    none: 'Pick at least 1 interest (3 maximum).',
+    one: 'We’re starting to get to know you — you can add up to 3.',
     two: 'We already have two great conversation starters.',
-    three: 'Perfect, you’re ready for the next meetup.',
+    three: 'Max reached (3) — you’re set for the next meetup.',
   },
   es: {
-    none: 'Elige hasta 3 intereses.',
-    one: 'Empezamos a conocerte.',
+    none: 'Elige al menos 1 interés (3 como máximo).',
+    one: 'Empezamos a conocerte — puedes añadir hasta 3.',
     two: 'Ya tenemos dos buenos temas de conversación.',
-    three: 'Perfecto, listo/a para el próximo afterwork.',
+    three: 'Máximo alcanzado (3) — listo/a para el próximo afterwork.',
   },
 };
 
@@ -125,6 +126,7 @@ export function IceBreakerInterests({
   const header = headerTexts[lang] ?? headerTexts.fr;
   const count = selected.length;
   const isMax = count >= maxSelected;
+  const belowMin = count < MIN_PASSIONS;
 
   const toggleInterest = (id: string) => {
     const isSelected = selected.includes(id);
@@ -160,8 +162,19 @@ export function IceBreakerInterests({
         <div
           className={cn(
             'inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-medium',
-            isMax ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
+            isMax
+              ? 'bg-emerald-50 text-emerald-700'
+              : belowMin && markRequired
+                ? 'bg-amber-50 text-amber-800'
+                : 'bg-slate-100 text-slate-600'
           )}
+          title={
+            lang === 'en'
+              ? `${MIN_PASSIONS}–${maxSelected} required for your profile`
+              : lang === 'es'
+                ? `${MIN_PASSIONS}–${maxSelected} para tu perfil`
+                : `${MIN_PASSIONS}–${maxSelected} pour ta fiche`
+          }
         >
           {count}/{maxSelected} — {header.counter}
         </div>
@@ -208,7 +221,11 @@ export function IceBreakerInterests({
       <p
         className={cn(
           'mt-3 text-xs md:text-sm',
-          isMax ? 'text-emerald-600' : 'text-slate-500'
+          isMax
+            ? 'text-emerald-600'
+            : belowMin && markRequired
+              ? 'text-amber-700'
+              : 'text-slate-500'
         )}
       >
         {getIceBreakerText(lang, count)}

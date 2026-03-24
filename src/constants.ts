@@ -207,6 +207,7 @@ export const TRANSLATIONS: Translations = {
   arrivalYear: { fr: "Année d'arrivée au Mexique", es: "Año de llegada a México" },
   yearsInMexico: { fr: "Années au Mexique", es: "Años en México" },
   employeeCount: { fr: "Nombre d'employés", es: "Número de empleados" },
+  employeeCountOptional: { fr: "(facultatif)", es: "(opcional)" },
   isEmailPublic: { fr: "Rendre l'email public", es: "Hacer público mi correo" },
   isWhatsappPublic: { fr: "Rendre WhatsApp public", es: "Hacer público mi WhatsApp" },
   statsOnlySectionTitle: {
@@ -514,6 +515,7 @@ export const TRANSLATIONS: Translations = {
     fr: "Mots-clés (industrie, domaine, zone…)",
     es: "Palabras clave (industria, ámbito, zona…)",
   },
+  targetSectorsOptional: { fr: "(facultatif)", es: "(opcional)" },
   needKeywordsHint: {
     fr: "Indiquez des mots-clés séparés par des virgules (secteur, type de clientèle, zone géographique, technologie…).",
     es: "Indica palabras clave separadas por comas (sector, tipo de cliente, zona, tecnología…).",
@@ -714,12 +716,13 @@ export const TRANSLATIONS: Translations = {
     es: 'Se guarda en tus datos no publicados (como género y delegaciones).',
   },
   highlightedNeedsTitle: {
-    fr: "Besoins actuels (max. 3)",
-    es: "Necesidades actuales (máx. 3)",
+    fr: "Besoins actuels (0 à 3)",
+    es: "Necesidades actuales (0 a 3)",
   },
+  highlightedNeedsOptional: { fr: "(facultatif)", es: "(opcional)" },
   highlightedNeedsHint: {
-    fr: "Sélectionnez jusqu’à 3 besoins représentatifs ; ils apparaîtront sur votre fiche dans l’annuaire.",
-    es: "Elige hasta 3 necesidades; aparecerán en tu ficha del directorio.",
+    fr: "Vous pouvez sélectionner entre 0 et 3 besoins ; s’ils sont renseignés, ils apparaîtront sur votre fiche dans l’annuaire.",
+    es: "Puedes elegir entre 0 y 3 necesidades; si las indicas, aparecerán en tu ficha del directorio.",
   },
   highlightedNeedsCount: {
     fr: "sélectionné(s)",
@@ -730,8 +733,8 @@ export const TRANSLATIONS: Translations = {
     es: "Necesidades de la red",
   },
   typedNeedsRadarEmpty: {
-    fr: "Aucun besoin structuré renseigné pour l’instant. Complétez votre profil (max. 3).",
-    es: "Aún no hay necesidades estructuradas. Completa tu perfil (máx. 3).",
+    fr: "Aucun besoin structuré renseigné pour l’instant (champ facultatif, jusqu’à 3).",
+    es: "Aún no hay necesidades estructuradas (opcional, hasta 3).",
   },
   filterByTypedNeed: {
     fr: "Filtré par besoin structuré :",
