@@ -144,7 +144,6 @@ import MembersCountBlock from './components/home/MembersCountBlock';
 import InviteNetworkModal from './components/home/InviteNetworkModal';
 import NewMembersStrip from './components/home/NewMembersStrip';
 import OpportunitiesSection from './components/home/OpportunitiesSection';
-import NetworkRadarSection from './components/home/NetworkRadarSection';
 import AiTranslatedFreeText from './components/AiTranslatedFreeText';
 import ProfileAvatar from './components/ProfileAvatar';
 import {
@@ -155,7 +154,6 @@ import {
 import { Header as AppHeader, LanguageDropdownMobile } from './components/Header';
 import { DirectoryTabBar } from './components/DirectoryUi';
 import HomeFunFactStrip from './components/home/HomeFunFactStrip';
-import DashboardPage from './components/dashboard/DashboardPage';
 import { homeLanding } from './copy/homeLanding';
 import AffinityScore from './components/AffinityScore';
 import { profileMatchesSearchQuery } from './profileSearch';
@@ -205,10 +203,13 @@ import {
   Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as XLSX from 'xlsx';
-import { GoogleGenAI } from "@google/genai";
 import { cn } from './cn';
 import { cardPad, pageMainPad, pageSectionPad } from './lib/pageLayout';
+
+const loadNetworkRadarSection = () => import('./components/home/NetworkRadarSection');
+const loadDashboardPage = () => import('./components/dashboard/DashboardPage');
+const NetworkRadarSection = React.lazy(loadNetworkRadarSection);
+const DashboardPage = React.lazy(loadDashboardPage);
 
 type SocialAuthProvider = 'google' | 'microsoft' | 'apple';
 
@@ -2103,6 +2104,35 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     return () => globalThis.clearTimeout(timer);
   }, [profileSaveSuccess]);
 
+  useEffect(() => {
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    let timeoutId: number | null = null;
+    let idleId: number | null = null;
+    const preload = () => {
+      // Prefetch chunks likely needed next, without blocking first paint.
+      void loadNetworkRadarSection();
+      if (profile?.role === 'admin') {
+        void loadDashboardPage();
+        void import('xlsx');
+      }
+    };
+    if (typeof w.requestIdleCallback === 'function') {
+      idleId = w.requestIdleCallback(preload, { timeout: 1200 });
+      return () => {
+        if (idleId !== null && typeof w.cancelIdleCallback === 'function') {
+          w.cancelIdleCallback(idleId);
+        }
+      };
+    }
+    timeoutId = window.setTimeout(preload, 900);
+    return () => {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, [profile?.role]);
+
   const getAuthErrorMessage = (code: string) => {
     const host = typeof window !== 'undefined' ? window.location.host : '';
     const fr = {
@@ -2591,6 +2621,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       try {
         const apiKey = getGeminiApiKey();
         if (!apiKey) throw new Error('missing-gemini-api-key');
+        const { GoogleGenAI } = await import('@google/genai');
         const ai = new GoogleGenAI({ apiKey });
         const fp = u.accountType === 'foreign' ? 'Prioriser Distributeurs/Partenaires locaux.' : '';
         const uKeywords = normalizedTargetKeywords(u).join(',') || 'tous';
@@ -3212,6 +3243,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   const exportToExcel = async () => {
     if (profile?.role !== 'admin') return;
+    const XLSX = await import('xlsx');
 
     const data = await Promise.all(
       allProfiles.map(async (p) => {
@@ -3237,6 +3269,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       alert(t('adminOAuthLeadsEmpty'));
       return;
     }
+    void (async () => {
+      const XLSX = await import('xlsx');
     const h = {
       uid: pickLang('UID', 'UID', 'UID', lang),
       email: pickLang('E-mail', 'Correo', 'Email', lang),
@@ -3269,6 +3303,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const m = String(now.getMonth() + 1).padStart(2, '0');
     const d = String(now.getDate()).padStart(2, '0');
     XLSX.writeFile(workbook, `OAuth_connexions_${y}-${m}-${d}.xlsx`);
+    })();
   };
 
   const filteredProfiles = useMemo(() => {
@@ -3546,6 +3581,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     try {
       const apiKey = getGeminiApiKey();
       if (!apiKey) throw new Error('missing-gemini-api-key');
+      const { GoogleGenAI } = await import('@google/genai');
       const ai = new GoogleGenAI({ apiKey });
       const prompt = `Tu es expert en profils B2B. Analyse ce profil et propose des optimisations concretes.
 Reponds STRICTEMENT en JSON valide:
@@ -5460,64 +5496,80 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               )}
 
               {viewMode === 'radar' && (
-                <NetworkRadarSection
-                  lang={lang}
-                  t={t}
-                  allProfiles={allProfiles}
-                  urgentPosts={urgentPostsListed}
-                  viewerProfile={profile}
-                  user={user}
-                  copy={h}
-                  activityCategoryLabel={activityCategoryLabel}
-                  needOptionLabel={needOptionLabel}
-                  getPassionEmoji={getPassionEmoji}
-                  getPassionLabel={getPassionLabel}
-                  onNeedClick={(needId) => {
-                    setViewMode('members');
-                    setPassionIdFilter('');
-                    setHighlightedNeedFilter(needId);
-                  }}
-                  onPassionClick={(passionId) => {
-                    setViewMode('members');
-                    setHighlightedNeedFilter('');
-                    setPassionIdFilter(passionId);
-                  }}
-                  onOpportunityClick={openOpportunityProfile}
-                  onPostOpportunity={() => setShowUrgentPostModal(true)}
-                  onCreateProfile={() => {
-                    setAuthError(null);
-                    setShowAuthModal(true);
-                  }}
-                  registeredWithProfile={!!user && !!profile}
-                  onUnlockRadar={() => {
-                    setAuthError(null);
-                    if (!user) {
+                <React.Suspense
+                  fallback={
+                    <div className="rounded-xl border border-stone-200 bg-white p-6 text-sm text-stone-500">
+                      {pickLang('Chargement du radar...', 'Cargando radar...', 'Loading radar...', lang)}
+                    </div>
+                  }
+                >
+                  <NetworkRadarSection
+                    lang={lang}
+                    t={t}
+                    allProfiles={allProfiles}
+                    urgentPosts={urgentPostsListed}
+                    viewerProfile={profile}
+                    user={user}
+                    copy={h}
+                    activityCategoryLabel={activityCategoryLabel}
+                    needOptionLabel={needOptionLabel}
+                    getPassionEmoji={getPassionEmoji}
+                    getPassionLabel={getPassionLabel}
+                    onNeedClick={(needId) => {
+                      setViewMode('members');
+                      setPassionIdFilter('');
+                      setHighlightedNeedFilter(needId);
+                    }}
+                    onPassionClick={(passionId) => {
+                      setViewMode('members');
+                      setHighlightedNeedFilter('');
+                      setPassionIdFilter(passionId);
+                    }}
+                    onOpportunityClick={openOpportunityProfile}
+                    onPostOpportunity={() => setShowUrgentPostModal(true)}
+                    onCreateProfile={() => {
+                      setAuthError(null);
                       setShowAuthModal(true);
-                    } else {
-                      setShowOnboarding(true);
-                    }
-                  }}
-                  isAdmin={profile?.role === 'admin'}
-                  canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
-                  onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
-                />
+                    }}
+                    registeredWithProfile={!!user && !!profile}
+                    onUnlockRadar={() => {
+                      setAuthError(null);
+                      if (!user) {
+                        setShowAuthModal(true);
+                      } else {
+                        setShowOnboarding(true);
+                      }
+                    }}
+                    isAdmin={profile?.role === 'admin'}
+                    canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
+                    onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
+                  />
+                </React.Suspense>
               )}
 
               {isAdminDashboard && (
-                <DashboardPage
-                  lang={lang}
-                  t={t}
-                  registeredWithProfile={!!user && !!profile}
-                  onUnlockRadar={() => {
-                    setAuthError(null);
-                    if (!user) {
-                      setShowAuthModal(true);
-                    } else {
-                      setShowOnboarding(true);
-                    }
-                  }}
-                  user={user}
-                />
+                <React.Suspense
+                  fallback={
+                    <div className="rounded-xl border border-stone-200 bg-white p-6 text-sm text-stone-500">
+                      {pickLang('Chargement du tableau de bord...', 'Cargando panel...', 'Loading dashboard...', lang)}
+                    </div>
+                  }
+                >
+                  <DashboardPage
+                    lang={lang}
+                    t={t}
+                    registeredWithProfile={!!user && !!profile}
+                    onUnlockRadar={() => {
+                      setAuthError(null);
+                      if (!user) {
+                        setShowAuthModal(true);
+                      } else {
+                        setShowOnboarding(true);
+                      }
+                    }}
+                    user={user}
+                  />
+                </React.Suspense>
               )}
 
             {filteredProfiles.length === 0 &&
