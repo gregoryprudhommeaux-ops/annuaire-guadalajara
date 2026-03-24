@@ -58,17 +58,16 @@ service cloud.firestore {
     }
 
     /**
-     * Création annonce publique (format actuel) : hasAll + champs obligatoires (pas hasOnly, pour éviter
-     * les refus si le client ou une évolution ajoute des clés). isPublished bool optionnelle.
+     * Création annonce publique (format actuel) : contrôle des champs utiles uniquement (pas hasOnly / hasAll).
+     * Champs en plus autorisés. Pas de contrôle sur isPublished (évite les refus selon le type côté client).
      */
     function isValidUrgentPostPublicCreate(data) {
-      return data.keys().hasAll(['text', 'sector', 'createdAt', 'expiresAt'])
+      return ('text' in data) && ('sector' in data) && ('createdAt' in data) && ('expiresAt' in data)
         && data.text is string && data.text.size() >= 1 && data.text.size() <= 200
         && data.sector is string && data.sector.size() >= 1
         && data.createdAt is number
         && data.expiresAt is number
-        && data.expiresAt > data.createdAt
-        && (!('isPublished' in data) || data.isPublished is bool);
+        && data.expiresAt > data.createdAt;
     }
 
     function urgentPostNonExpired(data) {
@@ -86,7 +85,7 @@ service cloud.firestore {
     }
 
     function isValidUrgentPostPrivateCreate(data) {
-      return data.keys().hasAll(['authorId', 'authorName', 'authorPhoto'])
+      return ('authorId' in data) && ('authorName' in data) && ('authorPhoto' in data)
         && data.authorId == request.auth.uid
         && data.authorName is string
         && data.authorPhoto is string
