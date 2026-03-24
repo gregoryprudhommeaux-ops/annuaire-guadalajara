@@ -4905,8 +4905,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           {/* Colonne gauche — recherche (+ opportunités si connecté), stats */}
           <div
             className={cn(
-              'min-w-0 w-full space-y-4 sm:space-y-6 lg:order-none lg:col-span-4 lg:self-start',
-              user && showDiscoveryStrips ? 'order-1' : 'order-4',
+              'order-1 min-w-0 w-full space-y-4 sm:space-y-6 lg:order-1 lg:col-span-4 lg:self-start',
               isAdminDashboard && 'hidden'
             )}
           >
@@ -5027,7 +5026,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             ref={directoryMainRef}
             id="directory-main"
             className={cn(
-              'order-5 min-w-0 w-full scroll-mt-24 space-y-6 lg:order-none',
+              'order-2 min-w-0 w-full scroll-mt-24 space-y-6 lg:order-2',
               isAdminDashboard ? 'lg:col-span-12' : 'lg:col-span-8'
             )}
           >
