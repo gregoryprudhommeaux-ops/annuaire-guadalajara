@@ -840,9 +840,9 @@ export const TRANSLATIONS: Translations = {
   },
   urgentPostErrorPermissionDenied: {
     fr:
-      "Enregistrement refusé par Firebase (droits / règles ou App Check). Vous êtes connecté : déployez firestore.rules sur la même base que l’app (npm run firebase:deploy:rules). Dans la console Firebase → App Check, désactivez l’application stricte sur Cloud Firestore si vous n’utilisez plus App Check côté web.",
+      "Enregistrement refusé par Firebase (droits / règles Firestore). Vous êtes connecté : déployez firestore.rules sur la même base que l’app (npm run firebase:deploy:rules) ou mettez à jour les règles dans la console.",
     es:
-      "Firebase ha rechazado el guardado (reglas o App Check). Estás conectado: despliega firestore.rules en la misma base que la app (npm run firebase:deploy:rules). En Firebase → App Check, desactiva el modo estricto en Cloud Firestore si no usas App Check en la web.",
+      "Firebase ha rechazado el guardado (reglas de Firestore). Estás conectado: despliega firestore.rules en la misma base que la app (npm run firebase:deploy:rules) o actualiza las reglas en la consola.",
   },
   urgentPostErrorNetwork: {
     fr: "Service temporairement indisponible ou connexion instable. Réessayez dans un instant.",

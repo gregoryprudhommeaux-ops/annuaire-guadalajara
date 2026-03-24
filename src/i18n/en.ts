@@ -350,7 +350,7 @@ export const EN_STRINGS: Record<string, string> = {
   urgentPostSubmitErrorGeneric:
     "Could not save your post. Check your connection and try again.",
   urgentPostErrorPermissionDenied:
-    "Firebase blocked the save (security rules or App Check). You are signed in — deploy firestore.rules to the same database as the app (npm run firebase:deploy:rules). In Firebase → App Check, turn off enforcement for Cloud Firestore if the web app no longer uses App Check.",
+    "Firebase blocked the save (Firestore security rules). You are signed in — deploy firestore.rules to the same database as the app (npm run firebase:deploy:rules) or update rules in the console.",
   urgentPostErrorNetwork:
     "The service is temporarily unavailable or your connection is unstable. Please try again shortly.",
   urgentPostMustSignIn: "Sign in to publish a post.",
