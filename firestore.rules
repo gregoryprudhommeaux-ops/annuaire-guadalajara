@@ -64,7 +64,7 @@ service cloud.firestore {
         && data.createdAt is number
         && data.expiresAt is number
         && data.expiresAt > data.createdAt
-        && data.isPublished == false;
+        && data.isPublished == true;
     }
 
     function urgentPostNonExpired(data) {
@@ -202,9 +202,10 @@ service cloud.firestore {
         || isValidUrgentPostLegacy(request.resource.data)
       );
       allow update: if isAdmin();
+      /** Suppression : admin, auteur (doc public legacy avec authorId), ou auteur format public+privé (métadonnées dans urgent_post_private). */
       allow delete: if isAdmin()
         || (isAuthenticated() && resource.data.authorId == request.auth.uid)
-        || (resource.data.isPublished == false && urgentPostAuthorOwns(postId));
+        || (isAuthenticated() && urgentPostAuthorOwns(postId));
     }
 
     match /urgent_post_private/{postId} {
@@ -215,11 +216,9 @@ service cloud.firestore {
             && urgentPostNonExpired(get(/databases/$(database)/documents/urgent_posts/$(postId)).data)
             && urgentPostListedForEveryone(get(/databases/$(database)/documents/urgent_posts/$(postId)).data));
       allow create: if isAuthenticated() && isValidUrgentPostPrivateCreate(request.resource.data);
+      /** Suppression : admin ou auteur du doc privé (y compris après publication de l’annonce publique). */
       allow delete: if isAdmin()
-        || (isAuthenticated()
-            && resource.data.authorId == request.auth.uid
-            && exists(/databases/$(database)/documents/urgent_posts/$(postId))
-            && get(/databases/$(database)/documents/urgent_posts/$(postId)).data.isPublished == false);
+        || (isAuthenticated() && resource.data.authorId == request.auth.uid);
       allow update: if false;
     }
 

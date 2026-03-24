@@ -148,6 +148,7 @@ import {
   mergeUrgentPostFromFirestore,
   isUrgentPostListedForEveryone,
   isUrgentPostPendingModeration,
+  isUrgentPostInAdminRecentWindow,
   type UrgentPostPrivateDoc,
 } from './lib/urgentPosts';
 import { getGeminiApiKey } from './lib/geminiEnv';
@@ -2508,13 +2509,21 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     [urgentPosts]
   );
 
-  const pendingUrgentForAdmin = useMemo(
-    () =>
-      profile?.role === 'admin' || isAdminEmail(user?.email)
-        ? urgentPosts.filter(isUrgentPostPendingModeration)
-        : [],
-    [urgentPosts, profile?.role, user?.email]
-  );
+  const adminOpportunityReviewList = useMemo(() => {
+    const isAdmin = profile?.role === 'admin' || isAdminEmail(user?.email);
+    if (!isAdmin) return [];
+    const now = Date.now();
+    const pending = urgentPosts.filter(isUrgentPostPendingModeration);
+    const recentListed = urgentPosts.filter((p) =>
+      isUrgentPostInAdminRecentWindow(p, now)
+    );
+    const byId = new Map<string, UrgentPost>();
+    recentListed.forEach((p) => byId.set(p.id, p));
+    pending.forEach((p) => byId.set(p.id, p));
+    return Array.from(byId.values()).sort(
+      (a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)
+    );
+  }, [urgentPosts, profile?.role, user?.email]);
 
   const urgentAuthorIdSet = useMemo(() => {
     const s = new Set<string>();
@@ -3985,9 +3994,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
                     {t('opportunitiesModerationTitle')}
                   </span>
-                  {pendingUrgentForAdmin.length > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-amber-600 px-0.5 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:min-w-5 sm:text-[10px]">
-                      {pendingUrgentForAdmin.length}
+                  {adminOpportunityReviewList.length > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-600 px-0.5 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:min-w-5 sm:text-[10px]">
+                      {adminOpportunityReviewList.length}
                     </span>
                   )}
                 </button>
@@ -5281,7 +5290,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 allProfiles={allProfiles}
                 user={user}
                 compactLayout
-                isAdmin={profile?.role === 'admin'}
                 canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
                 onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                 onSeeAll={() => {
@@ -5306,7 +5314,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 allProfiles={allProfiles}
                 user={user}
                 compactLayout
-                isAdmin={profile?.role === 'admin'}
                 canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
                 onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                 onSeeAll={() => {
@@ -5387,7 +5394,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     posts={urgentPostsListed}
                     allProfiles={allProfiles}
                     user={user}
-                    isAdmin={profile?.role === 'admin'}
                     canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
                     onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                     onSeeAll={() => {
@@ -5767,7 +5773,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           setShowOnboarding(true);
                         }
                       }}
-                      isAdmin={profile?.role === 'admin'}
                       canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
                       onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                     />
@@ -6492,15 +6497,21 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             >
               <div className="flex items-center justify-between border-b border-stone-100 p-6">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-800">
                     <Zap size={20} />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold">{t('opportunitiesModerationTitle')}</h3>
-                    <p className="text-xs text-stone-500">
-                      {pendingUrgentForAdmin.length}{' '}
-                      {t('opportunitiesModerationPendingCount').toLowerCase()}
-                    </p>
+                    {adminOpportunityReviewList.length > 0 ? (
+                      <p className="text-xs text-stone-500">
+                        {adminOpportunityReviewList.length}{' '}
+                        {t('opportunitiesModerationReviewCountLabel')}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-stone-500">
+                        {t('opportunitiesModerationPanelHint')}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button
@@ -6523,16 +6534,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </div>
               ) : null}
               <div className="flex-1 space-y-4 overflow-y-auto p-6">
-                {pendingUrgentForAdmin.length === 0 ? (
+                {adminOpportunityReviewList.length === 0 ? (
                   <div className="py-12 text-center">
                     <Zap size={48} className="mx-auto mb-4 text-stone-100" />
                     <p className="font-medium text-stone-400">{t('opportunitiesModerationEmpty')}</p>
                   </div>
                 ) : (
-                  pendingUrgentForAdmin.map((post) => (
+                  adminOpportunityReviewList.map((post) => (
                     <div
                       key={post.id}
-                      className="rounded-2xl border border-amber-100 bg-amber-50/40 p-4"
+                      className="rounded-2xl border border-stone-200 bg-stone-50/50 p-4"
                     >
                       <AiTranslatedFreeText
                         lang={lang}
@@ -6548,21 +6559,23 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         {post.authorCompany ? ` · ${post.authorCompany}` : ''}
                       </p>
                       <div className="mt-4 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            setOpportunitiesModerationError(null);
-                            const r = await handlePublishUrgentPost(post.id);
-                            if (!r.success) {
-                              setOpportunitiesModerationError(
-                                urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang, user?.uid ?? null)
-                              );
-                            }
-                          }}
-                          className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
-                        >
-                          {t('opportunityPublish')}
-                        </button>
+                        {isUrgentPostPendingModeration(post) ? (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setOpportunitiesModerationError(null);
+                              const r = await handlePublishUrgentPost(post.id);
+                              if (!r.success) {
+                                setOpportunitiesModerationError(
+                                  urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang, user?.uid ?? null)
+                                );
+                              }
+                            }}
+                            className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+                          >
+                            {t('opportunityPublish')}
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={async () => {
@@ -6576,7 +6589,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           }}
                           className="rounded-lg border border-stone-200 bg-white px-4 py-2 text-xs font-bold text-stone-700 hover:bg-stone-50"
                         >
-                          {t('opportunityReject')}
+                          {t('delete')}
                         </button>
                         <button
                           type="button"
@@ -6707,7 +6720,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     sector,
                     createdAt,
                     expiresAt,
-                    isPublished: false,
+                    isPublished: true,
                   });
                   batch.set(doc(db, URGENT_POST_PRIVATE_COLLECTION, postRef.id), {
                     authorId: user.uid,
@@ -6943,6 +6956,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   type="button"
                   onClick={async () => {
                     if (!urgentPostIdToDelete) return;
+                    const post = urgentPosts.find((p) => p.id === urgentPostIdToDelete);
+                    if (!post || !canDeleteOpportunityForCurrentUser(post)) {
+                      setUrgentPostIdToDelete(null);
+                      return;
+                    }
                     const ok = await handleDeleteOpportunity(urgentPostIdToDelete);
                     if (ok) setUrgentPostIdToDelete(null);
                   }}

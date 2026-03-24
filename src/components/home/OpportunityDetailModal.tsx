@@ -250,7 +250,7 @@ export default function OpportunityDetailModal({
                     onClick={() => void onModerationReject?.()}
                     className="w-full rounded-xl border border-stone-200 bg-white py-3 text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-50 sm:flex-1"
                   >
-                    {t('opportunityReject')}
+                    {t('delete')}
                   </button>
                 </div>
               ) : null}

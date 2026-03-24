@@ -518,7 +518,10 @@ export const TRANSLATIONS: Translations = {
     fr: "Supprimer cette opportunité publiée ? Elle disparaîtra pour tous les membres. Cette action est irréversible.",
     es: "¿Eliminar esta oportunidad publicada? Desaparecerá para todos los miembros. Esta acción no se puede deshacer.",
   },
-  deleteOpportunityAria: { fr: "Supprimer l’opportunité (administrateur)", es: "Eliminar la oportunidad (administrador)" },
+  deleteOpportunityAria: {
+    fr: "Supprimer l’opportunité (créateur ou administrateur)",
+    es: "Eliminar la oportunidad (autor o administrador)",
+  },
   delete: { fr: "Supprimer", es: "Eliminar" },
   allIndustries: { fr: "Toutes les industries", es: "Todas las industrias" },
   filterSectorHint: {
@@ -682,8 +685,8 @@ export const TRANSLATIONS: Translations = {
     es: "Sin oportunidades por el momento.",
   },
   opportunityModerationPendingNote: {
-    fr: "Votre annonce sera visible par tous après validation par un administrateur.",
-    es: "Tu anuncio será visible para todos tras la validación de un administrador.",
+    fr: "Votre annonce est visible immédiatement par les membres (et les invités selon les réglages d’affichage).",
+    es: "Tu anuncio es visible de inmediato para los miembros (y para invitados según la configuración).",
   },
   opportunityAuthorHiddenGuest: {
     fr: "Membre — connectez-vous pour voir l’auteur et le contacter.",
@@ -710,16 +713,20 @@ export const TRANSLATIONS: Translations = {
   },
   opportunityViewFullProfile: { fr: "Voir le profil complet", es: "Ver perfil completo" },
   opportunitiesModerationTitle: {
-    fr: "Modération opportunités",
-    es: "Moderación de oportunidades",
+    fr: "Opportunités récentes",
+    es: "Oportunidades recientes",
   },
-  opportunitiesModerationPendingCount: {
-    fr: "en attente",
-    es: "pendientes",
+  opportunitiesModerationReviewCountLabel: {
+    fr: "à contrôler (7 derniers jours ou brouillon)",
+    es: "a revisar (últimos 7 días o borrador)",
+  },
+  opportunitiesModerationPanelHint: {
+    fr: "Annonces publiées sous 7 jours et éventuels brouillons non publiés.",
+    es: "Anuncios publicados en 7 días y borradores pendientes si los hay.",
   },
   opportunitiesModerationEmpty: {
-    fr: "Aucune opportunité en attente de publication.",
-    es: "Ninguna oportunidad pendiente de publicación.",
+    fr: "Aucune opportunité récente ni brouillon à afficher.",
+    es: "No hay oportunidades recientes ni borradores que mostrar.",
   },
   opportunityPublish: { fr: "Publier", es: "Publicar" },
   opportunityReject: { fr: "Refuser", es: "Rechazar" },

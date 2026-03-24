@@ -24,8 +24,7 @@ type Props = {
   onOpenPost: (post: UrgentPost) => void;
   /** Colonne étroite (sous la recherche) : une seule colonne de cartes. */
   compactLayout?: boolean;
-  /** Admin ou auteur : affiche une icône pour demander la suppression (confirmation dans App). */
-  isAdmin?: boolean;
+  /** Créateur ou admin (logique dans App) : icône suppression → confirmation dans App. */
   canDeleteOpportunityForCurrentUser?: (post: UrgentPost) => boolean;
   onRequestDeleteOpportunity?: (post: UrgentPost) => void;
 };
@@ -49,20 +48,18 @@ export default function OpportunitiesSection({
   onCreateProfile,
   onOpenPost,
   compactLayout = false,
-  isAdmin = false,
   canDeleteOpportunityForCurrentUser,
   onRequestDeleteOpportunity,
 }: Props) {
   const slice = posts.slice(0, 5);
   const hasPosts = slice.length > 0;
-  const canDeleteOpportunity = (post: UrgentPost): boolean => {
-    if (canDeleteOpportunityForCurrentUser) {
-      return canDeleteOpportunityForCurrentUser(post) && !!onRequestDeleteOpportunity;
-    }
-    if (!onRequestDeleteOpportunity) return false;
-    if (isAdmin) return true;
-    return !!user && !!post.authorId && post.authorId === user.uid;
-  };
+  /** Uniquement auteur ou admin (via callback App) — pas de raccourci isAdmin seul pour éviter les écarts avec viewerIsAdmin. */
+  const canDeleteOpportunity = (post: UrgentPost): boolean =>
+    Boolean(
+      onRequestDeleteOpportunity &&
+        canDeleteOpportunityForCurrentUser &&
+        canDeleteOpportunityForCurrentUser(post)
+    );
   /** Même gabarit que SearchBlock / MembersCountBlock (colonne gauche, état vide). */
   const sidebarEmptyStyle = compactLayout && !hasPosts;
 

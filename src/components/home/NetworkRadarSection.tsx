@@ -46,7 +46,6 @@ type Props = {
   registeredWithProfile: boolean;
   /** Ouvre la connexion, ou l’onboarding profil si déjà connecté sans fiche. */
   onUnlockRadar: () => void;
-  isAdmin?: boolean;
   canDeleteOpportunityForCurrentUser?: (post: UrgentPost) => boolean;
   onRequestDeleteOpportunity?: (post: UrgentPost) => void;
 };
@@ -107,7 +106,6 @@ export default function NetworkRadarSection({
   onCreateProfile,
   registeredWithProfile,
   onUnlockRadar,
-  isAdmin = false,
   canDeleteOpportunityForCurrentUser,
   onRequestDeleteOpportunity,
 }: Props) {
@@ -263,14 +261,12 @@ export default function NetworkRadarSection({
   }, [profilesForStats]);
 
   const recentOpportunities = urgentPosts.slice(0, 3);
-  const canDeleteOpportunity = (post: UrgentPost): boolean => {
-    if (canDeleteOpportunityForCurrentUser) {
-      return canDeleteOpportunityForCurrentUser(post) && !!onRequestDeleteOpportunity;
-    }
-    if (!onRequestDeleteOpportunity) return false;
-    if (isAdmin) return true;
-    return !!user && !!post.authorId && post.authorId === user.uid;
-  };
+  const canDeleteOpportunity = (post: UrgentPost): boolean =>
+    Boolean(
+      onRequestDeleteOpportunity &&
+        canDeleteOpportunityForCurrentUser &&
+        canDeleteOpportunityForCurrentUser(post)
+    );
 
   const expandChartLabel =
     lang === 'en'

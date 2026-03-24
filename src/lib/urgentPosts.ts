@@ -19,6 +19,21 @@ export function isUrgentPostPendingModeration(p: UrgentPost): boolean {
   return p.isPublished === false;
 }
 
+/** Fenêtre pour le repère admin (badge + panneau) : opportunités encore visibles et récentes. */
+const URGENT_POST_ADMIN_RECENT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function isUrgentPostInAdminRecentWindow(
+  p: UrgentPost,
+  nowMs: number = Date.now()
+): boolean {
+  if (!isUrgentPostListedForEveryone(p)) return false;
+  const created = p.createdAt ?? 0;
+  if (created <= 0) return false;
+  const expiresAt = p.expiresAt ?? 0;
+  if (expiresAt > 0 && nowMs > expiresAt) return false;
+  return nowMs - created <= URGENT_POST_ADMIN_RECENT_WINDOW_MS;
+}
+
 /** Lit un booléen Firestore même si le type stocké diffère (évite les annonces bloquées en « en attente » côté client). */
 function readOptionalBoolean(raw: unknown): boolean | undefined {
   if (raw === true) return true;
