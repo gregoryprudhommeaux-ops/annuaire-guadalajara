@@ -105,6 +105,8 @@ export interface UserProfile {
   role: Role;
   createdAt: Timestamp;
   isValidated?: boolean;
+  /** Revue admin en attente (accès membre déjà autorisé). */
+  needsAdminReview?: boolean;
   bio?: string;
   /** Jusqu’à 3 codes NEED_* (voir `NEED_OPTIONS`) mis en avant sur le profil */
   highlightedNeeds?: string[];

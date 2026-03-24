@@ -202,7 +202,11 @@ export default function NetworkRadarSection({
   }, [profilesForStats]);
 
   const recentOpportunities = urgentPosts.slice(0, 3);
-  const showAdminOppDelete = isAdmin && !!onRequestDeleteOpportunity;
+  const canDeleteOpportunity = (post: UrgentPost): boolean => {
+    if (!onRequestDeleteOpportunity) return false;
+    if (isAdmin) return true;
+    return !!user && !!post.authorId && post.authorId === user.uid;
+  };
 
   const expandChartLabel =
     lang === 'en'
@@ -503,7 +507,7 @@ export default function NetworkRadarSection({
               );
               return (
                 <li key={post.id} className="relative">
-                  {showAdminOppDelete ? (
+                  {canDeleteOpportunity(post) ? (
                     <button
                       type="button"
                       aria-label={t('deleteOpportunityAria')}
@@ -524,7 +528,7 @@ export default function NetworkRadarSection({
                       onClick={() => onOpportunityClick(post)}
                       className={cn(
                         'flex h-full w-full flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition-colors hover:border-slate-300 hover:bg-white',
-                        showAdminOppDelete && 'pr-10'
+                        canDeleteOpportunity(post) && 'pr-10'
                       )}
                     >
                       {cardInner}
@@ -533,7 +537,7 @@ export default function NetworkRadarSection({
                     <div
                       className={cn(
                         'flex h-full w-full cursor-default flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 text-left',
-                        showAdminOppDelete && 'pr-10'
+                        canDeleteOpportunity(post) && 'pr-10'
                       )}
                     >
                       {cardInner}

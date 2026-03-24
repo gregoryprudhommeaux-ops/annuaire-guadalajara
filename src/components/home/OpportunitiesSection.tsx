@@ -24,7 +24,7 @@ type Props = {
   onOpenPost: (post: UrgentPost) => void;
   /** Colonne étroite (sous la recherche) : une seule colonne de cartes. */
   compactLayout?: boolean;
-  /** Admin : affiche une icône pour demander la suppression (confirmation dans App). */
+  /** Admin ou auteur : affiche une icône pour demander la suppression (confirmation dans App). */
   isAdmin?: boolean;
   onRequestDeleteOpportunity?: (post: UrgentPost) => void;
 };
@@ -53,7 +53,11 @@ export default function OpportunitiesSection({
 }: Props) {
   const slice = posts.slice(0, 5);
   const hasPosts = slice.length > 0;
-  const showAdminDelete = isAdmin && !!onRequestDeleteOpportunity;
+  const canDeleteOpportunity = (post: UrgentPost): boolean => {
+    if (!onRequestDeleteOpportunity) return false;
+    if (isAdmin) return true;
+    return !!user && !!post.authorId && post.authorId === user.uid;
+  };
   /** Même gabarit que SearchBlock / MembersCountBlock (colonne gauche, état vide). */
   const sidebarEmptyStyle = compactLayout && !hasPosts;
 
@@ -127,7 +131,7 @@ export default function OpportunitiesSection({
                   canOpenProfile && 'hover:border-stone-200 hover:bg-stone-50'
                 )}
               >
-                {showAdminDelete ? (
+                {canDeleteOpportunity(post) ? (
                   <button
                     type="button"
                     aria-label={t('deleteOpportunityAria')}
@@ -146,12 +150,12 @@ export default function OpportunitiesSection({
                   <button
                     type="button"
                     onClick={() => onOpenPost(post)}
-                    className={cn('flex flex-col text-left', showAdminDelete && 'pr-9')}
+                    className={cn('flex flex-col text-left', canDeleteOpportunity(post) && 'pr-9')}
                   >
                     {cardBody}
                   </button>
                 ) : (
-                  <div className={cn('flex flex-col text-left cursor-default', showAdminDelete && 'pr-9')}>
+                  <div className={cn('flex flex-col text-left cursor-default', canDeleteOpportunity(post) && 'pr-9')}>
                     {cardBody}
                   </div>
                 )}

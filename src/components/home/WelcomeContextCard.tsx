@@ -8,6 +8,8 @@ type Props = {
   className?: string;
   /** Sur les écrans &lt; sm : bouton pour replier le corps et libérer de la hauteur. */
   collapsibleOnMobile?: boolean;
+  /** État initial mobile (ouvert par défaut si non précisé). */
+  mobileDefaultOpen?: boolean;
   mobileShowIntroLabel?: string;
   mobileHideIntroLabel?: string;
 };
@@ -18,10 +20,11 @@ export default function WelcomeContextCard({
   body,
   className,
   collapsibleOnMobile = false,
+  mobileDefaultOpen = true,
   mobileShowIntroLabel = 'Show introduction',
   mobileHideIntroLabel = 'Hide introduction',
 }: Props) {
-  const [mobileOpen, setMobileOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(mobileDefaultOpen);
   const bodyId = useId();
   const showToggle = collapsibleOnMobile;
 

@@ -2115,7 +2115,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   };
 
   const pendingProfiles = useMemo(() => {
-    return allProfiles.filter(p => p.isValidated === false);
+    return allProfiles.filter((p) => p.needsAdminReview === true || p.isValidated === false);
   }, [allProfiles]);
 
   const pendingUidsKey = useMemo(
@@ -3051,6 +3051,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       ? companySizeFromEmployeeRange(employeeCountVal)
       : (baseProfile?.companySize ?? 'solo');
 
+    const isInitialSelfProfile = isSelf && !profile;
     const newProfile = {
       uid: targetUid,
       fullName: getTrimmed('fullName'),
@@ -3090,7 +3091,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
         ? 'admin'
         : (editingProfile?.role || profile?.role || 'user') as Role,
       createdAt: (isSelf ? profile?.createdAt : editingProfile?.createdAt) || Timestamp.now(),
-      isValidated: isSelf ? (profile?.isValidated ?? false) : (editingProfile?.isValidated ?? true),
+      isValidated: isSelf ? (profile?.isValidated ?? true) : (editingProfile?.isValidated ?? true),
+      needsAdminReview: isInitialSelfProfile
+        ? true
+        : (isSelf ? (profile?.needsAdminReview ?? false) : (editingProfile?.needsAdminReview ?? false)),
       communityYearsInGdl: deleteField(),
       communityCompanyKind,
       communityMemberStatus,
@@ -3423,7 +3427,11 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   const handleValidateProfile = async (uid: string, isValid: boolean) => {
     try {
-      await setDoc(doc(db, 'users', uid), { isValidated: isValid }, { merge: true });
+      await setDoc(
+        doc(db, 'users', uid),
+        { isValidated: isValid, needsAdminReview: false },
+        { merge: true }
+      );
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${uid}`);
     }
@@ -3445,6 +3453,24 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       batch.delete(doc(db, 'urgent_posts', postId));
       batch.delete(doc(db, URGENT_POST_PRIVATE_COLLECTION, postId));
       await batch.commit();
+      return true;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `urgent_posts/${postId}`);
+      return false;
+    }
+  };
+
+  /** Suppression opportunité : admin (batch public+private) ou auteur (doc public, privé si autorisé). */
+  const handleDeleteOpportunity = async (postId: string): Promise<boolean> => {
+    if (!user) return false;
+    if (profile?.role === 'admin') {
+      return handleRejectUrgentPost(postId);
+    }
+    try {
+      await deleteDoc(doc(db, 'urgent_posts', postId));
+      await deleteDoc(doc(db, URGENT_POST_PRIVATE_COLLECTION, postId)).catch(() => {
+        // Peut être refusé pour un post déjà publié ; non bloquant pour retirer la carte publique.
+      });
       return true;
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `urgent_posts/${postId}`);
@@ -4763,6 +4789,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </div>
                           );
                         })()}
+                        <div className="mt-6 border-t border-stone-100 pt-5">
+                          <button
+                            type="button"
+                            onClick={() => setProfileToDelete(profile.uid)}
+                            className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50"
+                          >
+                            <Plus size={14} className="rotate-45" aria-hidden />
+                            {t('deleteProfile')}
+                          </button>
+                        </div>
                       </div>
                     ) : (
                         <div className="text-center py-8">
@@ -4841,6 +4877,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   body={t('welcomeIntro')}
                   className="h-full w-full"
                   collapsibleOnMobile
+                  mobileDefaultOpen={false}
                   mobileShowIntroLabel={t('welcomeIntroShow')}
                   mobileHideIntroLabel={t('welcomeIntroHide')}
                 />
@@ -4895,6 +4932,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   body={t('welcomeIntro')}
                   className="w-full"
                   collapsibleOnMobile
+                  mobileDefaultOpen={false}
                   mobileShowIntroLabel={t('welcomeIntroShow')}
                   mobileHideIntroLabel={t('welcomeIntroHide')}
                 />
@@ -5559,16 +5597,34 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         {selectedProfile.city}
                       </span>
                     </div>
-                    {profile?.role === 'admin' && selectedProfile.isValidated === false && (
+                    {profile?.role === 'admin' &&
+                      (selectedProfile.needsAdminReview === true || selectedProfile.isValidated === false) && (
                       <div className="mt-4 flex flex-wrap gap-2">
                         <button
                           onClick={async () => {
                             await handleValidateProfile(selectedProfile.uid, true);
-                            setSelectedProfile((prev) => prev ? { ...prev, isValidated: true } : prev);
+                            setSelectedProfile((prev) =>
+                              prev
+                                ? { ...prev, isValidated: true, needsAdminReview: false }
+                                : prev
+                            );
                           }}
                           className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all"
                         >
                           {t('validate')}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            await handleValidateProfile(selectedProfile.uid, false);
+                            setSelectedProfile((prev) =>
+                              prev
+                                ? { ...prev, isValidated: false, needsAdminReview: false }
+                                : prev
+                            );
+                          }}
+                          className="px-4 py-2 rounded-lg border border-red-200 bg-white text-red-700 text-xs font-bold hover:bg-red-50 transition-all"
+                        >
+                          {pickLang('Annuler', 'Cancelar', 'Cancel', lang)}
                         </button>
                         <button
                           onClick={() => generateOptimizationSuggestion(selectedProfile)}
@@ -5581,7 +5637,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         </button>
                       </div>
                     )}
-                    {profile?.role === 'admin' && selectedProfile.isValidated === false && selectedProfile.optimizationSuggestion && (
+                    {profile?.role === 'admin' &&
+                      (selectedProfile.needsAdminReview === true || selectedProfile.isValidated === false) &&
+                      selectedProfile.optimizationSuggestion && (
                       <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl space-y-3">
                         <p className="text-xs font-bold text-indigo-900">
                           {pickLang(
@@ -6046,6 +6104,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           >
                             {t('validate')}
                           </button>
+                          <button 
+                            onClick={() => handleValidateProfile(p.uid, false)}
+                            className="flex-1 sm:flex-none px-4 py-2 bg-white text-red-700 rounded-lg text-xs font-bold border border-red-200 hover:bg-red-50 transition-all"
+                          >
+                            {pickLang('Annuler', 'Cancelar', 'Cancel', lang)}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -6436,7 +6500,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   type="button"
                   onClick={async () => {
                     if (!urgentPostIdToDelete) return;
-                    const ok = await handleRejectUrgentPost(urgentPostIdToDelete);
+                    const ok = await handleDeleteOpportunity(urgentPostIdToDelete);
                     if (ok) setUrgentPostIdToDelete(null);
                   }}
                   className="w-full rounded-xl bg-red-600 py-3 font-bold text-white transition-all hover:bg-red-700"
