@@ -21,7 +21,7 @@ service cloud.firestore {
      */
     function isAdmin() {
       return isAuthenticated() && (
-        request.auth.uid == 'HiSztwqyDXUZ5RaIOyqUP3BJd6Y2' ||
+        request.auth.uid == 'HiSztwqyDXUZ5RalOyqUP3BJd6Y2' ||
         exists(/databases/ai-studio-b6e23c83-eceb-4cf9-848f-8e11b8db6eb8/documents/admin_allowlist/$(request.auth.uid)) ||
         (request.auth.token.email is string &&
           request.auth.token.email.trim() == 'chinois2001@gmail.com') ||
