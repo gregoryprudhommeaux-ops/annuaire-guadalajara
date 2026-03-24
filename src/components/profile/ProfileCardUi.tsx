@@ -45,7 +45,7 @@ const waIcon = (
   </svg>
 );
 
-/** Email masqué jusqu’au clic, puis lien mailto. */
+/** Lien mailto: libellé fixe — ouvre le client mail sans afficher l’adresse dans la carte. */
 export function ProfileCardEmailContact({
   email,
   canView,
@@ -55,8 +55,6 @@ export function ProfileCardEmailContact({
   canView: boolean;
   t: (key: string) => string;
 }) {
-  const [revealed, setReveal] = useState(false);
-
   if (!canView) {
     return (
       <div className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs italic text-slate-400 blur-[2px] select-none">
@@ -66,31 +64,21 @@ export function ProfileCardEmailContact({
     );
   }
 
-  if (revealed) {
-    return (
-      <a
-        href={`mailto:${email}`}
-        onClick={(e) => e.stopPropagation()}
-        className="flex w-full min-w-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-slate-50 hover:underline"
-      >
-        <Mail size={16} className="shrink-0" strokeWidth={1.75} />
-        <span className="truncate">{email}</span>
-      </a>
-    );
-  }
+  const trimmed = email.trim();
+  const mailtoHref = trimmed ? `mailto:${encodeURIComponent(trimmed)}` : '#';
 
   return (
-    <button
-      type="button"
+    <a
+      href={mailtoHref}
       onClick={(e) => {
         e.stopPropagation();
-        setReveal(true);
+        if (!trimmed) e.preventDefault();
       }}
-      className="flex w-full min-w-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+      className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
     >
       <Mail size={16} className="shrink-0 text-slate-500" strokeWidth={1.75} />
       {t('cardContactByEmail')}
-    </button>
+    </a>
   );
 }
 

@@ -3,7 +3,7 @@
  * - Pas de routes dédiées `/invitation` ni `/opportunite` : tout passe par des modales sur `/`.
  * - Invitation : message prérempli + WhatsApp / e-mail / copier (pas de champ `email` ni `<form>` HTML).
  * - Opportunité (connecté) : `textarea[name="text"]`, `select[name="sector"]` (pas titre / catégorie).
- * - « Voir tous les derniers inscrits » : active l’onglet Membres (l’URL reste `/`).
+ * - « Voir tous les derniers inscrits » : navigation vers `/membres?sort=recent` (page dédiée + onglet Membres).
  *
  * Variables :
  * - `CYPRESS_BASE_URL` (ex. https://annuaire-guadalajara.vercel.app) ou défaut localhost:3000.
@@ -62,7 +62,9 @@ describe('CTA navigation — Annuaire Guadalajara', () => {
       .should('be.visible')
       .click();
 
-    cy.url().should('not.include', '/membres');
+    cy.url().should('include', '/membres');
+    cy.url().should('include', 'sort=recent');
+    cy.get('[data-testid="members-directory-page"]').should('be.visible');
     cy.get('[data-testid="directory-tab-members"]').should('have.attr', 'aria-pressed', 'true');
     cy.get('[data-testid="member-card"]', { timeout: 40000 }).should('have.length.greaterThan', 0);
   });

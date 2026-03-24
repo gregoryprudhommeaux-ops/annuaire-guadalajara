@@ -218,6 +218,8 @@ export const EN_STRINGS: Record<string, string> = {
     "Your profile must be validated by an administrator to access all directory information.",
   profileFormRequiredLegend:
     "Fields marked with an asterisk (*) are required for the team to validate your directory profile.",
+  profileFormSubsectionEntreprise: "Company",
+  profileFormSubsectionRH: "Human resources",
   profileBannerMandatory:
     "Please update your profile with the new required fields (marked *) so it can be validated.",
   profileBannerAi:
@@ -304,6 +306,13 @@ export const EN_STRINGS: Record<string, string> = {
   radarLockedCtaProfile: "Complete my directory profile",
   companies: "Companies",
   members: "Members",
+  membersPageTitle: "Member directory",
+  membersPageSubtitle:
+    "Sort the list, then narrow it down with sector, place, and search (left column).",
+  membersSortLabel: "Sort by",
+  membersSortOptionRecent: "Newest first",
+  membersSortOptionAlphabetical: "Alphabetical (name)",
+  membersSortOptionDefault: "Default order",
   activities: "Sectors",
   recommendedForYou: "Recommended for you",
   aiRecCompleteProfile:
@@ -329,6 +338,7 @@ export const EN_STRINGS: Record<string, string> = {
     "The service is temporarily unavailable or your connection is unstable. Please try again shortly.",
   urgentPostMustSignIn: "Sign in to publish a post.",
   urgentPostFormInvalid: "Please fill in the description and sector.",
+  htmlValidationFillField: "Please fill out this field.",
   contact: "Contact",
   contactLinks: "Contact & links",
   contactPrefsTitle: "Contact & collaboration preferences",

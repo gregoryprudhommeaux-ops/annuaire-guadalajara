@@ -54,6 +54,37 @@ export function collectProfileCoachGapKeys(p: UserProfile): string[] {
   return keys;
 }
 
+/**
+ * Score 0–1 aligné sur `collectProfileCoachGapKeys` (mêmes critères que le texte « Conseil : … »).
+ * Sert au badge « Profil: X% » pour éviter 100% + conseils contradictoires.
+ */
+export function getProfileCoachCompletionFraction(p: UserProfile): number {
+  const web = p.website?.trim() ?? '';
+  const websiteOk = web.length > 0 && /^https?:\/\/.+/i.test(web);
+  const primaryChecks = [
+    websiteOk,
+    !!(p.whatsapp?.trim()),
+    !!(p.city?.trim()),
+    (p.bio?.trim() ?? '').length >= PUBLICATION_BIO_MIN_LEN,
+    !!(p.activityCategory?.trim()),
+    !!(p.positionCategory?.trim()),
+    sanitizePassionIds(p.passionIds).length >= 1,
+  ];
+  const primaryPassed = primaryChecks.filter(Boolean).length;
+  if (primaryPassed < primaryChecks.length) {
+    return primaryPassed / primaryChecks.length;
+  }
+  const secondaryChecks = [
+    !!(p.linkedin?.trim()),
+    !!(p.photoURL?.trim()),
+    !!(p.contactPreferenceCta?.trim()),
+    (p.workingLanguageCodes?.length ?? 0) > 0,
+    !!p.typicalClientSize,
+  ];
+  const secondaryPassed = secondaryChecks.filter(Boolean).length;
+  return (primaryPassed + secondaryPassed) / (primaryChecks.length + secondaryChecks.length);
+}
+
 export function formatLocalProfileCoachLine(
   p: UserProfile,
   t: (key: string) => string

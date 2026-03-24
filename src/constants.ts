@@ -543,6 +543,12 @@ export const TRANSLATIONS: Translations = {
     fr: 'Les champs suivis d’une astérisque (*) sont obligatoires pour la validation de votre fiche par l’équipe.',
     es: 'Los campos con asterisco (*) son obligatorios para que el equipo valide tu ficha.',
   },
+  /** Sous-titres de groupe dans le formulaire profil (création société vs effectifs). */
+  profileFormSubsectionEntreprise: { fr: 'Entreprise', es: 'Empresa' },
+  profileFormSubsectionRH: {
+    fr: 'Ressources humaines',
+    es: 'Recursos humanos',
+  },
   profileBannerMandatory: {
     fr: 'Merci de mettre à jour votre profil avec les nouveaux champs obligatoires (marqués *) pour permettre sa validation.',
     es: 'Actualiza tu perfil con los nuevos campos obligatorios (marcados con *) para poder validarlo.',
@@ -745,6 +751,18 @@ export const TRANSLATIONS: Translations = {
   },
   companies: { fr: "Entreprises", es: "Empresas" },
   members: { fr: "Membres", es: "Miembros" },
+  membersPageTitle: { fr: "Annuaire des membres", es: "Directorio de miembros" },
+  membersPageSubtitle: {
+    fr: "Triez la liste, puis affinez avec secteur, lieu et recherche (colonne de gauche).",
+    es: "Ordena la lista y refina con sector, lugar y búsqueda (columna izquierda).",
+  },
+  membersSortLabel: { fr: "Trier par", es: "Ordenar por" },
+  membersSortOptionRecent: { fr: "Plus récents en premier", es: "Más recientes primero" },
+  membersSortOptionAlphabetical: {
+    fr: "Ordre alphabétique (nom)",
+    es: "Orden alfabético (nombre)",
+  },
+  membersSortOptionDefault: { fr: "Ordre par défaut", es: "Orden predeterminado" },
   /** @deprecated Libellé d’onglet : utiliser `radarTitle`. Conservé pour rétrocompatibilité éventuelle. */
   activities: { fr: "Secteurs", es: "Sectores" },
   recommendedForYou: { fr: "Recommandé pour vous", es: "Recomendado para ti" },
@@ -800,6 +818,11 @@ export const TRANSLATIONS: Translations = {
   urgentPostFormInvalid: {
     fr: "Renseignez la description et le secteur.",
     es: "Completa la descripción y el sector.",
+  },
+  /** Message HTML5 `setCustomValidity` (navigateur) — aligné sur la langue UI. */
+  htmlValidationFillField: {
+    fr: "Veuillez remplir ce champ.",
+    es: "Por favor, complete este campo.",
   },
   contact: { fr: "Contacter", es: "Contactar" },
   contactLinks: { fr: "Contact & liens", es: "Contacto y enlaces" },

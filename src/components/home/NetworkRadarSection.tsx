@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   LabelList,
+  Legend,
 } from 'recharts';
 import { Users, Target, Factory, Zap, Maximize2, Trash2 } from 'lucide-react';
 import type { UserProfile, Language, UrgentPost } from '../../types';
@@ -50,10 +51,41 @@ type Props = {
   onRequestDeleteOpportunity?: (post: UrgentPost) => void;
 };
 
-function truncateLabel(s: string, max = 30): string {
-  const x = s.trim();
-  if (x.length <= max) return x;
-  return `${x.slice(0, max - 1)}…`;
+/** Découpe les libellés de besoins (souvent « a / b / c ») pour affichage multi-ligne sur l’axe Y. */
+function splitNeedLabelLines(s: string, maxLines = 4, maxSegLen = 36): string[] {
+  const t = s.trim();
+  if (!t) return [''];
+
+  const bySlash = t.split(/\s*\/\s*/).map((p) => p.trim()).filter(Boolean);
+  if (bySlash.length >= 2) {
+    const lines = bySlash.slice(0, maxLines).map((line) =>
+      line.length > maxSegLen ? `${line.slice(0, maxSegLen - 1)}…` : line
+    );
+    if (bySlash.length > maxLines) {
+      const last = lines[maxLines - 1];
+      lines[maxLines - 1] = last.endsWith('…')
+        ? last
+        : `${last.slice(0, Math.max(0, maxSegLen - 2))}…`;
+    }
+    return lines;
+  }
+
+  const words = t.split(/\s+/);
+  const lines: string[] = [];
+  let cur = '';
+  for (const w of words) {
+    if (lines.length >= maxLines) break;
+    const next = cur ? `${cur} ${w}` : w;
+    if (next.length <= maxSegLen) {
+      cur = next;
+    } else {
+      if (cur) lines.push(cur);
+      if (lines.length >= maxLines) break;
+      cur = w.length > maxSegLen ? `${w.slice(0, maxSegLen - 1)}…` : w;
+    }
+  }
+  if (lines.length < maxLines && cur) lines.push(cur);
+  return lines.slice(0, maxLines);
 }
 
 export default function NetworkRadarSection({
@@ -146,51 +178,78 @@ export default function NetworkRadarSection({
       .map(([id, count]) => ({
         id,
         count,
-        label: truncateLabel(needOptionLabel(id, lang), 30),
-        fullLabel: needOptionLabel(id, lang),
+        label: needOptionLabel(id, lang),
       }));
   }, [profilesForStats, lang, needOptionLabel]);
 
   const maxNeedCount = needsBarData.reduce((m, d) => Math.max(m, d.count), 0) || 1;
 
-  const needsShortToFullLabel = useMemo(() => {
-    const m = new Map<string, string>();
-    needsBarData.forEach((d) => m.set(d.label, d.fullLabel));
-    return m;
+  const needsBarRowHeight = useMemo(() => {
+    const lineH = 10;
+    const pad = 14;
+    let maxLines = 1;
+    needsBarData.forEach((d) => {
+      maxLines = Math.max(maxLines, splitNeedLabelLines(d.label, 4, 34).length);
+    });
+    return Math.max(44, maxLines * lineH + pad);
   }, [needsBarData]);
 
   const renderNeedsYAxisTickSmall = useCallback(
     (props: { x: number; y: number; payload?: { value?: string } }) => {
       const { x, y, payload } = props;
-      const short = String(payload?.value ?? '');
-      const full = needsShortToFullLabel.get(short) ?? short;
+      const full = String(payload?.value ?? '');
+      const lines = splitNeedLabelLines(full, 4, 34);
+      const lh = 10;
+      const fs = 10;
+      const startDy = lines.length <= 1 ? 0 : -((lines.length - 1) * lh) / 2;
       return (
         <g transform={`translate(${x},${y})`}>
           <title>{full}</title>
-          <text textAnchor="end" dy={4} className="fill-slate-700" fontSize={10}>
-            {short}
+          <text
+            textAnchor="end"
+            className="fill-slate-700"
+            fontSize={fs}
+            dominantBaseline="middle"
+          >
+            {lines.map((line, i) => (
+              <tspan key={i} x={0} dy={i === 0 ? startDy : lh}>
+                {line}
+              </tspan>
+            ))}
           </text>
         </g>
       );
     },
-    [needsShortToFullLabel]
+    []
   );
 
   const renderNeedsYAxisTickLarge = useCallback(
     (props: { x: number; y: number; payload?: { value?: string } }) => {
       const { x, y, payload } = props;
-      const short = String(payload?.value ?? '');
-      const full = needsShortToFullLabel.get(short) ?? short;
+      const full = String(payload?.value ?? '');
+      const lines = splitNeedLabelLines(full, 5, 44);
+      const lh = 13;
+      const fs = 12;
+      const startDy = lines.length <= 1 ? 0 : -((lines.length - 1) * lh) / 2;
       return (
         <g transform={`translate(${x},${y})`}>
           <title>{full}</title>
-          <text textAnchor="end" dy={4} className="fill-slate-700" fontSize={12}>
-            {short}
+          <text
+            textAnchor="end"
+            className="fill-slate-700"
+            fontSize={fs}
+            dominantBaseline="middle"
+          >
+            {lines.map((line, i) => (
+              <tspan key={i} x={0} dy={i === 0 ? startDy : lh}>
+                {line}
+              </tspan>
+            ))}
           </text>
         </g>
       );
     },
-    [needsShortToFullLabel]
+    []
   );
 
   const passionEntries = useMemo(() => {
@@ -379,21 +438,21 @@ export default function NetworkRadarSection({
           ) : (
             <div
               className="min-w-0 w-full overflow-x-auto"
-              style={{ height: Math.min(320, 40 + needsBarData.length * 50) }}
+              style={{ height: Math.min(380, 28 + needsBarData.length * needsBarRowHeight) }}
             >
-              <div className="h-full min-w-[260px]">
+              <div className="h-full w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     layout="vertical"
                     data={needsBarData}
-                    margin={{ top: 4, right: 36, left: 4, bottom: 4 }}
-                  barCategoryGap={12}
+                    margin={{ top: 6, right: 40, left: 10, bottom: 6 }}
+                  barCategoryGap={10}
                 >
                   <XAxis type="number" hide domain={[0, maxNeedCount]} />
                   <YAxis
                     type="category"
                     dataKey="label"
-                    width={108}
+                    width={192}
                     tick={renderNeedsYAxisTickSmall}
                     axisLine={false}
                     tickLine={false}
@@ -402,8 +461,8 @@ export default function NetworkRadarSection({
                   <Tooltip
                     formatter={(v: number) => [v, t('chartNeedsTitle')]}
                     labelFormatter={(_, payload) => {
-                      const p = payload?.[0]?.payload as { fullLabel?: string };
-                      return p?.fullLabel ?? '';
+                      const p = payload?.[0]?.payload as { label?: string };
+                      return p?.label ?? '';
                     }}
                     contentStyle={{
                       borderRadius: 8,
@@ -646,14 +705,14 @@ export default function NetworkRadarSection({
                   <BarChart
                     layout="vertical"
                     data={needsBarData}
-                    margin={{ top: 8, right: 40, left: 8, bottom: 8 }}
+                    margin={{ top: 8, right: 48, left: 16, bottom: 8 }}
                     barCategoryGap={14}
                   >
                     <XAxis type="number" hide domain={[0, maxNeedCount]} />
                     <YAxis
                       type="category"
                       dataKey="label"
-                      width={200}
+                      width={288}
                       tick={renderNeedsYAxisTickLarge}
                       axisLine={false}
                       tickLine={false}
@@ -662,8 +721,8 @@ export default function NetworkRadarSection({
                     <Tooltip
                       formatter={(v: number) => [v, t('chartNeedsTitle')]}
                       labelFormatter={(_, payload) => {
-                        const p = payload?.[0]?.payload as { fullLabel?: string };
-                        return p?.fullLabel ?? '';
+                        const p = payload?.[0]?.payload as { label?: string };
+                        return p?.label ?? '';
                       }}
                       contentStyle={{ borderRadius: 8, border: '1px solid rgb(226 232 240)', fontSize: 12 }}
                     />

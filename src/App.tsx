@@ -3,13 +3,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo, useCallback, useRef, createContext, useContext } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useCallback,
+  useRef,
+  createContext,
+  useContext,
+} from 'react';
 import { 
   BrowserRouter, 
   Routes, 
   Route, 
   useParams, 
-  useNavigate, 
+  useNavigate,
+  useLocation,
   Link 
 } from 'react-router-dom';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
@@ -127,8 +137,10 @@ import {
 import { translateFreeTextToUiLang } from './lib/aiTranslateFreeText';
 import {
   profileCoachFingerprint,
+  collectProfileCoachGapKeys,
   formatLocalProfileCoachLine,
   fetchAiProfileCoachLine,
+  getProfileCoachCompletionFraction,
   normalizeAiCoachToSingleTip,
 } from './lib/profileCoach';
 import {
@@ -142,7 +154,7 @@ import { getGeminiApiKey } from './lib/geminiEnv';
 import IceBreakerInterests from './components/profile/IceBreakerInterests';
 import HeroSection from './components/home/HeroSection';
 import WelcomeContextCard from './components/home/WelcomeContextCard';
-import SearchBlock, { DirectoryRandomProfileButton } from './components/home/SearchBlock';
+import SearchBlock from './components/home/SearchBlock';
 import RecommendedSection from './components/home/RecommendedSection';
 import MembersCountBlock from './components/home/MembersCountBlock';
 import InviteNetworkModal from './components/home/InviteNetworkModal';
@@ -2065,8 +2077,19 @@ type MainAppProps = {
   initialViewMode?: 'companies' | 'members' | 'activities' | 'radar' | 'dashboard';
 };
 
+type MembersSortMode = 'default' | 'recent' | 'alphabetical';
+
+function parseMembersSortFromSearch(search: string): MembersSortMode {
+  const s = new URLSearchParams(search).get('sort');
+  if (s === 'alpha' || s === 'alphabetical') return 'alphabetical';
+  if (s === 'default') return 'default';
+  return 'recent';
+}
+
 const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const { lang, setLang, t } = useLanguage();
+  const location = useLocation();
+  const navigate = useNavigate();
   const h = homeLanding(lang);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -2099,7 +2122,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [loading, setLoading] = useState(true);
   const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
   const directoryMainRef = useRef<HTMLDivElement>(null);
-  const [membersSortRecent, setMembersSortRecent] = useState(false);
+  const [membersSortMode, setMembersSortMode] = useState<MembersSortMode>('default');
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   const [authLeads, setAuthLeads] = useState<AuthLeadDoc[]>([]);
   const [showOpportunitiesModerationPanel, setShowOpportunitiesModerationPanel] = useState(false);
@@ -2190,6 +2213,18 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       if (timeoutId !== null) window.clearTimeout(timeoutId);
     };
   }, [profile?.role]);
+
+  const isMembersDirectoryRoute = location.pathname === '/membres';
+
+  useLayoutEffect(() => {
+    if (location.pathname === '/membres') {
+      setViewMode('members');
+      setDirectoryDiscoveryStripsHidden(true);
+      setMembersSortMode(parseMembersSortFromSearch(location.search));
+    } else {
+      setMembersSortMode('default');
+    }
+  }, [location.pathname, location.search]);
 
   const getAuthErrorMessage = (code: string) => {
     const host = typeof window !== 'undefined' ? window.location.host : '';
@@ -2446,7 +2481,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   const profileCompletionPct = useMemo(() => {
     if (!profile) return 0;
-    return Math.round(getProfileAiRecommendationReadiness(profile) * 100);
+    return Math.round(getProfileCoachCompletionFraction(profile) * 100);
   }, [profile]);
 
   useEffect(() => {
@@ -2461,8 +2496,16 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const cacheKey = `profile_coach_ai_v2_${profile.uid}_${lang}`;
 
     if (isEditing) {
-      setProfileCoachLine(formatLocalProfileCoachLine(profile, t));
+      const gaps = collectProfileCoachGapKeys(profile);
+      setProfileCoachLine(gaps.length ? formatLocalProfileCoachLine(profile, t) : '');
       setProfileCoachSource('local');
+      setProfileCoachLoading(false);
+      return;
+    }
+
+    if (collectProfileCoachGapKeys(profile).length === 0) {
+      setProfileCoachLine('');
+      setProfileCoachSource(null);
       setProfileCoachLoading(false);
       return;
     }
@@ -3461,11 +3504,18 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   const membersDisplayList = useMemo(() => {
     const list = [...membersFiltered];
-    if (membersSortRecent) {
+    if (membersSortMode === 'recent') {
       list.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+    } else if (membersSortMode === 'alphabetical') {
+      const locale = sortLocale(lang);
+      list.sort((a, b) => {
+        const byName = a.fullName.localeCompare(b.fullName, locale, { sensitivity: 'base' });
+        if (byName !== 0) return byName;
+        return a.companyName.localeCompare(b.companyName, locale, { sensitivity: 'base' });
+      });
     }
     return list;
-  }, [membersFiltered, membersSortRecent]);
+  }, [membersFiltered, membersSortMode, lang]);
 
   const profilesSortedForCompanies = useMemo(() => {
     return [...filteredProfiles].sort((a, b) => {
@@ -4102,9 +4152,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               lang
                             )}
                           </p>
-                          <p className="text-xs leading-relaxed text-stone-500 sm:text-sm break-words">
-                            {profileCoachLine}
-                          </p>
+                          {profileCoachLine.trim() ? (
+                            <p className="text-xs leading-relaxed text-stone-500 sm:text-sm break-words">
+                              {profileCoachLine}
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                     ) : null}
@@ -4221,11 +4273,26 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 </label>
                                 <input name="companyName" defaultValue={editingProfile?.companyName || profile?.companyName} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
                               </div>
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-3 rounded-xl border border-stone-100 bg-stone-50/50 p-3 sm:p-4">
+                                <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                                  {t('profileFormSubsectionEntreprise')}
+                                </h3>
                                 <div className="space-y-1">
-                                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('creationYear')}</label>
-                                  <input type="number" name="creationYear" defaultValue={editingProfile?.creationYear || profile?.creationYear} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
+                                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                    {t('creationYear')}
+                                  </label>
+                                  <input
+                                    type="number"
+                                    name="creationYear"
+                                    defaultValue={editingProfile?.creationYear || profile?.creationYear}
+                                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                  />
                                 </div>
+                              </div>
+                              <div className="space-y-3 rounded-xl border border-stone-100 bg-stone-50/50 p-3 sm:p-4">
+                                <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                                  {t('profileFormSubsectionRH')}
+                                </h3>
                                 <div className="space-y-1">
                                   <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
                                     {t('employeeCount')}{' '}
@@ -4238,7 +4305,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     defaultValue={employeeCountToSelectDefault(
                                       editingProfile?.employeeCount ?? profile?.employeeCount
                                     )}
-                                    className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                    className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
                                   >
                                     <option value="">
                                       {pickLang(
@@ -5071,7 +5138,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   onExploreMembers={() => {
                     setDirectoryDiscoveryStripsHidden(true);
                     setViewMode('members');
-                    setMembersSortRecent(false);
                     requestAnimationFrame(() =>
                       directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                     );
@@ -5103,38 +5169,23 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               isAdminDashboard && 'hidden'
             )}
           >
-            {viewMode === 'activities' ? (
-              <div
-                className={cn(
-                  'min-w-0 rounded-xl border border-slate-200 bg-slate-50/95 shadow-sm',
-                  cardPad
-                )}
-              >
-                <DirectoryRandomProfileButton
-                  t={t}
-                  onRandomProfile={handleRandomProfile}
-                  randomDisabled={guestVisibleProfilesForRandom.length === 0}
-                />
-              </div>
-            ) : (
-              <SearchBlock
-                lang={lang}
-                t={t}
-                searchTerm={searchTerm}
-                onSearchTermChange={setSearchTerm}
-                filterCategory={filterCategory}
-                onFilterCategoryChange={setFilterCategory}
-                filterProfileType={filterProfileType}
-                onFilterProfileTypeChange={handleFilterProfileTypeChange}
-                filterLocation={filterLocation}
-                onFilterLocationChange={setFilterLocation}
-                onSearchSubmit={scrollDirectoryIntoView}
-                onClearFilters={clearDirectoryFilters}
-                onRandomProfile={handleRandomProfile}
-                randomDisabled={guestVisibleProfilesForRandom.length === 0}
-                showClearFilters={showDirectoryClearFilters}
-              />
-            )}
+            <SearchBlock
+              lang={lang}
+              t={t}
+              searchTerm={searchTerm}
+              onSearchTermChange={setSearchTerm}
+              filterCategory={filterCategory}
+              onFilterCategoryChange={setFilterCategory}
+              filterProfileType={filterProfileType}
+              onFilterProfileTypeChange={handleFilterProfileTypeChange}
+              filterLocation={filterLocation}
+              onFilterLocationChange={setFilterLocation}
+              onSearchSubmit={scrollDirectoryIntoView}
+              onClearFilters={clearDirectoryFilters}
+              onRandomProfile={handleRandomProfile}
+              randomDisabled={guestVisibleProfilesForRandom.length === 0}
+              showClearFilters={showDirectoryClearFilters}
+            />
 
             <div
               className={cn(
@@ -5230,12 +5281,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 guestTeaser={guestDirectoryRestricted}
                 onOpenProfile={(p) => setSelectedProfile(p)}
                 onSeeAll={() => {
-                  setDirectoryDiscoveryStripsHidden(true);
-                  setViewMode('members');
-                  setMembersSortRecent(true);
-                  requestAnimationFrame(() =>
-                    directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  );
+                  navigate('/membres?sort=recent');
                 }}
               />
             )}
@@ -5253,12 +5299,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   guestTeaser={guestDirectoryRestricted}
                   onOpenProfile={(p) => setSelectedProfile(p)}
                   onSeeAll={() => {
-                    setDirectoryDiscoveryStripsHidden(true);
-                    setViewMode('members');
-                    setMembersSortRecent(true);
-                    requestAnimationFrame(() =>
-                      directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    );
+                    navigate('/membres?sort=recent');
                   }}
                 />
 
@@ -5359,6 +5400,18 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </RecommendedSection>
             )}
 
+            {isMembersDirectoryRoute && !isAdminDashboard && (
+              <header
+                data-testid="members-directory-page"
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5"
+              >
+                <h1 className="text-xl font-bold tracking-tight text-stone-900 sm:text-2xl">
+                  {t('membersPageTitle')}
+                </h1>
+                <p className="mt-2 text-sm leading-snug text-stone-600">{t('membersPageSubtitle')}</p>
+              </header>
+            )}
+
             {/* View Mode Tabs — seule barre d’onglets, collée au listing ; sticky sous le header (z-50) */}
             <div className="sticky top-24 z-40 min-w-0 bg-slate-50 py-2 sm:top-16">
               <DirectoryTabBar
@@ -5375,6 +5428,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     setShowOpportunitiesModerationPanel(false);
                     window.location.assign('/dashboard');
                     return;
+                  }
+                  if (isMembersDirectoryRoute && id !== 'members') {
+                    navigate('/');
                   }
                   setDirectoryDiscoveryStripsHidden(true);
                   setViewMode(
@@ -5417,18 +5473,41 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
               {viewMode === 'members' && (
                 <div className="space-y-6">
-                  {membersSortRecent && (
-                    <div className="flex flex-col gap-2 rounded-2xl border border-blue-100 bg-blue-50/80 p-4 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="min-w-0 text-sm font-medium leading-snug text-blue-950 break-words hyphens-auto">
-                        {h.membersSortBanner}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setMembersSortRecent(false)}
-                        className="text-sm font-semibold text-blue-800 underline-offset-2 hover:underline"
-                      >
-                        {h.membersSortReset}
-                      </button>
+                  {isMembersDirectoryRoute && (
+                    <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <label
+                          htmlFor="members-directory-sort"
+                          className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
+                        >
+                          {t('membersSortLabel')}
+                        </label>
+                        <select
+                          id="members-directory-sort"
+                          data-testid="members-directory-sort"
+                          value={membersSortMode}
+                          onChange={(e) => {
+                            const mode = e.target.value as MembersSortMode;
+                            const sortParam =
+                              mode === 'recent'
+                                ? 'recent'
+                                : mode === 'alphabetical'
+                                  ? 'alpha'
+                                  : 'default';
+                            const p = new URLSearchParams(location.search);
+                            p.set('sort', sortParam);
+                            navigate(
+                              { pathname: '/membres', search: `?${p.toString()}` },
+                              { replace: true }
+                            );
+                          }}
+                          className="w-full max-w-md rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-medium text-stone-800 outline-none transition-all focus:ring-2 focus:ring-blue-600"
+                        >
+                          <option value="recent">{t('membersSortOptionRecent')}</option>
+                          <option value="alphabetical">{t('membersSortOptionAlphabetical')}</option>
+                          <option value="default">{t('membersSortOptionDefault')}</option>
+                        </select>
+                      </div>
                     </div>
                   )}
                   {highlightedNeedFilter && (
@@ -5497,24 +5576,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
               {viewMode === 'activities' && (
                 <div className="space-y-6">
-                  <SearchBlock
-                    lang={lang}
-                    t={t}
-                    searchTerm={searchTerm}
-                    onSearchTermChange={setSearchTerm}
-                    filterCategory={filterCategory}
-                    onFilterCategoryChange={setFilterCategory}
-                    filterProfileType={filterProfileType}
-                    onFilterProfileTypeChange={handleFilterProfileTypeChange}
-                    filterLocation={filterLocation}
-                    onFilterLocationChange={setFilterLocation}
-                    onSearchSubmit={scrollDirectoryIntoView}
-                    onClearFilters={clearDirectoryFilters}
-                    onRandomProfile={handleRandomProfile}
-                    randomDisabled={guestVisibleProfilesForRandom.length === 0}
-                    showClearFilters={showDirectoryClearFilters}
-                    hideRandomButton
-                  />
                   {activityCategoryPopularity.filter(([cat]) => cat).length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {activityCategoryPopularity
@@ -6596,12 +6657,28 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       'E.g. Looking for a logistics distributor in Guadalajara...',
                       lang
                     )}
+                    onInvalid={(e) => {
+                      e.currentTarget.setCustomValidity(t('htmlValidationFillField'));
+                    }}
+                    onInput={(e) => {
+                      e.currentTarget.setCustomValidity('');
+                    }}
                     className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all h-32 resize-none" 
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('activityCategory')}</label>
-                  <select name="sector" required className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all">
+                  <select
+                    name="sector"
+                    required
+                    onInvalid={(e) => {
+                      e.currentTarget.setCustomValidity(t('htmlValidationFillField'));
+                    }}
+                    onChange={(e) => {
+                      e.currentTarget.setCustomValidity('');
+                    }}
+                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all"
+                  >
                     {ACTIVITY_CATEGORIES.map(c => <option key={c} value={c}>{activityCategoryLabel(c, lang)}</option>)}
                   </select>
                 </div>
@@ -6826,6 +6903,7 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<MainApp />} />
+            <Route path="/membres" element={<MainApp />} />
             <Route path="/dashboard" element={<MainApp initialViewMode="dashboard" />} />
             <Route path="/profil/:profileId" element={<ProfilePage />} />
             <Route path="/besoin/:needId" element={<NeedPage />} />
