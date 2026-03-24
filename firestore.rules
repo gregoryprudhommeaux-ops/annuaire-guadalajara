@@ -1,4 +1,6 @@
 rules_version = '2';
+// Déploiement : firebase deploy --only firestore:rules
+// firebase.json cible la base nommée (même id que firestoreDatabaseId dans firebase-applet-config.json).
 service cloud.firestore {
   match /databases/{database}/documents {
 
