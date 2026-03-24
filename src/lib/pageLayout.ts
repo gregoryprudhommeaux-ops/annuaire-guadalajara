@@ -9,13 +9,13 @@
 export const pagePadX = 'px-4 sm:px-6 lg:px-8';
 
 /** Barre de titre (sticky) : largeur max + padding X */
-export const pageHeaderInner = `mx-auto min-w-0 max-w-7xl py-3 ${pagePadX}`;
+export const pageHeaderInner = `mx-auto w-full min-w-0 max-w-7xl py-3 ${pagePadX}`;
 
 /** Zone principale sous le header (sans max-width : à combiner avec max-w-7xl ou max-w-none) */
-export const pageMainPad = `mx-auto min-w-0 ${pagePadX} py-5 sm:py-6`;
+export const pageMainPad = `mx-auto w-full min-w-0 ${pagePadX} py-5 sm:py-6`;
 
 /** Bandeau profil connecté / blocs full-bleed dans max-w-7xl */
-export const pageSectionPad = `max-w-7xl mx-auto py-6 ${pagePadX}`;
+export const pageSectionPad = `mx-auto w-full max-w-7xl py-6 ${pagePadX}`;
 
 /**
  * Cartes (recherche, opportunités, etc.) — moins de p-6 brutal sur très petit écran.
