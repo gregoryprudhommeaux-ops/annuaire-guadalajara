@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Annuaire Guadalajara favicon">
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="#0b1a45" />
+  <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+    <rect x="14" y="16" width="36" height="34" rx="6" />
+    <rect x="24" y="24" width="16" height="26" rx="3" />
+    <path d="M20 24h2M20 30h2M20 36h2M42 24h2M42 30h2M42 36h2" />
+    <path d="M30 34h4M30 40h4" />
+  </g>
+</svg>
