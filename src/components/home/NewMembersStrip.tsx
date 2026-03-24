@@ -18,6 +18,8 @@ type Props = {
   /** Ouvre la fiche (ex. modal annuaire). */
   onOpenProfile?: (p: UserProfile) => void;
   className?: string;
+  /** Variante plus compacte (utilisée pour alignement desktop connecté). */
+  compact?: boolean;
   /** Invité : photo & secteur floutés ; nom + société seuls nets. */
   guestTeaser?: boolean;
 };
@@ -62,6 +64,7 @@ export default function NewMembersStrip({
   onSeeAll,
   onOpenProfile,
   className,
+  compact = false,
   guestTeaser = false,
 }: Props) {
   const display = profiles.slice(0, 4);
@@ -69,7 +72,8 @@ export default function NewMembersStrip({
   return (
     <section
       className={cn(
-        'flex min-h-0 min-w-0 flex-col rounded-2xl border border-stone-200 bg-white px-4 py-4 text-left shadow-sm sm:px-6 sm:py-5',
+        'flex min-h-0 min-w-0 flex-col rounded-2xl border border-stone-200 bg-white text-left shadow-sm',
+        compact ? 'px-4 py-3 sm:px-5 sm:py-4' : 'px-4 py-4 sm:px-6 sm:py-5',
         className
       )}
       aria-labelledby="home-new-members-title"
@@ -82,7 +86,7 @@ export default function NewMembersStrip({
           {copy.newMembersTitle}
         </h2>
         {totalNewThisWeek > 0 && (
-          <p className="mt-2 inline-flex rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
+          <p className={cn('inline-flex rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-800', compact ? 'mt-1.5' : 'mt-2')}>
             {formatHomeBadge(copy.newMembersBadge, totalNewThisWeek)}
           </p>
         )}
@@ -94,9 +98,10 @@ export default function NewMembersStrip({
         <>
           {/* Max 2 colonnes ; secteur sans ville (mobile + desktop) */}
           <ul
-            className={
-              'mt-4 grid min-h-0 grid-cols-1 content-stretch gap-3 sm:grid-cols-2 sm:gap-4'
-            }
+            className={cn(
+              'grid min-h-0 grid-cols-1 content-stretch gap-3 sm:grid-cols-2',
+              compact ? 'mt-3 sm:gap-3' : 'mt-4 sm:gap-4'
+            )}
           >
           {display.map((p) => {
             const sectorLabel = stripTrailingCityFromSectorLine(
@@ -140,7 +145,7 @@ export default function NewMembersStrip({
                     />
                   )}
                 </div>
-                <div className="flex min-h-[4.25rem] min-w-0 flex-1 flex-col justify-center gap-1 text-left">
+                <div className={cn('flex min-w-0 flex-1 flex-col justify-center gap-1 text-left', compact ? 'min-h-[3.75rem]' : 'min-h-[4.25rem]')}>
                   <p className="truncate text-sm font-semibold leading-tight text-stone-900 sm:text-[15px]" title={p.fullName}>
                     {p.fullName}
                   </p>
@@ -165,8 +170,10 @@ export default function NewMembersStrip({
                 </div>
               </>
             );
-            const cardClass =
-              'flex h-full min-h-[5.75rem] w-full items-center gap-3 rounded-xl border border-stone-100 bg-stone-50/80 p-3 sm:min-h-[6rem] sm:p-3.5';
+            const cardClass = cn(
+              'flex h-full w-full items-center gap-3 rounded-xl border border-stone-100 bg-stone-50/80',
+              compact ? 'min-h-[5.25rem] p-2.5 sm:min-h-[5.5rem] sm:p-3' : 'min-h-[5.75rem] p-3 sm:min-h-[6rem] sm:p-3.5'
+            );
             return (
               <li key={p.uid} className="flex min-h-0 min-w-0">
                 {onOpenProfile ? (
@@ -196,7 +203,7 @@ export default function NewMembersStrip({
         </>
       )}
 
-      <div className="mt-3 border-t border-stone-100 pt-2.5 sm:mt-4 sm:pt-3">
+      <div className={cn('border-t border-stone-100', compact ? 'mt-2.5 pt-2 sm:mt-3 sm:pt-2.5' : 'mt-3 pt-2.5 sm:mt-4 sm:pt-3')}>
         <button
           type="button"
           onClick={onSeeAll}
