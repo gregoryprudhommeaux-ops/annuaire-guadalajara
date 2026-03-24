@@ -405,8 +405,20 @@ function logFirestoreErrorQuietly(error: unknown, operationType: OperationType, 
 
 type UrgentModerationMutationResult = { success: true } | { success: false; code: string };
 
-function urgentModerationErrorMessage(code: string, t: (key: string) => string): string {
-  if (code === 'permission-denied') return t('urgentPostErrorPermissionDenied');
+function urgentModerationErrorMessage(
+  code: string,
+  t: (key: string) => string,
+  connectedEmail?: string | null,
+  lang: Language = 'fr'
+): string {
+  if (code === 'permission-denied') {
+    const base = t('urgentPostErrorPermissionDenied');
+    const who =
+      connectedEmail && connectedEmail.trim() !== ''
+        ? ` — ${pickLang('compte : ', 'cuenta: ', 'signed in as: ', lang)}${connectedEmail.trim()}`
+        : '';
+    return `${base}${who}`;
+  }
   if (
     code === 'unavailable' ||
     code === 'deadline-exceeded' ||
@@ -6531,7 +6543,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             setOpportunitiesModerationError(null);
                             const r = await handlePublishUrgentPost(post.id);
                             if (!r.success) {
-                              setOpportunitiesModerationError(urgentModerationErrorMessage(r.code, t));
+                              setOpportunitiesModerationError(
+                                urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang)
+                              );
                             }
                           }}
                           className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
@@ -6544,7 +6558,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             setOpportunitiesModerationError(null);
                             const r = await handleRejectUrgentPost(post.id);
                             if (!r.success) {
-                              setOpportunitiesModerationError(urgentModerationErrorMessage(r.code, t));
+                              setOpportunitiesModerationError(
+                                urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang)
+                              );
                             }
                           }}
                           className="rounded-lg border border-stone-200 bg-white px-4 py-2 text-xs font-bold text-stone-700 hover:bg-stone-50"
@@ -7010,7 +7026,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           setOpportunityDetailModerationError(null);
           const r = await handlePublishUrgentPost(p.id);
           if (r.success) setOpportunityDetailPost(null);
-          else setOpportunityDetailModerationError(urgentModerationErrorMessage(r.code, t));
+          else
+            setOpportunityDetailModerationError(
+              urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang)
+            );
         }}
         onModerationReject={async () => {
           const p = opportunityDetailPost;
@@ -7018,7 +7037,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           setOpportunityDetailModerationError(null);
           const r = await handleRejectUrgentPost(p.id);
           if (r.success) setOpportunityDetailPost(null);
-          else setOpportunityDetailModerationError(urgentModerationErrorMessage(r.code, t));
+          else
+            setOpportunityDetailModerationError(
+              urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang)
+            );
         }}
         onClose={() => {
           setOpportunityDetailModerationError(null);

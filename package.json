@@ -11,7 +11,9 @@
     "lint": "tsc --noEmit",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
-    "test:e2e": "cypress run"
+    "test:e2e": "cypress run",
+    "firebase:login": "firebase login",
+    "firebase:deploy:rules": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
@@ -46,6 +48,7 @@
     "@types/node": "^22.14.0",
     "autoprefixer": "^10.4.21",
     "cypress": "^14.5.4",
+    "firebase-tools": "^14.24.0",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
