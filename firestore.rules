@@ -57,22 +57,11 @@ service cloud.firestore {
         && data.expiresAt > data.createdAt;
     }
 
-    /** Membres : champs stricts ; isPublished true ou false (compat anciennes règles / appli pas à jour). */
-    function isValidUrgentPostPublicCreate(data) {
-      return data.keys().hasOnly(['text', 'sector', 'createdAt', 'expiresAt', 'isPublished'])
-        && data.text is string && data.text.size() >= 1 && data.text.size() <= 200
-        && data.sector is string && data.sector.size() >= 1
-        && data.createdAt is number
-        && data.expiresAt is number
-        && data.expiresAt > data.createdAt
-        && (data.isPublished == true || data.isPublished == false);
-    }
-
     /**
-     * Admin : mêmes garde-fous sur le contenu, sans hasOnly (évite blocage si champs supplémentaires)
-     * et isPublished optionnelle / booléenne.
+     * Création annonce publique (format actuel) : hasAll + champs obligatoires (pas hasOnly, pour éviter
+     * les refus si le client ou une évolution ajoute des clés). isPublished bool optionnelle.
      */
-    function isValidUrgentPostPublicCreateAdmin(data) {
+    function isValidUrgentPostPublicCreate(data) {
       return data.keys().hasAll(['text', 'sector', 'createdAt', 'expiresAt'])
         && data.text is string && data.text.size() >= 1 && data.text.size() <= 200
         && data.sector is string && data.sector.size() >= 1
@@ -99,7 +88,7 @@ service cloud.firestore {
     function isValidUrgentPostPrivateCreate(data) {
       return data.keys().hasAll(['authorId', 'authorName', 'authorPhoto'])
         && data.authorId == request.auth.uid
-        && data.authorName is string && data.authorName.size() >= 1
+        && data.authorName is string
         && data.authorPhoto is string
         && (!('authorCompany' in data) || (data.authorCompany is string));
     }
@@ -215,7 +204,6 @@ service cloud.firestore {
       allow create: if isAuthenticated() && (
         isValidUrgentPostPublicCreate(request.resource.data)
         || isValidUrgentPostLegacy(request.resource.data)
-        || (isAdmin() && isValidUrgentPostPublicCreateAdmin(request.resource.data))
       );
       allow update: if isAdmin();
       /** Suppression : admin, auteur (doc public legacy avec authorId), ou auteur format public+privé (métadonnées dans urgent_post_private). */

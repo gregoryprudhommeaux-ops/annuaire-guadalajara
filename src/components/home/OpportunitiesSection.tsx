@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { User } from 'firebase/auth';
-import type { UrgentPost, UserProfile, Language } from '../../types';
+import type { UrgentPost, Language } from '../../types';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
-import { activityCategoryLabel } from '../../constants';
 import { cn } from '../../cn';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
 import { OpportunityActions } from '../DirectoryUi';
@@ -16,7 +15,6 @@ type Props = {
   t: TFn;
   lang: Language;
   posts: UrgentPost[];
-  allProfiles: UserProfile[];
   user: User | null;
   onSeeAll: () => void;
   onPost: () => void;
@@ -29,11 +27,7 @@ type Props = {
   onRequestDeleteOpportunity?: (post: UrgentPost) => void;
 };
 
-function cityForAuthor(authorId: string | undefined, allProfiles: UserProfile[]): string {
-  if (!authorId) return '';
-  const p = allProfiles.find((x) => x.uid === authorId);
-  return (p?.city || '').trim();
-}
+const HOME_OPPORTUNITIES_PREVIEW_LIMIT = 2;
 
 /** Opportunités (données = besoins urgents existants ; structure prête pour d’autres sources). */
 export default function OpportunitiesSection({
@@ -41,7 +35,6 @@ export default function OpportunitiesSection({
   t,
   lang,
   posts,
-  allProfiles,
   user,
   onSeeAll,
   onPost,
@@ -51,7 +44,13 @@ export default function OpportunitiesSection({
   canDeleteOpportunityForCurrentUser,
   onRequestDeleteOpportunity,
 }: Props) {
-  const slice = posts.slice(0, 5);
+  const slice = useMemo(
+    () =>
+      [...posts]
+        .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
+        .slice(0, HOME_OPPORTUNITIES_PREVIEW_LIMIT),
+    [posts]
+  );
   const hasPosts = slice.length > 0;
   /** Uniquement auteur ou admin (via callback App) — pas de raccourci isAdmin seul pour éviter les écarts avec viewerIsAdmin. */
   const canDeleteOpportunity = (post: UrgentPost): boolean =>
@@ -91,39 +90,21 @@ export default function OpportunitiesSection({
         <ul
           className={cn(
             'mt-4 grid grid-cols-1 gap-3',
-            !compactLayout && 'md:grid-cols-2 lg:grid-cols-3'
+            !compactLayout && 'sm:grid-cols-2'
           )}
         >
           {slice.map((post) => {
-            const city =
-              user && post.authorId ? cityForAuthor(post.authorId, allProfiles) : '';
-            const typeLabel = post.sector?.trim() || copy.opportunityTypeUrgent;
             const cardBody = (
-              <>
-                <div className="line-clamp-3 min-w-0 break-words text-sm font-semibold leading-snug text-stone-900">
-                  <AiTranslatedFreeText
-                    lang={lang}
-                    t={t}
-                    text={post.text}
-                    as="span"
-                    omitAiDisclaimer
-                    className="font-semibold leading-snug"
-                  />
-                </div>
-                <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-stone-400">
-                  {activityCategoryLabel(typeLabel, lang) || typeLabel}
-                </p>
-                {user ? (
-                  <p className="mt-2 text-xs text-stone-600">
-                    {post.authorName
-                      ? `${post.authorName}${post.authorCompany ? ` · ${post.authorCompany}` : ''}`
-                      : '—'}
-                  </p>
-                ) : (
-                  <p className="mt-2 text-xs text-stone-500">{t('opportunityAuthorHiddenGuest')}</p>
-                )}
-                {city ? <p className="mt-1 text-xs text-stone-500">{city}</p> : null}
-              </>
+              <div className="line-clamp-1 min-w-0 break-words text-sm font-semibold leading-snug text-stone-900">
+                <AiTranslatedFreeText
+                  lang={lang}
+                  t={t}
+                  text={post.text}
+                  as="span"
+                  omitAiDisclaimer
+                  className="font-semibold leading-snug"
+                />
+              </div>
             );
             return (
               <li

@@ -5287,7 +5287,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 t={t}
                 lang={lang}
                 posts={urgentPostsListed}
-                allProfiles={allProfiles}
                 user={user}
                 compactLayout
                 canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
@@ -5311,7 +5310,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 t={t}
                 lang={lang}
                 posts={urgentPostsListed}
-                allProfiles={allProfiles}
                 user={user}
                 compactLayout
                 canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
@@ -5392,7 +5390,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     t={t}
                     lang={lang}
                     posts={urgentPostsListed}
-                    allProfiles={allProfiles}
                     user={user}
                     canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
                     onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
@@ -6685,13 +6682,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   setUrgentPostModalError(t('urgentPostFormInvalid'));
                   return;
                 }
-                const authorName =
+                const authorNameRaw =
                   profile?.fullName?.trim() ||
                   user.displayName?.trim() ||
                   user.email?.split('@')[0]?.trim() ||
-                  'Membre';
+                  '';
+                const authorName = authorNameRaw.trim() || 'Membre';
                 const authorCompany = profile?.companyName?.trim() ?? '';
-                const authorPhoto = profile?.photoURL?.trim() || user.photoURL || '';
+                const authorPhoto = String(
+                  profile?.photoURL?.trim() || user.photoURL || ''
+                );
                 const createdAt = Date.now();
                 const expiresAt = createdAt + (7 * 24 * 60 * 60 * 1000);
 
