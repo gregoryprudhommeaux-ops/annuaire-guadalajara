@@ -140,7 +140,6 @@ function MiniBarCard({
         <div className="w-full min-w-0">
           <div className="h-52 sm:hidden">
             <ResponsiveBar
-              theme={barTheme}
               data={rows}
               keys={['value']}
               indexBy="label"

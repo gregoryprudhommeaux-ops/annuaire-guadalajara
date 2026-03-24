@@ -4833,6 +4833,26 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </>
           )}
 
+          {/* Mobile admin shortcut: Dashboard directly under top banner */}
+          {profile?.role === 'admin' && !isAdminDashboard && (
+            <div className="order-3 min-w-0 w-full sm:hidden">
+              <button
+                type="button"
+                onClick={() => {
+                  setDirectoryDiscoveryStripsHidden(true);
+                  setViewMode('dashboard');
+                  requestAnimationFrame(() =>
+                    directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  );
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800 transition-colors hover:bg-indigo-100"
+              >
+                <LayoutDashboard size={17} aria-hidden />
+                {t('dashboardTab')}
+              </button>
+            </div>
+          )}
+
           {/* Mobile : fun fact entre le hero (ou bandeau connecté) et recherche / onglets */}
           {(!user || (user && showDiscoveryStrips)) &&
             !(viewMode === 'dashboard' && profile?.role === 'admin') && (
