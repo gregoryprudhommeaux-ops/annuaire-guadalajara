@@ -19,6 +19,13 @@ export function isUrgentPostPendingModeration(p: UrgentPost): boolean {
   return p.isPublished === false;
 }
 
+/** Lit un booléen Firestore même si le type stocké diffère (évite les annonces bloquées en « en attente » côté client). */
+function readOptionalBoolean(raw: unknown): boolean | undefined {
+  if (raw === true) return true;
+  if (raw === false) return false;
+  return undefined;
+}
+
 /**
  * Fusionne le document `urgent_posts` et éventuellement `urgent_post_private`.
  * Anciens documents : champs auteur encore sur `urgent_posts`.
@@ -30,21 +37,21 @@ export function mergeUrgentPostFromFirestore(
 ): UrgentPost {
   const legacyAuthorId = typeof pub.authorId === 'string' && (pub.authorId as string).length > 0;
   if (legacyAuthorId) {
+    const pubPub = readOptionalBoolean(pub.isPublished);
     return {
       id,
       text: String(pub.text ?? ''),
       sector: String(pub.sector ?? ''),
       createdAt: Number(pub.createdAt ?? 0),
       expiresAt: Number(pub.expiresAt ?? 0),
-      isPublished: pub.isPublished !== false,
+      isPublished: pubPub !== false,
       authorId: pub.authorId as string,
       authorName: String(pub.authorName ?? ''),
       authorCompany: String(pub.authorCompany ?? ''),
       authorPhoto: String(pub.authorPhoto ?? ''),
     };
   }
-  const isPublished =
-    pub.isPublished === true ? true : pub.isPublished === false ? false : undefined;
+  const isPublished = readOptionalBoolean(pub.isPublished);
   const base: UrgentPost = {
     id,
     text: String(pub.text ?? ''),

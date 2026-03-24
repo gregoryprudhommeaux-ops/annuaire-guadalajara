@@ -27,6 +27,7 @@ type Props = {
   showModerationActions?: boolean;
   onModerationPublish?: () => void | Promise<void>;
   onModerationReject?: () => void | Promise<void>;
+  moderationActionError?: string | null;
 };
 
 export default function OpportunityDetailModal({
@@ -45,6 +46,7 @@ export default function OpportunityDetailModal({
   showModerationActions = false,
   onModerationPublish,
   onModerationReject,
+  moderationActionError = null,
 }: Props) {
   useEffect(() => {
     if (!open) return;
@@ -226,6 +228,14 @@ export default function OpportunityDetailModal({
             </div>
 
             <div className="shrink-0 space-y-2 border-t border-stone-100 px-4 py-3 sm:px-6">
+              {moderationActionError ? (
+                <p
+                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs leading-snug text-red-800"
+                  role="alert"
+                >
+                  {moderationActionError}
+                </p>
+              ) : null}
               {showModerationActions ? (
                 <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
                   <button

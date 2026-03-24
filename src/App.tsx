@@ -403,6 +403,20 @@ function logFirestoreErrorQuietly(error: unknown, operationType: OperationType, 
   console.error('Firestore Error: ', JSON.stringify(buildFirestoreErrorInfo(error, operationType, path)));
 }
 
+type UrgentModerationMutationResult = { success: true } | { success: false; code: string };
+
+function urgentModerationErrorMessage(code: string, t: (key: string) => string): string {
+  if (code === 'permission-denied') return t('urgentPostErrorPermissionDenied');
+  if (
+    code === 'unavailable' ||
+    code === 'deadline-exceeded' ||
+    code === 'resource-exhausted'
+  ) {
+    return t('urgentPostErrorNetwork');
+  }
+  return t('urgentPostSubmitErrorGeneric');
+}
+
 /** Langue UI partagée : un seul état pour l’annuaire, les pages profil/besoin et les cartes. */
 type LanguageContextValue = {
   lang: Language;
@@ -2141,6 +2155,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   const [authLeads, setAuthLeads] = useState<AuthLeadDoc[]>([]);
   const [showOpportunitiesModerationPanel, setShowOpportunitiesModerationPanel] = useState(false);
+  const [opportunitiesModerationError, setOpportunitiesModerationError] = useState<string | null>(null);
+  const [opportunityDetailModerationError, setOpportunityDetailModerationError] = useState<string | null>(
+    null
+  );
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
   const [urgentPostIdToDelete, setUrgentPostIdToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<
@@ -3645,28 +3663,30 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     }
   };
 
-  const handlePublishUrgentPost = async (postId: string): Promise<boolean> => {
-    if (!viewerIsAdmin) return false;
+  const handlePublishUrgentPost = async (postId: string): Promise<UrgentModerationMutationResult> => {
+    if (!viewerIsAdmin) return { success: false, code: 'not-admin' };
     try {
       await updateDoc(doc(db, 'urgent_posts', postId), { isPublished: true });
-      return true;
+      return { success: true };
     } catch (error) {
+      const code = error instanceof FirebaseError ? error.code : 'unknown';
       logFirestoreErrorQuietly(error, OperationType.WRITE, `urgent_posts/${postId}`);
-      return false;
+      return { success: false, code };
     }
   };
 
-  const handleRejectUrgentPost = async (postId: string): Promise<boolean> => {
-    if (!viewerIsAdmin) return false;
+  const handleRejectUrgentPost = async (postId: string): Promise<UrgentModerationMutationResult> => {
+    if (!viewerIsAdmin) return { success: false, code: 'not-admin' };
     try {
       const batch = writeBatch(db);
       batch.delete(doc(db, 'urgent_posts', postId));
       batch.delete(doc(db, URGENT_POST_PRIVATE_COLLECTION, postId));
       await batch.commit();
-      return true;
+      return { success: true };
     } catch (error) {
+      const code = error instanceof FirebaseError ? error.code : 'unknown';
       logFirestoreErrorQuietly(error, OperationType.DELETE, `urgent_posts/${postId}`);
-      return false;
+      return { success: false, code };
     }
   };
 
@@ -3674,7 +3694,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const handleDeleteOpportunity = async (postId: string): Promise<boolean> => {
     if (!user) return false;
     if (viewerIsAdmin) {
-      return handleRejectUrgentPost(postId);
+      const r = await handleRejectUrgentPost(postId);
+      return r.success;
     }
     const targetPost = urgentPosts.find((p) => p.id === postId);
     if (!targetPost?.authorId || targetPost.authorId !== user.uid) {
@@ -3703,6 +3724,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   );
 
   const openOpportunityDetail = useCallback((post: UrgentPost) => {
+    setOpportunityDetailModerationError(null);
     setOpportunityDetailPost(post);
   }, []);
 
@@ -3930,7 +3952,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowOpportunitiesModerationPanel(true)}
+                  onClick={() => {
+                    setOpportunitiesModerationError(null);
+                    setShowOpportunitiesModerationPanel(true);
+                  }}
                   className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-amber-50 px-1 py-1.5 text-amber-900 transition-colors hover:bg-amber-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
                 >
                   <Zap className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
@@ -6430,7 +6455,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowOpportunitiesModerationPanel(false)}
+              onClick={() => {
+                setOpportunitiesModerationError(null);
+                setShowOpportunitiesModerationPanel(false);
+              }}
               className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
             />
             <motion.div
@@ -6454,12 +6482,23 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowOpportunitiesModerationPanel(false)}
+                  onClick={() => {
+                    setOpportunitiesModerationError(null);
+                    setShowOpportunitiesModerationPanel(false);
+                  }}
                   className="rounded-full p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-900"
                 >
                   <Plus size={24} className="rotate-45" />
                 </button>
               </div>
+              {opportunitiesModerationError ? (
+                <div
+                  className="shrink-0 border-b border-red-100 bg-red-50 px-6 py-3 text-xs leading-snug text-red-800"
+                  role="alert"
+                >
+                  {opportunitiesModerationError}
+                </div>
+              ) : null}
               <div className="flex-1 space-y-4 overflow-y-auto p-6">
                 {pendingUrgentForAdmin.length === 0 ? (
                   <div className="py-12 text-center">
@@ -6488,14 +6527,26 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       <div className="mt-4 flex flex-wrap gap-2">
                         <button
                           type="button"
-                          onClick={() => handlePublishUrgentPost(post.id)}
+                          onClick={async () => {
+                            setOpportunitiesModerationError(null);
+                            const r = await handlePublishUrgentPost(post.id);
+                            if (!r.success) {
+                              setOpportunitiesModerationError(urgentModerationErrorMessage(r.code, t));
+                            }
+                          }}
                           className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700"
                         >
                           {t('opportunityPublish')}
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleRejectUrgentPost(post.id)}
+                          onClick={async () => {
+                            setOpportunitiesModerationError(null);
+                            const r = await handleRejectUrgentPost(post.id);
+                            if (!r.success) {
+                              setOpportunitiesModerationError(urgentModerationErrorMessage(r.code, t));
+                            }
+                          }}
                           className="rounded-lg border border-stone-200 bg-white px-4 py-2 text-xs font-bold text-stone-700 hover:bg-stone-50"
                         >
                           {t('opportunityReject')}
@@ -6952,19 +7003,27 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             opportunityDetailPost &&
             opportunityDetailPost.isPublished === false
         )}
+        moderationActionError={opportunityDetailModerationError}
         onModerationPublish={async () => {
           const p = opportunityDetailPost;
           if (!p) return;
-          const ok = await handlePublishUrgentPost(p.id);
-          if (ok) setOpportunityDetailPost(null);
+          setOpportunityDetailModerationError(null);
+          const r = await handlePublishUrgentPost(p.id);
+          if (r.success) setOpportunityDetailPost(null);
+          else setOpportunityDetailModerationError(urgentModerationErrorMessage(r.code, t));
         }}
         onModerationReject={async () => {
           const p = opportunityDetailPost;
           if (!p) return;
-          const ok = await handleRejectUrgentPost(p.id);
-          if (ok) setOpportunityDetailPost(null);
+          setOpportunityDetailModerationError(null);
+          const r = await handleRejectUrgentPost(p.id);
+          if (r.success) setOpportunityDetailPost(null);
+          else setOpportunityDetailModerationError(urgentModerationErrorMessage(r.code, t));
         }}
-        onClose={() => setOpportunityDetailPost(null)}
+        onClose={() => {
+          setOpportunityDetailModerationError(null);
+          setOpportunityDetailPost(null);
+        }}
         onOpenAuth={openAuthModal}
         onViewFullProfile={viewFullProfileFromOpportunityModal}
       />

@@ -10,12 +10,13 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    /** Admin : rôle dans users/{uid} OU email autorisé (sans exiger email_verified : certains fournisseurs ne le renseignent pas comme attendu). */
     function isAdmin() {
       return isAuthenticated() && (
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-        (request.auth.token.email == "chinois2001@gmail.com" &&
-          request.auth.token.email_verified == true)
+        (request.auth.token.email != null &&
+          request.auth.token.email.lower() == 'chinois2001@gmail.com')
       );
     }
 
