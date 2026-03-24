@@ -5013,6 +5013,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 lang={lang}
                 profiles={stats.newThisWeekProfiles}
                 totalNewThisWeek={stats.newThisWeekCount}
+                className="lg:min-h-[12rem]"
                 compact
                 guestTeaser={guestDirectoryRestricted}
                 onOpenProfile={(p) => setSelectedProfile(p)}
@@ -5035,6 +5036,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   lang={lang}
                   profiles={stats.newThisWeekProfiles}
                   totalNewThisWeek={stats.newThisWeekCount}
+                  className="lg:min-h-[12rem]"
+                  compact
                   guestTeaser={guestDirectoryRestricted}
                   onOpenProfile={(p) => setSelectedProfile(p)}
                   onSeeAll={() => {
