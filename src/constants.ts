@@ -472,6 +472,18 @@ export const TRANSLATIONS: Translations = {
   adminPanel: { fr: "Panneau Admin", es: "Panel de Admin" },
   exportData: { fr: "Exporter la base de données", es: "Exportar base de datos" },
   signature: { fr: "Produit et managé par NextStep Services", es: "Producido y gestionado por NextStep Services" },
+  footerPrivacy: { fr: "Confidentialité", es: "Privacidad" },
+  footerTerms: { fr: "Conditions", es: "Términos" },
+  footerContact: { fr: "Contact", es: "Contacto" },
+  legalPrivacyTitle: {
+    fr: "Politique de confidentialité et protection des données personnelles",
+    es: "Aviso de privacidad y protección de datos personales",
+  },
+  legalTermsTitle: {
+    fr: "Conditions générales d’utilisation",
+    es: "Términos y condiciones de uso",
+  },
+  footerLegalClose: { fr: "Fermer", es: "Cerrar" },
   welcome: {
     fr: "Bienvenue dans l'annuaire de la communauté d'affaires francophone de Guadalajara.",
     es: "Bienvenido al directorio de la comunidad de negocios francohablante de Guadalajara.",
@@ -677,6 +689,26 @@ export const TRANSLATIONS: Translations = {
     fr: "Membre — connectez-vous pour voir l’auteur et le contacter.",
     es: "Miembro — inicia sesión para ver al autor y contactarle.",
   },
+  opportunityDetailTitle: { fr: "Détail de l’opportunité", es: "Detalle de la oportunidad" },
+  opportunityDetailMessageHeading: { fr: "Annonce", es: "Anuncio" },
+  opportunityDetailAuthorHeading: { fr: "Publiée par", es: "Publicada por" },
+  opportunityDetailContactHeading: {
+    fr: "Contacter pour répondre",
+    es: "Contactar para responder",
+  },
+  opportunityDetailContactHint: {
+    fr: "Les boutons ci-dessous respectent les préférences de visibilité de l’auteur (email et WhatsApp publics, ou accès réservé aux membres dont le profil est validé).",
+    es: "Los botones respetan la visibilidad del autor (correo o WhatsApp públicos, o acceso para miembros con perfil validado).",
+  },
+  opportunityDetailSignInPrompt: {
+    fr: "Connectez-vous avec un compte membre pour voir le nom de l’auteur et utiliser l’email ou le WhatsApp selon les réglages de sa fiche.",
+    es: "Inicia sesión como miembro para ver el nombre del autor y usar correo o WhatsApp según su ficha.",
+  },
+  opportunityDetailAuthorUnavailable: {
+    fr: "Le profil annuaire de l’auteur n’est plus disponible dans la liste ; les raccourcis de contact automatiques ne sont pas proposés.",
+    es: "El perfil del autor ya no está en el listado; no se ofrecen accesos de contacto automáticos.",
+  },
+  opportunityViewFullProfile: { fr: "Voir le profil complet", es: "Ver perfil completo" },
   opportunitiesModerationTitle: {
     fr: "Modération opportunités",
     es: "Moderación de oportunidades",

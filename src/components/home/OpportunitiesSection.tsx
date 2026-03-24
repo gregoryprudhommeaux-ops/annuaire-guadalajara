@@ -98,8 +98,8 @@ export default function OpportunitiesSection({
           )}
         >
           {slice.map((post) => {
-            const canOpenProfile = !!user && !!post.authorId;
-            const city = canOpenProfile ? cityForAuthor(post.authorId, allProfiles) : '';
+            const city =
+              user && post.authorId ? cityForAuthor(post.authorId, allProfiles) : '';
             const typeLabel = post.sector?.trim() || copy.opportunityTypeUrgent;
             const cardBody = (
               <>
@@ -131,10 +131,7 @@ export default function OpportunitiesSection({
             return (
               <li
                 key={post.id}
-                className={cn(
-                  'relative flex flex-col rounded-xl border border-stone-100 bg-stone-50/60 p-3 transition-colors',
-                  canOpenProfile && 'hover:border-stone-200 hover:bg-stone-50'
-                )}
+                className="relative flex flex-col rounded-xl border border-stone-100 bg-stone-50/60 p-3 transition-colors hover:border-stone-200 hover:bg-stone-50"
               >
                 {canDeleteOpportunity(post) ? (
                   <button
@@ -151,19 +148,13 @@ export default function OpportunitiesSection({
                     <Trash2 className="h-4 w-4 shrink-0" strokeWidth={2} />
                   </button>
                 ) : null}
-                {canOpenProfile ? (
-                  <button
-                    type="button"
-                    onClick={() => onOpenPost(post)}
-                    className={cn('flex flex-col text-left', canDeleteOpportunity(post) && 'pr-9')}
-                  >
-                    {cardBody}
-                  </button>
-                ) : (
-                  <div className={cn('flex flex-col text-left cursor-default', canDeleteOpportunity(post) && 'pr-9')}>
-                    {cardBody}
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => onOpenPost(post)}
+                  className={cn('flex flex-col text-left', canDeleteOpportunity(post) && 'pr-9')}
+                >
+                  {cardBody}
+                </button>
               </li>
             );
           })}

@@ -173,6 +173,12 @@ export const EN_STRINGS: Record<string, string> = {
   adminPanel: "Admin panel",
   exportData: "Export database",
   signature: "Built and managed by NextStep Services",
+  footerPrivacy: "Privacy",
+  footerTerms: "Terms",
+  footerContact: "Contact",
+  legalPrivacyTitle: "Privacy policy and personal data protection",
+  legalTermsTitle: "Terms of use",
+  footerLegalClose: "Close",
   welcome: "Welcome to the directory of the French-speaking business community in Guadalajara.",
   welcomeIntro:
     "Discover companies and members already on the directory, filter by sector, profile type or location, then explore the first suggested profiles. Invite your network to join the platform to unlock more opportunities and accelerate your connections in Guadalajara.",
@@ -276,6 +282,17 @@ export const EN_STRINGS: Record<string, string> = {
   opportunityModerationPendingNote:
     "Your post will be visible to everyone after an administrator approves it.",
   opportunityAuthorHiddenGuest: "Member — sign in to see who posted and contact them.",
+  opportunityDetailTitle: "Opportunity details",
+  opportunityDetailMessageHeading: "Post",
+  opportunityDetailAuthorHeading: "Posted by",
+  opportunityDetailContactHeading: "Contact to respond",
+  opportunityDetailContactHint:
+    "The buttons below follow the author’s visibility settings (public email or WhatsApp, or access for members with a validated profile).",
+  opportunityDetailSignInPrompt:
+    "Sign in as a member to see the author’s name and use email or WhatsApp according to their profile settings.",
+  opportunityDetailAuthorUnavailable:
+    "The author’s directory profile is no longer in the list; automatic contact shortcuts are not available.",
+  opportunityViewFullProfile: "View full profile",
   opportunitiesModerationTitle: "Opportunity moderation",
   opportunitiesModerationPendingCount: "pending",
   opportunitiesModerationEmpty: "No opportunities waiting for publication.",

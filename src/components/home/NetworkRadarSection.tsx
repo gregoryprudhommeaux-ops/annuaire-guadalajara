@@ -544,7 +544,6 @@ export default function NetworkRadarSection({
         ) : (
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {recentOpportunities.map((post) => {
-              const canOpen = !!user && !!post.authorId;
               const cardInner = (
                 <>
                   <div className="line-clamp-3 break-words text-[13px] font-medium leading-snug text-slate-800">
@@ -588,27 +587,16 @@ export default function NetworkRadarSection({
                       <Trash2 className="h-4 w-4 shrink-0" strokeWidth={2} />
                     </button>
                   ) : null}
-                  {canOpen ? (
-                    <button
-                      type="button"
-                      onClick={() => onOpportunityClick(post)}
-                      className={cn(
-                        'flex h-full w-full flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition-colors hover:border-slate-300 hover:bg-white',
-                        canDeleteOpportunity(post) && 'pr-10'
-                      )}
-                    >
-                      {cardInner}
-                    </button>
-                  ) : (
-                    <div
-                      className={cn(
-                        'flex h-full w-full cursor-default flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 text-left',
-                        canDeleteOpportunity(post) && 'pr-10'
-                      )}
-                    >
-                      {cardInner}
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => onOpportunityClick(post)}
+                    className={cn(
+                      'flex h-full w-full flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition-colors hover:border-slate-300 hover:bg-white',
+                      canDeleteOpportunity(post) && 'pr-10'
+                    )}
+                  >
+                    {cardInner}
+                  </button>
                 </li>
               );
             })}
