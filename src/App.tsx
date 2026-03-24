@@ -262,6 +262,26 @@ function BrandApple({ className }: { className?: string }) {
   );
 }
 
+class SectionErrorBoundary extends React.Component<
+  { fallback: React.ReactNode; children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error('Section render error:', error);
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
 interface SocialSignInButtonsProps {
   lang: Language;
   t: (key: string) => string;
@@ -5496,80 +5516,96 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               )}
 
               {viewMode === 'radar' && (
-                <React.Suspense
+                <SectionErrorBoundary
                   fallback={
-                    <div className="rounded-xl border border-stone-200 bg-white p-6 text-sm text-stone-500">
-                      {pickLang('Chargement du radar...', 'Cargando radar...', 'Loading radar...', lang)}
+                    <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+                      {pickLang('Le module Radar a rencontré une erreur. Revenez sur Membres.', 'El módulo Radar encontró un error. Vuelve a Miembros.', 'Radar module crashed. Please switch back to Members.', lang)}
                     </div>
                   }
                 >
-                  <NetworkRadarSection
-                    lang={lang}
-                    t={t}
-                    allProfiles={allProfiles}
-                    urgentPosts={urgentPostsListed}
-                    viewerProfile={profile}
-                    user={user}
-                    copy={h}
-                    activityCategoryLabel={activityCategoryLabel}
-                    needOptionLabel={needOptionLabel}
-                    getPassionEmoji={getPassionEmoji}
-                    getPassionLabel={getPassionLabel}
-                    onNeedClick={(needId) => {
-                      setViewMode('members');
-                      setPassionIdFilter('');
-                      setHighlightedNeedFilter(needId);
-                    }}
-                    onPassionClick={(passionId) => {
-                      setViewMode('members');
-                      setHighlightedNeedFilter('');
-                      setPassionIdFilter(passionId);
-                    }}
-                    onOpportunityClick={openOpportunityProfile}
-                    onPostOpportunity={() => setShowUrgentPostModal(true)}
-                    onCreateProfile={() => {
-                      setAuthError(null);
-                      setShowAuthModal(true);
-                    }}
-                    registeredWithProfile={!!user && !!profile}
-                    onUnlockRadar={() => {
-                      setAuthError(null);
-                      if (!user) {
+                  <React.Suspense
+                    fallback={
+                      <div className="rounded-xl border border-stone-200 bg-white p-6 text-sm text-stone-500">
+                        {pickLang('Chargement du radar...', 'Cargando radar...', 'Loading radar...', lang)}
+                      </div>
+                    }
+                  >
+                    <NetworkRadarSection
+                      lang={lang}
+                      t={t}
+                      allProfiles={allProfiles}
+                      urgentPosts={urgentPostsListed}
+                      viewerProfile={profile}
+                      user={user}
+                      copy={h}
+                      activityCategoryLabel={activityCategoryLabel}
+                      needOptionLabel={needOptionLabel}
+                      getPassionEmoji={getPassionEmoji}
+                      getPassionLabel={getPassionLabel}
+                      onNeedClick={(needId) => {
+                        setViewMode('members');
+                        setPassionIdFilter('');
+                        setHighlightedNeedFilter(needId);
+                      }}
+                      onPassionClick={(passionId) => {
+                        setViewMode('members');
+                        setHighlightedNeedFilter('');
+                        setPassionIdFilter(passionId);
+                      }}
+                      onOpportunityClick={openOpportunityProfile}
+                      onPostOpportunity={() => setShowUrgentPostModal(true)}
+                      onCreateProfile={() => {
+                        setAuthError(null);
                         setShowAuthModal(true);
-                      } else {
-                        setShowOnboarding(true);
-                      }
-                    }}
-                    isAdmin={profile?.role === 'admin'}
-                    canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
-                    onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
-                  />
-                </React.Suspense>
+                      }}
+                      registeredWithProfile={!!user && !!profile}
+                      onUnlockRadar={() => {
+                        setAuthError(null);
+                        if (!user) {
+                          setShowAuthModal(true);
+                        } else {
+                          setShowOnboarding(true);
+                        }
+                      }}
+                      isAdmin={profile?.role === 'admin'}
+                      canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
+                      onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
+                    />
+                  </React.Suspense>
+                </SectionErrorBoundary>
               )}
 
               {isAdminDashboard && (
-                <React.Suspense
+                <SectionErrorBoundary
                   fallback={
-                    <div className="rounded-xl border border-stone-200 bg-white p-6 text-sm text-stone-500">
-                      {pickLang('Chargement du tableau de bord...', 'Cargando panel...', 'Loading dashboard...', lang)}
+                    <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+                      {pickLang('Le tableau de bord a rencontré une erreur. Retour sur la vue Membres.', 'El panel encontró un error. Vuelve a la vista Miembros.', 'Dashboard crashed. Please return to Members view.', lang)}
                     </div>
                   }
                 >
-                  <DashboardPage
-                    lang={lang}
-                    t={t}
-                    registeredWithProfile={!!user && !!profile}
-                    onUnlockRadar={() => {
-                      setAuthError(null);
-                      if (!user) {
-                        setShowAuthModal(true);
-                      } else {
-                        setShowOnboarding(true);
-                      }
-                    }}
-                    user={user}
-                  />
-                </React.Suspense>
+                  <React.Suspense
+                    fallback={
+                      <div className="rounded-xl border border-stone-200 bg-white p-6 text-sm text-stone-500">
+                        {pickLang('Chargement du tableau de bord...', 'Cargando panel...', 'Loading dashboard...', lang)}
+                      </div>
+                    }
+                  >
+                    <DashboardPage
+                      lang={lang}
+                      t={t}
+                      registeredWithProfile={!!user && !!profile}
+                      onUnlockRadar={() => {
+                        setAuthError(null);
+                        if (!user) {
+                          setShowAuthModal(true);
+                        } else {
+                          setShowOnboarding(true);
+                        }
+                      }}
+                      user={user}
+                    />
+                  </React.Suspense>
+                </SectionErrorBoundary>
               )}
 
             {filteredProfiles.length === 0 &&

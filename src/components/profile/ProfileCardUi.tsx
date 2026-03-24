@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Mail } from 'lucide-react';
 import { cn } from '../../cn';
 import type { Language } from '../../types';
@@ -9,7 +9,7 @@ export function ProfileCardBio({
   text,
   lang,
   pretranslatedByLang,
-  t: _t,
+  t,
   className,
 }: {
   text: string;
