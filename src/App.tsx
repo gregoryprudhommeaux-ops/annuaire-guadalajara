@@ -3623,68 +3623,74 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         }
         fullWidthRow={
           headerAdminLayout ? (
-            <div className="flex w-full min-w-0 flex-row items-stretch gap-1 sm:gap-3">
-              <button
-                type="button"
-                onClick={() => setShowValidationPanel(true)}
-                className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-slate-100 px-1 py-1.5 text-slate-800 transition-colors hover:bg-slate-200 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
-              >
-                <Users className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                <span className="hidden max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
-                  {t('newProfiles')}
-                </span>
-                {pendingProfiles.length > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:w-5 sm:text-[10px]">
-                    {pendingProfiles.length}
+            <div className="w-full min-w-0 space-y-2 sm:space-y-0">
+              <div className="rounded-2xl bg-stone-900 px-4 py-3 text-white shadow-sm sm:hidden">
+                <p className="text-sm font-semibold leading-snug">{t('welcome')}</p>
+                <p className="mt-1 text-xs leading-relaxed text-stone-200">{t('welcomeIntro')}</p>
+              </div>
+              <div className="flex w-full min-w-0 flex-row items-stretch gap-1 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowValidationPanel(true)}
+                  className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-slate-100 px-1 py-1.5 text-slate-800 transition-colors hover:bg-slate-200 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
+                >
+                  <Users className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
+                  <span className="hidden max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                    {t('newProfiles')}
                   </span>
-                )}
-              </button>
-                  <button
-                    type="button"
-                    onClick={exportAuthLeadsToExcel}
-                    className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-blue-50 px-1 py-1.5 text-blue-900 transition-colors hover:bg-blue-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
-                    title={pickLang(
-                      'Télécharger la liste des connexions OAuth (.xlsx)',
-                      'Descargar la lista de conexiones OAuth (.xlsx)',
-                      'Download OAuth sign-ins list (.xlsx)',
-                      lang
-                    )}
-                  >
-                <LogIn className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
-                  {t('adminOAuthLeadsTitle')}
-                </span>
-                {oauthLeadsWithoutProfileCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-blue-700 px-0.5 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:min-w-5 sm:text-[10px]">
-                    {oauthLeadsWithoutProfileCount > 99 ? '99+' : oauthLeadsWithoutProfileCount}
+                  {pendingProfiles.length > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:w-5 sm:text-[10px]">
+                      {pendingProfiles.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={exportAuthLeadsToExcel}
+                  className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-blue-50 px-1 py-1.5 text-blue-900 transition-colors hover:bg-blue-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
+                  title={pickLang(
+                    'Télécharger la liste des connexions OAuth (.xlsx)',
+                    'Descargar la lista de conexiones OAuth (.xlsx)',
+                    'Download OAuth sign-ins list (.xlsx)',
+                    lang
+                  )}
+                >
+                  <LogIn className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
+                  <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                    {t('adminOAuthLeadsTitle')}
                   </span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowOpportunitiesModerationPanel(true)}
-                className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-amber-50 px-1 py-1.5 text-amber-900 transition-colors hover:bg-amber-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
-              >
-                <Zap className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
-                  {t('opportunitiesModerationTitle')}
-                </span>
-                {pendingUrgentForAdmin.length > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-amber-600 px-0.5 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:min-w-5 sm:text-[10px]">
-                    {pendingUrgentForAdmin.length}
+                  {oauthLeadsWithoutProfileCount > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-blue-700 px-0.5 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:min-w-5 sm:text-[10px]">
+                      {oauthLeadsWithoutProfileCount > 99 ? '99+' : oauthLeadsWithoutProfileCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowOpportunitiesModerationPanel(true)}
+                  className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-amber-50 px-1 py-1.5 text-amber-900 transition-colors hover:bg-amber-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
+                >
+                  <Zap className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
+                  <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                    {t('opportunitiesModerationTitle')}
                   </span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={exportToExcel}
-                className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-50 px-1 py-1.5 text-emerald-800 transition-colors hover:bg-emerald-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
-              >
-                <Download className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
-                  {t('exportData')}
-                </span>
-              </button>
+                  {pendingUrgentForAdmin.length > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-amber-600 px-0.5 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:min-w-5 sm:text-[10px]">
+                      {pendingUrgentForAdmin.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={exportToExcel}
+                  className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-50 px-1 py-1.5 text-emerald-800 transition-colors hover:bg-emerald-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
+                >
+                  <Download className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
+                  <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                    {t('exportData')}
+                  </span>
+                </button>
+              </div>
             </div>
           ) : undefined
         }
@@ -3795,6 +3801,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               <button
                 type="button"
                 onClick={() => {
+                  setSelectedProfile(null);
+                  setShowValidationPanel(false);
+                  setShowOpportunitiesModerationPanel(false);
                   setDirectoryDiscoveryStripsHidden(true);
                   setViewMode('dashboard');
                 }}
@@ -5136,6 +5145,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 }))}
                 activeTab={viewMode}
                 onTabChange={(id) => {
+                  if (id === 'dashboard') {
+                    setSelectedProfile(null);
+                    setShowValidationPanel(false);
+                    setShowOpportunitiesModerationPanel(false);
+                  }
                   setDirectoryDiscoveryStripsHidden(true);
                   setViewMode(
                     id as 'companies' | 'members' | 'activities' | 'radar' | 'dashboard'
