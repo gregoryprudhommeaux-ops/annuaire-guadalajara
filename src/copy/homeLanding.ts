@@ -18,6 +18,8 @@ export type HomeLandingCopy = {
   opportunitiesTitle: string;
   opportunitiesSeeAll: string;
   opportunitiesPost: string;
+  /** CTA visible près du titre (même action que « poster » : modal besoin urgent). */
+  opportunitiesCreateCta: string;
   opportunitiesMembersOnly: string;
   opportunityTypeUrgent: string;
   membersSortBanner: string;
@@ -44,6 +46,7 @@ const HOME_LANDING: Record<'fr' | 'en' | 'es', HomeLandingCopy> = {
     opportunitiesTitle: 'Opportunités du réseau',
     opportunitiesSeeAll: 'Toutes les Opportunités',
     opportunitiesPost: 'Poster une opportunité',
+    opportunitiesCreateCta: 'Créer une opportunité',
     opportunitiesMembersOnly: 'Réservé aux membres',
     opportunityTypeUrgent: 'Besoin urgent',
     membersSortBanner: 'Affichage : plus récents en premier',
@@ -68,6 +71,7 @@ const HOME_LANDING: Record<'fr' | 'en' | 'es', HomeLandingCopy> = {
     opportunitiesTitle: 'Network opportunities',
     opportunitiesSeeAll: 'All opportunities',
     opportunitiesPost: 'Post an opportunity',
+    opportunitiesCreateCta: 'Create an opportunity',
     opportunitiesMembersOnly: 'Members only',
     opportunityTypeUrgent: 'Urgent need',
     membersSortBanner: 'Sorted by: newest first',
@@ -92,6 +96,7 @@ const HOME_LANDING: Record<'fr' | 'en' | 'es', HomeLandingCopy> = {
     opportunitiesTitle: 'Oportunidades de la red',
     opportunitiesSeeAll: 'Todas las oportunidades',
     opportunitiesPost: 'Publicar una oportunidad',
+    opportunitiesCreateCta: 'Crear una oportunidad',
     opportunitiesMembersOnly: 'Solo miembros',
     opportunityTypeUrgent: 'Necesidad urgente',
     membersSortBanner: 'Orden: más recientes primero',

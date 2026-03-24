@@ -2103,6 +2103,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [workingLanguagesDraft, setWorkingLanguagesDraft] = useState<string[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showUrgentPostModal, setShowUrgentPostModal] = useState(false);
+  const [urgentPostModalError, setUrgentPostModalError] = useState<string | null>(null);
+  const [urgentPostModalSaving, setUrgentPostModalSaving] = useState(false);
   const [expandedHookId, setExpandedHookId] = useState<string | null>(null);
   const [authProviderBusy, setAuthProviderBusy] = useState<SocialAuthProvider | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -2123,6 +2125,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const timer = globalThis.setTimeout(() => setProfileSaveSuccess(null), 8000);
     return () => globalThis.clearTimeout(timer);
   }, [profileSaveSuccess]);
+
+  useEffect(() => {
+    if (showUrgentPostModal) setUrgentPostModalError(null);
+  }, [showUrgentPostModal]);
 
   useEffect(() => {
     const w = window as Window & {
@@ -6447,13 +6453,29 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
               <form onSubmit={async (e) => {
                 e.preventDefault();
-                if (!user || !profile) return;
+                setUrgentPostModalError(null);
+                if (!user) {
+                  setUrgentPostModalError(t('urgentPostMustSignIn'));
+                  return;
+                }
                 const formData = new FormData(e.currentTarget);
-                const text = formData.get('text') as string;
-                const sector = formData.get('sector') as string;
+                const text = String(formData.get('text') ?? '').trim();
+                const sector = String(formData.get('sector') ?? '').trim();
+                if (!text || !sector) {
+                  setUrgentPostModalError(t('urgentPostFormInvalid'));
+                  return;
+                }
+                const authorName =
+                  profile?.fullName?.trim() ||
+                  user.displayName?.trim() ||
+                  user.email?.split('@')[0]?.trim() ||
+                  'Membre';
+                const authorCompany = profile?.companyName?.trim() ?? '';
+                const authorPhoto = profile?.photoURL?.trim() || user.photoURL || '';
                 const createdAt = Date.now();
                 const expiresAt = createdAt + (7 * 24 * 60 * 60 * 1000);
 
+                setUrgentPostModalSaving(true);
                 try {
                   const postRef = doc(collection(db, 'urgent_posts'));
                   const batch = writeBatch(db);
@@ -6466,14 +6488,27 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   });
                   batch.set(doc(db, URGENT_POST_PRIVATE_COLLECTION, postRef.id), {
                     authorId: user.uid,
-                    authorName: profile.fullName,
-                    authorCompany: profile.companyName,
-                    authorPhoto: profile.photoURL || '',
+                    authorName,
+                    authorCompany,
+                    authorPhoto,
                   });
                   await batch.commit();
                   setShowUrgentPostModal(false);
                 } catch (error) {
-                  handleFirestoreError(error, OperationType.CREATE, 'urgent_posts');
+                  const errInfo: FirestoreErrorInfo = {
+                    error: error instanceof Error ? error.message : String(error),
+                    authInfo: {
+                      userId: auth.currentUser?.uid,
+                      email: auth.currentUser?.email,
+                      emailVerified: auth.currentUser?.emailVerified,
+                    },
+                    operationType: OperationType.CREATE,
+                    path: 'urgent_posts',
+                  };
+                  console.error('Firestore Error: ', JSON.stringify(errInfo));
+                  setUrgentPostModalError(t('urgentPostSubmitErrorGeneric'));
+                } finally {
+                  setUrgentPostModalSaving(false);
                 }
               }} className="space-y-6">
                 <div className="space-y-1">
@@ -6510,11 +6545,17 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     )}
                   </p>
                 </div>
+                {urgentPostModalError ? (
+                  <p className="text-sm font-medium text-red-600" role="alert">
+                    {urgentPostModalError}
+                  </p>
+                ) : null}
                 <button 
                   type="submit" 
-                  className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-200"
+                  disabled={urgentPostModalSaving}
+                  className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-200 disabled:pointer-events-none disabled:opacity-60"
                 >
-                  {t('save')}
+                  {urgentPostModalSaving ? t('urgentPostSaving') : t('save')}
                 </button>
               </form>
             </motion.div>

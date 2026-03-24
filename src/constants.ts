@@ -654,6 +654,19 @@ export const TRANSLATIONS: Translations = {
   },
   aiRecRetry: { fr: "Réessayer", es: "Reintentar" },
   postUrgentNeed: { fr: "Publier un besoin urgent", es: "Publicar necesidad urgente" },
+  urgentPostSaving: { fr: "Enregistrement…", es: "Guardando…" },
+  urgentPostSubmitErrorGeneric: {
+    fr: "Impossible d’enregistrer l’annonce. Vérifiez votre connexion et réessayez.",
+    es: "No se pudo guardar el anuncio. Comprueba la conexión e inténtalo de nuevo.",
+  },
+  urgentPostMustSignIn: {
+    fr: "Connectez-vous pour publier une annonce.",
+    es: "Inicia sesión para publicar un anuncio.",
+  },
+  urgentPostFormInvalid: {
+    fr: "Renseignez la description et le secteur.",
+    es: "Completa la descripción y el sector.",
+  },
   contact: { fr: "Contacter", es: "Contactar" },
   contactLinks: { fr: "Contact & liens", es: "Contacto y enlaces" },
   contactPrefsTitle: {

@@ -463,19 +463,21 @@ export default function NetworkRadarSection({
 
       {/* Opportunités récentes */}
       <div className={cn('rounded-xl border border-slate-200 bg-white shadow-sm', cardPad)}>
-        <h3 className="mb-4 text-[15px] font-semibold leading-snug text-slate-800 break-words">
-          {t('radarRecentOpportunitiesTitle')}
-        </h3>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-slate-800 break-words">
+            {t('radarRecentOpportunitiesTitle')}
+          </h3>
+          <button
+            type="button"
+            onClick={user ? onPostOpportunity : onCreateProfile}
+            className="shrink-0 rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-800 sm:px-4 sm:py-2 sm:text-sm"
+          >
+            {copy.opportunitiesCreateCta}
+          </button>
+        </div>
         {recentOpportunities.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
             <p className="text-[13px] text-slate-500">{t('radarRecentOpportunitiesEmpty')}</p>
-            <button
-              type="button"
-              onClick={user ? onPostOpportunity : onCreateProfile}
-              className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
-            >
-              {copy.opportunitiesPost}
-            </button>
             {!user && (
               <span className="text-[11px] text-slate-500">{copy.opportunitiesMembersOnly}</span>
             )}

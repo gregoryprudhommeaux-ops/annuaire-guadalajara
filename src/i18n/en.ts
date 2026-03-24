@@ -276,6 +276,11 @@ export const EN_STRINGS: Record<string, string> = {
     "No suggestions for now. Try again later or expand your network in the directory.",
   aiRecRetry: "Retry",
   postUrgentNeed: "Post an urgent need",
+  urgentPostSaving: "Saving…",
+  urgentPostSubmitErrorGeneric:
+    "Could not save your post. Check your connection and try again.",
+  urgentPostMustSignIn: "Sign in to publish a post.",
+  urgentPostFormInvalid: "Please fill in the description and sector.",
   contact: "Contact",
   contactLinks: "Contact & links",
   contactPrefsTitle: "Contact & collaboration preferences",
