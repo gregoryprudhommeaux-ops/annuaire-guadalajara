@@ -206,6 +206,7 @@ export default function NewMembersStrip({
       <div className={cn('border-t border-stone-100', compact ? 'mt-2.5 pt-2 sm:mt-3 sm:pt-2.5' : 'mt-3 pt-2.5 sm:mt-4 sm:pt-3')}>
         <button
           type="button"
+          data-testid="new-members-see-all"
           onClick={onSeeAll}
           className="block w-full text-left text-sm font-semibold text-blue-700 underline-offset-2 hover:text-blue-800 hover:underline sm:inline sm:w-auto"
         >

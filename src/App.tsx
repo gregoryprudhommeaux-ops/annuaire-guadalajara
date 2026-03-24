@@ -72,6 +72,7 @@ import {
   cityOptionLabel,
   WORK_FUNCTION_OPTIONS,
   MEMBERS_THRESHOLD,
+  AI_REC_MIN_OTHER_MEMBERS,
   isEmployeeCountRange,
   companySizeFromEmployeeRange,
   formatEmployeeCountDisplay,
@@ -142,6 +143,7 @@ import IceBreakerInterests from './components/profile/IceBreakerInterests';
 import HeroSection from './components/home/HeroSection';
 import WelcomeContextCard from './components/home/WelcomeContextCard';
 import SearchBlock, { DirectoryRandomProfileButton } from './components/home/SearchBlock';
+import RecommendedSection from './components/home/RecommendedSection';
 import MembersCountBlock from './components/home/MembersCountBlock';
 import InviteNetworkModal from './components/home/InviteNetworkModal';
 import NewMembersStrip from './components/home/NewMembersStrip';
@@ -636,6 +638,7 @@ const ProfileCard = ({
       exit={{ opacity: 0, scale: 0.95 }}
       key={p.uid}
       id={`profile-card-${p.uid}`}
+      data-testid="member-card"
       onClick={() => onSelect(p)}
       className={cn(
         'relative flex min-h-0 cursor-pointer flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow group hover:shadow-md sm:p-5',
@@ -2236,6 +2239,15 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     [authLeads, profileUidSet]
   );
 
+  const aiRecOtherMemberCount = useMemo(
+    () =>
+      profile?.uid
+        ? allProfiles.filter((p) => Boolean(p.uid) && p.uid !== profile.uid).length
+        : 0,
+    [allProfiles, profile?.uid]
+  );
+  const aiRecNeedsInviteGate = aiRecOtherMemberCount < AI_REC_MIN_OTHER_MEMBERS;
+
   useEffect(() => {
     if (!isEditing || !user) {
       setFormAdminPrivate(null);
@@ -2657,7 +2669,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       }
 
       const other = profiles.filter((p) => p.uid !== u.uid).slice(0, 50);
-      if (other.length < 3) {
+      if (other.length < AI_REC_MIN_OTHER_MEMBERS) {
         setMatches([]);
         setMatchLoading(false);
         setMatchBlockReason('few_members');
@@ -3893,6 +3905,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           ) : (
             <button
               type="button"
+              data-testid="header-login"
               onClick={openAuthModal}
               disabled={authProviderBusy !== null || authEmailBusy}
               className={cn(
@@ -3928,12 +3941,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               }}
             />
             <motion.div
+              data-testid="auth-modal"
               initial={{ opacity: 0, scale: 0.96, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 8 }}
               transition={{ type: 'spring', damping: 26, stiffness: 320 }}
               className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white p-6 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
             >
               <button
                 type="button"
@@ -5272,50 +5288,53 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </>
             )}
 
-            {/* Recommendations Section */}
+            {/* Recommandations IA — état vide invitation si moins de 3 autres membres dans l’annuaire */}
             {user && profile && !isAdminDashboard && (
-              <section className="min-w-0 space-y-4">
-                <div className="flex min-w-0 items-center gap-2">
-                  <Trophy className="h-5 w-5 shrink-0 text-indigo-500" />
-                  <h2 className="min-w-0 text-lg font-bold leading-snug text-stone-900 break-words">
-                    {t('recommendedForYou')}
-                  </h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <RecommendedSection
+                t={t}
+                needsInviteGate={aiRecNeedsInviteGate}
+                onInviteClick={() => setShowInviteNetworkModal(true)}
+              >
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   {matchLoading || (matches.length === 0 && !aiRecResolved) ? (
-                    [1, 2, 3].map(i => (
-                      <div key={i} className="h-48 bg-white rounded-2xl border border-stone-100 animate-pulse flex flex-col p-5 gap-4">
+                    [1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="flex h-48 flex-col gap-4 rounded-2xl border border-stone-100 bg-white p-5 animate-pulse"
+                      >
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-stone-100 rounded-xl" />
-                          <div className="space-y-2 flex-1">
-                            <div className="h-4 bg-stone-100 rounded w-3/4" />
-                            <div className="h-3 bg-stone-100 rounded w-1/2" />
+                          <div className="h-12 w-12 rounded-xl bg-stone-100" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 w-3/4 rounded bg-stone-100" />
+                            <div className="h-3 w-1/2 rounded bg-stone-100" />
                           </div>
                         </div>
-                        <div className="h-16 bg-stone-50 rounded-xl" />
+                        <div className="h-16 rounded-xl bg-stone-50" />
                       </div>
                     ))
                   ) : matches.length > 0 ? (
-                    matches.map(m => {
-                      const p = allProfiles.find(ap => ap.uid === m.profileId);
+                    matches.map((m) => {
+                      const p = allProfiles.find((ap) => ap.uid === m.profileId);
                       if (!p) return null;
                       return (
                         <React.Fragment key={m.profileId}>
-                          <MatchCard 
-                            m={m} 
-                            p={p} 
+                          <MatchCard
+                            m={m}
+                            p={p}
                             onShare={(id) => {
-                              const found = allProfiles.find(ap => ap.uid === id);
+                              const found = allProfiles.find((ap) => ap.uid === id);
                               if (found) setSelectedProfile(found);
                             }}
                             expanded={expandedHookId === m.profileId}
-                            onToggleHook={() => setExpandedHookId(expandedHookId === m.profileId ? null : m.profileId)}
+                            onToggleHook={() =>
+                              setExpandedHookId(expandedHookId === m.profileId ? null : m.profileId)
+                            }
                           />
                         </React.Fragment>
                       );
                     })
                   ) : (
-                    <div className="col-span-3 py-8 px-4 text-center bg-white rounded-2xl border border-dashed border-stone-200 space-y-3">
+                    <div className="col-span-3 space-y-3 rounded-2xl border border-dashed border-stone-200 bg-white px-4 py-8 text-center">
                       <p className="text-sm text-stone-500">
                         {matchBlockReason === 'incomplete_profile' && t('aiRecCompleteProfile')}
                         {matchBlockReason === 'few_members' && t('aiRecFewMembers')}
@@ -5337,7 +5356,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     </div>
                   )}
                 </div>
-              </section>
+              </RecommendedSection>
             )}
 
             {/* View Mode Tabs — seule barre d’onglets, collée au listing ; sticky sous le header (z-50) */}
@@ -6464,13 +6483,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               onClick={() => setShowUrgentPostModal(false)}
               className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
+              data-testid="urgent-post-modal"
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="relative bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl p-8"
+              role="dialog"
+              aria-modal="true"
             >
-              <button 
+              <button
                 onClick={() => setShowUrgentPostModal(false)}
                 className="absolute top-6 right-6 p-2 hover:bg-stone-100 rounded-full transition-colors text-stone-400 hover:text-stone-900"
               >
@@ -6558,7 +6580,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 } finally {
                   setUrgentPostModalSaving(false);
                 }
-              }} className="space-y-6">
+              }} className="space-y-6" data-testid="urgent-post-form">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
                     {t('bio')}{' '}

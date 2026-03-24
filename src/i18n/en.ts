@@ -118,9 +118,15 @@ export const EN_STRINGS: Record<string, string> = {
   cancel: "Cancel",
   search: "Search",
   searchPlaceholder: "Name, sector, need, keyword…",
-  searchBlockTitle: "🔍 Search the directory",
+  searchBlockTitle: "Find a key contact in 2 clicks",
+  searchBlockSubtitle:
+    "Search for a member, company, or need to grow your network in Guadalajara.",
   searchDirectoryPlaceholder: "Search a member, company, or need…",
-  searchButton: "Search",
+  searchDirectoryPlaceholderExamples:
+    "E.g. French-speaking lawyer, agro importer, coworking in Zapopan",
+  searchButton: "Search now",
+  searchHelperTip:
+    'Tip: start with a concrete need (e.g. “wine importer”, “tax expert”).',
   filterSectorLabel: "Sector",
   filterSectorDefault: "Sector",
   filterTypeLabel: "Profile type",
@@ -133,7 +139,7 @@ export const EN_STRINGS: Record<string, string> = {
   filterLocationZapopan: "Zapopan",
   filterLocationOther: "Other",
   clearFilters: "Clear filters",
-  randomProfile: "🎲 Discover a random profile",
+  randomProfile: "🎲 Discover someone to meet this week",
   randomProfileEmpty: "No profile available",
   launchTitle: "Community launching now",
   launchSubtitle: "Be among the first French-speaking members in Guadalajara.",
@@ -304,6 +310,11 @@ export const EN_STRINGS: Record<string, string> = {
     "Complete your profile (≥ 80% of key fields: sector, needs, keywords, bio, etc.) to enable AI recommendations.",
   aiRecFewMembers:
     "At least 3 other members are needed in the directory to generate suggestions. Check back soon.",
+  aiRecInviteEmptyBody:
+    "Turn on personalized recommendations by inviting at least 3 more members to join the directory.",
+  aiRecInviteEmptyBenefit:
+    "The more contacts you invite, the more relevant the suggested introductions will be for your business.",
+  aiRecInviteCta: "Invite 3 contacts to turn on recommendations",
   aiRecUnavailable: "AI suggestions are temporarily unavailable. Please try again shortly.",
   aiRecNoSuggestions:
     "No suggestions for now. Try again later or expand your network in the directory.",

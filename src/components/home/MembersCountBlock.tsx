@@ -46,6 +46,7 @@ export default function MembersCountBlock({
               </p>
               <button
                 type="button"
+                data-testid="invite-network-cta"
                 onClick={onOpenInvite}
                 className="mt-3 text-left text-sm font-semibold text-emerald-800 underline-offset-2 hover:text-emerald-950 hover:underline"
               >

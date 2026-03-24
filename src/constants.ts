@@ -146,6 +146,9 @@ export function cityOptionLabel(city: string, lang: Language): string {
 /** Seuil d’affichage : bloc « lancement » vs stats complètes (homepage). */
 export const MEMBERS_THRESHOLD = 20;
 
+/** Autres membres dans l’annuaire requis pour activer les recommandations IA (3 → 4 fiches au total avec vous). */
+export const AI_REC_MIN_OTHER_MEMBERS = 3;
+
 export const TRANSLATIONS: Translations = {
   title: { fr: "Annuaire d'Affaires de Guadalajara", es: "Directorio de Negocios de Guadalajara" },
   subtitle: { fr: "Communauté d'affaires francophone", es: "Comunidad de negocios francohablante" },
@@ -377,14 +380,26 @@ export const TRANSLATIONS: Translations = {
     es: "Nombre, sector, necesidad, palabra clave…",
   },
   searchBlockTitle: {
-    fr: "🔍 Rechercher dans l'annuaire",
-    es: '🔍 Buscar en el directorio',
+    fr: "Trouver un contact clé en 2 clics",
+    es: "Encuentra un contacto clave en 2 clics",
+  },
+  searchBlockSubtitle: {
+    fr: "Recherchez un membre, une entreprise ou un besoin pour développer votre réseau à Guadalajara.",
+    es: "Busca un miembro, una empresa o una necesidad para hacer crecer tu red en Guadalajara.",
   },
   searchDirectoryPlaceholder: {
     fr: "Rechercher un membre, une entreprise, un besoin…",
     es: "Buscar un miembro, empresa o necesidad…",
   },
-  searchButton: { fr: "Rechercher", es: "Buscar" },
+  searchDirectoryPlaceholderExamples: {
+    fr: "Ex. avocat francophone, importateur agro, coworking à Zapopan",
+    es: "Ej. abogado francófono, importador agro, coworking en Zapopan",
+  },
+  searchButton: { fr: "Chercher maintenant", es: "Buscar ahora" },
+  searchHelperTip: {
+    fr: 'Astuce : commencez par un besoin concret (ex. « importateur vin », « expert fiscalité »).',
+    es: 'Consejo: empieza por una necesidad concreta (ej. « importador de vinos », « experto en fiscalidad »).',
+  },
   filterSectorLabel: { fr: "Secteur", es: "Sector" },
   filterSectorDefault: { fr: "Secteur", es: "Sector" },
   filterTypeLabel: { fr: "Type de profil", es: "Tipo de perfil" },
@@ -398,8 +413,8 @@ export const TRANSLATIONS: Translations = {
   filterLocationOther: { fr: "Autre", es: "Otro" },
   clearFilters: { fr: "Effacer les filtres", es: "Borrar filtros" },
   randomProfile: {
-    fr: "🎲 Découvrir un profil au hasard",
-    es: "🎲 Descubrir un perfil al azar",
+    fr: "🎲 Découvrir un contact à rencontrer cette semaine",
+    es: "🎲 Descubrir un contacto para conocer esta semana",
   },
   randomProfileEmpty: {
     fr: "Aucun profil disponible",
@@ -740,6 +755,18 @@ export const TRANSLATIONS: Translations = {
   aiRecFewMembers: {
     fr: "Il faut au moins 3 autres membres dans l’annuaire pour générer des suggestions. Revenez bientôt.",
     es: "Se necesitan al menos 3 miembros más en el directorio para generar sugerencias. Vuelve pronto.",
+  },
+  aiRecInviteEmptyBody: {
+    fr: "Activez les recommandations personnalisées en invitant au moins 3 autres membres à rejoindre l’annuaire.",
+    es: "Activa las recomendaciones personalizadas invitando al menos a 3 miembros más a unirse al directorio.",
+  },
+  aiRecInviteEmptyBenefit: {
+    fr: "Plus vous invitez de contacts, plus les mises en relation proposées seront pertinentes pour votre activité.",
+    es: "Cuantos más contactos invites, más relevantes serán las conexiones propuestas para tu actividad.",
+  },
+  aiRecInviteCta: {
+    fr: "Inviter 3 contacts pour activer les recommandations",
+    es: "Invitar a 3 contactos para activar las recomendaciones",
   },
   aiRecUnavailable: {
     fr: "Les suggestions IA sont temporairement indisponibles. Réessayez dans un instant.",

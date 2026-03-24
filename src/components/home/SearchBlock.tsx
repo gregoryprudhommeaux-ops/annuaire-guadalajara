@@ -24,12 +24,21 @@ type Props = {
   onRandomProfile: () => void;
   randomDisabled: boolean;
   showClearFilters: boolean;
-  /** Masquer « Découvrir un profil au hasard » (ex. bloc centré onglet Secteurs — bouton reste dans la colonne gauche). */
+  /** Masquer le bouton « contact à rencontrer » (ex. bloc centré onglet Secteurs — bouton reste dans la colonne gauche). */
   hideRandomButton?: boolean;
 };
 
-const randomBtnClass =
-  'flex min-h-[44px] w-full items-center justify-center rounded-lg border border-slate-300 bg-transparent px-4 text-sm font-medium text-slate-700 transition-colors hover:border-blue-700 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40';
+const randomBtnClass = cn(
+  'btn-secondary random-profile-button flex min-h-[44px] w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition-colors',
+  'hover:border-slate-400 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400',
+  'disabled:pointer-events-none disabled:opacity-40'
+);
+
+const selectClass =
+  'h-11 min-h-[44px] w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition-shadow focus:ring-2 focus:ring-blue-700 focus:ring-offset-0';
+
+const searchComboInputClass =
+  'h-11 min-h-[44px] w-full min-w-0 border-0 bg-transparent py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none placeholder:text-slate-400';
 
 /** Bouton isolé pour la colonne gauche quand le bloc recherche est affiché au centre (onglet Secteurs). */
 export function DirectoryRandomProfileButton({
@@ -48,10 +57,7 @@ export function DirectoryRandomProfileButton({
   );
 }
 
-const selectClass =
-  'h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition-shadow focus:ring-2 focus:ring-blue-700 focus:ring-offset-0';
-
-/** [SEARCH] Bloc recherche + filtres (colonne annuaire). */
+/** Bloc recherche + filtres (structure sémantique type landing : section / header / barre / astuce). */
 export default function SearchBlock({
   lang,
   t,
@@ -76,46 +82,53 @@ export default function SearchBlock({
   };
 
   return (
-    <div
+    <section
       className={cn(
-        'min-w-0 rounded-xl border border-slate-200 bg-slate-50/95 shadow-sm',
+        'search-section min-w-0 rounded-xl border border-slate-200 bg-slate-50/95 shadow-sm',
         cardPad
       )}
     >
-      {/* [SEARCH] Titre du bloc */}
-      <h2 className="mb-4 hyphens-auto break-words text-sm font-semibold text-slate-700">
-        {t('searchBlockTitle')}
-      </h2>
+      <header className="search-header mb-4 space-y-2">
+        <h2 className="hyphens-auto break-words text-base font-bold tracking-tight text-slate-800 sm:text-lg">
+          {t('searchBlockTitle')}
+        </h2>
+        <p className="text-sm leading-snug text-slate-600">{t('searchBlockSubtitle')}</p>
+      </header>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* [SEARCH] Ligne 1 - Input + bouton */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
-          <div className="relative min-w-0 flex-1 sm:flex sm:min-h-[44px]">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400"
-              size={18}
-              aria-hidden
-            />
-            <input
-              type="search"
-              value={searchTerm}
-              onChange={(e) => onSearchTermChange(e.target.value)}
-              placeholder={t('searchDirectoryPlaceholder')}
-              aria-label={t('searchDirectoryPlaceholder')}
-              className="min-h-[44px] w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition-shadow focus:ring-2 focus:ring-blue-700 sm:min-h-0 sm:rounded-r-none sm:border-r-0 sm:py-2"
-            />
-          </div>
-          <button
-            type="submit"
-            className="min-h-[44px] shrink-0 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-800 sm:rounded-l-none sm:px-4"
+        <div className="search-bar space-y-3">
+          <div
+            className={cn(
+              'flex min-h-[44px] w-full min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm',
+              'transition-shadow focus-within:ring-2 focus-within:ring-blue-700 focus-within:ring-offset-0'
+            )}
           >
-            {t('searchButton')}
-          </button>
-        </div>
+            <div className="relative flex min-w-0 flex-1 items-center">
+              <Search
+                className="pointer-events-none absolute left-3 h-4 w-4 shrink-0 text-slate-400"
+                aria-hidden
+              />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(e) => onSearchTermChange(e.target.value)}
+                placeholder={t('searchDirectoryPlaceholderExamples')}
+                aria-label={t('searchDirectoryPlaceholder')}
+                className={searchComboInputClass}
+              />
+            </div>
+            <button
+              type="submit"
+              className={cn(
+                'btn-primary shrink-0 border-l border-blue-800/30 bg-blue-700 px-4 text-sm font-semibold text-white transition-colors sm:px-6',
+                'hover:bg-blue-800 focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-700'
+              )}
+            >
+              {t('searchButton')}
+            </button>
+          </div>
 
-        {/* [SEARCH] Ligne 2 - Filtres (sans titres : le libellé visible = 1re option) */}
-        <div className="flex flex-col gap-2 md:flex-row md:gap-2">
-          <div className="min-w-0 flex-1">
+          <div className="search-filters grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
             <select
               id="filter-sector"
               value={filterCategory}
@@ -130,8 +143,6 @@ export default function SearchBlock({
                 </option>
               ))}
             </select>
-          </div>
-          <div className="min-w-0 flex-1">
             <select
               id="filter-profile-type"
               value={filterProfileType}
@@ -143,8 +154,6 @@ export default function SearchBlock({
               <option value="company">{t('filterTypeCompany')}</option>
               <option value="member">{t('filterTypeMember')}</option>
             </select>
-          </div>
-          <div className="min-w-0 flex-1">
             <select
               id="filter-location"
               value={filterLocation}
@@ -160,7 +169,6 @@ export default function SearchBlock({
           </div>
         </div>
 
-        {/* [SEARCH] Effacer les filtres */}
         {showClearFilters && (
           <div className="flex justify-start sm:justify-end">
             <button
@@ -173,15 +181,17 @@ export default function SearchBlock({
           </div>
         )}
 
-        {/* [SEARCH] Découvrir un profil au hasard */}
         {!hideRandomButton && (
-          <DirectoryRandomProfileButton
-            t={t}
-            onRandomProfile={onRandomProfile}
-            randomDisabled={randomDisabled}
-          />
+          <div className="space-y-2">
+            <p className="search-helper text-xs leading-relaxed text-slate-500">{t('searchHelperTip')}</p>
+            <DirectoryRandomProfileButton
+              t={t}
+              onRandomProfile={onRandomProfile}
+              randomDisabled={randomDisabled}
+            />
+          </div>
         )}
       </form>
-    </div>
+    </section>
   );
 }

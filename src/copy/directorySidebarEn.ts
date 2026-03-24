@@ -3,9 +3,15 @@
  * Référence EN pour alignement avec `src/i18n/en.ts` (clés proches de `TRANSLATIONS`).
  */
 export const DIRECTORY_SIDEBAR_COPY_EN = {
-  searchBlockTitle: '🔍 Search the directory',
+  searchBlockTitle: 'Find a key contact in 2 clicks',
+  searchBlockSubtitle:
+    'Search for a member, company, or need to grow your network in Guadalajara.',
   searchDirectoryPlaceholder: 'Search a member, company, or need…',
-  searchButton: 'Search',
+  searchDirectoryPlaceholderExamples:
+    'E.g. French-speaking lawyer, agro importer, coworking in Zapopan',
+  searchButton: 'Search now',
+  searchHelperTip:
+    'Tip: start with a concrete need (e.g. “wine importer”, “tax expert”).',
   filterSectorLabel: 'Sector',
   filterSectorDefault: 'Sector',
   filterTypeLabel: 'Profile type',
@@ -18,7 +24,7 @@ export const DIRECTORY_SIDEBAR_COPY_EN = {
   filterLocationZapopan: 'Zapopan',
   filterLocationOther: 'Other',
   clearFilters: 'Clear filters',
-  randomProfile: '🎲 Discover a random profile',
+  randomProfile: '🎲 Discover someone to meet this week',
   randomProfileEmpty: 'No profile available',
   opportunitiesEmpty: 'No opportunities at the moment.',
   launchTitle: 'Community launching now',

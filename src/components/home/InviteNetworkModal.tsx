@@ -57,6 +57,7 @@ export default function InviteNetworkModal({ open, onClose, lang, t }: Props) {
       onClick={onClose}
     >
       <motion.div
+        data-testid="invite-network-modal"
         initial={{ opacity: 0, scale: 0.95, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className="w-full max-w-lg overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-2xl"
@@ -89,11 +90,17 @@ export default function InviteNetworkModal({ open, onClose, lang, t }: Props) {
           </p>
 
           <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-stone-400">
+            <label
+              htmlFor="invite-network-message"
+              className="mb-2 block text-xs font-bold uppercase tracking-wider text-stone-400"
+            >
               {t('inviteNetworkMessageLabel')}
             </label>
             <textarea
               readOnly
+              id="invite-network-message"
+              name="message"
+              data-testid="invite-network-message"
               value={message}
               rows={6}
               className="w-full resize-none rounded-2xl border border-stone-200 bg-stone-50 p-4 text-sm leading-relaxed text-stone-800 outline-none"

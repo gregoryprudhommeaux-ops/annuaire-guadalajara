@@ -77,6 +77,7 @@ export const OpportunityActions: React.FC<{
     </button>
     <button
       type="button"
+      data-testid="cta-post-opportunity"
       onClick={onPost}
       title={postLabel}
       className={cn(
@@ -126,6 +127,7 @@ export const DirectoryTabBar: React.FC<DirectoryTabBarProps> = ({
         <button
           key={tab.id}
           type="button"
+          data-testid={`directory-tab-${tab.id}`}
           onClick={() => onTabChange(tab.id)}
           className={cn(
             'flex min-w-0 flex-1 basis-[calc(50%-2px)] items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-center text-[11px] font-semibold transition-colors sm:basis-auto sm:text-sm',
