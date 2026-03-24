@@ -3505,6 +3505,11 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     if (profile?.role === 'admin') {
       return handleRejectUrgentPost(postId);
     }
+    const targetPost = urgentPosts.find((p) => p.id === postId);
+    if (!targetPost?.authorId || targetPost.authorId !== user.uid) {
+      // Defense in depth: only the author (or admin above) can trigger deletion.
+      return false;
+    }
     try {
       await deleteDoc(doc(db, 'urgent_posts', postId));
       await deleteDoc(doc(db, URGENT_POST_PRIVATE_COLLECTION, postId)).catch(() => {

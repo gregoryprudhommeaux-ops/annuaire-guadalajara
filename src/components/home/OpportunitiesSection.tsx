@@ -108,7 +108,7 @@ export default function OpportunitiesSection({
                     className="font-semibold leading-snug"
                   />
                 </div>
-                <p className="mt-2 text-xs font-medium uppercase tracking-wide text-stone-400">
+                <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-stone-400">
                   {activityCategoryLabel(typeLabel, lang) || typeLabel}
                 </p>
                 {user ? (

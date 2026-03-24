@@ -500,7 +500,7 @@ export default function NetworkRadarSection({
                   ) : (
                     <p className="mt-2 text-[11px] text-slate-500">{t('opportunityAuthorHiddenGuest')}</p>
                   )}
-                  <span className="mt-2 inline-flex w-fit rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">
+                  <span className="mt-2 inline-flex w-fit rounded-full bg-white px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">
                     {activityCategoryLabel(post.sector, lang)}
                   </span>
                 </>
