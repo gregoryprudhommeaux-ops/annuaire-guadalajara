@@ -4863,26 +4863,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </>
           )}
 
-          {/* Connecté : Bienvenue | Nouveaux membres — même hauteur de ligne (pas de hero) */}
+          {/* Connecté : nouveaux membres (le bloc bienvenue est retiré) */}
           {user && showDiscoveryStrips && !isAdminDashboard && (
             <>
-              <div
-                className={cn(
-                  'order-1 h-full min-h-0 min-w-0 lg:order-none lg:col-span-4',
-                  profile?.role === 'admin' && 'hidden sm:block'
-                )}
-              >
-                <WelcomeContextCard
-                  title={t('welcome')}
-                  body={t('welcomeIntro')}
-                  className="h-full w-full"
-                  collapsible
-                  collapsibleOnMobile
-                  mobileDefaultOpen={false}
-                  mobileShowIntroLabel={t('welcomeIntroShow')}
-                  mobileHideIntroLabel={t('welcomeIntroHide')}
-                />
-              </div>
               <div className="order-2 h-full min-h-0 w-full min-w-0 lg:order-none lg:col-span-8">
                 <NewMembersStrip
                   copy={h}
@@ -4922,24 +4905,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           {/* Colonne gauche — recherche (+ opportunités si connecté), stats */}
           <div
             className={cn(
-              'order-4 min-w-0 w-full space-y-6 lg:order-none lg:col-span-4 lg:self-start',
+              'min-w-0 w-full space-y-4 sm:space-y-6 lg:order-none lg:col-span-4 lg:self-start',
+              user && showDiscoveryStrips ? 'order-1' : 'order-4',
               isAdminDashboard && 'hidden'
             )}
           >
-            {user && !showDiscoveryStrips && (
-              <div className={cn('h-fit shrink-0', profile?.role === 'admin' && 'hidden sm:block')}>
-                <WelcomeContextCard
-                  title={t('welcome')}
-                  body={t('welcomeIntro')}
-                  className="w-full"
-                  collapsible
-                  collapsibleOnMobile
-                  mobileDefaultOpen={false}
-                  mobileShowIntroLabel={t('welcomeIntroShow')}
-                  mobileHideIntroLabel={t('welcomeIntroHide')}
-                />
-              </div>
-            )}
             {viewMode === 'activities' ? (
               <div
                 className={cn(
