@@ -53,7 +53,6 @@ import {
   where,
   addDoc,
   limit,
-  writeBatch,
 } from 'firebase/firestore';
 import { FirebaseError } from 'firebase/app';
 import { auth, db } from './firebase';
@@ -3710,10 +3709,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const handleRejectUrgentPost = async (postId: string): Promise<UrgentModerationMutationResult> => {
     if (!viewerIsAdmin) return { success: false, code: 'not-admin' };
     try {
-      const batch = writeBatch(db);
-      batch.delete(doc(db, 'urgent_posts', postId));
-      batch.delete(doc(db, URGENT_POST_PRIVATE_COLLECTION, postId));
-      await batch.commit();
+      await deleteDoc(doc(db, 'urgent_posts', postId));
+      await deleteDoc(doc(db, URGENT_POST_PRIVATE_COLLECTION, postId)).catch(() => {});
       return { success: true };
     } catch (error) {
       const code = error instanceof FirebaseError ? error.code : 'unknown';
@@ -3722,7 +3719,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     }
   };
 
-  /** Suppression opportunité : admin (batch public+private) ou auteur (doc public, privé si autorisé). */
+  /** Suppression opportunité : admin ou auteur (doc public, puis privé si présent). */
   const handleDeleteOpportunity = async (postId: string): Promise<boolean> => {
     if (!user) return false;
     if (viewerIsAdmin) {
@@ -6697,22 +6694,19 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                 setUrgentPostModalSaving(true);
                 try {
+                  /** Un seul doc `urgent_posts` (format historique) : même modèle que les annonces déjà visibles dans la console, évite le batch public + privé. */
                   const postRef = doc(collection(db, 'urgent_posts'));
-                  const batch = writeBatch(db);
-                  batch.set(postRef, {
+                  await setDoc(postRef, {
+                    authorId: user.uid,
+                    authorName,
+                    authorCompany,
+                    authorPhoto,
                     text,
                     sector,
                     createdAt,
                     expiresAt,
                     isPublished: true,
                   });
-                  batch.set(doc(db, URGENT_POST_PRIVATE_COLLECTION, postRef.id), {
-                    authorId: user.uid,
-                    authorName,
-                    authorCompany,
-                    authorPhoto,
-                  });
-                  await batch.commit();
                   setShowUrgentPostModal(false);
                 } catch (error) {
                   const code =
@@ -6728,16 +6722,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     path: 'urgent_posts',
                   };
                   console.error('Firestore Error: ', JSON.stringify({ ...errInfo, code }));
+                  const devDetail =
+                    import.meta.env.DEV && error instanceof Error && error.message
+                      ? ` — ${error.message}`
+                      : '';
                   if (code === 'permission-denied') {
-                    setUrgentPostModalError(t('urgentPostErrorPermissionDenied'));
+                    setUrgentPostModalError(t('urgentPostErrorPermissionDenied') + devDetail);
                   } else if (
                     code === 'unavailable' ||
                     code === 'deadline-exceeded' ||
                     code === 'resource-exhausted'
                   ) {
-                    setUrgentPostModalError(t('urgentPostErrorNetwork'));
+                    setUrgentPostModalError(t('urgentPostErrorNetwork') + devDetail);
                   } else {
-                    setUrgentPostModalError(t('urgentPostSubmitErrorGeneric'));
+                    setUrgentPostModalError(t('urgentPostSubmitErrorGeneric') + devDetail);
                   }
                 } finally {
                   setUrgentPostModalSaving(false);

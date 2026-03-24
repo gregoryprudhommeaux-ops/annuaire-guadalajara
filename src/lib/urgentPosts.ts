@@ -1,6 +1,6 @@
 import type { UrgentPost } from '../types';
 
-/** Métadonnées auteur (collection séparée ; non lisible par les invités). */
+/** Anciens posts « split » : métadonnées auteur dans une collection séparée. Les nouvelles annonces utilisent un seul doc `urgent_posts` (champs auteur sur le doc public). */
 export const URGENT_POST_PRIVATE_COLLECTION = 'urgent_post_private';
 
 export type UrgentPostPrivateDoc = {
@@ -42,8 +42,8 @@ function readOptionalBoolean(raw: unknown): boolean | undefined {
 }
 
 /**
- * Fusionne le document `urgent_posts` et éventuellement `urgent_post_private`.
- * Anciens documents : champs auteur encore sur `urgent_posts`.
+ * Fusionne `urgent_posts` et, si présent, `urgent_post_private` (anciens enregistrements split).
+ * Format courant : tout sur `urgent_posts` (authorId, authorName, … sur le doc public).
  */
 export function mergeUrgentPostFromFirestore(
   id: string,

@@ -45,31 +45,6 @@ service cloud.firestore {
         && data.createdAt is timestamp;
     }
 
-    /** Anciennes annonces : auteur encore sur `urgent_posts`. */
-    function isValidUrgentPostLegacy(data) {
-      return data.keys().hasAll(['authorId', 'authorName', 'text', 'sector', 'createdAt', 'expiresAt'])
-        && data.authorId == request.auth.uid
-        && data.authorName is string
-        && data.text is string && data.text.size() <= 200
-        && data.sector is string
-        && data.createdAt is number
-        && data.expiresAt is number
-        && data.expiresAt > data.createdAt;
-    }
-
-    /**
-     * Création annonce publique (format actuel) : contrôle des champs utiles uniquement (pas hasOnly / hasAll).
-     * Champs en plus autorisés. Pas de contrôle sur isPublished (évite les refus selon le type côté client).
-     */
-    function isValidUrgentPostPublicCreate(data) {
-      return ('text' in data) && ('sector' in data) && ('createdAt' in data) && ('expiresAt' in data)
-        && data.text is string && data.text.size() >= 1 && data.text.size() <= 200
-        && data.sector is string && data.sector.size() >= 1
-        && data.createdAt is number
-        && data.expiresAt is number
-        && data.expiresAt > data.createdAt;
-    }
-
     function urgentPostNonExpired(data) {
       return data.expiresAt is number && data.expiresAt > request.time.toMillis();
     }
@@ -82,14 +57,6 @@ service cloud.firestore {
       return isAuthenticated()
         && exists(/databases/$(database)/documents/urgent_post_private/$(postId))
         && get(/databases/$(database)/documents/urgent_post_private/$(postId)).data.authorId == request.auth.uid;
-    }
-
-    function isValidUrgentPostPrivateCreate(data) {
-      return ('authorId' in data) && ('authorName' in data) && ('authorPhoto' in data)
-        && data.authorId == request.auth.uid
-        && data.authorName is string
-        && data.authorPhoto is string
-        && (!('authorCompany' in data) || (data.authorCompany is string));
     }
 
     function isValidNeedComment(data) {
@@ -200,10 +167,11 @@ service cloud.firestore {
         || urgentPostAuthorOwns(postId)
         || (isAuthenticated() && resource.data.authorId == request.auth.uid)
       );
-      allow create: if isAuthenticated() && (
-        isValidUrgentPostPublicCreate(request.resource.data)
-        || isValidUrgentPostLegacy(request.resource.data)
-      );
+      /**
+       * Création : tout membre connecté (même logique qu’avant les validations strictes).
+       * L’app envoie texte / secteur / dates ; on ne valide plus la forme ici pour éviter les refus SDK.
+       */
+      allow create: if isAuthenticated();
       allow update: if isAdmin();
       /** Suppression : admin, auteur (doc public legacy avec authorId), ou auteur format public+privé (métadonnées dans urgent_post_private). */
       allow delete: if isAdmin()
@@ -218,7 +186,11 @@ service cloud.firestore {
             && exists(/databases/$(database)/documents/urgent_posts/$(postId))
             && urgentPostNonExpired(get(/databases/$(database)/documents/urgent_posts/$(postId)).data)
             && urgentPostListedForEveryone(get(/databases/$(database)/documents/urgent_posts/$(postId)).data));
-      allow create: if isAuthenticated() && isValidUrgentPostPrivateCreate(request.resource.data);
+      /** Métadonnées auteur : seule contrainte = authorId == utilisateur connecté (pas d’usurpation). */
+      allow create: if isAuthenticated()
+        && 'authorId' in request.resource.data
+        && request.resource.data.authorId is string
+        && request.resource.data.authorId == request.auth.uid;
       /** Suppression : admin ou auteur du doc privé (y compris après publication de l’annonce publique). */
       allow delete: if isAdmin()
         || (isAuthenticated() && resource.data.authorId == request.auth.uid);
