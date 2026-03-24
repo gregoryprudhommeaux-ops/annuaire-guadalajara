@@ -4799,16 +4799,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </div>
                           );
                         })()}
-                        <div className="mt-6 border-t border-stone-100 pt-5">
-                          <button
-                            type="button"
-                            onClick={() => setProfileToDelete(profile.uid)}
-                            className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50"
-                          >
-                            <Plus size={14} className="rotate-45" aria-hidden />
-                            {t('deleteProfile')}
-                          </button>
-                        </div>
                       </div>
                     ) : (
                         <div className="text-center py-8">
