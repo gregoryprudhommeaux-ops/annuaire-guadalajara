@@ -119,10 +119,9 @@ import {
 } from './lib/contactPreferences';
 import {
   profileMeetsPublicationRequirements,
-  getProfilePublicationBlockReason,
-  PUBLICATION_BIO_MIN_LEN,
   AI_OPTIMIZATION_READINESS_TARGET,
 } from './lib/profilePublicationRules';
+import { translateFreeTextToUiLang } from './lib/aiTranslateFreeText';
 import {
   profileCoachFingerprint,
   formatLocalProfileCoachLine,
@@ -717,7 +716,14 @@ const ProfileCard = ({
                     {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
                   </span>
                 </div>
-                {p.bio?.trim() ? <ProfileCardBio text={p.bio} t={t} /> : null}
+                {p.bio?.trim() ? (
+                  <ProfileCardBio
+                    text={p.bio}
+                    lang={lang}
+                    pretranslatedByLang={p.bioTranslations}
+                    t={t}
+                  />
+                ) : null}
               </>
             )}
             {!guestDirectoryTeaser && variant === 'activity' && (
@@ -756,7 +762,14 @@ const ProfileCard = ({
                     {[p.city, p.neighborhood, p.state || 'Jalisco'].filter(Boolean).join(', ')}
                   </span>
                 </div>
-                {p.bio?.trim() ? <ProfileCardBio text={p.bio} t={t} /> : null}
+                {p.bio?.trim() ? (
+                  <ProfileCardBio
+                    text={p.bio}
+                    lang={lang}
+                    pretranslatedByLang={p.bioTranslations}
+                    t={t}
+                  />
+                ) : null}
               </>
             )}
             {!guestDirectoryTeaser && variant === 'default' && (
@@ -793,7 +806,14 @@ const ProfileCard = ({
                     {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
                   </span>
                 </div>
-                {p.bio?.trim() ? <ProfileCardBio text={p.bio} t={t} /> : null}
+                {p.bio?.trim() ? (
+                  <ProfileCardBio
+                    text={p.bio}
+                    lang={lang}
+                    pretranslatedByLang={p.bioTranslations}
+                    t={t}
+                  />
+                ) : null}
               </>
             )}
           </div>
@@ -1423,6 +1443,7 @@ const ProfilePage = () => {
                       lang={lang}
                       t={t}
                       text={profile.bio}
+                      pretranslatedByLang={profile.bioTranslations}
                       className="text-stone-700 leading-relaxed text-lg"
                       whitespace="pre-wrap"
                     />
@@ -2068,12 +2089,19 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [showInviteNetworkModal, setShowInviteNetworkModal] = useState(false);
   const [profileSaveBusy, setProfileSaveBusy] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+  const [profileSaveSuccess, setProfileSaveSuccess] = useState<string | null>(null);
   const [profileReminderDismissed, setProfileReminderDismissed] = useState(false);
   const [optimizationBusy, setOptimizationBusy] = useState(false);
   const [optimizationError, setOptimizationError] = useState<string | null>(null);
   const [profileCoachLine, setProfileCoachLine] = useState('');
   const [profileCoachSource, setProfileCoachSource] = useState<'local' | 'ai' | null>(null);
   const [profileCoachLoading, setProfileCoachLoading] = useState(false);
+
+  useEffect(() => {
+    if (!profileSaveSuccess) return;
+    const timer = globalThis.setTimeout(() => setProfileSaveSuccess(null), 8000);
+    return () => globalThis.clearTimeout(timer);
+  }, [profileSaveSuccess]);
 
   const getAuthErrorMessage = (code: string) => {
     const host = typeof window !== 'undefined' ? window.location.host : '';
@@ -2322,6 +2350,11 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       mandatory: !pubOk,
       ai: pubOk && readiness < AI_OPTIMIZATION_READINESS_TARGET,
     };
+  }, [profile]);
+
+  const profileCompletionPct = useMemo(() => {
+    if (!profile) return 0;
+    return Math.round(getProfileAiRecommendationReadiness(profile) * 100);
   }, [profile]);
 
   useEffect(() => {
@@ -2739,6 +2772,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     if (!user) return;
     setProfileSaveBusy(true);
     setProfileSaveError(null);
+    setProfileSaveSuccess(null);
 
     const formData = new FormData(e.currentTarget);
     const targetUid = editingProfile?.uid || user.uid;
@@ -2810,97 +2844,46 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       targetSectors: targetSectorListProbe,
     };
 
-    const publicationBlock = getProfilePublicationBlockReason(publicationProbe);
-    if (publicationBlock !== null) {
-      const blockMsg = (() => {
-        switch (publicationBlock) {
-          case 'website':
-            return pickLang(
-              'Le site web doit commencer par https:// (ex. https://votredomaine.com).',
-              'El sitio web debe empezar por https:// (p. ej. https://sudominio.com).',
-              'Website URL must start with https:// (e.g. https://yourdomain.com).',
-              lang
-            );
-          case 'whatsapp':
-            return pickLang(
-              'Indiquez un numéro WhatsApp pour la validation de la fiche.',
-              'Indica un número de WhatsApp para validar la ficha.',
-              'Please add a WhatsApp number for profile validation.',
-              lang
-            );
-          case 'passions':
-            return pickLang(
-              'Sélectionnez au moins une passion dans « En dehors du business » (les choix sont enregistrés dans l’app, pas dans les champs texte du bas).',
-              'Elige al menos un interés en « Fuera del negocio » (se guardan en la app, no en un campo de texto abajo).',
-              'Pick at least one interest under “Beyond business” (saved in the app — not via a plain text field below).',
-              lang
-            );
-          case 'bio':
-            return pickLang(
-              `La bio doit contenir au moins ${PUBLICATION_BIO_MIN_LEN} caractères.`,
-              `La bio debe tener al menos ${PUBLICATION_BIO_MIN_LEN} caracteres.`,
-              `Your bio must be at least ${PUBLICATION_BIO_MIN_LEN} characters.`,
-              lang
-            );
-          case 'city':
-            return pickLang(
-              'Choisissez une ville.',
-              'Elige una ciudad.',
-              'Please choose a city.',
-              lang
-            );
-          case 'state':
-            return pickLang(
-              'Indiquez l’état / la région (ex. Jalisco).',
-              'Indica el estado o región (p. ej. Jalisco).',
-              'Enter the state or region (e.g. Jalisco).',
-              lang
-            );
-          case 'country':
-            return pickLang(
-              'Indiquez le pays (ex. Mexique).',
-              'Indica el país (p. ej. México).',
-              'Enter the country (e.g. Mexico).',
-              lang
-            );
-          case 'communityCompanyKind':
-            return pickLang(
-              'Choisissez un type d’entreprise (analytics) : startup, PME, corporate ou indépendant.',
-              'Elige un tipo de empresa (analytics): startup, PYME, corporate o independiente.',
-              'Choose a company type (analytics): startup, SME, corporate, or independent.',
-              lang
-            );
-          case 'communityMemberStatus':
-            return pickLang(
-              'Choisissez un statut professionnel (analytics) : freelance, salarié ou dirigeant.',
-              'Elige un estatus profesional (analytics): freelance, asalariado o director.',
-              'Choose a professional status (analytics): freelance, employee, or owner.',
-              lang
-            );
-          case 'activity':
-            return pickLang(
-              'Renseignez le secteur d’activité et la fonction dans l’entreprise.',
-              'Completa el sector de actividad y la función en la empresa.',
-              'Please fill in activity sector and role in the company.',
-              lang
-            );
-          case 'identity':
-            return pickLang(
-              'Renseignez le nom, la société et l’e-mail.',
-              'Completa el nombre, la empresa y el correo.',
-              'Please fill in name, company, and email.',
-              lang
-            );
-          default:
-            return pickLang(
-              'Pour une fiche publiable et validable par l’admin, remplissez tous les champs marqués d’une astérisque (*), dont la bio (au moins 15 caractères) et au moins une passion (jusqu’à 3 au choix).',
-              'Para un perfil publicable y validable por el admin, completa los campos marcados con asterisco (*), incluida la bio (mín. 15 caracteres) y al menos una pasión (hasta 3 a elegir).',
-              'To publish and get admin validation, complete every field marked with an asterisk (*), including your bio (min. 15 characters) and at least one interest (up to 3).',
-              lang
-            );
-        }
-      })();
-      setProfileSaveError(blockMsg);
+    const hasIdentity = !!(
+      publicationProbe.fullName?.trim() &&
+      publicationProbe.companyName?.trim() &&
+      publicationProbe.email?.trim()
+    );
+    if (!hasIdentity) {
+      setProfileSaveError(
+        pickLang(
+          'Renseignez le nom, la société et l’e-mail.',
+          'Completa el nombre, la empresa y el correo.',
+          'Please fill in name, company, and email.',
+          lang
+        )
+      );
+      setProfileSaveBusy(false);
+      return;
+    }
+
+    if (!publicationProbe.activityCategory?.trim()) {
+      setProfileSaveError(
+        pickLang(
+          "Choisissez un secteur d'activité.",
+          'Elige un sector de actividad.',
+          'Please choose an activity sector.',
+          lang
+        )
+      );
+      setProfileSaveBusy(false);
+      return;
+    }
+
+    if (!publicationProbe.city?.trim()) {
+      setProfileSaveError(
+        pickLang(
+          'Choisissez une ville.',
+          'Elige una ciudad.',
+          'Please choose a city.',
+          lang
+        )
+      );
       setProfileSaveBusy(false);
       return;
     }
@@ -2970,20 +2953,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     ];
 
     const cckRaw = getTrimmed('communityCompanyKind');
-    let communityCompanyKind: CommunityCompanyKind;
+    let communityCompanyKind: CommunityCompanyKind | ReturnType<typeof deleteField>;
     if (cckRaw === '') {
-      setProfileSaveError(
-        pickLang(
-          'Choisissez un type d’entreprise (analytics).',
-          'Elige un tipo de empresa (analytics).',
-          'Choose a company type (analytics).',
-          lang
-        )
-      );
-      setProfileSaveBusy(false);
-      return;
-    }
-    if ((COMMUNITY_COMPANY_KINDS as readonly string[]).includes(cckRaw)) {
+      communityCompanyKind = deleteField();
+    } else if ((COMMUNITY_COMPANY_KINDS as readonly string[]).includes(cckRaw)) {
       communityCompanyKind = cckRaw as CommunityCompanyKind;
     } else {
       setProfileSaveError(
@@ -2999,20 +2972,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     }
 
     const cmsRaw = getTrimmed('communityMemberStatus');
-    let communityMemberStatus: CommunityMemberStatus;
+    let communityMemberStatus: CommunityMemberStatus | ReturnType<typeof deleteField>;
     if (cmsRaw === '') {
-      setProfileSaveError(
-        pickLang(
-          'Choisissez un statut professionnel (analytics).',
-          'Elige un estatus profesional (analytics).',
-          'Choose a professional status (analytics).',
-          lang
-        )
-      );
-      setProfileSaveBusy(false);
-      return;
-    }
-    if ((COMMUNITY_MEMBER_STATUSES as readonly string[]).includes(cmsRaw)) {
+      communityMemberStatus = deleteField();
+    } else if ((COMMUNITY_MEMBER_STATUSES as readonly string[]).includes(cmsRaw)) {
       communityMemberStatus = cmsRaw as CommunityMemberStatus;
     } else {
       setProfileSaveError(
@@ -3052,6 +3015,75 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       : (baseProfile?.companySize ?? 'solo');
 
     const isInitialSelfProfile = isSelf && !profile;
+    const previousBio = String((baseProfile?.bio ?? '')).trim();
+    const nextBio = optionalString('bio');
+    const previousBioTranslations = baseProfile?.bioTranslations;
+    const sameBioAsBefore = !!nextBio && nextBio.trim() === previousBio;
+    let nextBioTranslations: Partial<Record<Language, string>> | ReturnType<typeof deleteField> =
+      deleteField();
+    if (nextBio) {
+      if (
+        sameBioAsBefore &&
+        previousBioTranslations &&
+        Object.keys(previousBioTranslations).length > 0
+      ) {
+        nextBioTranslations = previousBioTranslations;
+      } else {
+        const generated: Partial<Record<Language, string>> = { [lang]: nextBio };
+        if (getGeminiApiKey()) {
+          const targets: Language[] = ['fr', 'es', 'en'];
+          const jobs = targets
+            .filter((target) => target !== lang)
+            .map(async (target) => {
+              try {
+                const out = await translateFreeTextToUiLang(nextBio, target);
+                if (out.trim()) generated[target] = out.trim();
+              } catch {
+                // Keep graceful fallback to source text.
+              }
+            });
+          await Promise.all(jobs);
+        }
+        nextBioTranslations =
+          Object.keys(generated).length > 0 ? generated : deleteField();
+      }
+    }
+    const previousContactCta = String((baseProfile?.contactPreferenceCta ?? '')).trim();
+    const nextContactCta = optionalString('contactPreferenceCta');
+    const previousContactCtaTranslations = baseProfile?.contactPreferenceCtaTranslations;
+    const sameContactCtaAsBefore =
+      !!nextContactCta && nextContactCta.trim() === previousContactCta;
+    let nextContactCtaTranslations:
+      | Partial<Record<Language, string>>
+      | ReturnType<typeof deleteField> = deleteField();
+    if (nextContactCta) {
+      if (
+        sameContactCtaAsBefore &&
+        previousContactCtaTranslations &&
+        Object.keys(previousContactCtaTranslations).length > 0
+      ) {
+        nextContactCtaTranslations = previousContactCtaTranslations;
+      } else {
+        const generated: Partial<Record<Language, string>> = { [lang]: nextContactCta };
+        if (getGeminiApiKey()) {
+          const targets: Language[] = ['fr', 'es', 'en'];
+          const jobs = targets
+            .filter((target) => target !== lang)
+            .map(async (target) => {
+              try {
+                const out = await translateFreeTextToUiLang(nextContactCta, target);
+                if (out.trim()) generated[target] = out.trim();
+              } catch {
+                // Keep graceful fallback to source text.
+              }
+            });
+          await Promise.all(jobs);
+        }
+        nextContactCtaTranslations =
+          Object.keys(generated).length > 0 ? generated : deleteField();
+      }
+    }
+
     const newProfile = {
       uid: targetUid,
       fullName: getTrimmed('fullName'),
@@ -3072,14 +3104,13 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       employeeCount: employeeCountVal,
       isEmailPublic: formData.get('isEmailPublic') === 'on',
       isWhatsappPublic: formData.get('isWhatsappPublic') === 'on',
-      bio: optionalString('bio'),
+      bio: nextBio,
+      bioTranslations: nextBioTranslations,
       highlightedNeeds: sanitizeHighlightedNeeds(highlightedNeedsDraft),
       passionIds: sanitizePassionIds(passionIdsDraft),
       targetSectors: (formData.get('targetSectors') as string)?.split(',').map(s => s.trim()).filter(Boolean) || [],
-      contactPreferenceCta: (() => {
-        const v = getTrimmed('contactPreferenceCta');
-        return v === '' ? deleteField() : v;
-      })(),
+      contactPreferenceCta: nextContactCta ?? deleteField(),
+      contactPreferenceCtaTranslations: nextContactCtaTranslations,
       workingLanguageCodes: sanitizeWorkingLanguageCodes(workingLanguagesDraft),
       typicalClientSize,
       openToMentoring: formData.get('openToMentoring') === 'on',
@@ -3128,6 +3159,14 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
           ...(formAdminPrivateReady ? { openToEventSponsoring } : {}),
         }));
       }
+      setProfileSaveSuccess(
+        pickLang(
+          'Profil enregistré. Vous pouvez compléter le reste plus tard pour améliorer votre visibilité.',
+          'Perfil guardado. Puedes completar el resto más tarde para mejorar tu visibilidad.',
+          'Profile saved. You can complete the rest later to improve your visibility.',
+          lang
+        )
+      );
       setIsEditing(false);
       setEditingProfile(null);
     } catch (error) {
@@ -3874,7 +3913,17 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     <UserIcon size={16} />
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
-                    <h2 className="text-lg font-semibold tracking-tight">{t('myProfile')}</h2>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold tracking-tight">{t('myProfile')}</h2>
+                      <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
+                        {pickLang(
+                          `Profil: ${profileCompletionPct}%`,
+                          `Perfil: ${profileCompletionPct}%`,
+                          `Profile: ${profileCompletionPct}%`,
+                          lang
+                        )}
+                      </span>
+                    </div>
                     {profile ? (
                       <div className="flex items-start gap-2">
                         {profileCoachSource === 'ai' ? (
@@ -3889,9 +3938,25 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             aria-hidden
                           />
                         ) : null}
-                        <p className="min-w-0 flex-1 text-xs leading-relaxed text-stone-500 sm:text-sm break-words">
-                          {profileCoachLine}
-                        </p>
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <p className="text-[11px] font-medium leading-relaxed text-blue-700 sm:text-xs">
+                            {pickLang(
+                              profileCompletionPct >= 100
+                                ? 'Bravo, votre profil est complet !'
+                                : `Objectif 100%: complétez votre profil pour gagner en visibilité.`,
+                              profileCompletionPct >= 100
+                                ? 'Excelente, tu perfil está completo.'
+                                : 'Meta 100%: completa tu perfil para ganar visibilidad.',
+                              profileCompletionPct >= 100
+                                ? 'Great, your profile is complete.'
+                                : 'Target 100%: complete your profile to boost visibility.',
+                              lang
+                            )}
+                          </p>
+                          <p className="text-xs leading-relaxed text-stone-500 sm:text-sm break-words">
+                            {profileCoachLine}
+                          </p>
+                        </div>
                       </div>
                     ) : null}
                   </div>
@@ -3917,6 +3982,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   </div>
                 </div>
               </div>
+
+              {profileSaveSuccess ? (
+                <div className="mx-4 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 sm:mx-6 sm:text-sm">
+                  {profileSaveSuccess}
+                </div>
+              ) : null}
 
             <AnimatePresence>
               {isProfileExpanded && (
@@ -4718,6 +4789,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               lang={lang}
                               t={t}
                               text={profile.bio}
+                              pretranslatedByLang={profile.bioTranslations}
                               className="text-sm text-stone-600 leading-relaxed"
                               whitespace="pre-wrap"
                             />
@@ -4756,6 +4828,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     lang={lang}
                                     t={t}
                                     text={profile.contactPreferenceCta.trim()}
+                                    pretranslatedByLang={profile.contactPreferenceCtaTranslations}
                                     className="mt-1 text-sm text-stone-600"
                                   />
                                 </div>
@@ -5708,6 +5781,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             lang={lang}
                             t={t}
                             text={selectedProfile.bio}
+                            pretranslatedByLang={selectedProfile.bioTranslations}
                             className="text-sm text-stone-600 leading-relaxed"
                             whitespace="pre-wrap"
                           />

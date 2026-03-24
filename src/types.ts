@@ -108,6 +108,8 @@ export interface UserProfile {
   /** Revue admin en attente (accès membre déjà autorisé). */
   needsAdminReview?: boolean;
   bio?: string;
+  /** Pré-traductions de la bio (clé = langue UI) pour limiter les appels IA en lecture. */
+  bioTranslations?: Partial<Record<Language, string>>;
   /** Jusqu’à 3 codes NEED_* (voir `NEED_OPTIONS`) mis en avant sur le profil */
   highlightedNeeds?: string[];
   lookingFor?: string;
@@ -115,6 +117,8 @@ export interface UserProfile {
   targetSectors?: string[];
   /** Canal privilégié pour un premier contact (texte libre) */
   contactPreferenceCta?: string;
+  /** Pré-traductions du CTA de contact (clé = langue UI). */
+  contactPreferenceCtaTranslations?: Partial<Record<Language, string>>;
   /** Jusqu’à 3 codes langue (FR, ES, EN, …) — voir `WORKING_LANGUAGE_OPTIONS` */
   workingLanguageCodes?: string[];
   /** Taille de clients avec lesquels le membre travaille le plus souvent (distinct de `companySize`) */

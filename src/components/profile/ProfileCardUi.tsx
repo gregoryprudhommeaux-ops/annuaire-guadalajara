@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
 import { Mail } from 'lucide-react';
 import { cn } from '../../cn';
+import type { Language } from '../../types';
+import AiTranslatedFreeText from '../AiTranslatedFreeText';
 
 /** Bio : pas d’italique, line-clamp-3 + Voir plus / Voir moins (clics ne propagent pas vers la carte). */
 export function ProfileCardBio({
   text,
+  lang,
+  pretranslatedByLang,
   t,
   className,
 }: {
   text: string;
+  lang: Language;
+  pretranslatedByLang?: Partial<Record<Language, string>>;
   t: (key: string) => string;
   className?: string;
 }) {
@@ -22,14 +28,18 @@ export function ProfileCardBio({
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
     >
-      <p
+      <AiTranslatedFreeText
+        lang={lang}
+        t={t}
+        text={trimmed}
+        pretranslatedByLang={pretranslatedByLang}
+        as="p"
+        omitAiDisclaimer
         className={cn(
           'text-sm leading-relaxed text-slate-600',
           !expanded && isLong && 'line-clamp-3'
         )}
-      >
-        {trimmed}
-      </p>
+      />
       {isLong && (
         <button
           type="button"
