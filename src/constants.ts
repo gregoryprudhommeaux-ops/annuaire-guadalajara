@@ -162,6 +162,103 @@ export const TRANSLATIONS: Translations = {
     fr: "Choisissez un compte :",
     es: "Elige una cuenta:",
   },
+  authOrEmail: {
+    fr: "Ou avec une adresse e-mail",
+    es: "O con correo electrónico",
+  },
+  authPassword: { fr: "Mot de passe", es: "Contraseña" },
+  authConfirmPassword: {
+    fr: "Confirmer le mot de passe",
+    es: "Confirmar contraseña",
+  },
+  authEmailSignIn: { fr: "Se connecter", es: "Iniciar sesión" },
+  authEmailSignUp: { fr: "Créer un compte", es: "Crear cuenta" },
+  authEmailForgotLink: {
+    fr: "Mot de passe oublié ?",
+    es: "¿Olvidaste tu contraseña?",
+  },
+  authEmailNoAccount: { fr: "Pas encore de compte ?", es: "¿No tienes cuenta?" },
+  authEmailHasAccount: { fr: "Déjà un compte ?", es: "¿Ya tienes cuenta?" },
+  authEmailBackSignIn: {
+    fr: "Retour à la connexion",
+    es: "Volver al inicio de sesión",
+  },
+  authEmailSendReset: {
+    fr: "Envoyer le lien de réinitialisation",
+    es: "Enviar enlace de restablecimiento",
+  },
+  authResetEmailSent: {
+    fr: "Si cette adresse est associée à un compte, un e-mail de réinitialisation vient d’être envoyé.",
+    es: "Si esa dirección está asociada a una cuenta, acabamos de enviar un correo para restablecer la contraseña.",
+  },
+  authVerificationEmailSent: {
+    fr: "Un e-mail de vérification vient d’être envoyé. Ouvrez-le pour activer votre compte.",
+    es: "Hemos enviado un correo de verificación. Ábrelo para activar tu cuenta.",
+  },
+  authPasswordMismatch: {
+    fr: "Les mots de passe ne correspondent pas.",
+    es: "Las contraseñas no coinciden.",
+  },
+  authErrGeneric: {
+    fr: "Une erreur d’authentification s’est produite. Réessayez.",
+    es: "Se produjo un error de autenticación. Inténtalo de nuevo.",
+  },
+  authErrEmailAlreadyInUse: {
+    fr: "Cette adresse e-mail est déjà utilisée.",
+    es: "Este correo ya está en uso.",
+  },
+  authErrInvalidEmail: {
+    fr: "Adresse e-mail invalide.",
+    es: "Correo electrónico no válido.",
+  },
+  authErrWeakPassword: {
+    fr: "Mot de passe trop faible (minimum 6 caractères recommandé).",
+    es: "Contraseña demasiado débil (se recomiendan al menos 6 caracteres).",
+  },
+  authErrUserNotFound: {
+    fr: "Aucun compte ne correspond à cette adresse.",
+    es: "No hay ninguna cuenta con esta dirección.",
+  },
+  authErrWrongPassword: {
+    fr: "Mot de passe incorrect.",
+    es: "Contraseña incorrecta.",
+  },
+  authErrUserDisabled: {
+    fr: "Ce compte a été désactivé. Contactez le support.",
+    es: "Esta cuenta está desactivada. Contacta con soporte.",
+  },
+  authErrTooManyRequests: {
+    fr: "Trop de tentatives. Patientez quelques minutes puis réessayez.",
+    es: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+  },
+  authErrInvalidCredential: {
+    fr: "E-mail ou mot de passe incorrect.",
+    es: "Correo o contraseña incorrectos.",
+  },
+  authErrUnauthorizedDomain: {
+    fr: "Ce domaine ({{host}}) n’est pas autorisé dans Firebase Auth. Ajoutez-le dans Authentication > Settings > Authorized domains.",
+    es: "Este dominio ({{host}}) no está autorizado en Firebase Auth. Agrégalo en Authentication > Settings > Authorized domains.",
+  },
+  authErrOperationNotAllowed: {
+    fr: "Ce mode de connexion n’est pas activé dans Firebase Auth (Sign-in method).",
+    es: "Este método de inicio de sesión no está habilitado en Firebase Auth (Sign-in method).",
+  },
+  authErrPopupClosed: {
+    fr: "La fenêtre de connexion a été fermée avant la fin. Réessayez.",
+    es: "La ventana de inicio de sesión se cerró antes de terminar. Inténtalo de nuevo.",
+  },
+  authVerifyEmailBanner: {
+    fr: "Vérifiez votre adresse e-mail (lien reçu par message) pour sécuriser votre compte.",
+    es: "Verifica tu correo (enlace en el mensaje) para asegurar tu cuenta.",
+  },
+  authResendVerification: {
+    fr: "Renvoyer l’e-mail de vérification",
+    es: "Reenviar correo de verificación",
+  },
+  authVerificationSentShort: {
+    fr: "E-mail de vérification envoyé.",
+    es: "Correo de verificación enviado.",
+  },
   close: { fr: "Fermer", es: "Cerrar" },
   logout: { fr: "Se déconnecter", es: "Cerrar sesión" },
   register: { fr: "S'enregistrer", es: "Registrarse" },
@@ -658,6 +755,16 @@ export const TRANSLATIONS: Translations = {
   urgentPostSubmitErrorGeneric: {
     fr: "Impossible d’enregistrer l’annonce. Vérifiez votre connexion et réessayez.",
     es: "No se pudo guardar el anuncio. Comprueba la conexión e inténtalo de nuevo.",
+  },
+  urgentPostErrorPermissionDenied: {
+    fr:
+      "Enregistrement refusé par Firebase (droits / règles). Vous êtes bien connecté : le blocage vient souvent des règles Firestore non déployées ou obsolètes. Déployez le fichier firestore.rules du projet (firebase deploy --only firestore:rules) ou mettez à jour les règles dans la console Firebase.",
+    es:
+      "Firebase ha rechazado el guardado (permisos / reglas). Estás conectado: suele deberse a reglas de Firestore no desplegadas. Despliega firestore.rules (firebase deploy --only firestore:rules) o actualiza las reglas en la consola.",
+  },
+  urgentPostErrorNetwork: {
+    fr: "Service temporairement indisponible ou connexion instable. Réessayez dans un instant.",
+    es: "Servicio temporalmente no disponible o conexión inestable. Inténtalo de nuevo en un momento.",
   },
   urgentPostMustSignIn: {
     fr: "Connectez-vous pour publier une annonce.",

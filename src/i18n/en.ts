@@ -11,6 +11,39 @@ export const EN_STRINGS: Record<string, string> = {
   continueMicrosoft: "Continue with Microsoft",
   continueApple: "Continue with Apple",
   signInWithProvider: "Choose an account:",
+  authOrEmail: "Or sign in with email",
+  authPassword: "Password",
+  authConfirmPassword: "Confirm password",
+  authEmailSignIn: "Sign in",
+  authEmailSignUp: "Create account",
+  authEmailForgotLink: "Forgot password?",
+  authEmailNoAccount: "No account yet?",
+  authEmailHasAccount: "Already have an account?",
+  authEmailBackSignIn: "Back to sign in",
+  authEmailSendReset: "Send reset link",
+  authResetEmailSent:
+    "If that address is linked to an account, we’ve sent a password reset email.",
+  authVerificationEmailSent:
+    "We’ve sent a verification email. Open it to activate your account.",
+  authPasswordMismatch: "Passwords do not match.",
+  authErrGeneric: "Something went wrong with authentication. Please try again.",
+  authErrEmailAlreadyInUse: "This email address is already in use.",
+  authErrInvalidEmail: "Invalid email address.",
+  authErrWeakPassword: "Password is too weak (at least 6 characters recommended).",
+  authErrUserNotFound: "No account matches this email address.",
+  authErrWrongPassword: "Incorrect password.",
+  authErrUserDisabled: "This account has been disabled. Contact support.",
+  authErrTooManyRequests: "Too many attempts. Wait a few minutes and try again.",
+  authErrInvalidCredential: "Incorrect email or password.",
+  authErrUnauthorizedDomain:
+    "This domain ({{host}}) is not authorized in Firebase Auth. Add it under Authentication > Settings > Authorized domains.",
+  authErrOperationNotAllowed:
+    "This sign-in method is not enabled in Firebase Auth (Sign-in method).",
+  authErrPopupClosed: "The sign-in window was closed before finishing. Please try again.",
+  authVerifyEmailBanner:
+    "Verify your email (link in the message) to secure your account.",
+  authResendVerification: "Resend verification email",
+  authVerificationSentShort: "Verification email sent.",
   close: "Close",
   logout: "Sign out",
   register: "Register",
@@ -279,6 +312,10 @@ export const EN_STRINGS: Record<string, string> = {
   urgentPostSaving: "Saving…",
   urgentPostSubmitErrorGeneric:
     "Could not save your post. Check your connection and try again.",
+  urgentPostErrorPermissionDenied:
+    "Firebase blocked the save (security rules). You are signed in — this usually means Firestore rules are missing or outdated. Deploy this project’s firestore.rules (firebase deploy --only firestore:rules) or update rules in the Firebase console.",
+  urgentPostErrorNetwork:
+    "The service is temporarily unavailable or your connection is unstable. Please try again shortly.",
   urgentPostMustSignIn: "Sign in to publish a post.",
   urgentPostFormInvalid: "Please fill in the description and sector.",
   contact: "Contact",

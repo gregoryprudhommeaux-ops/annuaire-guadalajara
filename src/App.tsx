@@ -23,6 +23,7 @@ import {
   browserLocalPersistence,
   signOut, 
   onAuthStateChanged, 
+  sendEmailVerification,
   User 
 } from 'firebase/auth';
 import { 
@@ -44,6 +45,7 @@ import {
   limit,
   writeBatch,
 } from 'firebase/firestore';
+import { FirebaseError } from 'firebase/app';
 import { auth, db } from './firebase';
 import {
   UserProfile,
@@ -205,6 +207,11 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from './cn';
 import { cardPad, pageMainPad, pageSectionPad } from './lib/pageLayout';
+import {
+  firebaseAuthCodeToTranslationKey,
+  firebaseAuthErrorUserMessage,
+} from './lib/firebaseAuthUi';
+import EmailAuthPanel from './components/EmailAuthPanel';
 
 const loadNetworkRadarSection = () => import('./components/home/NetworkRadarSection');
 const loadDashboardPage = () => import('./components/dashboard/DashboardPage');
@@ -286,22 +293,25 @@ interface SocialSignInButtonsProps {
   lang: Language;
   t: (key: string) => string;
   busy: SocialAuthProvider | null;
+  /** Désactive Google / Microsoft / Apple (ex. soumission e-mail en cours). */
+  oauthDisabled?: boolean;
   onSignIn: (p: SocialAuthProvider) => void;
 }
 
-function SocialSignInButtons({ lang, t, busy, onSignIn }: SocialSignInButtonsProps) {
+function SocialSignInButtons({ lang, t, busy, oauthDisabled = false, onSignIn }: SocialSignInButtonsProps) {
   const connecting = pickLang('Connexion...', 'Conectando...', 'Signing in...', lang);
   const baseBtn =
     'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none disabled:cursor-not-allowed';
 
   const stackBtn = `w-full ${baseBtn} py-3 rounded-xl text-sm`;
+  const blocked = busy !== null || oauthDisabled;
 
   return (
     <div className="flex w-full flex-col gap-2">
       <button
         type="button"
         onClick={() => onSignIn('google')}
-        disabled={busy !== null}
+        disabled={blocked}
         className={`${stackBtn} bg-white text-stone-900 shadow-lg hover:bg-stone-100`}
       >
         <BrandGoogle className="h-5 w-5 shrink-0" />
@@ -310,7 +320,7 @@ function SocialSignInButtons({ lang, t, busy, onSignIn }: SocialSignInButtonsPro
       <button
         type="button"
         onClick={() => onSignIn('microsoft')}
-        disabled={busy !== null}
+        disabled={blocked}
         className={`${stackBtn} bg-[#2F2F2F] text-white hover:bg-[#1f1f1f]`}
       >
         <BrandMicrosoft className="h-5 w-5 shrink-0" />
@@ -319,7 +329,7 @@ function SocialSignInButtons({ lang, t, busy, onSignIn }: SocialSignInButtonsPro
       <button
         type="button"
         onClick={() => onSignIn('apple')}
-        disabled={busy !== null}
+        disabled={blocked}
         className={`${stackBtn} bg-black text-white hover:bg-stone-900`}
       >
         <BrandApple className="h-5 w-5 shrink-0" />
@@ -2059,6 +2069,15 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
   const profileUidSet = useMemo(() => new Set(allProfiles.map((p) => p.uid)), [allProfiles]);
+  const showEmailVerifyBanner = useMemo(
+    () =>
+      Boolean(
+        user &&
+          !user.emailVerified &&
+          user.providerData.some((p) => p.providerId === 'password')
+      ),
+    [user]
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [isShareNeedsModalOpen, setIsShareNeedsModalOpen] = useState(false);
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
@@ -2109,6 +2128,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [authProviderBusy, setAuthProviderBusy] = useState<SocialAuthProvider | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authEmailBusy, setAuthEmailBusy] = useState(false);
+  const [authModalResetKey, setAuthModalResetKey] = useState(0);
+  const [emailVerifyNotice, setEmailVerifyNotice] = useState<string | null>(null);
+  const [emailVerifySending, setEmailVerifySending] = useState(false);
   const [showInviteNetworkModal, setShowInviteNetworkModal] = useState(false);
   const [profileSaveBusy, setProfileSaveBusy] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
@@ -2129,6 +2152,12 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   useEffect(() => {
     if (showUrgentPostModal) setUrgentPostModalError(null);
   }, [showUrgentPostModal]);
+
+  useEffect(() => {
+    if (!emailVerifyNotice) return;
+    const id = window.setTimeout(() => setEmailVerifyNotice(null), 6000);
+    return () => window.clearTimeout(id);
+  }, [emailVerifyNotice]);
 
   useEffect(() => {
     const w = window as Window & {
@@ -2161,32 +2190,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   const getAuthErrorMessage = (code: string) => {
     const host = typeof window !== 'undefined' ? window.location.host : '';
-    const fr = {
-      unauthorizedDomain: `Ce domaine (${host}) n'est pas autorisé dans Firebase Auth. Ajoutez-le dans Authentication > Settings > Authorized domains.`,
-      providerDisabled:
-        "Ce fournisseur (Google, Microsoft ou Apple) n'est pas activé dans Firebase Auth > Sign-in method.",
-      popupClosed: "La fenêtre de connexion a été fermée avant la fin. Réessayez.",
-      generic: "Connexion impossible. Vérifiez la configuration Firebase Auth et que le fournisseur est activé."
-    };
-    const es = {
-      unauthorizedDomain: `Este dominio (${host}) no está autorizado en Firebase Auth. Agrégalo en Authentication > Settings > Authorized domains.`,
-      providerDisabled:
-        "Este proveedor (Google, Microsoft o Apple) no está habilitado en Firebase Auth > Sign-in method.",
-      popupClosed: "La ventana de inicio de sesión se cerró antes de terminar. Inténtalo de nuevo.",
-      generic: "No se pudo iniciar sesión. Verifica Firebase Auth y que el proveedor esté habilitado."
-    };
-    const en = {
-      unauthorizedDomain: `This domain (${host}) is not authorized in Firebase Auth. Add it under Authentication > Settings > Authorized domains.`,
-      providerDisabled:
-        "This provider (Google, Microsoft, or Apple) is not enabled in Firebase Auth > Sign-in method.",
-      popupClosed: "The sign-in window was closed before finishing. Please try again.",
-      generic: "Sign-in failed. Check Firebase Auth and that the provider is enabled."
-    };
-    const msg = lang === 'fr' ? fr : lang === 'es' ? es : en;
-
-    if (code === 'auth/unauthorized-domain') return msg.unauthorizedDomain;
-    if (code === 'auth/operation-not-allowed') return msg.providerDisabled;
-    if (code === 'auth/popup-closed-by-user') return msg.popupClosed;
     if (code === 'auth/popup-timeout') {
       return pickLang(
         'La popup Google prend trop de temps. Redirection automatique en cours…',
@@ -2195,7 +2198,28 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
         lang
       );
     }
-    return msg.generic;
+    const key = firebaseAuthCodeToTranslationKey(code);
+    let msg = t(key);
+    if (key === 'authErrUnauthorizedDomain') {
+      msg = msg.replace(/\{\{host\}\}/g, host);
+    }
+    return msg;
+  };
+
+  const handleResendEmailVerification = async () => {
+    const u = auth.currentUser;
+    if (!u || u.emailVerified) return;
+    setEmailVerifySending(true);
+    setEmailVerifyNotice(null);
+    try {
+      await sendEmailVerification(u);
+      setEmailVerifyNotice(t('authVerificationSentShort'));
+    } catch (err) {
+      const host = typeof window !== 'undefined' ? window.location.host : '';
+      setEmailVerifyNotice(firebaseAuthErrorUserMessage(err, t, host));
+    } finally {
+      setEmailVerifySending(false);
+    }
   };
 
   const pendingProfiles = useMemo(() => {
@@ -2823,6 +2847,12 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   };
 
   const handleLogout = () => signOut(auth);
+
+  const openAuthModal = useCallback(() => {
+    setAuthError(null);
+    setAuthModalResetKey((k) => k + 1);
+    setShowAuthModal(true);
+  }, []);
 
   const handleSaveProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -3465,13 +3495,12 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   );
 
   const onGuestDirectoryJoin = useCallback(() => {
-    setAuthError(null);
     if (!user) {
-      setShowAuthModal(true);
+      openAuthModal();
     } else {
       setShowOnboarding(true);
     }
-  }, [user]);
+  }, [user, openAuthModal]);
 
   const companiesDirectoryList = useMemo(() => {
     if (!guestDirectoryRestricted) return profilesSortedForCompanies;
@@ -3864,11 +3893,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           ) : (
             <button
               type="button"
-              onClick={() => {
-                setAuthError(null);
-                setShowAuthModal(true);
-              }}
-              disabled={authProviderBusy !== null}
+              onClick={openAuthModal}
+              disabled={authProviderBusy !== null || authEmailBusy}
               className={cn(
                 'w-full border-0 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-white transition-colors',
                 'rounded-none bg-transparent hover:bg-blue-800/35 active:bg-blue-900/40',
@@ -3898,7 +3924,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
               onClick={() => {
-                if (authProviderBusy === null) setShowAuthModal(false);
+                if (authProviderBusy === null && !authEmailBusy) setShowAuthModal(false);
               }}
             />
             <motion.div
@@ -3912,7 +3938,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               <button
                 type="button"
                 onClick={() => {
-                  if (authProviderBusy === null) setShowAuthModal(false);
+                  if (authProviderBusy === null && !authEmailBusy) setShowAuthModal(false);
                 }}
                 className="absolute right-4 top-4 rounded-full p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-900"
                 aria-label={t('close')}
@@ -3926,12 +3952,23 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   lang={lang}
                   t={t}
                   busy={authProviderBusy}
+                  oauthDisabled={authEmailBusy}
                   onSignIn={handleSocialLogin}
                 />
               </div>
-              {authError && (
+              <EmailAuthPanel
+                resetToken={authModalResetKey}
+                lang={lang}
+                t={t}
+                socialBusy={authProviderBusy !== null}
+                emailBusy={authEmailBusy}
+                setEmailBusy={setAuthEmailBusy}
+                onError={(msg) => setAuthError(msg)}
+                clearError={() => setAuthError(null)}
+              />
+              {authError ? (
                 <p className="mt-4 text-sm text-red-600 leading-snug">{authError}</p>
-              )}
+              ) : null}
             </motion.div>
           </div>
         )}
@@ -3939,6 +3976,26 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
       {user && !isAdminDashboard && (
         <div className="bg-stone-50 border-b border-stone-200">
+          {showEmailVerifyBanner ? (
+            <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-950">
+              <p className="font-medium">{t('authVerifyEmailBanner')}</p>
+              <div className="mt-2 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+                <button
+                  type="button"
+                  onClick={handleResendEmailVerification}
+                  disabled={emailVerifySending}
+                  className="rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100 disabled:opacity-60"
+                >
+                  {emailVerifySending
+                    ? pickLang('Envoi…', 'Enviando…', 'Sending…', lang)
+                    : t('authResendVerification')}
+                </button>
+                {emailVerifyNotice ? (
+                  <span className="text-xs text-amber-900/90">{emailVerifyNotice}</span>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
           {profile?.role === 'admin' && viewMode !== 'dashboard' && (
             <div className={cn(pageSectionPad, 'pb-0 sm:hidden')}>
               <button
@@ -4994,10 +5051,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 <HeroSection
                   copy={h}
                   authBusy={authProviderBusy !== null}
-                  onCreateProfile={() => {
-                    setAuthError(null);
-                    setShowAuthModal(true);
-                  }}
+                  onCreateProfile={openAuthModal}
                   onExploreMembers={() => {
                     setDirectoryDiscoveryStripsHidden(true);
                     setViewMode('members');
@@ -5095,10 +5149,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   );
                 }}
                 onPost={() => setShowUrgentPostModal(true)}
-                onCreateProfile={() => {
-                  setAuthError(null);
-                  setShowAuthModal(true);
-                }}
+                onCreateProfile={openAuthModal}
                 onOpenPost={openOpportunityProfile}
               />
             )}
@@ -5123,10 +5174,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   );
                 }}
                 onPost={() => setShowUrgentPostModal(true)}
-                onCreateProfile={() => {
-                  setAuthError(null);
-                  setShowAuthModal(true);
-                }}
+                onCreateProfile={openAuthModal}
                 onOpenPost={openOpportunityProfile}
               />
             )}
@@ -5140,10 +5188,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               threshold={MEMBERS_THRESHOLD}
               registeredWithProfile={!!user && !!profile}
               onOpenInvite={() => setShowInviteNetworkModal(true)}
-              onCreateProfile={() => {
-                setAuthError(null);
-                setShowAuthModal(true);
-              }}
+              onCreateProfile={openAuthModal}
             />
           </div>
 
@@ -5220,10 +5265,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       );
                     }}
                     onPost={() => setShowUrgentPostModal(true)}
-                    onCreateProfile={() => {
-                      setAuthError(null);
-                      setShowAuthModal(true);
-                    }}
+                    onCreateProfile={openAuthModal}
                     onOpenPost={openOpportunityProfile}
                   />
                 )}
@@ -5560,15 +5602,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       }}
                       onOpportunityClick={openOpportunityProfile}
                       onPostOpportunity={() => setShowUrgentPostModal(true)}
-                      onCreateProfile={() => {
-                        setAuthError(null);
-                        setShowAuthModal(true);
-                      }}
+                      onCreateProfile={openAuthModal}
                       registeredWithProfile={!!user && !!profile}
                       onUnlockRadar={() => {
-                        setAuthError(null);
                         if (!user) {
-                          setShowAuthModal(true);
+                          openAuthModal();
                         } else {
                           setShowOnboarding(true);
                         }
@@ -5601,9 +5639,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       t={t}
                       registeredWithProfile={!!user && !!profile}
                       onUnlockRadar={() => {
-                        setAuthError(null);
                         if (!user) {
-                          setShowAuthModal(true);
+                          openAuthModal();
                         } else {
                           setShowOnboarding(true);
                         }
@@ -6114,11 +6151,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     <button
                       type="button"
                       onClick={() => {
-                        setAuthError(null);
                         setSelectedProfile(null);
-                        setShowAuthModal(true);
+                        openAuthModal();
                       }}
-                      disabled={authProviderBusy !== null}
+                      disabled={authProviderBusy !== null || authEmailBusy}
                       className="w-full rounded-xl bg-white py-3 text-sm font-bold text-stone-900 transition-colors hover:bg-stone-100 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {t('register')}
@@ -6495,6 +6531,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   await batch.commit();
                   setShowUrgentPostModal(false);
                 } catch (error) {
+                  const code =
+                    error instanceof FirebaseError ? error.code : '';
                   const errInfo: FirestoreErrorInfo = {
                     error: error instanceof Error ? error.message : String(error),
                     authInfo: {
@@ -6505,8 +6543,18 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     operationType: OperationType.CREATE,
                     path: 'urgent_posts',
                   };
-                  console.error('Firestore Error: ', JSON.stringify(errInfo));
-                  setUrgentPostModalError(t('urgentPostSubmitErrorGeneric'));
+                  console.error('Firestore Error: ', JSON.stringify({ ...errInfo, code }));
+                  if (code === 'permission-denied') {
+                    setUrgentPostModalError(t('urgentPostErrorPermissionDenied'));
+                  } else if (
+                    code === 'unavailable' ||
+                    code === 'deadline-exceeded' ||
+                    code === 'resource-exhausted'
+                  ) {
+                    setUrgentPostModalError(t('urgentPostErrorNetwork'));
+                  } else {
+                    setUrgentPostModalError(t('urgentPostSubmitErrorGeneric'));
+                  }
                 } finally {
                   setUrgentPostModalSaving(false);
                 }
