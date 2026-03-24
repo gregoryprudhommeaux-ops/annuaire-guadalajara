@@ -2658,10 +2658,13 @@ const MainApp = () => {
   }, []);
 
   useEffect(() => {
-    if (viewMode === 'dashboard' && profile?.role !== 'admin') {
+    if (
+      viewMode === 'dashboard' &&
+      !(profile?.role === 'admin' || isAdminEmail(user?.email))
+    ) {
       setViewMode('members');
     }
-  }, [viewMode, profile?.role]);
+  }, [viewMode, profile?.role, user?.email]);
 
   const handleSocialLogin = async (which: SocialAuthProvider) => {
     const provider = buildAuthProvider(which);
@@ -3253,7 +3256,8 @@ const MainApp = () => {
   }, [searchTerm, filterCategory, filterLocation, filterProfileType]);
 
   const showDiscoveryStrips = !showDirectoryClearFilters && !directoryDiscoveryStripsHidden;
-  const isAdminDashboard = viewMode === 'dashboard' && profile?.role === 'admin';
+  const viewerIsAdmin = profile?.role === 'admin' || isAdminEmail(user?.email);
+  const isAdminDashboard = viewMode === 'dashboard' && viewerIsAdmin;
 
   const directoryViewTabs = useMemo(
     () =>
@@ -3262,11 +3266,11 @@ const MainApp = () => {
         { id: 'members' as const, icon: Users, label: t('members') },
         { id: 'activities' as const, icon: Briefcase, label: t('activities') },
         { id: 'radar' as const, icon: Activity, label: t('directoryTabRadar') },
-        ...(profile?.role === 'admin'
+        ...(viewerIsAdmin
           ? [{ id: 'dashboard' as const, icon: LayoutDashboard, label: t('dashboardTab') }]
           : []),
       ] as const,
-    [t, profile?.role]
+    [t, viewerIsAdmin]
   );
 
   const clearDirectoryFilters = useCallback(() => {
@@ -3346,7 +3350,6 @@ const MainApp = () => {
     });
   }, [filteredProfiles, activityCategoryPopularity, lang]);
 
-  const viewerIsAdmin = profile?.role === 'admin';
   const guestDirectoryRestricted = useMemo(
     () => isGuestDirectoryRestricted(user, profile, Boolean(viewerIsAdmin)),
     [user, profile, viewerIsAdmin]
@@ -3787,6 +3790,21 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
       {user && (
         <div className="bg-stone-50 border-b border-stone-200">
+          {profile?.role === 'admin' && viewMode !== 'dashboard' && (
+            <div className={cn(pageSectionPad, 'pb-0 sm:hidden')}>
+              <button
+                type="button"
+                onClick={() => {
+                  setDirectoryDiscoveryStripsHidden(true);
+                  setViewMode('dashboard');
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800 transition-colors hover:bg-indigo-100"
+              >
+                <LayoutDashboard size={17} aria-hidden />
+                {t('dashboardTab')}
+              </button>
+            </div>
+          )}
           <div className={pageSectionPad}>
             <section className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden relative">
               {profile &&
@@ -4801,7 +4819,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           {/* Connecté : Bienvenue | Nouveaux membres — même hauteur de ligne (pas de hero) */}
           {user && showDiscoveryStrips && !isAdminDashboard && (
             <>
-              <div className="order-1 h-full min-h-0 min-w-0 lg:order-none lg:col-span-4">
+              <div
+                className={cn(
+                  'order-1 h-full min-h-0 min-w-0 lg:order-none lg:col-span-4',
+                  profile?.role === 'admin' && 'hidden sm:block'
+                )}
+              >
                 <WelcomeContextCard
                   title={t('welcome')}
                   body={t('welcomeIntro')}
@@ -4833,29 +4856,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </>
           )}
 
-          {/* Mobile admin shortcut: Dashboard directly under top banner */}
-          {profile?.role === 'admin' && !isAdminDashboard && (
-            <div className="order-3 min-w-0 w-full sm:hidden">
-              <button
-                type="button"
-                onClick={() => {
-                  setDirectoryDiscoveryStripsHidden(true);
-                  setViewMode('dashboard');
-                  requestAnimationFrame(() =>
-                    directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  );
-                }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800 transition-colors hover:bg-indigo-100"
-              >
-                <LayoutDashboard size={17} aria-hidden />
-                {t('dashboardTab')}
-              </button>
-            </div>
-          )}
-
           {/* Mobile : fun fact entre le hero (ou bandeau connecté) et recherche / onglets */}
           {(!user || (user && showDiscoveryStrips)) &&
-            !(viewMode === 'dashboard' && profile?.role === 'admin') && (
+            !isAdminDashboard && (
             <div className="order-3 min-w-0 w-full sm:hidden">
               <HomeFunFactStrip
                 lang={lang}
@@ -4875,7 +4878,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             )}
           >
             {user && !showDiscoveryStrips && (
-              <div className="h-fit shrink-0">
+              <div className={cn('h-fit shrink-0', profile?.role === 'admin' && 'hidden sm:block')}>
                 <WelcomeContextCard
                   title={t('welcome')}
                   body={t('welcomeIntro')}
@@ -4922,7 +4925,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             <div
               className={cn(
                 (!user || showDiscoveryStrips) && 'hidden sm:block',
-                viewMode === 'dashboard' && profile?.role === 'admin' && 'hidden'
+                isAdminDashboard && 'hidden'
               )}
             >
               <HomeFunFactStrip lang={lang} canLoadMemberProfiles={!guestDirectoryRestricted} />
@@ -5382,7 +5385,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 />
               )}
 
-              {viewMode === 'dashboard' && profile?.role === 'admin' && (
+              {isAdminDashboard && (
                 <DashboardPage
                   lang={lang}
                   t={t}
