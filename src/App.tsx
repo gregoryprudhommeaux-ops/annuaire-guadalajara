@@ -409,7 +409,8 @@ function urgentModerationErrorMessage(
   code: string,
   t: (key: string) => string,
   connectedEmail?: string | null,
-  lang: Language = 'fr'
+  lang: Language = 'fr',
+  connectedUid?: string | null
 ): string {
   if (code === 'permission-denied') {
     const base = t('urgentPostErrorPermissionDenied');
@@ -417,7 +418,17 @@ function urgentModerationErrorMessage(
       connectedEmail && connectedEmail.trim() !== ''
         ? ` — ${pickLang('compte : ', 'cuenta: ', 'signed in as: ', lang)}${connectedEmail.trim()}`
         : '';
-    return `${base}${who}`;
+    const uidPart =
+      connectedUid && connectedUid.trim() !== ''
+        ? ` — ${pickLang('UID : ', 'UID: ', 'UID: ', lang)}${connectedUid.trim()}`
+        : '';
+    const hint = pickLang(
+      ' · Vérifiez Firestore → Rules (même base que l’app) : le fichier doit contenir votre UID. Si Build → App Check → Cloud Firestore est « Enforced » sans reCAPTCHA web, désactivez l’application stricte ou définissez VITE_FIREBASE_APPCHECK_SITE_KEY.',
+      ' · Revisa Firestore → Rules (misma base). Si App Check exige Firestore sin clave web, desactiva enforcement o usa VITE_FIREBASE_APPCHECK_SITE_KEY.',
+      ' · Check Firestore → Rules (same DB as the app). If App Check enforces Firestore without a web key, turn off enforcement (Build → App Check) or set VITE_FIREBASE_APPCHECK_SITE_KEY.',
+      lang
+    );
+    return `${base}${who}${uidPart}${hint}`;
   }
   if (
     code === 'unavailable' ||
@@ -5329,9 +5340,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             ref={directoryMainRef}
             id="directory-main"
             className={cn(
-              'order-2 min-w-0 w-full scroll-mt-24 space-y-6 lg:order-2 lg:col-start-5',
-              user && showDiscoveryStrips && !isAdminDashboard && 'lg:space-y-5',
-              isAdminDashboard ? 'lg:col-span-12' : 'lg:col-span-8'
+              'order-2 min-w-0 w-full scroll-mt-24 space-y-6 lg:order-2',
+              isAdminDashboard ? 'lg:col-span-12 lg:col-start-1' : 'lg:col-span-8 lg:col-start-5',
+              user && showDiscoveryStrips && !isAdminDashboard && 'lg:space-y-5'
             )}
           >
             {/* Connecté : nouveaux membres en tête de la colonne centrale */}
@@ -6544,7 +6555,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             const r = await handlePublishUrgentPost(post.id);
                             if (!r.success) {
                               setOpportunitiesModerationError(
-                                urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang)
+                                urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang, user?.uid ?? null)
                               );
                             }
                           }}
@@ -6559,7 +6570,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             const r = await handleRejectUrgentPost(post.id);
                             if (!r.success) {
                               setOpportunitiesModerationError(
-                                urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang)
+                                urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang, user?.uid ?? null)
                               );
                             }
                           }}
@@ -7028,7 +7039,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           if (r.success) setOpportunityDetailPost(null);
           else
             setOpportunityDetailModerationError(
-              urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang)
+              urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang, user?.uid ?? null)
             );
         }}
         onModerationReject={async () => {
@@ -7039,7 +7050,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           if (r.success) setOpportunityDetailPost(null);
           else
             setOpportunityDetailModerationError(
-              urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang)
+              urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang, user?.uid ?? null)
             );
         }}
         onClose={() => {
