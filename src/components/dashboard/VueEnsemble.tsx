@@ -104,6 +104,13 @@ function toTwoLinesLabel(label: string, maxPerLine = 12): [string, string?] {
   return [line1, `${remaining.slice(0, Math.max(1, maxPerLine - 1))}…`];
 }
 
+type BarAxisTick = {
+  x: number;
+  y: number;
+  value: string | number;
+  opacity?: number;
+};
+
 function MiniBarCard({
   title,
   kpiLabel,
@@ -119,71 +126,118 @@ function MiniBarCard({
   const hasData = rows.length > 0 && rows.some((r) => r.value > 0);
 
   return (
-    <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+      <div className="mb-2.5 flex flex-col gap-1.5 sm:mb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-        <div className="min-w-0 shrink-0 text-right">
+        <div className="min-w-0 shrink-0 text-left sm:text-right">
           <p className="text-[11px] uppercase tracking-wide text-slate-500">{kpiLabel}</p>
-          <p className="text-sm font-semibold text-slate-900">{kpiValue}</p>
+          <p className="text-lg font-semibold leading-tight text-slate-900 sm:text-sm">{kpiValue}</p>
         </div>
       </div>
       {!hasData ? (
         <p className="text-sm text-slate-500">—</p>
       ) : (
-        <div className="h-40 w-full min-w-0">
-          <ResponsiveBar
-            theme={barTheme}
-            data={rows}
-            keys={['value']}
-            indexBy="label"
-            margin={{ top: 10, right: 10, bottom: 56, left: 40 }}
-            padding={0.3}
-            layout="vertical"
-            valueScale={{ type: 'linear', min: 0 }}
-            colorBy="indexValue"
-            colors={[...BAR_FILL_COLORS]}
-            borderWidth={1}
-            borderColor={{ from: 'color', modifiers: [['darker', 0.65]] }}
-            axisTop={null}
-            axisRight={null}
-            axisBottom={{
-              tickSize: 3,
-              tickPadding: 4,
-              tickRotation: 0,
-              renderTick: (tick: { x: number; y: number; value: string; opacity: number }) => {
-                const raw = String(tick.value ?? '');
-                const compact = raw.length > 24 ? characteristicWord(raw) : raw;
-                const [line1, line2] = toTwoLinesLabel(compact, 11);
-                return (
-                  <g transform={`translate(${tick.x},${tick.y})`} opacity={tick.opacity}>
-                    <title>{raw}</title>
-                    <line y2="3" stroke="#9ca3af" />
-                    <text
-                      textAnchor="middle"
-                      dominantBaseline="hanging"
-                      style={{ fill: '#6b7280', fontSize: 10, pointerEvents: 'none' }}
-                    >
-                      <tspan x="0" dy="6">
-                        {line1}
-                      </tspan>
-                      {line2 ? (
-                        <tspan x="0" dy="11">
-                          {line2}
+        <div className="w-full min-w-0">
+          <div className="h-52 sm:hidden">
+            <ResponsiveBar
+              theme={barTheme}
+              data={rows}
+              keys={['value']}
+              indexBy="label"
+              margin={{ top: 8, right: 10, bottom: 30, left: 86 }}
+              padding={0.35}
+              layout="horizontal"
+              valueScale={{ type: 'linear', min: 0, max: 1 }}
+              colorBy="indexValue"
+              colors={[...BAR_FILL_COLORS]}
+              borderWidth={1}
+              borderColor={{ from: 'color', modifiers: [['darker', 0.65]] }}
+              axisTop={null}
+              axisRight={null}
+              axisBottom={{
+                tickSize: 3,
+                tickPadding: 4,
+                tickValues: [0, 1],
+                format: (v) => (Number(v) >= 1 ? '1' : '0'),
+                legendOffset: 0,
+              }}
+              axisLeft={{
+                tickSize: 0,
+                tickPadding: 6,
+                format: (v) => compactLabel(String(v ?? ''), 12),
+              }}
+              theme={{
+                ...barTheme,
+                axis: {
+                  ...barTheme.axis,
+                  ticks: { text: { fill: '#6b7280', fontSize: 9 } },
+                },
+              }}
+              gridXValues={[0, 1]}
+              enableLabel={false}
+              motionConfig="gentle"
+              role="application"
+            />
+          </div>
+
+          <div className="hidden h-44 sm:block">
+            <ResponsiveBar
+              theme={barTheme}
+              data={rows}
+              keys={['value']}
+              indexBy="label"
+              margin={{ top: 8, right: 8, bottom: 64, left: 30 }}
+              padding={0.3}
+              layout="vertical"
+              valueScale={{ type: 'linear', min: 0, max: 1 }}
+              colorBy="indexValue"
+              colors={[...BAR_FILL_COLORS]}
+              borderWidth={1}
+              borderColor={{ from: 'color', modifiers: [['darker', 0.65]] }}
+              axisTop={null}
+              axisRight={null}
+              axisBottom={{
+                tickSize: 3,
+                tickPadding: 4,
+                tickRotation: 0,
+                renderTick: (tick: BarAxisTick) => {
+                  const raw = String(tick.value ?? '');
+                  const compact = raw.length > 28 ? characteristicWord(raw) : raw;
+                  const [line1, line2] = toTwoLinesLabel(compact, 10);
+                  return (
+                    <g transform={`translate(${tick.x},${tick.y})`} opacity={tick.opacity ?? 1}>
+                      <title>{raw}</title>
+                      <line y2="3" stroke="#9ca3af" />
+                      <text
+                        textAnchor="middle"
+                        dominantBaseline="hanging"
+                        style={{ fill: '#6b7280', fontSize: 10, pointerEvents: 'none' }}
+                      >
+                        <tspan x="0" dy="6">
+                          {line1}
                         </tspan>
-                      ) : null}
-                    </text>
-                  </g>
-                );
-              },
-            }}
-            axisLeft={{
-              tickSize: 3,
-              tickPadding: 4,
-            }}
-            enableLabel={false}
-            motionConfig="gentle"
-            role="application"
-          />
+                        {line2 ? (
+                          <tspan x="0" dy="11">
+                            {line2}
+                          </tspan>
+                        ) : null}
+                      </text>
+                    </g>
+                  );
+                },
+              }}
+              axisLeft={{
+                tickSize: 3,
+                tickPadding: 4,
+                tickValues: [0, 1],
+                format: (v) => (Number(v) >= 1 ? '1' : '0'),
+              }}
+              gridYValues={[0, 1]}
+              enableLabel={false}
+              motionConfig="gentle"
+              role="application"
+            />
+          </div>
         </div>
       )}
     </section>

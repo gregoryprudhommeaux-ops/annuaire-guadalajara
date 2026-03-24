@@ -36,6 +36,13 @@ const chartTheme = {
 
 const SIZE_OPTIONS: CompanyKind[] = ['startup', 'pme', 'corporate', 'independent'];
 
+type AxisTick = {
+  x: number;
+  y: number;
+  value: string | number;
+  opacity?: number;
+};
+
 function sizeOptionLabel(kind: CompanyKind, lang: Language): string {
   switch (kind) {
     case 'startup':
@@ -170,64 +177,105 @@ export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
       </header>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-slate-900">{t('cardTopNeeds')}</h3>
+        <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+          <h3 className="mb-2.5 text-sm font-semibold text-slate-900 sm:mb-3">{t('cardTopNeeds')}</h3>
           {!hasBar ? (
-            <div className="flex h-64 items-center justify-center text-sm text-slate-500">—</div>
+            <div className="flex h-56 items-center justify-center text-sm text-slate-500 sm:h-64">—</div>
           ) : (
-            <div className="h-64 w-full min-w-0">
-              <ResponsiveBar
-                theme={chartTheme}
-                data={topNeedsBarData}
-                keys={['count']}
-                indexBy="need"
-                margin={{ top: 10, right: 10, bottom: 60, left: 40 }}
-                padding={0.3}
-                layout="vertical"
-                valueScale={{ type: 'linear', min: 0 }}
-                colors={{ scheme: 'set2' }}
-                axisTop={null}
-                axisRight={null}
-                axisBottom={{
-                  tickSize: 3,
-                  tickPadding: 4,
-                  tickRotation: 0,
-                  renderTick: (tick: { x: number; y: number; value: string | number; opacity: number }) => {
-                    const compact = String(tick.value ?? '');
-                    const full = needCompactToFullBar.get(compact) ?? compact;
-                    return (
-                      <g transform={`translate(${tick.x},${tick.y})`} opacity={tick.opacity}>
-                        <title>{full}</title>
-                        <line y2="3" stroke="#9ca3af" />
-                        <text
-                          textAnchor="middle"
-                          dominantBaseline="hanging"
-                          style={{ fill: '#78716c', fontSize: 10, pointerEvents: 'none' }}
-                        >
-                          {compact}
-                        </text>
-                      </g>
-                    );
-                  },
-                }}
-                axisLeft={{
-                  tickSize: 3,
-                  tickPadding: 4,
-                }}
-                enableLabel={false}
-                motionConfig="gentle"
-                role="application"
-              />
+            <div className="h-56 w-full min-w-0 sm:h-64">
+              <div className="h-56 sm:hidden">
+                <ResponsiveBar
+                  theme={{
+                    ...chartTheme,
+                    axis: {
+                      ...chartTheme.axis,
+                      ticks: { text: { fill: '#6b7280', fontSize: 9 } },
+                    },
+                  }}
+                  data={topNeedsBarData}
+                  keys={['count']}
+                  indexBy="need"
+                  margin={{ top: 10, right: 12, bottom: 28, left: 90 }}
+                  padding={0.35}
+                  layout="horizontal"
+                  valueScale={{ type: 'linear', min: 0, max: 1 }}
+                  colors={{ scheme: 'set2' }}
+                  axisTop={null}
+                  axisRight={null}
+                  axisBottom={{
+                    tickSize: 3,
+                    tickPadding: 4,
+                    tickValues: [0, 1],
+                    format: (v) => (Number(v) >= 1 ? '1' : '0'),
+                  }}
+                  axisLeft={{
+                    tickSize: 0,
+                    tickPadding: 6,
+                    format: (v) => compactLabel(String(v ?? ''), 12),
+                  }}
+                  gridXValues={[0, 1]}
+                  enableLabel={false}
+                  motionConfig="gentle"
+                  role="application"
+                />
+              </div>
+              <div className="hidden h-full sm:block">
+                <ResponsiveBar
+                  theme={chartTheme}
+                  data={topNeedsBarData}
+                  keys={['count']}
+                  indexBy="need"
+                  margin={{ top: 10, right: 10, bottom: 60, left: 40 }}
+                  padding={0.3}
+                  layout="vertical"
+                  valueScale={{ type: 'linear', min: 0, max: 1 }}
+                  colors={{ scheme: 'set2' }}
+                  axisTop={null}
+                  axisRight={null}
+                  axisBottom={{
+                    tickSize: 3,
+                    tickPadding: 4,
+                    tickRotation: 0,
+                    renderTick: (tick: AxisTick) => {
+                      const compact = String(tick.value ?? '');
+                      const full = needCompactToFullBar.get(compact) ?? compact;
+                      return (
+                        <g transform={`translate(${tick.x},${tick.y})`} opacity={tick.opacity ?? 1}>
+                          <title>{full}</title>
+                          <line y2="3" stroke="#9ca3af" />
+                          <text
+                            textAnchor="middle"
+                            dominantBaseline="hanging"
+                            style={{ fill: '#78716c', fontSize: 10, pointerEvents: 'none' }}
+                          >
+                            {compact}
+                          </text>
+                        </g>
+                      );
+                    },
+                  }}
+                  axisLeft={{
+                    tickSize: 3,
+                    tickPadding: 4,
+                    tickValues: [0, 1],
+                    format: (v) => (Number(v) >= 1 ? '1' : '0'),
+                  }}
+                  gridYValues={[0, 1]}
+                  enableLabel={false}
+                  motionConfig="gentle"
+                  role="application"
+                />
+              </div>
             </div>
           )}
         </section>
 
-        <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-slate-900">{t('cardNeedsHeatmap')}</h3>
+        <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+          <h3 className="mb-2.5 text-sm font-semibold text-slate-900 sm:mb-3">{t('cardNeedsHeatmap')}</h3>
           {!hasHeatmap ? (
-            <div className="flex h-64 items-center justify-center text-sm text-slate-500">—</div>
+            <div className="flex h-56 items-center justify-center text-sm text-slate-500 sm:h-64">—</div>
           ) : (
-            <div className="h-64 w-full min-w-0">
+            <div className="h-56 w-full min-w-0 sm:h-64">
               <ResponsiveHeatMap
                 data={heatmapNivoData}
                 margin={{ top: 20, right: 10, bottom: 40, left: 70 }}
@@ -238,11 +286,11 @@ export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
                   tickSize: 3,
                   tickPadding: 4,
                   tickRotation: 0,
-                  renderTick: (tick: { x: number; y: number; value: string | number; opacity: number }) => {
+                  renderTick: (tick: AxisTick) => {
                     const compact = String(tick.value ?? '');
                     const full = heatmapXToFull.get(compact) ?? compact;
                     return (
-                      <g transform={`translate(${tick.x},${tick.y})`} opacity={tick.opacity}>
+                      <g transform={`translate(${tick.x},${tick.y})`} opacity={tick.opacity ?? 1}>
                         <title>{full}</title>
                         <line y2="3" stroke="#9ca3af" />
                         <text
@@ -274,12 +322,12 @@ export const NeedsDashboard: React.FC<NeedsDashboardProps> = ({
           )}
         </section>
 
-        <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-slate-900">{t('cardNeedsTimeseries')}</h3>
+        <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+          <h3 className="mb-2.5 text-sm font-semibold text-slate-900 sm:mb-3">{t('cardNeedsTimeseries')}</h3>
           {!hasLine ? (
-            <div className="flex h-64 items-center justify-center text-sm text-slate-500">—</div>
+            <div className="flex h-56 items-center justify-center text-sm text-slate-500 sm:h-64">—</div>
           ) : (
-            <div className="h-64 w-full min-w-0">
+            <div className="h-56 w-full min-w-0 sm:h-64">
               <ResponsiveLine
                 data={timeseries}
                 margin={{ top: 20, right: 20, bottom: 40, left: 50 }}
