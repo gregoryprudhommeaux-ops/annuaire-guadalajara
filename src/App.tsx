@@ -3796,7 +3796,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         )}
       </AnimatePresence>
 
-      {user && (
+      {user && !isAdminDashboard && (
         <div className="bg-stone-50 border-b border-stone-200">
           {profile?.role === 'admin' && viewMode !== 'dashboard' && (
             <div className={cn(pageSectionPad, 'pb-0 sm:hidden')}>
