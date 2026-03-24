@@ -60,8 +60,7 @@ export function normalizedTargetKeywords(p: UserProfile): string[] {
  * Aligné sur les champs réellement envoyés au prompt de matching.
  */
 export function getProfileAiRecommendationReadiness(p: UserProfile): number {
-  const keywords =
-    normalizedTargetKeywords(p).length > 0 || sanitizePassionIds(p.passionIds).length > 0;
+  const passionsOk = sanitizePassionIds(p.passionIds).length >= 1;
   const typedNeeds = (p.highlightedNeeds?.filter(Boolean).length ?? 0) >= 1;
   const checks = [
     !!(p.fullName?.trim()),
@@ -70,9 +69,8 @@ export function getProfileAiRecommendationReadiness(p: UserProfile): number {
     !!(p.activityCategory?.trim()),
     !!(p.bio?.trim() && p.bio.trim().length >= 15),
     typedNeeds,
-    keywords,
+    passionsOk,
     !!(p.positionCategory?.trim()),
-    !!p.companySize,
   ];
   const ok = checks.filter(Boolean).length;
   return ok / checks.length;

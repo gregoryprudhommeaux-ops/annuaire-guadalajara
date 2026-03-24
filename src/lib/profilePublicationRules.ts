@@ -1,5 +1,4 @@
 import type { UserProfile } from '../types';
-import { normalizedTargetKeywords } from '../types';
 import { isEmployeeCountRange } from '../constants';
 import { sanitizePassionIds } from './passionConfig';
 import { sanitizeHighlightedNeeds } from '../needOptions';
@@ -21,23 +20,38 @@ export function hasEmployeeInfo(p: Partial<UserProfile>): boolean {
 /**
  * Champs minimum pour qu’un admin puisse valider / publier la fiche annuaire.
  * À garder aligné avec les astérisques du formulaire et la validation à l’enregistrement.
+ * (Effectifs / mots-clés secteur : optionnels ; au moins une passion requise.)
  */
 export function profileMeetsPublicationRequirements(
   p: Partial<UserProfile> | null | undefined
 ): boolean {
-  if (!p) return false;
-  if (!(p.fullName?.trim() && p.companyName?.trim() && p.email?.trim())) return false;
-  if (!(p.activityCategory?.trim() && p.positionCategory?.trim())) return false;
-  if (!p.city?.trim()) return false;
+  return getProfilePublicationBlockReason(p) === null;
+}
+
+/** Première cause bloquante (pour messages d’erreur explicites côté formulaire). */
+export type ProfilePublicationBlockReason =
+  | 'identity'
+  | 'activity'
+  | 'city'
+  | 'website'
+  | 'whatsapp'
+  | 'bio'
+  | 'needs'
+  | 'passions';
+
+export function getProfilePublicationBlockReason(
+  p: Partial<UserProfile> | null | undefined
+): ProfilePublicationBlockReason | null {
+  if (!p) return 'identity';
+  if (!(p.fullName?.trim() && p.companyName?.trim() && p.email?.trim())) return 'identity';
+  if (!(p.activityCategory?.trim() && p.positionCategory?.trim())) return 'activity';
+  if (!p.city?.trim()) return 'city';
   const web = p.website?.trim() ?? '';
-  if (!web || !/^https?:\/\/.+/i.test(web)) return false;
-  if (!p.whatsapp?.trim()) return false;
+  if (!web || !/^https?:\/\/.+/i.test(web)) return 'website';
+  if (!p.whatsapp?.trim()) return 'whatsapp';
   const bio = p.bio?.trim() ?? '';
-  if (bio.length < PUBLICATION_BIO_MIN_LEN) return false;
-  if (!hasEmployeeInfo(p)) return false;
-  if (sanitizeHighlightedNeeds(p.highlightedNeeds).length < 1) return false;
-  const passions = sanitizePassionIds(p.passionIds);
-  const kw = normalizedTargetKeywords(p as UserProfile);
-  if (passions.length < 1 && kw.length < 1) return false;
-  return true;
+  if (bio.length < PUBLICATION_BIO_MIN_LEN) return 'bio';
+  if (sanitizeHighlightedNeeds(p.highlightedNeeds).length < 1) return 'needs';
+  if (sanitizePassionIds(p.passionIds).length < 1) return 'passions';
+  return null;
 }

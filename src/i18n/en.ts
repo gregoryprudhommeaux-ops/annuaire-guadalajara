@@ -176,7 +176,7 @@ export const EN_STRINGS: Record<string, string> = {
   profileBannerMandatory:
     "Please update your profile with the new required fields (marked *) so it can be validated.",
   profileBannerAi:
-    "Consider optimizing your profile by filling in fields that power AI matching (sector, needs, bio, role, company size, interests or sector keywords).",
+    "Consider optimizing your profile by filling in fields that power AI matching (sector, needs, bio, role, interests).",
   profileBannerDismiss: "Hide for this session",
   profileCoachPrefix: "Tip: prioritize filling in",
   profileCoachSeparator: " · ",
@@ -184,7 +184,7 @@ export const EN_STRINGS: Record<string, string> = {
   profileCoachAllGood:
     "Your profile looks solid. You can still refine your bio or contact preferences to get more responses.",
   coachGapHighlightedNeeds: "at least one highlighted need",
-  coachGapKeywordsPassions: "interests or target keywords",
+  coachGapKeywordsPassions: "at least one interest",
   profileCoachAiHint:
     "One AI suggestion per session (no extra requests until your profile changes).",
   newProfiles: "New profiles",

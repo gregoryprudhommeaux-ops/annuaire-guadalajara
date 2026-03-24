@@ -41,11 +41,9 @@ export function collectProfileCoachGapKeys(p: UserProfile): string[] {
   if (bio.length < PUBLICATION_BIO_MIN_LEN) keys.push('bio');
   if (!p.activityCategory?.trim()) keys.push('activityCategory');
   if (!p.positionCategory?.trim()) keys.push('workFunction');
-  if (!hasEmployeeInfo(p)) keys.push('employeeCount');
   if (sanitizeHighlightedNeeds(p.highlightedNeeds).length < 1) keys.push('coachGapHighlightedNeeds');
   const passions = sanitizePassionIds(p.passionIds);
-  const kw = normalizedTargetKeywords(p);
-  if (passions.length < 1 && kw.length < 1) keys.push('coachGapKeywordsPassions');
+  if (passions.length < 1) keys.push('coachGapKeywordsPassions');
 
   if (keys.length === 0) {
     if (!(p.linkedin?.trim())) keys.push('linkedin');

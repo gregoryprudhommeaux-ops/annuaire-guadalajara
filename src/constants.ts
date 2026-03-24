@@ -426,8 +426,8 @@ export const TRANSLATIONS: Translations = {
     es: 'Actualiza tu perfil con los nuevos campos obligatorios (marcados con *) para poder validarlo.',
   },
   profileBannerAi: {
-    fr: 'Pensez à optimiser votre profil en complétant les champs utiles au matching IA (secteur, besoins, bio, fonction, taille d’entreprise, passions ou mots-clés).',
-    es: 'Optimiza tu perfil completando los campos útiles para el emparejamiento por IA (sector, necesidades, bio, función, tamaño, pasiones o palabras clave).',
+    fr: 'Pensez à optimiser votre profil en complétant les champs utiles au matching IA (secteur, besoins, bio, fonction, passions).',
+    es: 'Optimiza tu perfil completando los campos útiles para el emparejamiento por IA (sector, necesidades, bio, función, pasiones).',
   },
   profileBannerDismiss: { fr: 'Masquer pour cette session', es: 'Ocultar esta sesión' },
   profileCoachPrefix: {
@@ -445,8 +445,8 @@ export const TRANSLATIONS: Translations = {
     es: 'al menos una necesidad destacada',
   },
   coachGapKeywordsPassions: {
-    fr: 'passions ou mots-clés cibles',
-    es: 'pasiones o palabras clave',
+    fr: 'au moins une passion',
+    es: 'al menos una pasión',
   },
   profileCoachAiHint: {
     fr: 'Une suggestion IA par session (aucune nouvelle requête tant que votre profil ne change pas).',

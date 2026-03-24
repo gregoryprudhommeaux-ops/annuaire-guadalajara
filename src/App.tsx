@@ -119,6 +119,8 @@ import {
 } from './lib/contactPreferences';
 import {
   profileMeetsPublicationRequirements,
+  getProfilePublicationBlockReason,
+  PUBLICATION_BIO_MIN_LEN,
   AI_OPTIMIZATION_READINESS_TARGET,
 } from './lib/profilePublicationRules';
 import {
@@ -1911,7 +1913,6 @@ const MainApp = () => {
   const directoryMainRef = useRef<HTMLDivElement>(null);
   const [membersSortRecent, setMembersSortRecent] = useState(false);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
-  const [showAuthLeadsPanel, setShowAuthLeadsPanel] = useState(false);
   const [authLeads, setAuthLeads] = useState<AuthLeadDoc[]>([]);
   const [showOpportunitiesModerationPanel, setShowOpportunitiesModerationPanel] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
@@ -2087,14 +2088,41 @@ const MainApp = () => {
     setProfileReminderDismissed(false);
   }, [user?.uid]);
 
+  /**
+   * Synchronise les brouillons (besoins / passions / langues) depuis le profil au passage en édition
+   * ou quand l’admin ouvre une autre fiche. Ne doit PAS dépendre de `profile?.uid` : sinon, quand le
+   * document Firestore arrive après l’ouverture du formulaire, l’effet réécrit les brouillons avec
+   * des tableaux vides et annule les sélections de l’utilisateur (validation impossible alors que
+   * l’écran semble rempli).
+   */
+  const publicationDraftsHydratedUidRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!isEditing) return;
+    if (!isEditing) {
+      publicationDraftsHydratedUidRef.current = null;
+      return;
+    }
     const src = editingProfile ?? profile;
     if (!src) return;
     setHighlightedNeedsDraft(sanitizeHighlightedNeeds(src.highlightedNeeds));
     setPassionIdsDraft(sanitizePassionIds(src.passionIds));
     setWorkingLanguagesDraft(sanitizeWorkingLanguageCodes(src.workingLanguageCodes));
-  }, [isEditing, editingProfile?.uid, profile?.uid]);
+  }, [isEditing, editingProfile?.uid]);
+
+  /** Si le profil charge après l’ouverture du formulaire : hydrate une seule fois par uid sans écraser si l’utilisateur a déjà choisi. */
+  useEffect(() => {
+    if (!isEditing || editingProfile || !profile) return;
+    if (publicationDraftsHydratedUidRef.current === profile.uid) return;
+    publicationDraftsHydratedUidRef.current = profile.uid;
+    setHighlightedNeedsDraft((prev) =>
+      prev.length > 0 ? prev : sanitizeHighlightedNeeds(profile.highlightedNeeds)
+    );
+    setPassionIdsDraft((prev) =>
+      prev.length > 0 ? prev : sanitizePassionIds(profile.passionIds)
+    );
+    setWorkingLanguagesDraft((prev) =>
+      prev.length > 0 ? prev : sanitizeWorkingLanguageCodes(profile.workingLanguageCodes)
+    );
+  }, [isEditing, editingProfile, profile]);
 
   const toggleWorkingLanguageDraft = (code: string) => {
     setWorkingLanguagesDraft((prev) => {
@@ -2637,15 +2665,76 @@ const MainApp = () => {
       targetSectors: targetSectorListProbe,
     };
 
-    if (!profileMeetsPublicationRequirements(publicationProbe)) {
-      setProfileSaveError(
-        pickLang(
-          'Pour une fiche publiable et validable par l’admin, remplissez tous les champs marqués d’une astérisque (*), dont la bio (au moins 15 caractères), la fourchette d’employés, au moins un besoin mis en avant, et au moins une passion ou des mots-clés secteur.',
-          'Para un perfil publicable y validable por el admin, completa los campos marcados con asterisco (*), incluida la bio (mín. 15 caracteres), el rango de empleados, al menos una necesidad destacada, y al menos una pasión o palabras clave de sector.',
-          'To publish and get admin validation, complete every field marked with an asterisk (*), including your bio (min. 15 characters), employee range, at least one highlighted need, and at least one interest or sector keywords.',
-          lang
-        )
-      );
+    const publicationBlock = getProfilePublicationBlockReason(publicationProbe);
+    if (publicationBlock !== null) {
+      const blockMsg = (() => {
+        switch (publicationBlock) {
+          case 'website':
+            return pickLang(
+              'Le site web doit commencer par https:// (ex. https://votredomaine.com).',
+              'El sitio web debe empezar por https:// (p. ej. https://sudominio.com).',
+              'Website URL must start with https:// (e.g. https://yourdomain.com).',
+              lang
+            );
+          case 'whatsapp':
+            return pickLang(
+              'Indiquez un numéro WhatsApp pour la validation de la fiche.',
+              'Indica un número de WhatsApp para validar la ficha.',
+              'Please add a WhatsApp number for profile validation.',
+              lang
+            );
+          case 'needs':
+            return pickLang(
+              'Sélectionnez au moins un besoin mis en avant (section « Besoins actuels »).',
+              'Selecciona al menos una necesidad destacada (sección « Necesidades actuales »).',
+              'Select at least one highlighted need (Current needs section).',
+              lang
+            );
+          case 'passions':
+            return pickLang(
+              'Sélectionnez au moins une passion dans « En dehors du business » (les choix sont enregistrés dans l’app, pas dans les champs texte du bas).',
+              'Elige al menos un interés en « Fuera del negocio » (se guardan en la app, no en un campo de texto abajo).',
+              'Pick at least one interest under “Beyond business” (saved in the app — not via a plain text field below).',
+              lang
+            );
+          case 'bio':
+            return pickLang(
+              `La bio doit contenir au moins ${PUBLICATION_BIO_MIN_LEN} caractères.`,
+              `La bio debe tener al menos ${PUBLICATION_BIO_MIN_LEN} caracteres.`,
+              `Your bio must be at least ${PUBLICATION_BIO_MIN_LEN} characters.`,
+              lang
+            );
+          case 'city':
+            return pickLang(
+              'Choisissez une ville.',
+              'Elige una ciudad.',
+              'Please choose a city.',
+              lang
+            );
+          case 'activity':
+            return pickLang(
+              'Renseignez le secteur d’activité et la fonction dans l’entreprise.',
+              'Completa el sector de actividad y la función en la empresa.',
+              'Please fill in activity sector and role in the company.',
+              lang
+            );
+          case 'identity':
+            return pickLang(
+              'Renseignez le nom, la société et l’e-mail.',
+              'Completa el nombre, la empresa y el correo.',
+              'Please fill in name, company, and email.',
+              lang
+            );
+          default:
+            return pickLang(
+              'Pour une fiche publiable et validable par l’admin, remplissez tous les champs marqués d’une astérisque (*), dont la bio (au moins 15 caractères), au moins un besoin mis en avant, et au moins une passion (jusqu’à 3 au choix).',
+              'Para un perfil publicable y validable por el admin, completa los campos marcados con asterisco (*), incluida la bio (mín. 15 caracteres), al menos una necesidad destacada y al menos una pasión (hasta 3 a elegir).',
+              'To publish and get admin validation, complete every field marked with an asterisk (*), including your bio (min. 15 characters), at least one highlighted need, and at least one interest (up to 3).',
+              lang
+            );
+        }
+      })();
+      setProfileSaveError(blockMsg);
       setProfileSaveBusy(false);
       return;
     }
@@ -2913,6 +3002,47 @@ const MainApp = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Profiles");
     XLSX.writeFile(workbook, "Annuaire_Guadalajara.xlsx");
+  };
+
+  /** Export des pistes OAuth (`auth_leads`) en .xlsx — remplace l’ancienne modale liste. */
+  const exportAuthLeadsToExcel = () => {
+    if (profile?.role !== 'admin') return;
+    if (authLeads.length === 0) {
+      alert(t('adminOAuthLeadsEmpty'));
+      return;
+    }
+    const h = {
+      uid: pickLang('UID', 'UID', 'UID', lang),
+      email: pickLang('E-mail', 'Correo', 'Email', lang),
+      displayName: pickLang('Nom affiché', 'Nombre mostrado', 'Display name', lang),
+      provider: pickLang('Fournisseur', 'Proveedor', 'Provider', lang),
+      emailVerified: pickLang('E-mail vérifié', 'Correo verificado', 'Email verified', lang),
+      first: pickLang('Première connexion (UTC)', 'Primera conexión (UTC)', 'First sign-in (UTC)', lang),
+      last: pickLang('Dernière connexion (UTC)', 'Última conexión (UTC)', 'Last sign-in (UTC)', lang),
+      hasProfile: pickLang('Fiche annuaire', 'Ficha directorio', 'Directory profile', lang),
+    };
+    const yes = pickLang('Oui', 'Sí', 'Yes', lang);
+    const no = pickLang('Non', 'No', 'No', lang);
+    const tsIso = (ts: AuthLeadDoc['lastConnectedAt'] | undefined) =>
+      ts && typeof ts.toDate === 'function' ? ts.toDate().toISOString() : '';
+    const rows = authLeads.map((lead) => ({
+      [h.uid]: lead.uid,
+      [h.email]: lead.email ?? '',
+      [h.displayName]: lead.displayName?.trim() ?? '',
+      [h.provider]: lead.primaryProvider ?? '',
+      [h.emailVerified]: lead.emailVerified ? yes : no,
+      [h.first]: tsIso(lead.firstConnectedAt),
+      [h.last]: tsIso(lead.lastConnectedAt),
+      [h.hasProfile]: profileUidSet.has(lead.uid) ? yes : no,
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'OAuth');
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    XLSX.writeFile(workbook, `OAuth_connexions_${y}-${m}-${d}.xlsx`);
   };
 
   const filteredProfiles = useMemo(() => {
@@ -3313,12 +3443,17 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   </span>
                 )}
               </button>
-              <button
-                type="button"
-                onClick={() => setShowAuthLeadsPanel(true)}
-                className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-blue-50 px-1 py-1.5 text-blue-900 transition-colors hover:bg-blue-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
-                title={t('adminOAuthLeadsTitle')}
-              >
+                  <button
+                    type="button"
+                    onClick={exportAuthLeadsToExcel}
+                    className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-blue-50 px-1 py-1.5 text-blue-900 transition-colors hover:bg-blue-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
+                    title={pickLang(
+                      'Télécharger la liste des connexions OAuth (.xlsx)',
+                      'Descargar la lista de conexiones OAuth (.xlsx)',
+                      'Download OAuth sign-ins list (.xlsx)',
+                      lang
+                    )}
+                  >
                 <LogIn className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
                 <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
                   {t('adminOAuthLeadsTitle')}
@@ -3626,9 +3761,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 <div className="space-y-1">
                                   <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
                                     {t('employeeCount')}
-                                    <span className="text-red-500 font-semibold" aria-hidden>
-                                      {' *'}
-                                    </span>
                                   </label>
                                   <select
                                     name="employeeCount"
@@ -3954,19 +4086,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
                               >
                                 {t('targetSectors')}
-                                <span className="text-red-500 font-semibold" aria-hidden>
-                                  {' *'}
-                                </span>
                               </label>
                               <p className="text-[10px] text-stone-400 leading-relaxed">{t('needKeywordsHint')}</p>
-                              <p className="text-[10px] text-stone-500 leading-relaxed">
-                                {pickLang(
-                                  '* Requis si vous n’avez pas sélectionné au moins une passion ci-dessus.',
-                                  '* Obligatorio si no elegiste al menos una pasión arriba.',
-                                  '* Required if you did not pick at least one interest above.',
-                                  lang
-                                )}
-                              </p>
                               <input
                                 id="targetSectors-contact"
                                 name="targetSectors"
@@ -5585,113 +5706,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         </div>
                       </div>
                     </div>
-                    );
-                  })
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showAuthLeadsPanel && profile?.role === 'admin' && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowAuthLeadsPanel(false)}
-              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between border-b border-stone-100 p-6">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-800">
-                    <LogIn size={20} />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-bold leading-tight">{t('adminOAuthLeadsTitle')}</h3>
-                    <p className="mt-1 text-xs leading-snug text-stone-500">{t('adminOAuthLeadsSubtitle')}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAuthLeadsPanel(false)}
-                  className="shrink-0 rounded-full p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-900"
-                >
-                  <Plus size={24} className="rotate-45" />
-                </button>
-              </div>
-              <div className="flex-1 space-y-3 overflow-y-auto p-6">
-                {authLeads.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <LogIn size={48} className="mx-auto mb-4 text-stone-100" />
-                    <p className="font-medium text-stone-400">{t('adminOAuthLeadsEmpty')}</p>
-                  </div>
-                ) : (
-                  authLeads.map((lead) => {
-                    const hasProfile = profileUidSet.has(lead.uid);
-                    const last =
-                      lead.lastConnectedAt && typeof lead.lastConnectedAt.toDate === 'function'
-                        ? lead.lastConnectedAt.toDate().toLocaleString(uiLocale(lang))
-                        : '—';
-                    const first =
-                      lead.firstConnectedAt && typeof lead.firstConnectedAt.toDate === 'function'
-                        ? lead.firstConnectedAt.toDate().toLocaleString(uiLocale(lang))
-                        : '—';
-                    return (
-                      <div
-                        key={lead.uid}
-                        className="rounded-2xl border border-stone-100 bg-stone-50/80 p-4"
-                      >
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="min-w-0">
-                            <p className="font-semibold text-stone-900">
-                              {lead.displayName?.trim() || '—'}
-                            </p>
-                            <p className="mt-0.5 break-all text-xs text-stone-600">{lead.email || '—'}</p>
-                            <p className="mt-2 text-[10px] text-stone-400">
-                              <span className="font-medium text-stone-500">{t('adminOAuthLeadsProvider')}:</span>{' '}
-                              {lead.primaryProvider || '—'}
-                              {lead.emailVerified ? ` · ${t('adminOAuthLeadsEmailVerified')}` : null}
-                            </p>
-                            <p className="mt-1 text-[10px] text-stone-400">
-                              {t('adminOAuthLeadsFirstSeen')}: {first} · {t('adminOAuthLeadsLastSeen')}: {last}
-                            </p>
-                          </div>
-                          <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-                            <span
-                              className={`inline-flex rounded-full px-2.5 py-0.5 text-center text-[10px] font-semibold ${
-                                hasProfile
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : 'bg-amber-100 text-amber-900'
-                              }`}
-                            >
-                              {hasProfile ? t('adminOAuthLeadsHasProfile') : t('adminOAuthLeadsNoProfile')}
-                            </span>
-                            {lead.email ? (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  void navigator.clipboard.writeText(lead.email);
-                                  alert(pickLang('Copié !', '¡Copiado!', 'Copied!', lang));
-                                }}
-                                className="inline-flex items-center justify-center gap-1 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50"
-                              >
-                                <Copy size={12} />
-                                Email
-                              </button>
-                            ) : null}
-                          </div>
-                        </div>
-                      </div>
                     );
                   })
                 )}
