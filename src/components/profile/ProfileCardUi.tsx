@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Mail } from 'lucide-react';
 import { cn } from '../../cn';
 import type { Language } from '../../types';
@@ -9,7 +9,7 @@ export function ProfileCardBio({
   text,
   lang,
   pretranslatedByLang,
-  t,
+  t: _t,
   className,
 }: {
   text: string;
@@ -18,9 +18,7 @@ export function ProfileCardBio({
   t: (key: string) => string;
   className?: string;
 }) {
-  const [expanded, setExpanded] = useState(false);
   const trimmed = text.trim();
-  const isLong = trimmed.length > 120;
 
   return (
     <div
@@ -35,23 +33,8 @@ export function ProfileCardBio({
         pretranslatedByLang={pretranslatedByLang}
         as="p"
         omitAiDisclaimer
-        className={cn(
-          'text-sm leading-relaxed text-slate-600',
-          !expanded && isLong && 'line-clamp-3'
-        )}
+        className="line-clamp-2 text-sm leading-relaxed text-slate-600"
       />
-      {isLong && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setExpanded((v) => !v);
-          }}
-          className="mt-1 text-xs font-medium text-blue-700 hover:underline"
-        >
-          {expanded ? t('cardBioSeeLess') : t('seeMore')}
-        </button>
-      )}
     </div>
   );
 }
