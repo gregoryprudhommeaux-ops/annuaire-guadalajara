@@ -242,7 +242,8 @@ export function userProfileToExplorerMember(p: UserProfile): ExplorerMember {
 }
 
 /**
- * Charge tous les profils publics (collection `users`, même requête que l’annuaire principal).
+ * Charge les profils annuaire (collection `users`, même requête que l’annuaire principal).
+ * Les règles Firestore autorisent la lecture ; l’UI limite l’aperçu invité côté app.
  */
 export async function getMembers(): Promise<ExplorerMember[]> {
   const q = query(collection(db, 'users'), orderBy('fullName', 'asc'));

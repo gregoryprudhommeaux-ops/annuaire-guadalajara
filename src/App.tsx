@@ -580,12 +580,16 @@ const ProfileCard = ({
   const [recCount, setRecCount] = useState(0);
 
   useEffect(() => {
+    if (guestDirectoryTeaser) {
+      setRecCount(0);
+      return undefined;
+    }
     const q = query(collection(db, 'recommendations'), where('profileId', '==', p.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setRecCount(snapshot.size);
     });
     return unsubscribe;
-  }, [p.uid]);
+  }, [p.uid, guestDirectoryTeaser]);
 
   const mobileSummaryLine = [
     p.city,
@@ -609,17 +613,71 @@ const ProfileCard = ({
       )}
     >
       <div className="mb-2 flex shrink-0 justify-between items-start gap-2">
-        <div className="flex items-start gap-3 min-w-0 flex-1">
-          <div className="relative shrink-0">
-            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-stone-200">
-              <ProfileAvatar photoURL={p.photoURL} fullName={p.fullName} className="h-full w-full" iconSize={24} />
-            </div>
-            {isActive && (
-              <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" title="Actif ce mois" />
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-stone-200">
+            {guestDirectoryTeaser ? (
+              <>
+                <div
+                  className="pointer-events-none h-full w-full scale-125 select-none blur-md opacity-70"
+                  aria-hidden
+                >
+                  <ProfileAvatar
+                    photoURL={p.photoURL}
+                    fullName={p.fullName}
+                    className="h-full w-full"
+                    iconSize={24}
+                  />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center bg-stone-100/35">
+                  <Lock className="h-4 w-4 text-stone-500" strokeWidth={2} aria-hidden />
+                </div>
+              </>
+            ) : (
+              <>
+                <ProfileAvatar photoURL={p.photoURL} fullName={p.fullName} className="h-full w-full" iconSize={24} />
+                {isActive && (
+                  <div
+                    className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500"
+                    title="Actif ce mois"
+                  />
+                )}
+              </>
             )}
           </div>
           <div className="min-w-0 flex-1">
-            {variant === 'company' && (
+            {guestDirectoryTeaser && variant === 'company' && (
+              <>
+                <div className="mb-1 flex items-center gap-2">
+                  <Building2 size={18} className="shrink-0 text-stone-500" />
+                  <h3 className="truncate text-lg font-bold leading-tight text-stone-900 transition-colors group-hover:text-stone-800 sm:text-xl">
+                    {p.companyName}
+                  </h3>
+                </div>
+                <p className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-stone-600">
+                  <UserIcon size={14} className="shrink-0 text-stone-400" />
+                  <span className="truncate">{p.fullName}</span>
+                </p>
+              </>
+            )}
+            {guestDirectoryTeaser && variant === 'activity' && (
+              <>
+                <div
+                  className="mb-2 h-9 max-w-[90%] rounded-lg bg-slate-200/90 blur-[8px]"
+                  aria-hidden
+                />
+                <p className="truncate text-sm font-semibold text-stone-800">{p.companyName}</p>
+                <p className="mt-0.5 truncate text-xs text-stone-600">{p.fullName}</p>
+              </>
+            )}
+            {guestDirectoryTeaser && variant === 'default' && (
+              <>
+                <h3 className="line-clamp-2 break-words font-bold leading-tight text-stone-900 transition-colors group-hover:text-stone-700">
+                  {p.fullName}
+                </h3>
+                <p className="mt-0.5 truncate text-xs font-medium text-stone-500">{p.companyName}</p>
+              </>
+            )}
+            {!guestDirectoryTeaser && variant === 'company' && (
               <>
                 <div className="flex items-center gap-2 mb-1">
                   <Building2 size={18} className="text-stone-500 shrink-0" />
@@ -627,13 +685,11 @@ const ProfileCard = ({
                     {p.companyName}
                   </h3>
                 </div>
-                {!guestDirectoryTeaser ? (
-                  <ProfileWebsiteInlineLink
-                    website={p.website}
-                    className="mb-1 w-full text-xs sm:text-sm"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : null}
+                <ProfileWebsiteInlineLink
+                  website={p.website}
+                  className="mb-1 w-full text-xs sm:text-sm"
+                  onClick={(e) => e.stopPropagation()}
+                />
                 <p className="text-sm text-stone-600 font-medium flex items-center gap-1.5 flex-wrap">
                   <UserIcon size={14} className="text-stone-400 shrink-0" />
                   <span className="truncate">{p.fullName}</span>
@@ -661,16 +717,10 @@ const ProfileCard = ({
                     {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
                   </span>
                 </div>
-                {p.bio?.trim() ? (
-                  guestDirectoryTeaser ? (
-                    <p className="mt-1.5 text-sm leading-snug text-slate-600 line-clamp-1">{p.bio.trim()}</p>
-                  ) : (
-                    <ProfileCardBio text={p.bio} t={t} />
-                  )
-                ) : null}
+                {p.bio?.trim() ? <ProfileCardBio text={p.bio} t={t} /> : null}
               </>
             )}
-            {variant === 'activity' && (
+            {!guestDirectoryTeaser && variant === 'activity' && (
               <>
                 <div className="flex items-start gap-2 mb-1">
                   <Briefcase size={18} className="text-indigo-600 shrink-0 mt-0.5" />
@@ -681,13 +731,11 @@ const ProfileCard = ({
                   </h3>
                 </div>
                 <p className="text-sm font-semibold text-stone-800 truncate">{p.companyName}</p>
-                {!guestDirectoryTeaser ? (
-                  <ProfileWebsiteInlineLink
-                    website={p.website}
-                    className="mt-0.5 w-full text-xs sm:text-sm"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : null}
+                <ProfileWebsiteInlineLink
+                  website={p.website}
+                  className="mt-0.5 w-full text-xs sm:text-sm"
+                  onClick={(e) => e.stopPropagation()}
+                />
                 <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-stone-500">
                   <span className="truncate">{p.fullName}</span>
                 </p>
@@ -708,28 +756,20 @@ const ProfileCard = ({
                     {[p.city, p.neighborhood, p.state || 'Jalisco'].filter(Boolean).join(', ')}
                   </span>
                 </div>
-                {p.bio?.trim() ? (
-                  guestDirectoryTeaser ? (
-                    <p className="mt-1.5 text-sm leading-snug text-slate-600 line-clamp-1">{p.bio.trim()}</p>
-                  ) : (
-                    <ProfileCardBio text={p.bio} t={t} />
-                  )
-                ) : null}
+                {p.bio?.trim() ? <ProfileCardBio text={p.bio} t={t} /> : null}
               </>
             )}
-            {variant === 'default' && (
+            {!guestDirectoryTeaser && variant === 'default' && (
               <>
                 <h3 className="font-bold text-stone-900 group-hover:text-stone-700 transition-colors leading-tight line-clamp-2 break-words">
                   {p.fullName}
                 </h3>
                 <p className="text-xs text-stone-500 font-medium truncate mt-0.5">{p.companyName}</p>
-                {!guestDirectoryTeaser ? (
-                  <ProfileWebsiteInlineLink
-                    website={p.website}
-                    className="mt-0.5 w-full text-[11px] sm:text-xs"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : null}
+                <ProfileWebsiteInlineLink
+                  website={p.website}
+                  className="mt-0.5 w-full text-[11px] sm:text-xs"
+                  onClick={(e) => e.stopPropagation()}
+                />
                 {mobileSummaryLine ? (
                   <p className="mt-0.5 truncate text-xs text-stone-500 sm:hidden">{mobileSummaryLine}</p>
                 ) : null}
@@ -753,13 +793,7 @@ const ProfileCard = ({
                     {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
                   </span>
                 </div>
-                {p.bio?.trim() ? (
-                  guestDirectoryTeaser ? (
-                    <p className="mt-1.5 text-sm leading-snug text-slate-600 line-clamp-1">{p.bio.trim()}</p>
-                  ) : (
-                    <ProfileCardBio text={p.bio} t={t} />
-                  )
-                ) : null}
+                {p.bio?.trim() ? <ProfileCardBio text={p.bio} t={t} /> : null}
               </>
             )}
           </div>
@@ -1232,6 +1266,46 @@ const ProfilePage = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-stone-50"><RefreshCw className="animate-spin text-indigo-600" /></div>;
   if (!profile) return <div className="min-h-screen flex items-center justify-center bg-stone-50">{t('profileNotFound')}</div>;
 
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-stone-50 px-4 py-10">
+        <Helmet>
+          <title>{profile.fullName} | Community Hub</title>
+        </Helmet>
+        <div className="mx-auto max-w-lg">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="mb-6 flex items-center gap-2 font-bold text-stone-500 transition-colors hover:text-stone-900"
+          >
+            <ArrowLeft size={20} />
+            {pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
+          </button>
+          <div className="rounded-3xl border border-stone-200 bg-white p-8 text-center shadow-xl">
+            <h1 className="text-2xl font-bold text-stone-900 break-words">{profile.fullName}</h1>
+            <p className="mt-2 text-lg text-stone-600">{profile.companyName}</p>
+            <div className="relative mt-8 min-h-[200px] overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
+              <div className="pointer-events-none select-none p-6 blur-lg opacity-60" aria-hidden>
+                <p className="text-sm text-stone-400">{profile.bio || '…'}</p>
+              </div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/90 px-4 backdrop-blur-sm">
+                <Lock className="h-8 w-8 text-stone-400" strokeWidth={2} aria-hidden />
+                <p className="text-sm font-medium text-stone-700">{t('guestOverlayTitle')}</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
+                >
+                  {t('guestJoinCta')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const hasAlreadyRecommended = recs.some(r => r.authorId === currentUser?.uid);
   const tp = t;
 
@@ -1639,6 +1713,8 @@ const NeedPage = () => {
       if (user) {
         const docSnap = await getDoc(doc(db, 'users', user.uid));
         if (docSnap.exists()) setCurrentProfile(docSnap.data() as UserProfile);
+      } else {
+        setCurrentProfile(null);
       }
     });
     return unsubAuth;
@@ -1697,6 +1773,50 @@ const NeedPage = () => {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-stone-50"><RefreshCw className="animate-spin text-indigo-600" /></div>;
   if (!profile) return <div className="min-h-screen flex items-center justify-center bg-stone-50">{t('needNotFound')}</div>;
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-stone-50 px-4 py-10">
+        <Helmet>
+          <title>
+            {pickLang('Besoin — aperçu', 'Necesidad — vista previa', 'Need — preview', lang)}
+          </title>
+        </Helmet>
+        <div className="mx-auto max-w-lg">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="mb-6 flex items-center gap-2 font-bold text-stone-500 transition-colors hover:text-stone-900"
+          >
+            <ArrowLeft size={20} />
+            {pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
+          </button>
+          <div className="rounded-3xl border border-stone-200 bg-white p-8 text-center shadow-xl">
+            <h1 className="text-2xl font-bold text-stone-900 break-words">{profile.fullName}</h1>
+            <p className="mt-2 text-lg text-stone-600">{profile.companyName}</p>
+            <div className="relative mt-8 min-h-[180px] overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
+              <div className="pointer-events-none select-none p-6 blur-lg opacity-50" aria-hidden>
+                <p className="text-sm text-stone-400">
+                  {urgentPost?.text || formatHighlightedNeedsForText(profile.highlightedNeeds, lang) || '…'}
+                </p>
+              </div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/90 px-4 backdrop-blur-sm">
+                <Lock className="h-8 w-8 text-stone-400" strokeWidth={2} aria-hidden />
+                <p className="text-sm font-medium text-stone-700">{t('guestOverlayTitle')}</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
+                >
+                  {t('guestJoinCta')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-stone-50 pb-20">
@@ -1916,6 +2036,7 @@ const MainApp = () => {
   const [authLeads, setAuthLeads] = useState<AuthLeadDoc[]>([]);
   const [showOpportunitiesModerationPanel, setShowOpportunitiesModerationPanel] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
+  const [urgentPostIdToDelete, setUrgentPostIdToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<
     'companies' | 'members' | 'activities' | 'radar' | 'dashboard'
   >('members');
@@ -2319,10 +2440,14 @@ const MainApp = () => {
     });
 
     const profilesQuery = query(collection(db, 'users'), orderBy('fullName', 'asc'));
-    const unsubscribeProfiles = onSnapshot(profilesQuery, (snapshot) => {
-      const profiles = snapshot.docs.map(doc => doc.data() as UserProfile);
-      setAllProfiles(profiles);
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'users'));
+    const unsubscribeProfiles = onSnapshot(
+      profilesQuery,
+      (snapshot) => {
+        const profiles = snapshot.docs.map((d) => d.data() as UserProfile);
+        setAllProfiles(profiles);
+      },
+      (error) => handleFirestoreError(error, OperationType.LIST, 'users')
+    );
 
     const urgentQuery = query(
       collection(db, 'urgent_posts'), 
@@ -3164,15 +3289,6 @@ const MainApp = () => {
     else if (v === 'member') setViewMode('members');
   }, []);
 
-  const handleRandomProfile = useCallback(() => {
-    if (filteredProfiles.length === 0) return;
-    const pick = filteredProfiles[Math.floor(Math.random() * filteredProfiles.length)];
-    if (viewMode !== 'companies' && viewMode !== 'members') {
-      setViewMode(filterProfileType === 'company' ? 'companies' : 'members');
-    }
-    setSelectedProfile(pick);
-  }, [filteredProfiles, filterProfileType, viewMode]);
-
   const membersFiltered = useMemo(() => {
     return filteredProfiles.filter((p) => {
       if (highlightedNeedFilter && !(p.highlightedNeeds || []).includes(highlightedNeedFilter)) {
@@ -3272,6 +3388,31 @@ const MainApp = () => {
     ? Math.max(0, profilesSortedForActivities.length - GUEST_DIRECTORY_PREVIEW_LIMIT)
     : 0;
 
+  /** Invités : tirage au sort et bouton « au hasard » limités aux fiches visibles (max 4). */
+  const guestVisibleProfilesForRandom = useMemo(() => {
+    if (!guestDirectoryRestricted) return filteredProfiles;
+    if (viewMode === 'companies') return companiesDirectoryList;
+    if (viewMode === 'activities') return activitiesDirectoryList;
+    return membersDirectoryList;
+  }, [
+    guestDirectoryRestricted,
+    viewMode,
+    filteredProfiles,
+    companiesDirectoryList,
+    activitiesDirectoryList,
+    membersDirectoryList,
+  ]);
+
+  const handleRandomProfile = useCallback(() => {
+    const pool = guestDirectoryRestricted ? guestVisibleProfilesForRandom : filteredProfiles;
+    if (pool.length === 0) return;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    if (viewMode !== 'companies' && viewMode !== 'members') {
+      setViewMode(filterProfileType === 'company' ? 'companies' : 'members');
+    }
+    setSelectedProfile(pick);
+  }, [filteredProfiles, filterProfileType, viewMode, guestDirectoryRestricted, guestVisibleProfilesForRandom]);
+
   const handleValidateProfile = async (uid: string, isValid: boolean) => {
     try {
       await setDoc(doc(db, 'users', uid), { isValidated: isValid }, { merge: true });
@@ -3289,15 +3430,17 @@ const MainApp = () => {
     }
   };
 
-  const handleRejectUrgentPost = async (postId: string) => {
-    if (profile?.role !== 'admin') return;
+  const handleRejectUrgentPost = async (postId: string): Promise<boolean> => {
+    if (profile?.role !== 'admin') return false;
     try {
       const batch = writeBatch(db);
       batch.delete(doc(db, 'urgent_posts', postId));
       batch.delete(doc(db, URGENT_POST_PRIVATE_COLLECTION, postId));
       await batch.commit();
+      return true;
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `urgent_posts/${postId}`);
+      return false;
     }
   };
 
@@ -3433,8 +3576,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         hideDesktopLanguageSwitch={headerAdminLayout}
         topRight={
           headerAdminLayout && user ? (
-            <>
-              <div className="hidden items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="hidden shrink-0 items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
                 {(['fr', 'es', 'en'] as const).map((code) => {
                   const isActive = lang === code;
                   return (
@@ -3472,7 +3615,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   iconSize={16}
                 />
               </div>
-            </>
+            </div>
           ) : undefined
         }
         fullWidthRow={
@@ -4675,6 +4818,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   profiles={stats.newThisWeekProfiles}
                   totalNewThisWeek={stats.newThisWeekCount}
                   className="w-full min-h-0"
+                  guestTeaser={guestDirectoryRestricted}
                   onOpenProfile={(p) => setSelectedProfile(p)}
                   onSeeAll={() => {
                     setDirectoryDiscoveryStripsHidden(true);
@@ -4695,6 +4839,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             <div className="order-3 min-w-0 w-full sm:hidden">
               <HomeFunFactStrip
                 lang={lang}
+                canLoadMemberProfiles={!guestDirectoryRestricted}
                 collapsibleOnMobile
                 mobileShowLabel={t('funFactIntroShow')}
                 mobileHideLabel={t('funFactIntroHide')}
@@ -4731,7 +4876,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 <DirectoryRandomProfileButton
                   t={t}
                   onRandomProfile={handleRandomProfile}
-                  randomDisabled={filteredProfiles.length === 0}
+                  randomDisabled={guestVisibleProfilesForRandom.length === 0}
                 />
               </div>
             ) : (
@@ -4749,7 +4894,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 onSearchSubmit={scrollDirectoryIntoView}
                 onClearFilters={clearDirectoryFilters}
                 onRandomProfile={handleRandomProfile}
-                randomDisabled={filteredProfiles.length === 0}
+                randomDisabled={guestVisibleProfilesForRandom.length === 0}
                 showClearFilters={showDirectoryClearFilters}
               />
             )}
@@ -4760,7 +4905,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 viewMode === 'dashboard' && profile?.role === 'admin' && 'hidden'
               )}
             >
-              <HomeFunFactStrip lang={lang} />
+              <HomeFunFactStrip lang={lang} canLoadMemberProfiles={!guestDirectoryRestricted} />
             </div>
 
             {!user && showDiscoveryStrips && urgentPostsListed.length === 0 && (
@@ -4772,6 +4917,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 allProfiles={allProfiles}
                 user={user}
                 compactLayout
+                isAdmin={profile?.role === 'admin'}
+                onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                 onSeeAll={() => {
                   setDirectoryDiscoveryStripsHidden(true);
                   setViewMode('radar');
@@ -4797,6 +4944,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 allProfiles={allProfiles}
                 user={user}
                 compactLayout
+                isAdmin={profile?.role === 'admin'}
+                onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                 onSeeAll={() => {
                   setDirectoryDiscoveryStripsHidden(true);
                   setViewMode('radar');
@@ -4846,6 +4995,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   lang={lang}
                   profiles={stats.newThisWeekProfiles}
                   totalNewThisWeek={stats.newThisWeekCount}
+                  guestTeaser={guestDirectoryRestricted}
                   onOpenProfile={(p) => setSelectedProfile(p)}
                   onSeeAll={() => {
                     setDirectoryDiscoveryStripsHidden(true);
@@ -4865,6 +5015,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     posts={urgentPostsListed}
                     allProfiles={allProfiles}
                     user={user}
+                    isAdmin={profile?.role === 'admin'}
+                    onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                     onSeeAll={() => {
                       setDirectoryDiscoveryStripsHidden(true);
                       setViewMode('radar');
@@ -5096,7 +5248,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     onSearchSubmit={scrollDirectoryIntoView}
                     onClearFilters={clearDirectoryFilters}
                     onRandomProfile={handleRandomProfile}
-                    randomDisabled={filteredProfiles.length === 0}
+                    randomDisabled={guestVisibleProfilesForRandom.length === 0}
                     showClearFilters={showDirectoryClearFilters}
                     hideRandomButton
                   />
@@ -5205,6 +5357,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       setShowOnboarding(true);
                     }
                   }}
+                  isAdmin={profile?.role === 'admin'}
+                  onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                 />
               )}
 
@@ -5264,6 +5418,57 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   <Plus size={24} className="rotate-45" />
                 </button>
 
+                {guestDirectoryRestricted ? (
+                  <div className="flex flex-col items-center gap-5 py-6 text-center">
+                    <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-3xl border border-stone-200 bg-stone-100">
+                      <div
+                        className="pointer-events-none absolute inset-0 z-0 scale-110 blur-md opacity-70"
+                        aria-hidden
+                      >
+                        <ProfileAvatar
+                          photoURL={selectedProfile.photoURL}
+                          fullName={selectedProfile.fullName}
+                          className="h-full w-full"
+                          initialsClassName="text-xl font-bold text-stone-400 sm:text-2xl"
+                          iconSize={48}
+                        />
+                      </div>
+                      <div className="absolute inset-0 z-10 flex items-center justify-center bg-stone-100/40">
+                        <Lock className="h-8 w-8 text-stone-500" strokeWidth={2} aria-hidden />
+                      </div>
+                    </div>
+                    <div className="min-w-0 px-2">
+                      <h2 className="break-words text-2xl font-bold tracking-tight text-stone-900">
+                        {selectedProfile.fullName}
+                      </h2>
+                      <p className="mt-1 text-lg font-medium text-stone-500">{selectedProfile.companyName}</p>
+                    </div>
+                    <div className="relative mt-2 w-full min-h-[200px] overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
+                      <div
+                        className="pointer-events-none flex flex-col justify-end space-y-2 p-4 opacity-40 blur-sm select-none"
+                        aria-hidden
+                      >
+                        <div className="h-3 w-3/4 rounded bg-slate-200" />
+                        <div className="h-3 w-1/2 rounded bg-slate-200" />
+                        <div className="h-16 w-full rounded-lg bg-slate-100" />
+                      </div>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/88 px-4 backdrop-blur-[2px]">
+                        <p className="text-sm font-medium text-stone-700">{t('guestOverlayTitle')}</p>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onGuestDirectoryJoin();
+                          }}
+                          className="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
+                        >
+                          {t('guestJoinCta')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                <>
                 <div className="flex flex-col sm:flex-row gap-5 items-start mb-5">
                   <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-3xl bg-stone-100">
                     <ProfileAvatar
@@ -5641,7 +5846,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   </div>
                 )}
 
-                {!user && (!selectedProfile.isEmailPublic || (selectedProfile.whatsapp && !selectedProfile.isWhatsappPublic)) && (
+                {!guestDirectoryRestricted &&
+                  !user &&
+                  (!selectedProfile.isEmailPublic ||
+                    (selectedProfile.whatsapp && !selectedProfile.isWhatsappPublic)) && (
                   <div
                     className="mt-8 p-6 bg-stone-900 rounded-2xl text-white text-center"
                     onClick={(e) => e.stopPropagation()}
@@ -5660,6 +5868,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       {t('register')}
                     </button>
                   </div>
+                )}
+                </>
                 )}
               </div>
             </motion.div>
@@ -6147,6 +6357,55 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 <button 
                   onClick={() => setProfileToDelete(null)}
                   className="w-full py-3 bg-stone-100 text-stone-600 rounded-xl font-bold hover:bg-stone-200 transition-all"
+                >
+                  {t('cancel')}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Admin : confirmation suppression opportunité publiée */}
+      <AnimatePresence>
+        {urgentPostIdToDelete && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setUrgentPostIdToDelete(null)}
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-2xl"
+            >
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500">
+                <Plus size={32} className="rotate-45" />
+              </div>
+              <h3 className="mb-2 text-xl font-bold text-stone-900">{t('delete')}</h3>
+              <p className="mb-8 text-sm leading-relaxed text-stone-500">
+                {t('confirmDeleteOpportunity')}
+              </p>
+              <div className="flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!urgentPostIdToDelete) return;
+                    const ok = await handleRejectUrgentPost(urgentPostIdToDelete);
+                    if (ok) setUrgentPostIdToDelete(null);
+                  }}
+                  className="w-full rounded-xl bg-red-600 py-3 font-bold text-white transition-all hover:bg-red-700"
+                >
+                  {t('delete')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUrgentPostIdToDelete(null)}
+                  className="w-full rounded-xl bg-stone-100 py-3 font-bold text-stone-600 transition-all hover:bg-stone-200"
                 >
                   {t('cancel')}
                 </button>

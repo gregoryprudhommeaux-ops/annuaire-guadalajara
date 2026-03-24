@@ -10,10 +10,20 @@ type Props = {
   collapsibleOnMobile?: boolean;
   mobileShowLabel?: string;
   mobileHideLabel?: string;
+  /**
+   * `users` n’est lisible que pour les comptes connectés (Firestore).
+   * À `false` : pas d’appel `getNewMembersThisWeek`, membres = [].
+   */
+  canLoadMemberProfiles?: boolean;
 };
 
 /** Cache module : deux instances (mobile + desktop) partagent une seule requête. */
-let funFactCache: { lang: Language; members: MemberForFun[]; needs: NeedForFun[] } | null = null;
+let funFactCache: {
+  lang: Language;
+  members: MemberForFun[];
+  needs: NeedForFun[];
+  withMembers: boolean;
+} | null = null;
 
 /**
  * Équivalent Vite de l’`await getNewMembersThisWeek()` / `getNeedsThisWeek()` côté Next :
@@ -25,23 +35,31 @@ export default function HomeFunFactStrip({
   collapsibleOnMobile = false,
   mobileShowLabel,
   mobileHideLabel,
+  canLoadMemberProfiles = true,
 }: Props) {
-  const [members, setMembers] = useState<MemberForFun[]>(() => funFactCache?.lang === lang ? funFactCache.members : []);
-  const [needs, setNeeds] = useState<NeedForFun[]>(() => funFactCache?.lang === lang ? funFactCache.needs : []);
+  const [members, setMembers] = useState<MemberForFun[]>(() =>
+    funFactCache?.lang === lang && funFactCache.withMembers === canLoadMemberProfiles ? funFactCache.members : []
+  );
+  const [needs, setNeeds] = useState<NeedForFun[]>(() =>
+    funFactCache?.lang === lang && funFactCache.withMembers === canLoadMemberProfiles ? funFactCache.needs : []
+  );
 
   useEffect(() => {
     let cancelled = false;
-    if (funFactCache?.lang === lang) {
+    if (funFactCache?.lang === lang && funFactCache.withMembers === canLoadMemberProfiles) {
       setMembers(funFactCache.members);
       setNeeds(funFactCache.needs);
       return () => {
         cancelled = true;
       };
     }
-    Promise.all([getNewMembersThisWeek(lang), getNeedsThisWeek()])
+    const membersPromise = canLoadMemberProfiles
+      ? getNewMembersThisWeek(lang)
+      : Promise.resolve([] as MemberForFun[]);
+    Promise.all([membersPromise, getNeedsThisWeek()])
       .then(([m, n]) => {
         if (cancelled) return;
-        funFactCache = { lang, members: m, needs: n };
+        funFactCache = { lang, members: m, needs: n, withMembers: canLoadMemberProfiles };
         setMembers(m);
         setNeeds(n);
       })
@@ -54,7 +72,7 @@ export default function HomeFunFactStrip({
     return () => {
       cancelled = true;
     };
-  }, [lang]);
+  }, [lang, canLoadMemberProfiles]);
 
   return (
     <FunFactCard

@@ -353,6 +353,10 @@ export const TRANSLATIONS: Translations = {
   details: { fr: "Détails", es: "Detalles" },
   restrictedInfo: { fr: "Connectez-vous pour voir", es: "Inicia sesión para ver" },
   registerPrompt: { fr: "Pour accéder à l'ensemble du profil, veuillez vous enregistrer sur l'annuaire", es: "Para ver el perfil completo, regístrate en el directorio" },
+  directorySignInRequired: {
+    fr: "Les fiches annuaire ne sont visibles qu’après connexion. Connectez-vous depuis l’accueil pour consulter ce contenu.",
+    es: "Las fichas del directorio solo son visibles tras iniciar sesión. Conéctate desde el inicio para ver este contenido.",
+  },
   adminPanel: { fr: "Panneau Admin", es: "Panel de Admin" },
   exportData: { fr: "Exporter la base de données", es: "Exportar base de datos" },
   signature: { fr: "Produit et managé par NextStep Services", es: "Producido y gestionado por NextStep Services" },
@@ -386,6 +390,11 @@ export const TRANSLATIONS: Translations = {
   loading: { fr: "Chargement...", es: "Cargando..." },
   deleteProfile: { fr: "Supprimer mon profil", es: "Eliminar mi perfil" },
   confirmDelete: { fr: "Êtes-vous sûr de vouloir supprimer ce profil ? Cette action est irréversible.", es: "¿Seguro que quieres eliminar este perfil? Esta acción no se puede deshacer." },
+  confirmDeleteOpportunity: {
+    fr: "Supprimer cette opportunité publiée ? Elle disparaîtra pour tous les membres. Cette action est irréversible.",
+    es: "¿Eliminar esta oportunidad publicada? Desaparecerá para todos los miembros. Esta acción no se puede deshacer.",
+  },
+  deleteOpportunityAria: { fr: "Supprimer l’opportunité (administrateur)", es: "Eliminar la oportunidad (administrador)" },
   delete: { fr: "Supprimer", es: "Eliminar" },
   allIndustries: { fr: "Toutes les industries", es: "Todas las industrias" },
   filterSectorHint: {

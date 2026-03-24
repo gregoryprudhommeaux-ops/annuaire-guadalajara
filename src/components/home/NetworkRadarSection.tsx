@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
   LabelList,
 } from 'recharts';
-import { Users, Target, Factory, Zap, Maximize2 } from 'lucide-react';
+import { Users, Target, Factory, Zap, Maximize2, Trash2 } from 'lucide-react';
 import type { UserProfile, Language, UrgentPost } from '../../types';
 import type { User } from 'firebase/auth';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
@@ -45,6 +45,8 @@ type Props = {
   registeredWithProfile: boolean;
   /** Ouvre la connexion, ou l’onboarding profil si déjà connecté sans fiche. */
   onUnlockRadar: () => void;
+  isAdmin?: boolean;
+  onRequestDeleteOpportunity?: (post: UrgentPost) => void;
 };
 
 function truncateLabel(s: string, max = 30): string {
@@ -72,6 +74,8 @@ export default function NetworkRadarSection({
   onCreateProfile,
   registeredWithProfile,
   onUnlockRadar,
+  isAdmin = false,
+  onRequestDeleteOpportunity,
 }: Props) {
   const [activeRadarChart, setActiveRadarChart] = useState<null | 'sectors' | 'needs'>(null);
   const radarLocked = !registeredWithProfile;
@@ -198,6 +202,7 @@ export default function NetworkRadarSection({
   }, [profilesForStats]);
 
   const recentOpportunities = urgentPosts.slice(0, 3);
+  const showAdminOppDelete = isAdmin && !!onRequestDeleteOpportunity;
 
   const expandChartLabel =
     lang === 'en'
@@ -238,7 +243,7 @@ export default function NetworkRadarSection({
         <div
           className={
             radarLocked
-              ? 'pointer-events-none select-none blur-md saturate-50 transition-[filter]'
+              ? 'pointer-events-none select-none blur-lg saturate-50 transition-[filter]'
               : undefined
           }
           aria-hidden={radarLocked}
@@ -497,17 +502,40 @@ export default function NetworkRadarSection({
                 </>
               );
               return (
-                <li key={post.id}>
+                <li key={post.id} className="relative">
+                  {showAdminOppDelete ? (
+                    <button
+                      type="button"
+                      aria-label={t('deleteOpportunityAria')}
+                      title={t('deleteOpportunityAria')}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onRequestDeleteOpportunity!(post);
+                      }}
+                      className="absolute right-2 top-2 z-10 rounded-lg border border-slate-200 bg-white/95 p-1.5 text-slate-500 shadow-sm transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4 shrink-0" strokeWidth={2} />
+                    </button>
+                  ) : null}
                   {canOpen ? (
                     <button
                       type="button"
                       onClick={() => onOpportunityClick(post)}
-                      className="flex h-full w-full flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition-colors hover:border-slate-300 hover:bg-white"
+                      className={cn(
+                        'flex h-full w-full flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition-colors hover:border-slate-300 hover:bg-white',
+                        showAdminOppDelete && 'pr-10'
+                      )}
                     >
                       {cardInner}
                     </button>
                   ) : (
-                    <div className="flex h-full w-full cursor-default flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 text-left">
+                    <div
+                      className={cn(
+                        'flex h-full w-full cursor-default flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 text-left',
+                        showAdminOppDelete && 'pr-10'
+                      )}
+                    >
                       {cardInner}
                     </div>
                   )}
@@ -521,7 +549,7 @@ export default function NetworkRadarSection({
 
         {radarLocked && (
           <div
-            className="absolute inset-0 z-10 flex items-start justify-center overflow-y-auto bg-stone-100/40 px-4 py-10 backdrop-blur-[2px] sm:items-center sm:py-12"
+            className="absolute inset-0 z-10 flex items-start justify-center overflow-y-auto bg-stone-100/55 px-4 py-10 backdrop-blur-md sm:items-center sm:py-12"
             role="dialog"
             aria-modal="true"
             aria-labelledby="radar-locked-title"

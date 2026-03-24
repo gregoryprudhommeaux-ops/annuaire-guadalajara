@@ -151,6 +151,9 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
+      // Lecture ouverte : l’app limite l’affichage invité (4 fiches, nom + société seuls nets).
+      // Pour empêcher techniquement l’extraction des champs sensibles, il faudrait une collection
+      // « public » ou Cloud Functions (Firestore ne masque pas des champs par règle sur un même doc).
       allow read: if true;
 
       allow create: if isAuthenticated()
@@ -158,10 +161,18 @@ service cloud.firestore {
         && isValidUser(request.resource.data, userId)
         && (request.resource.data.role == 'user' || isAdmin());
 
+      // Seul un admin peut modifier le champ `role` (promouvoir / rétrograder).
+      // Un membre peut mettre à jour son profil mais pas s’attribuer le rôle admin.
       allow update: if isAuthenticated()
-        && (isOwner(userId) || isAdmin())
         && isValidUser(request.resource.data, userId)
-        && request.resource.data.uid == resource.data.uid;
+        && request.resource.data.uid == resource.data.uid
+        && (
+          isAdmin()
+          || (
+            isOwner(userId)
+            && request.resource.data.role == resource.data.role
+          )
+        );
 
       allow delete: if isOwner(userId) || isAdmin();
     }

@@ -172,7 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="w-full min-w-0">{fullWidthRow}</div>
           </div>
         ) : (
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-3">
             <div className="relative w-full flex-1 min-w-[12rem] sm:min-w-[14rem] md:min-w-[16rem]">
               <a
                 href="/"
@@ -200,13 +200,12 @@ export const Header: React.FC<HeaderProps> = ({
 
             <div
               className={cn(
-                'flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-3',
-                !hideDesktopLanguageSwitch && 'sm:w-auto',
+                'flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-nowrap sm:items-center sm:justify-end sm:gap-3',
                 !guestMobileFullWidthCta && trailing && !hideDesktopLanguageSwitch && 'sm:shrink-0'
               )}
             >
               {!hideDesktopLanguageSwitch ? (
-                <div className="hidden items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
+                <div className="hidden shrink-0 items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
                   {LANGUAGES.map(({ code, label }) => {
                     const isActive = lang === code;
                     return (
@@ -231,12 +230,12 @@ export const Header: React.FC<HeaderProps> = ({
               {trailing ? (
                 <div
                   className={cn(
-                    'min-w-0 sm:flex sm:items-center',
+                    'min-w-0 sm:flex sm:shrink-0 sm:items-center sm:justify-end',
                     guestMobileFullWidthCta &&
                       cn(
                         'flex justify-center border-t border-blue-800/25 bg-blue-700 px-3 py-1',
                         guestCtaFullBleed,
-                        'sm:mx-0 sm:w-auto sm:border-0 sm:bg-transparent sm:p-0'
+                        'sm:border-0 sm:bg-transparent sm:p-0'
                       ),
                     !guestMobileFullWidthCta &&
                       'flex flex-wrap items-center justify-end gap-2 pt-0.5 sm:justify-start sm:pt-0'

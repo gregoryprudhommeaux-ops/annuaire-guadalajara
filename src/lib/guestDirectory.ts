@@ -1,5 +1,5 @@
-/** Nombre de fiches visibles pour un visiteur sans compte annuaire (pas de doc `users`). */
-export const GUEST_DIRECTORY_PREVIEW_LIMIT = 3;
+/** Nombre de fiches visibles pour un visiteur sans fiche annuaire (ou non connecté). */
+export const GUEST_DIRECTORY_PREVIEW_LIMIT = 4;
 
 export function isGuestDirectoryRestricted(
   user: unknown,

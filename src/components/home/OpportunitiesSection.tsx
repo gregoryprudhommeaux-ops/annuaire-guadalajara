@@ -7,6 +7,7 @@ import { cn } from '../../cn';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
 import { OpportunityActions } from '../DirectoryUi';
 import { cardPad } from '../../lib/pageLayout';
+import { Trash2 } from 'lucide-react';
 
 type TFn = (key: string) => string;
 
@@ -23,6 +24,9 @@ type Props = {
   onOpenPost: (post: UrgentPost) => void;
   /** Colonne étroite (sous la recherche) : une seule colonne de cartes. */
   compactLayout?: boolean;
+  /** Admin : affiche une icône pour demander la suppression (confirmation dans App). */
+  isAdmin?: boolean;
+  onRequestDeleteOpportunity?: (post: UrgentPost) => void;
 };
 
 function cityForAuthor(authorId: string | undefined, allProfiles: UserProfile[]): string {
@@ -44,9 +48,12 @@ export default function OpportunitiesSection({
   onCreateProfile,
   onOpenPost,
   compactLayout = false,
+  isAdmin = false,
+  onRequestDeleteOpportunity,
 }: Props) {
   const slice = posts.slice(0, 5);
   const hasPosts = slice.length > 0;
+  const showAdminDelete = isAdmin && !!onRequestDeleteOpportunity;
   /** Même gabarit que SearchBlock / MembersCountBlock (colonne gauche, état vide). */
   const sidebarEmptyStyle = compactLayout && !hasPosts;
 
@@ -116,20 +123,37 @@ export default function OpportunitiesSection({
               <li
                 key={post.id}
                 className={cn(
-                  'flex flex-col rounded-xl border border-stone-100 bg-stone-50/60 p-3 transition-colors',
+                  'relative flex flex-col rounded-xl border border-stone-100 bg-stone-50/60 p-3 transition-colors',
                   canOpenProfile && 'hover:border-stone-200 hover:bg-stone-50'
                 )}
               >
+                {showAdminDelete ? (
+                  <button
+                    type="button"
+                    aria-label={t('deleteOpportunityAria')}
+                    title={t('deleteOpportunityAria')}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onRequestDeleteOpportunity!(post);
+                    }}
+                    className="absolute right-2 top-2 z-10 rounded-lg border border-stone-200/80 bg-white/95 p-1.5 text-stone-500 shadow-sm transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4 shrink-0" strokeWidth={2} />
+                  </button>
+                ) : null}
                 {canOpenProfile ? (
                   <button
                     type="button"
                     onClick={() => onOpenPost(post)}
-                    className="flex flex-col text-left"
+                    className={cn('flex flex-col text-left', showAdminDelete && 'pr-9')}
                   >
                     {cardBody}
                   </button>
                 ) : (
-                  <div className="flex flex-col text-left cursor-default">{cardBody}</div>
+                  <div className={cn('flex flex-col text-left cursor-default', showAdminDelete && 'pr-9')}>
+                    {cardBody}
+                  </div>
                 )}
               </li>
             );

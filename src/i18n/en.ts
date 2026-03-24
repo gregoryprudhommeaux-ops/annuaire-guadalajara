@@ -129,6 +129,8 @@ export const EN_STRINGS: Record<string, string> = {
   details: "Details",
   restrictedInfo: "Sign in to view",
   registerPrompt: "To see the full profile, please register on the directory",
+  directorySignInRequired:
+    "Directory profiles are only visible after you sign in. Go back to the home page and log in to view this content.",
   adminPanel: "Admin panel",
   exportData: "Export database",
   signature: "Built and managed by NextStep Services",
@@ -145,6 +147,9 @@ export const EN_STRINGS: Record<string, string> = {
   loading: "Loading…",
   deleteProfile: "Delete my profile",
   confirmDelete: "Are you sure you want to delete this profile? This cannot be undone.",
+  confirmDeleteOpportunity:
+    "Delete this published opportunity? It will disappear for all members. This cannot be undone.",
+  deleteOpportunityAria: "Delete opportunity (administrator)",
   delete: "Delete",
   allIndustries: "All industries",
   filterSectorHint: "Narrow the profile list by sector (same filter as in the left column).",

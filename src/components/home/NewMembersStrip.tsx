@@ -1,4 +1,5 @@
 import React from 'react';
+import { Lock } from 'lucide-react';
 import type { UserProfile } from '../../types';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
 import { formatHomeBadge } from '../../copy/homeLanding';
@@ -17,6 +18,8 @@ type Props = {
   /** Ouvre la fiche (ex. modal annuaire). */
   onOpenProfile?: (p: UserProfile) => void;
   className?: string;
+  /** Invité : photo & secteur floutés ; nom + société seuls nets. */
+  guestTeaser?: boolean;
 };
 
 /**
@@ -59,6 +62,7 @@ export default function NewMembersStrip({
   onSeeAll,
   onOpenProfile,
   className,
+  guestTeaser = false,
 }: Props) {
   const display = profiles.slice(0, 4);
 
@@ -102,14 +106,39 @@ export default function NewMembersStrip({
             );
             const cardInner = (
               <>
-                <div className="flex h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-stone-200 sm:h-12 sm:w-12">
-                  <ProfileAvatar
-                    photoURL={p.photoURL}
-                    fullName={p.fullName}
-                    className="h-full w-full bg-white"
-                    initialsClassName="text-[11px] font-bold text-blue-800 sm:text-xs"
-                    iconSize={18}
-                  />
+                <div
+                  className={cn(
+                    'relative flex h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-stone-200 sm:h-12 sm:w-12',
+                    guestTeaser && 'ring-stone-300'
+                  )}
+                >
+                  {guestTeaser ? (
+                    <>
+                      <div
+                        className="pointer-events-none absolute inset-0 z-0 scale-125 blur-md opacity-70"
+                        aria-hidden
+                      >
+                        <ProfileAvatar
+                          photoURL={p.photoURL}
+                          fullName={p.fullName}
+                          className="h-full w-full bg-white"
+                          initialsClassName="text-[11px] font-bold text-blue-800 sm:text-xs"
+                          iconSize={18}
+                        />
+                      </div>
+                      <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/35">
+                        <Lock className="h-3.5 w-3.5 text-stone-500 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
+                      </div>
+                    </>
+                  ) : (
+                    <ProfileAvatar
+                      photoURL={p.photoURL}
+                      fullName={p.fullName}
+                      className="h-full w-full bg-white"
+                      initialsClassName="text-[11px] font-bold text-blue-800 sm:text-xs"
+                      iconSize={18}
+                    />
+                  )}
                 </div>
                 <div className="flex min-h-[4.25rem] min-w-0 flex-1 flex-col justify-center gap-1 text-left">
                   <p className="truncate text-sm font-semibold leading-tight text-stone-900 sm:text-[15px]" title={p.fullName}>
@@ -118,12 +147,21 @@ export default function NewMembersStrip({
                   <p className="truncate text-xs leading-tight text-stone-600 sm:text-sm" title={p.companyName}>
                     {p.companyName}
                   </p>
-                  <p
-                    className="truncate text-left text-[11px] leading-tight text-stone-500 sm:text-xs"
-                    title={sectorLabel || undefined}
-                  >
-                    {sectorLabel || '—'}
-                  </p>
+                  {guestTeaser ? (
+                    <p
+                      className="truncate text-left text-[11px] leading-tight text-stone-400 blur-[5px] select-none sm:text-xs"
+                      aria-hidden
+                    >
+                      {sectorLabel ? '············' : '—'}
+                    </p>
+                  ) : (
+                    <p
+                      className="truncate text-left text-[11px] leading-tight text-stone-500 sm:text-xs"
+                      title={sectorLabel || undefined}
+                    >
+                      {sectorLabel || '—'}
+                    </p>
+                  )}
                 </div>
               </>
             );
