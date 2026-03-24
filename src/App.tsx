@@ -2006,7 +2006,11 @@ function parseMatchmakerResponse(raw: string, validUids: Set<string>): MatchSugg
   }
 }
 
-const MainApp = () => {
+type MainAppProps = {
+  initialViewMode?: 'companies' | 'members' | 'activities' | 'radar' | 'dashboard';
+};
+
+const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const { lang, setLang, t } = useLanguage();
   const h = homeLanding(lang);
   const [user, setUser] = useState<User | null>(null);
@@ -2039,7 +2043,7 @@ const MainApp = () => {
   const [urgentPostIdToDelete, setUrgentPostIdToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<
     'companies' | 'members' | 'activities' | 'radar' | 'dashboard'
-  >('members');
+  >(initialViewMode);
   /** Masque « Nouveaux membres » et « Opportunités » après interaction avec les onglets du listing (remonte le bloc principal). */
   const [directoryDiscoveryStripsHidden, setDirectoryDiscoveryStripsHidden] = useState(false);
   const [matches, setMatches] = useState<MatchSuggestion[]>([]);
@@ -2659,12 +2663,13 @@ const MainApp = () => {
 
   useEffect(() => {
     if (
+      !loading &&
       viewMode === 'dashboard' &&
       !(profile?.role === 'admin' || isAdminEmail(user?.email))
     ) {
       setViewMode('members');
     }
-  }, [viewMode, profile?.role, user?.email]);
+  }, [loading, viewMode, profile?.role, user?.email]);
 
   const handleSocialLogin = async (which: SocialAuthProvider) => {
     const provider = buildAuthProvider(which);
@@ -3799,7 +3804,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   setShowValidationPanel(false);
                   setShowOpportunitiesModerationPanel(false);
                   setDirectoryDiscoveryStripsHidden(true);
-                  setViewMode('dashboard');
+                  window.location.assign('/dashboard');
                 }}
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800 transition-colors hover:bg-indigo-100"
               >
@@ -5143,6 +5148,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     setSelectedProfile(null);
                     setShowValidationPanel(false);
                     setShowOpportunitiesModerationPanel(false);
+                    window.location.assign('/dashboard');
+                    return;
                   }
                   setDirectoryDiscoveryStripsHidden(true);
                   setViewMode(
@@ -6490,6 +6497,7 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<MainApp />} />
+            <Route path="/dashboard" element={<MainApp initialViewMode="dashboard" />} />
             <Route path="/profil/:profileId" element={<ProfilePage />} />
             <Route path="/besoin/:needId" element={<NeedPage />} />
           </Routes>
