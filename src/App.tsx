@@ -4866,7 +4866,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           {/* Connecté : nouveaux membres (le bloc bienvenue est retiré) */}
           {user && showDiscoveryStrips && !isAdminDashboard && (
             <>
-              <div className="order-2 h-full min-h-0 w-full min-w-0 lg:order-none lg:col-start-5 lg:col-span-8">
+              <div className="order-2 h-full min-h-0 w-full min-w-0 lg:order-none lg:row-start-1 lg:col-start-5 lg:col-span-8">
                 <NewMembersStrip
                   copy={h}
                   lang={lang}
@@ -4906,6 +4906,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           <div
             className={cn(
               'order-1 min-w-0 w-full space-y-4 sm:space-y-6 lg:order-1 lg:col-start-1 lg:col-span-4 lg:self-start',
+              user && showDiscoveryStrips && !isAdminDashboard && 'lg:row-start-1',
               isAdminDashboard && 'hidden'
             )}
           >
@@ -5027,6 +5028,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             id="directory-main"
             className={cn(
               'order-2 min-w-0 w-full scroll-mt-24 space-y-6 lg:order-2 lg:col-start-5',
+              user && showDiscoveryStrips && !isAdminDashboard && 'lg:row-start-2',
               isAdminDashboard ? 'lg:col-span-12' : 'lg:col-span-8'
             )}
           >
