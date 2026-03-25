@@ -765,6 +765,57 @@ export const TRANSLATIONS: Translations = {
     es: "No hay sugerencias por ahora. Inténtalo más tarde o amplía tu red en el directorio.",
   },
   aiRecRetry: { fr: "Réessayer", es: "Reintentar" },
+  memberRequestsTitle: { fr: "Demandes du réseau", es: "Demandas de la red" },
+  memberRequestsSubtitle: {
+    fr: "Publiez ce que vous cherchez (partenaire, zone, produit…).",
+    es: "Publica lo que buscas (socio, zona, producto…).",
+  },
+  memberRequestsPostCta: { fr: "Poster une demande", es: "Publicar una demanda" },
+  memberRequestsEmpty: {
+    fr: "Aucune demande pour le moment. Soyez le premier à en poster une.",
+    es: "Ninguna demanda por ahora. Sé el primero en publicar una.",
+  },
+  memberRequestsModalTitle: { fr: "Nouvelle demande réseau", es: "Nueva demanda de red" },
+  memberRequestsExpiresHint: {
+    fr: "Votre demande reste visible 30 jours (puis disparaît de la liste).",
+    es: "Tu demanda será visible 30 días (luego desaparece de la lista).",
+  },
+  memberRequestsTextLabel: { fr: "Description de votre besoin", es: "Descripción de tu necesidad" },
+  memberRequestsTextPlaceholder: {
+    fr: "Ex. distributeur alimentaire pour Jalisco, contact fournisseurs UE…",
+    es: "Ej. distribuidor alimentario para Jalisco, contacto con proveedores UE…",
+  },
+  memberRequestsSectorLabel: { fr: "Secteur (optionnel)", es: "Sector (opcional)" },
+  memberRequestsSectorOptional: { fr: "— Aucun —", es: "— Ninguno —" },
+  memberRequestsZoneLabel: { fr: "Zone / marché (optionnel)", es: "Zona / mercado (opcional)" },
+  memberRequestsZonePlaceholder: { fr: "Ex. Jalisco, Mexique, UE…", es: "Ej. Jalisco, México, UE…" },
+  memberRequestsProductLabel: { fr: "Produit ou service (optionnel)", es: "Producto o servicio (opcional)" },
+  memberRequestsProductPlaceholder: {
+    fr: "Ex. vins, équipements industriels…",
+    es: "Ej. vinos, equipos industriales…",
+  },
+  memberRequestsSubmit: { fr: "Publier", es: "Publicar" },
+  memberRequestNeedProfile: {
+    fr: "Créez ou complétez votre fiche annuaire pour publier une demande.",
+    es: "Crea o completa tu ficha en el directorio para publicar una demanda.",
+  },
+  memberRequestTextRequired: {
+    fr: "Décrivez votre besoin (au moins quelques mots).",
+    es: "Describe tu necesidad (al menos unas palabras).",
+  },
+  memberRequestTextTooLong: {
+    fr: "Texte trop long (800 caractères maximum).",
+    es: "Texto demasiado largo (máx. 800 caracteres).",
+  },
+  memberRequestSubmitError: {
+    fr: "Impossible de publier. Vérifiez votre connexion ou réessayez.",
+    es: "No se pudo publicar. Comprueba la conexión o inténtalo de nuevo.",
+  },
+  memberRequestDeleteConfirm: {
+    fr: "Supprimer cette demande ? Cette action est définitive.",
+    es: "¿Eliminar esta demanda? Esta acción es definitiva.",
+  },
+  memberRequestDeleteAria: { fr: "Supprimer la demande", es: "Eliminar la demanda" },
   postUrgentNeed: { fr: "Publier un besoin urgent", es: "Publicar necesidad urgente" },
   urgentPostSaving: { fr: "Enregistrement…", es: "Guardando…" },
   urgentPostSubmitErrorGeneric: {

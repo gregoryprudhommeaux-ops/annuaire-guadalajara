@@ -63,6 +63,31 @@ service cloud.firestore {
         && data.createdAt is number;
     }
 
+    /**
+     * Demandes réseau (annonce publique, pas de modération avant publication).
+     * Champs numériques : timestamps en ms (cohérent avec need_comments / recommendations).
+     */
+    function isValidMemberNetworkRequest(data) {
+      return data.keys().hasAll([
+          'authorId', 'authorName', 'authorPhoto', 'authorCompany', 'text', 'createdAt', 'expiresAt'
+        ])
+        && data.authorId == request.auth.uid
+        && data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 200
+        && data.authorPhoto is string && data.authorPhoto.size() <= 2048
+        && data.authorCompany is string && data.authorCompany.size() <= 200
+        && data.text is string && data.text.size() >= 1 && data.text.size() <= 800
+        && data.createdAt is number
+        && data.expiresAt is number
+        && data.expiresAt > data.createdAt
+        && data.expiresAt - data.createdAt <= 7776000000
+        && data.createdAt <= request.time.toMillis() + 120000
+        && data.createdAt >= request.time.toMillis() - 600000
+        && (!('sector' in data) || (data.sector is string && data.sector.size() >= 1 && data.sector.size() <= 200))
+        && (!('zone' in data) || (data.zone is string && data.zone.size() >= 1 && data.zone.size() <= 200))
+        && (!('productOrService' in data)
+          || (data.productOrService is string && data.productOrService.size() >= 1 && data.productOrService.size() <= 200));
+    }
+
     /** Besoins analytics (dashboard) : création par le membre concerné uniquement. */
     function isValidMemberNeed(data) {
       return data.keys().hasAll(['memberId', 'sector', 'need', 'createdAt'])
@@ -156,6 +181,14 @@ service cloud.firestore {
     match /recommendations/{recId} {
       allow read: if true;
       allow create: if isAuthenticated() && isValidRecommendation(request.resource.data);
+      allow delete: if isAuthenticated()
+        && (request.auth.uid == resource.data.authorId || isAdmin());
+    }
+
+    match /member_requests/{docId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidMemberNetworkRequest(request.resource.data);
+      allow update: if false;
       allow delete: if isAuthenticated()
         && (request.auth.uid == resource.data.authorId || isAdmin());
     }

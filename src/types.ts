@@ -168,6 +168,22 @@ export interface NeedComment {
   createdAt: number;
 }
 
+/** Demande réseau publique (secteur, zone, etc.) — suppression par auteur ou admin uniquement. */
+export interface MemberNetworkRequest {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorPhoto: string;
+  /** Libellé société au moment de la publication */
+  authorCompany?: string;
+  text: string;
+  sector?: string;
+  zone?: string;
+  productOrService?: string;
+  createdAt: number;
+  expiresAt: number;
+}
+
 export type Language = 'fr' | 'es' | 'en';
 
 export interface Translations {

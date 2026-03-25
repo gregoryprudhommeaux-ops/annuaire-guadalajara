@@ -67,6 +67,7 @@ import {
   MatchSuggestion,
   Recommendation,
   NeedComment,
+  MemberNetworkRequest,
   OptimizationSuggestion,
   EMPLOYEE_COUNT_RANGES,
   type EmployeeCountRange,
@@ -109,6 +110,10 @@ import {
   type AuthLeadDoc,
 } from './lib/authLeads';
 import {
+  MEMBER_REQUESTS_COLLECTION,
+  mapMemberRequestDoc,
+} from './lib/memberRequests';
+import {
   NEED_OPTIONS,
   NEED_OPTION_VALUE_SET,
   formatHighlightedNeedsForText,
@@ -148,6 +153,7 @@ import HeroSection from './components/home/HeroSection';
 import WelcomeContextCard from './components/home/WelcomeContextCard';
 import SearchBlock from './components/home/SearchBlock';
 import RecommendedSection from './components/home/RecommendedSection';
+import MemberRequestsSection from './components/home/MemberRequestsSection';
 import MembersCountBlock from './components/home/MembersCountBlock';
 import InviteNetworkModal from './components/home/InviteNetworkModal';
 import LegalInfoModal from './components/LegalInfoModal';
@@ -2145,6 +2151,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [membersSortMode, setMembersSortMode] = useState<MembersSortMode>('default');
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   const [authLeads, setAuthLeads] = useState<AuthLeadDoc[]>([]);
+  const [memberRequests, setMemberRequests] = useState<MemberNetworkRequest[]>([]);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<
     'companies' | 'members' | 'activities' | 'radar' | 'dashboard'
@@ -2605,6 +2612,27 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       unsubscribe();
       unsubscribeProfiles();
     };
+  }, []);
+
+  useEffect(() => {
+    const q = query(
+      collection(db, MEMBER_REQUESTS_COLLECTION),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
+    const unsub = onSnapshot(
+      q,
+      (snapshot) => {
+        const now = Date.now();
+        const rows = snapshot.docs
+          .map((d) => mapMemberRequestDoc(d.id, d.data() as Record<string, unknown>))
+          .filter((r) => r.expiresAt > now && r.authorId);
+        setMemberRequests(rows);
+      },
+      (error) =>
+        handleFirestoreError(error, OperationType.LIST, MEMBER_REQUESTS_COLLECTION)
+    );
+    return () => unsub();
   }, []);
 
   useEffect(() => {
@@ -3423,6 +3451,22 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     setFilterLocation('');
     setFilterProfileType('');
     setViewMode('members');
+  }, []);
+
+  const handleCreateMemberRequest = useCallback(async (payload: Record<string, unknown>) => {
+    await addDoc(collection(db, MEMBER_REQUESTS_COLLECTION), payload);
+  }, []);
+
+  const handleDeleteMemberRequest = useCallback(async (id: string) => {
+    try {
+      await deleteDoc(doc(db, MEMBER_REQUESTS_COLLECTION, id));
+    } catch (error: unknown) {
+      handleFirestoreError(
+        error,
+        OperationType.DELETE,
+        `${MEMBER_REQUESTS_COLLECTION}/${id}`
+      );
+    }
   }, []);
 
   const scrollDirectoryIntoView = useCallback(() => {
@@ -5127,6 +5171,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                 {/* Opportunités retirées du produit */}
               </>
+            )}
+
+            {!isMembersDirectoryRoute && !isAdminDashboard && (
+              <MemberRequestsSection
+                t={t}
+                lang={lang}
+                requests={memberRequests}
+                user={user}
+                profile={profile}
+                viewerIsAdmin={viewerIsAdmin}
+                onOpenAuth={openAuthModal}
+                onCreate={handleCreateMemberRequest}
+                onDelete={handleDeleteMemberRequest}
+              />
             )}
 
             {/* Recommandations IA — état vide invitation si moins de 3 autres membres dans l’annuaire */}
