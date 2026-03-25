@@ -7,7 +7,7 @@
  *   est « Inviter → » (`invite-network-cta`) et **uniquement** pour un membre **connecté avec fiche**
  *   quand le nombre de membres est sous le seuil de lancement. Un **invité** voit plutôt le bloc
  *   « Communauté en cours de lancement » avec **Créer mon profil**.
- * - Pour vérifier « doit se connecter », on teste le **bouton d’en-tête** et le CTA **Poster une opportunité**.
+ * - Pour vérifier « doit se connecter », on teste le **bouton d’en-tête**.
  *
  * `CYPRESS_BASE_URL` ou `baseUrl` (cypress.config.ts).
  */
@@ -37,12 +37,6 @@ describe('Droits d’accès sur les CTA (invité)', () => {
     cy.get('[data-testid="auth-modal"]').within(() => {
       cy.contains(/se connecter|sign in|iniciar sesión/i).should('be.visible');
     });
-  });
-
-  it('« Poster une opportunité » ouvre la modale de connexion (pas une route dédiée)', () => {
-    cy.get('[data-testid="cta-post-opportunity"]').first().scrollIntoView().click({ force: true });
-    cy.url().should('not.include', 'opportunite');
-    cy.get('[data-testid="auth-modal"]').should('be.visible');
   });
 
   it('invité : le CTA « Inviter → » du bloc réseau n’est en général pas affiché (bloc lancement à la place)', () => {

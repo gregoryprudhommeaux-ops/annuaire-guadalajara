@@ -15,13 +15,6 @@ export type HomeLandingCopy = {
   newMembersBadge: string;
   newMembersSeeAll: string;
   newMembersEmpty: string;
-  opportunitiesTitle: string;
-  opportunitiesSeeAll: string;
-  opportunitiesPost: string;
-  /** CTA visible près du titre (même action que « poster » : modal besoin urgent). */
-  opportunitiesCreateCta: string;
-  opportunitiesMembersOnly: string;
-  opportunityTypeUrgent: string;
   membersSortBanner: string;
   membersSortReset: string;
 };
@@ -37,18 +30,12 @@ const HOME_LANDING: Record<'fr' | 'en' | 'es', HomeLandingCopy> = {
     steps: [
       'Créez votre profil.',
       'Soyez trouvable par la communauté.',
-      'Recevez des opportunités ciblées.',
+      'Développez votre réseau sur place.',
     ],
     newMembersTitle: 'Nouveaux membres cette semaine',
     newMembersBadge: '{{n}} nouveaux membres cette semaine',
     newMembersSeeAll: 'Voir tous les derniers inscrits',
     newMembersEmpty: 'Aucun nouvel inscrit sur les 7 derniers jours.',
-    opportunitiesTitle: 'Opportunités du réseau',
-    opportunitiesSeeAll: 'Toutes les Opportunités',
-    opportunitiesPost: 'Poster une opportunité',
-    opportunitiesCreateCta: 'Créer une opportunité',
-    opportunitiesMembersOnly: 'Réservé aux membres',
-    opportunityTypeUrgent: 'Besoin urgent',
     membersSortBanner: 'Affichage : plus récents en premier',
     membersSortReset: 'Réinitialiser le tri',
   },
@@ -62,18 +49,12 @@ const HOME_LANDING: Record<'fr' | 'en' | 'es', HomeLandingCopy> = {
     steps: [
       'Create your profile.',
       'Be discoverable by the community.',
-      'Receive targeted opportunities.',
+      'Grow your local network.',
     ],
     newMembersTitle: 'New members this week',
     newMembersBadge: '{{n}} new members this week',
     newMembersSeeAll: 'See all recent sign-ups',
     newMembersEmpty: 'No new sign-ups in the last 7 days.',
-    opportunitiesTitle: 'Network opportunities',
-    opportunitiesSeeAll: 'All opportunities',
-    opportunitiesPost: 'Post an opportunity',
-    opportunitiesCreateCta: 'Create an opportunity',
-    opportunitiesMembersOnly: 'Members only',
-    opportunityTypeUrgent: 'Urgent need',
     membersSortBanner: 'Sorted by: newest first',
     membersSortReset: 'Reset sort order',
   },
@@ -87,18 +68,12 @@ const HOME_LANDING: Record<'fr' | 'en' | 'es', HomeLandingCopy> = {
     steps: [
       'Crea tu perfil.',
       'Sé visible para la comunidad.',
-      'Recibe oportunidades relevantes.',
+      'Haz crecer tu red local.',
     ],
     newMembersTitle: 'Nuevos miembros esta semana',
     newMembersBadge: '{{n}} nuevos miembros esta semana',
     newMembersSeeAll: 'Ver todos los últimos registros',
     newMembersEmpty: 'No hay nuevos registros en los últimos 7 días.',
-    opportunitiesTitle: 'Oportunidades de la red',
-    opportunitiesSeeAll: 'Todas las oportunidades',
-    opportunitiesPost: 'Publicar una oportunidad',
-    opportunitiesCreateCta: 'Crear una oportunidad',
-    opportunitiesMembersOnly: 'Solo miembros',
-    opportunityTypeUrgent: 'Necesidad urgente',
     membersSortBanner: 'Orden: más recientes primero',
     membersSortReset: 'Restablecer orden',
   },

@@ -42,6 +42,7 @@ class SectionErrorBoundary extends React.Component<
   SectionErrorBoundaryProps,
   SectionErrorBoundaryState
 > {
+  declare props: SectionErrorBoundaryProps;
   state: SectionErrorBoundaryState = { hasError: false };
 
   static getDerivedStateFromError(): SectionErrorBoundaryState {

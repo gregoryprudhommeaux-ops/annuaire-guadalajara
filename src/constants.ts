@@ -457,7 +457,6 @@ export const TRANSLATIONS: Translations = {
   inviteShareCopy: { fr: "Copier le message", es: "Copiar mensaje" },
   statsMembers: { fr: "membres", es: "miembros" },
   statsSectors: { fr: "secteurs", es: "sectores" },
-  statsOpportunities: { fr: "opportunités", es: "oportunidades" },
   tagNewMember: { fr: "Nouveau", es: "Nuevo" },
   tagUrgentNeed: { fr: "Besoin urgent", es: "Necesidad urgente" },
   tagsMore: { fr: "+{{count}} autres", es: "+{{count}} más" },
@@ -489,8 +488,8 @@ export const TRANSLATIONS: Translations = {
     es: "Bienvenido al directorio de la comunidad de negocios francohablante de Guadalajara.",
   },
   welcomeIntro: {
-    fr: "Découvrez les entreprises et membres déjà inscrits, filtrez par secteur, profil ou localisation, puis explorez les premiers profils suggérés. Invitez votre réseau à rejoindre la plateforme pour activer davantage d'opportunités et accélérer vos connexions à Guadalajara.",
-    es: "Descubre empresas y miembros ya inscritos, filtra por sector, tipo de perfil o ubicación, explora las primeras fichas sugeridas e invita a tu red a unirse a la plataforma para activar más oportunidades y acelerar tus conexiones en Guadalajara.",
+    fr: "Découvrez les entreprises et membres déjà inscrits, filtrez par secteur, profil ou localisation, puis explorez les premiers profils suggérés. Invitez votre réseau à rejoindre la plateforme pour accélérer vos connexions à Guadalajara.",
+    es: "Descubre empresas y miembros ya inscritos, filtra por sector, tipo de perfil o ubicación y explora las primeras fichas sugeridas. Invita a tu red a unirse a la plataforma para acelerar tus conexiones en Guadalajara.",
   },
   welcomeIntroShow: {
     fr: "Afficher l'introduction",
@@ -514,14 +513,6 @@ export const TRANSLATIONS: Translations = {
   loading: { fr: "Chargement...", es: "Cargando..." },
   deleteProfile: { fr: "Supprimer mon profil", es: "Eliminar mi perfil" },
   confirmDelete: { fr: "Êtes-vous sûr de vouloir supprimer ce profil ? Cette action est irréversible.", es: "¿Seguro que quieres eliminar este perfil? Esta acción no se puede deshacer." },
-  confirmDeleteOpportunity: {
-    fr: "Supprimer cette opportunité publiée ? Elle disparaîtra pour tous les membres. Cette action est irréversible.",
-    es: "¿Eliminar esta oportunidad publicada? Desaparecerá para todos los miembros. Esta acción no se puede deshacer.",
-  },
-  deleteOpportunityAria: {
-    fr: "Supprimer l’opportunité (créateur ou administrateur)",
-    es: "Eliminar la oportunidad (autor o administrador)",
-  },
   delete: { fr: "Supprimer", es: "Eliminar" },
   allIndustries: { fr: "Toutes les industries", es: "Todas las industrias" },
   filterSectorHint: {
@@ -627,8 +618,8 @@ export const TRANSLATIONS: Translations = {
     es: "{{count}} miembro(s) más en el directorio",
   },
   guestInterstitialBody: {
-    fr: "Créez votre profil gratuitement pour accéder à toutes les fiches, aux coordonnées et aux opportunités du réseau.",
-    es: "Crea tu perfil gratis para acceder a todas las fichas, datos de contacto y oportunidades de la red.",
+    fr: "Créez votre profil gratuitement pour accéder à toutes les fiches et aux coordonnées.",
+    es: "Crea tu perfil gratis para acceder a todas las fichas y a los datos de contacto.",
   },
   guestInterstitialCta: { fr: "Rejoindre la communauté", es: "Unirse a la comunidad" },
   guestInterstitialFinePrint: {
@@ -679,55 +670,6 @@ export const TRANSLATIONS: Translations = {
   local: { fr: "Local (Guadalajara)", es: "Local (Guadalajara)" },
   foreign: { fr: "Étranger / Visiteur", es: "Extranjero / Visitante" },
   urgentNeeds: { fr: "Besoins Urgents", es: "Necesidades Urgentes" },
-  opportunities: { fr: "Opportunités", es: "Oportunidades" },
-  opportunitiesEmpty: {
-    fr: "Aucune opportunité pour le moment.",
-    es: "Sin oportunidades por el momento.",
-  },
-  opportunityModerationPendingNote: {
-    fr: "Votre annonce est visible immédiatement par les membres (et les invités selon les réglages d’affichage).",
-    es: "Tu anuncio es visible de inmediato para los miembros (y para invitados según la configuración).",
-  },
-  opportunityAuthorHiddenGuest: {
-    fr: "Membre — connectez-vous pour voir l’auteur et le contacter.",
-    es: "Miembro — inicia sesión para ver al autor y contactarle.",
-  },
-  opportunityDetailTitle: { fr: "Détail de l’opportunité", es: "Detalle de la oportunidad" },
-  opportunityDetailMessageHeading: { fr: "Annonce", es: "Anuncio" },
-  opportunityDetailAuthorHeading: { fr: "Publiée par", es: "Publicada por" },
-  opportunityDetailContactHeading: {
-    fr: "Contacter pour répondre",
-    es: "Contactar para responder",
-  },
-  opportunityDetailContactHint: {
-    fr: "Les boutons ci-dessous respectent les préférences de visibilité de l’auteur (email et WhatsApp publics, ou accès réservé aux membres dont le profil est validé).",
-    es: "Los botones respetan la visibilidad del autor (correo o WhatsApp públicos, o acceso para miembros con perfil validado).",
-  },
-  opportunityDetailSignInPrompt: {
-    fr: "Connectez-vous avec un compte membre pour voir le nom de l’auteur et utiliser l’email ou le WhatsApp selon les réglages de sa fiche.",
-    es: "Inicia sesión como miembro para ver el nombre del autor y usar correo o WhatsApp según su ficha.",
-  },
-  opportunityDetailAuthorUnavailable: {
-    fr: "Le profil annuaire de l’auteur n’est plus disponible dans la liste ; les raccourcis de contact automatiques ne sont pas proposés.",
-    es: "El perfil del autor ya no está en el listado; no se ofrecen accesos de contacto automáticos.",
-  },
-  opportunityViewFullProfile: { fr: "Voir le profil complet", es: "Ver perfil completo" },
-  opportunitiesModerationTitle: {
-    fr: "Opportunités récentes",
-    es: "Oportunidades recientes",
-  },
-  opportunitiesModerationReviewCountLabel: {
-    fr: "à contrôler (7 derniers jours ou brouillon)",
-    es: "a revisar (últimos 7 días o borrador)",
-  },
-  opportunitiesModerationPanelHint: {
-    fr: "Annonces publiées sous 7 jours et éventuels brouillons non publiés.",
-    es: "Anuncios publicados en 7 días y borradores pendientes si los hay.",
-  },
-  opportunitiesModerationEmpty: {
-    fr: "Aucune opportunité récente ni brouillon à afficher.",
-    es: "No hay oportunidades recientes ni borradores que mostrar.",
-  },
   aiTranslationDisclaimer: {
     fr: 'Traduction générée automatiquement par IA.',
     es: 'Traducción generada automáticamente por IA.',
@@ -753,7 +695,6 @@ export const TRANSLATIONS: Translations = {
   kpiMembers: { fr: "Membres", es: "Miembros" },
   kpiNeeds: { fr: "Besoins", es: "Necesidades" },
   kpiSectors: { fr: "Secteurs", es: "Sectores" },
-  kpiOpportunities: { fr: "Opportunités", es: "Oportunidades" },
   chartSectorsTitle: { fr: "Secteurs représentés", es: "Sectores representados" },
   chartSectorsEmpty: {
     fr: "Le graphique s'enrichira avec de nouveaux membres.",
@@ -766,14 +707,6 @@ export const TRANSLATIONS: Translations = {
     es: "Ninguna pasión indicada.",
   },
   chartCenter: { fr: "membres", es: "miembros" },
-  radarRecentOpportunitiesTitle: {
-    fr: "Opportunités récentes",
-    es: "Oportunidades recientes",
-  },
-  radarRecentOpportunitiesEmpty: {
-    fr: "Aucune opportunité pour le moment.",
-    es: "Sin oportunidades por el momento.",
-  },
   radarLockedMessage: {
     fr: "Données du radar disponibles après inscription : connectez-vous et enregistrez votre fiche dans l’annuaire pour voir les statistiques et interactions.",
     es: "Los datos del radar están disponibles tras registrarte: inicia sesión y completa tu ficha en el directorio para ver estadísticas e interacciones.",
@@ -1015,8 +948,8 @@ export const TRANSLATIONS: Translations = {
   noSearchResults: { fr: "Aucun résultat trouvé", es: "No hay resultados" },
   onboardingWelcomeTitle: { fr: "Bienvenue dans l'Annuaire !", es: "¡Bienvenido al directorio!" },
   onboardingWelcomeBody: {
-    fr: "Votre profil est la clé pour générer des opportunités. Complétez-le dès maintenant pour apparaître dans l'annuaire et recevoir des recommandations personnalisées par IA.",
-    es: "Tu perfil es la llave para generar oportunidades. Complétalo ahora para aparecer en el directorio y recibir recomendaciones personalizadas con IA.",
+    fr: "Votre profil est la clé pour développer votre réseau. Complétez-le dès maintenant pour apparaître dans l'annuaire et recevoir des recommandations personnalisées par IA.",
+    es: "Tu perfil es la llave para hacer crecer tu red. Complétalo ahora para aparecer en el directorio y recibir recomendaciones personalizadas con IA.",
   },
   onboardingCompleteProfile: { fr: "Compléter mon profil", es: "Completar mi perfil" },
   onboardingLater: { fr: "Plus tard", es: "Más tarde" },

@@ -37,7 +37,7 @@ On each successful sign-in, the client upserts a document `auth_leads/{uid}` (em
 
 Reusable UI primitives aligned with a minimal palette: **slate** neutrals, **blue-700** primary CTA, **emerald** / **amber** accents. **Inter** is loaded in `src/index.css`.
 
-- Components: `Button`, `Heading`, `BodyText`, `Tag`, `Card`, `MemberCard`, `OpportunityCard`, `SearchInput`, `SectorSelect`.
+- Components: `Button`, `Heading`, `BodyText`, `Tag`, `Card`, `MemberCard`, `SearchInput`, `SectorSelect`.
 - `DirectoryExampleSection` is a static demo layout for reference; import it only if you need a playground page.
 
 The global shell uses `bg-slate-50` / `text-slate-900` on `body` and the main `MainApp` wrapper. The rest of the app still uses many `stone-*` utility classes; migrate sections gradually or compose new features with the design-system components.

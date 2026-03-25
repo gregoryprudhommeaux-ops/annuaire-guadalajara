@@ -90,7 +90,7 @@ export const BodyText: React.FC<React.HTMLAttributes<HTMLParagraphElement>> = ({
 // ——— Tags ———
 
 type TagProps = {
-  variant?: 'sector' | 'opportunity';
+  variant?: 'sector';
   children: React.ReactNode;
   className?: string;
 };
@@ -104,7 +104,6 @@ export const Tag: React.FC<TagProps> = ({
     'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium';
   const variants = {
     sector: 'bg-slate-100 text-slate-700',
-    opportunity: 'bg-emerald-50 text-emerald-700',
   };
 
   return <span className={`${base} ${variants[variant]} ${className}`}>{children}</span>;
@@ -156,25 +155,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
   </Card>
 );
 
-type OpportunityCardProps = {
-  title: string;
-  description: string;
-  typeLabel?: string;
-};
-
-export const OpportunityCard: React.FC<OpportunityCardProps> = ({
-  title,
-  description,
-  typeLabel = 'Opportunité',
-}) => (
-  <Card className="space-y-2">
-    <div className="flex items-start justify-between gap-2">
-      <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-      <Tag variant="opportunity">{typeLabel}</Tag>
-    </div>
-    <BodyText className="line-clamp-3 text-sm text-slate-600">{description}</BodyText>
-  </Card>
-);
+// OpportunityCard removed (opportunities feature deleted).
 
 // ——— Inputs ———
 
@@ -238,11 +219,6 @@ export const DirectoryExampleSection: React.FC = () => {
           company="La Despensería / Conseil"
           role="Développement international"
           sectors={['Agroalimentaire', 'Sourcing', 'F&B']}
-        />
-        <OpportunityCard
-          title="Recherche fournisseurs F&B francophones à Guadalajara"
-          description="Entreprise basée à Guadalajara recherchant des partenaires F&B francophones pour développer une offre premium auprès des hôtels et restaurants de la ville."
-          typeLabel="Opportunité"
         />
       </div>
     </section>

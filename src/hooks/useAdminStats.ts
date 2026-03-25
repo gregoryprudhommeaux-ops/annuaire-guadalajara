@@ -93,7 +93,7 @@ export function useAdminStats(period: PeriodKey): AdminStats {
         const allProfiles = profilesSnap.docs.map((d) => ({
           id: d.id,
           ...(d.data() as Record<string, unknown>),
-        }));
+        })) as Array<Record<string, unknown> & { id: string }>;
 
         const startDate = getStartDate(period);
 

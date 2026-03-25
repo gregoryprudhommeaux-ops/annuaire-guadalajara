@@ -9,7 +9,6 @@ type Props = {
   t: TFn;
   memberCount: number;
   sectorCount: number;
-  opportunitiesCount: number;
   threshold: number;
   onCreateProfile: () => void;
   /** Membre connecté avec un profil annuaire : masque le CTA « lancement » et affiche l’invitation. */
@@ -22,7 +21,6 @@ export default function MembersCountBlock({
   t,
   memberCount,
   sectorCount,
-  opportunitiesCount,
   threshold,
   onCreateProfile,
   registeredWithProfile = false,
@@ -88,9 +86,6 @@ export default function MembersCountBlock({
   }
   if (sectorCount > 0) {
     parts.push(`${sectorCount} ${t('statsSectors')}`);
-  }
-  if (opportunitiesCount > 0) {
-    parts.push(`${opportunitiesCount} ${t('statsOpportunities')}`);
   }
 
   if (parts.length === 0) {

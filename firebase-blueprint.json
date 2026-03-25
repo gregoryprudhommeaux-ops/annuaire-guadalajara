@@ -41,22 +41,6 @@
       },
       "required": ["uid", "fullName", "companyName", "email", "role", "createdAt"]
     },
-    "UrgentPost": {
-      "title": "Besoin Urgent",
-      "description": "Post pour un besoin urgent dans la communauté.",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string", "description": "ID du post" },
-        "authorId": { "type": "string", "description": "ID de l'auteur" },
-        "authorName": { "type": "string", "description": "Nom de l'auteur" },
-        "authorPhoto": { "type": "string", "description": "Photo de l'auteur" },
-        "text": { "type": "string", "description": "Contenu du besoin" },
-        "sector": { "type": "string", "description": "Secteur d'activité" },
-        "createdAt": { "type": "number", "description": "Date de création" },
-        "expiresAt": { "type": "number", "description": "Date d'expiration" }
-      },
-      "required": ["authorId", "authorName", "text", "sector", "createdAt", "expiresAt"]
-    },
     "NeedComment": {
       "title": "Commentaire de besoin",
       "description": "Commentaire sur un besoin partagé.",
@@ -90,10 +74,6 @@
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "Collection des profils utilisateurs"
-    },
-    "/urgent_posts/{postId}": {
-      "schema": "UrgentPost",
-      "description": "Collection des besoins urgents"
     },
     "/need_comments/{commentId}": {
       "schema": "NeedComment",

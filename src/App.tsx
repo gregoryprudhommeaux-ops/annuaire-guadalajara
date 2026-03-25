@@ -65,7 +65,6 @@ import {
   type CommunityCompanyKind,
   type CommunityMemberStatus,
   MatchSuggestion,
-  UrgentPost,
   Recommendation,
   NeedComment,
   OptimizationSuggestion,
@@ -142,14 +141,7 @@ import {
   getProfileCoachCompletionFraction,
   normalizeAiCoachToSingleTip,
 } from './lib/profileCoach';
-import {
-  URGENT_POST_PRIVATE_COLLECTION,
-  mergeUrgentPostFromFirestore,
-  isUrgentPostListedForEveryone,
-  isUrgentPostPendingModeration,
-  isUrgentPostInAdminRecentWindow,
-  type UrgentPostPrivateDoc,
-} from './lib/urgentPosts';
+// Opportunités retirées du produit.
 import { getGeminiApiKey } from './lib/geminiEnv';
 import IceBreakerInterests from './components/profile/IceBreakerInterests';
 import HeroSection from './components/home/HeroSection';
@@ -159,10 +151,8 @@ import RecommendedSection from './components/home/RecommendedSection';
 import MembersCountBlock from './components/home/MembersCountBlock';
 import InviteNetworkModal from './components/home/InviteNetworkModal';
 import LegalInfoModal from './components/LegalInfoModal';
-import OpportunityDetailModal from './components/home/OpportunityDetailModal';
 import { LEGAL_PRIVACY_PARAGRAPHS, LEGAL_TERMS_PARAGRAPHS } from './legal/footerLegalContent';
 import NewMembersStrip from './components/home/NewMembersStrip';
-import OpportunitiesSection from './components/home/OpportunitiesSection';
 import AiTranslatedFreeText from './components/AiTranslatedFreeText';
 import ProfileAvatar from './components/ProfileAvatar';
 import {
@@ -290,9 +280,10 @@ class SectionErrorBoundary extends React.Component<
   { fallback: React.ReactNode; children: React.ReactNode },
   { hasError: boolean }
 > {
-  state = { hasError: false };
+  declare props: { fallback: React.ReactNode; children: React.ReactNode };
+  state: { hasError: boolean } = { hasError: false };
 
-  static getDerivedStateFromError() {
+  static getDerivedStateFromError(): { hasError: boolean } {
     return { hasError: true };
   }
 
@@ -1818,7 +1809,6 @@ const NeedPage = () => {
   const { lang, t } = useLanguage();
   const { needId } = useParams();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [urgentPost, setUrgentPost] = useState<UrgentPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState<NeedComment[]>([]);
   const [commentText, setCommentText] = useState('');
@@ -1844,19 +1834,9 @@ const NeedPage = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        if (needId.startsWith('up_')) {
-          const docSnap = await getDoc(doc(db, 'urgent_posts', needId));
-          if (docSnap.exists()) {
-            const data = docSnap.data() as UrgentPost;
-            setUrgentPost(data);
-            const userSnap = await getDoc(doc(db, 'users', data.authorId));
-            if (userSnap.exists()) setProfile(userSnap.data() as UserProfile);
-          }
-        } else {
-          const docSnap = await getDoc(doc(db, 'users', needId));
-          if (docSnap.exists()) {
-            setProfile(docSnap.data() as UserProfile);
-          }
+        const docSnap = await getDoc(doc(db, 'users', needId));
+        if (docSnap.exists()) {
+          setProfile(docSnap.data() as UserProfile);
         }
       } catch (error) {
         console.error('Error fetching need data:', error);
@@ -1916,7 +1896,7 @@ const NeedPage = () => {
             <div className="relative mt-8 min-h-[180px] overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
               <div className="pointer-events-none select-none p-6 blur-lg opacity-50" aria-hidden>
                 <p className="text-sm text-stone-400">
-                  {urgentPost?.text || formatHighlightedNeedsForText(profile.highlightedNeeds, lang) || '…'}
+                  {formatHighlightedNeedsForText(profile.highlightedNeeds, lang) || '…'}
                 </p>
               </div>
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/90 px-4 backdrop-blur-sm">
@@ -1945,7 +1925,6 @@ const NeedPage = () => {
         <meta
           property="og:description"
           content={
-            urgentPost?.text ||
             formatHighlightedNeedsForText(profile.highlightedNeeds, lang) ||
             ''
           }
@@ -1974,12 +1953,7 @@ const NeedPage = () => {
                 <h1 className="text-2xl font-bold text-stone-900">{profile.fullName}</h1>
                 <p className="text-stone-500 font-medium">{profile.companyName}</p>
               </div>
-              {urgentPost && (
-                <div className="ml-auto px-4 py-2 bg-red-100 text-red-700 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
-                  <Zap size={14} fill="currentColor" />
-                  {pickLang('Urgent', 'Urgente', 'Urgent', lang)}
-                </div>
-              )}
+              {/* Opportunités retirées du produit */}
             </div>
 
             <div className="bg-stone-50 p-8 rounded-[2rem] border border-stone-200 mb-8">
@@ -1987,14 +1961,10 @@ const NeedPage = () => {
                 {pickLang('Description du besoin', 'Descripción de la necesidad', 'Need description', lang)}
               </h2>
               <div className="text-xl text-stone-800 font-bold leading-tight italic">
-                {urgentPost?.text ? (
-                  <AiTranslatedFreeText lang={lang} t={t} text={urgentPost.text} className="font-bold italic" />
-                ) : (
-                  <span>
-                    {formatHighlightedNeedsForText(profile.highlightedNeeds, lang) ||
-                      pickLang('Aucun besoin spécifié.', 'Ninguna necesidad especificada.', 'No need specified.', lang)}
-                  </span>
-                )}
+                <span>
+                  {formatHighlightedNeedsForText(profile.highlightedNeeds, lang) ||
+                    pickLang('Aucun besoin spécifié.', 'Ninguna necesidad especificada.', 'No need specified.', lang)}
+                </span>
               </div>
             </div>
 
@@ -2177,13 +2147,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [membersSortMode, setMembersSortMode] = useState<MembersSortMode>('default');
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   const [authLeads, setAuthLeads] = useState<AuthLeadDoc[]>([]);
-  const [showOpportunitiesModerationPanel, setShowOpportunitiesModerationPanel] = useState(false);
-  const [opportunitiesModerationError, setOpportunitiesModerationError] = useState<string | null>(null);
-  const [opportunityDetailModerationError, setOpportunityDetailModerationError] = useState<string | null>(
-    null
-  );
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
-  const [urgentPostIdToDelete, setUrgentPostIdToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<
     'companies' | 'members' | 'activities' | 'radar' | 'dashboard'
   >(initialViewMode);
@@ -2193,19 +2157,12 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [matchLoading, setMatchLoading] = useState(false);
   const [matchBlockReason, setMatchBlockReason] = useState<AiMatchBlockReason>(null);
   const [aiRecResolved, setAiRecResolved] = useState(false);
-  const [urgentPublicDocs, setUrgentPublicDocs] = useState<
-    Array<{ id: string; data: Record<string, unknown> }>
-  >([]);
-  const [urgentPrivateById, setUrgentPrivateById] = useState<Record<string, UrgentPostPrivateDoc>>({});
   const [highlightedNeedFilter, setHighlightedNeedFilter] = useState('');
   const [passionIdFilter, setPassionIdFilter] = useState('');
   const [highlightedNeedsDraft, setHighlightedNeedsDraft] = useState<string[]>([]);
   const [passionIdsDraft, setPassionIdsDraft] = useState<string[]>([]);
   const [workingLanguagesDraft, setWorkingLanguagesDraft] = useState<string[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showUrgentPostModal, setShowUrgentPostModal] = useState(false);
-  const [urgentPostModalError, setUrgentPostModalError] = useState<string | null>(null);
-  const [urgentPostModalSaving, setUrgentPostModalSaving] = useState(false);
   const [expandedHookId, setExpandedHookId] = useState<string | null>(null);
   const [authProviderBusy, setAuthProviderBusy] = useState<SocialAuthProvider | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -2216,7 +2173,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [emailVerifySending, setEmailVerifySending] = useState(false);
   const [showInviteNetworkModal, setShowInviteNetworkModal] = useState(false);
   const [footerLegalModal, setFooterLegalModal] = useState<null | 'privacy' | 'terms'>(null);
-  const [opportunityDetailPost, setOpportunityDetailPost] = useState<UrgentPost | null>(null);
   const [profileSaveBusy, setProfileSaveBusy] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [profileSaveSuccess, setProfileSaveSuccess] = useState<string | null>(null);
@@ -2232,10 +2188,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const timer = globalThis.setTimeout(() => setProfileSaveSuccess(null), 8000);
     return () => globalThis.clearTimeout(timer);
   }, [profileSaveSuccess]);
-
-  useEffect(() => {
-    if (showUrgentPostModal) setUrgentPostModalError(null);
-  }, [showUrgentPostModal]);
 
   useEffect(() => {
     if (!emailVerifyNotice) return;
@@ -2494,43 +2446,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       last10: last10 as UserProfile[]
     };
   }, [allProfiles]);
-
-  const urgentPosts = useMemo(
-    () =>
-      urgentPublicDocs.map(({ id, data }) =>
-        mergeUrgentPostFromFirestore(id, data, urgentPrivateById[id] ?? null)
-      ),
-    [urgentPublicDocs, urgentPrivateById]
-  );
-
-  const urgentPostsListed = useMemo(
-    () => urgentPosts.filter(isUrgentPostListedForEveryone),
-    [urgentPosts]
-  );
-
-  const adminOpportunityReviewList = useMemo(() => {
-    const isAdmin = profile?.role === 'admin' || isAdminEmail(user?.email);
-    if (!isAdmin) return [];
-    const now = Date.now();
-    const pending = urgentPosts.filter(isUrgentPostPendingModeration);
-    const recentListed = urgentPosts.filter((p) =>
-      isUrgentPostInAdminRecentWindow(p, now)
-    );
-    const byId = new Map<string, UrgentPost>();
-    recentListed.forEach((p) => byId.set(p.id, p));
-    pending.forEach((p) => byId.set(p.id, p));
-    return Array.from(byId.values()).sort(
-      (a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)
-    );
-  }, [urgentPosts, profile?.role, user?.email]);
-
-  const urgentAuthorIdSet = useMemo(() => {
-    const s = new Set<string>();
-    urgentPostsListed.forEach((post) => {
-      if (post.authorId) s.add(post.authorId);
-    });
-    return s;
-  }, [urgentPostsListed]);
+  const urgentAuthorIdSet = EMPTY_URGENT_AUTHOR_IDS;
 
   const profileUpdateBanner = useMemo(() => {
     if (!profile) {
@@ -2687,19 +2603,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       (error) => handleFirestoreError(error, OperationType.LIST, 'users')
     );
 
-    const urgentQuery = query(
-      collection(db, 'urgent_posts'), 
-      where('expiresAt', '>', Date.now()), 
-      orderBy('expiresAt', 'desc')
-    );
-    const unsubscribeUrgent = onSnapshot(urgentQuery, (snapshot) => {
-      setUrgentPublicDocs(snapshot.docs.map((d) => ({ id: d.id, data: d.data() })));
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'urgent_posts'));
-
     return () => {
       unsubscribe();
       unsubscribeProfiles();
-      unsubscribeUrgent();
     };
   }, []);
 
@@ -2722,26 +2628,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     );
     return () => unsub();
   }, [profile?.role]);
-
-  useEffect(() => {
-    if (!user) {
-      setUrgentPrivateById({});
-      return;
-    }
-    const unsub = onSnapshot(
-      collection(db, URGENT_POST_PRIVATE_COLLECTION),
-      (snapshot) => {
-        const m: Record<string, UrgentPostPrivateDoc> = {};
-        snapshot.docs.forEach((d) => {
-          m[d.id] = d.data() as UrgentPostPrivateDoc;
-        });
-        setUrgentPrivateById(m);
-      },
-      (error) =>
-        handleFirestoreError(error, OperationType.LIST, URGENT_POST_PRIVATE_COLLECTION)
-    );
-    return () => unsub();
-  }, [user?.uid]);
 
   const fetchMatches = useCallback(async (u: UserProfile, profiles: UserProfile[]) => {
     if (!u.uid) return;
@@ -3517,18 +3403,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   const showDiscoveryStrips = !showDirectoryClearFilters && !directoryDiscoveryStripsHidden;
   const viewerIsAdmin = profile?.role === 'admin' || isAdminEmail(user?.email);
-  /** Radar : les plus récentes d’abord + propres brouillons / tout si admin (Firestore renvoie déjà ce que l’utilisateur peut lire). */
-  const urgentPostsForNetworkRadar = useMemo(() => {
-    const rows = !user
-      ? urgentPostsListed
-      : urgentPosts.filter(
-          (p) =>
-            isUrgentPostListedForEveryone(p) ||
-            (p.authorId != null && p.authorId === user.uid) ||
-            viewerIsAdmin
-        );
-    return [...rows].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
-  }, [urgentPosts, urgentPostsListed, user, viewerIsAdmin]);
   const isAdminDashboard = viewMode === 'dashboard' && viewerIsAdmin;
 
   const directoryViewTabs = useMemo(
@@ -3705,71 +3579,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       handleFirestoreError(error, OperationType.WRITE, `users/${uid}`);
     }
   };
-
-  const handleRejectUrgentPost = async (postId: string): Promise<UrgentModerationMutationResult> => {
-    if (!viewerIsAdmin) return { success: false, code: 'not-admin' };
-    try {
-      await deleteDoc(doc(db, 'urgent_posts', postId));
-      await deleteDoc(doc(db, URGENT_POST_PRIVATE_COLLECTION, postId)).catch(() => {});
-      return { success: true };
-    } catch (error) {
-      const code = error instanceof FirebaseError ? error.code : 'unknown';
-      logFirestoreErrorQuietly(error, OperationType.DELETE, `urgent_posts/${postId}`);
-      return { success: false, code };
-    }
-  };
-
-  /** Suppression opportunité : admin ou auteur (doc public, puis privé si présent). */
-  const handleDeleteOpportunity = async (postId: string): Promise<boolean> => {
-    if (!user) return false;
-    if (viewerIsAdmin) {
-      const r = await handleRejectUrgentPost(postId);
-      return r.success;
-    }
-    const targetPost = urgentPosts.find((p) => p.id === postId);
-    if (!targetPost?.authorId || targetPost.authorId !== user.uid) {
-      // Defense in depth: only the author (or admin above) can trigger deletion.
-      return false;
-    }
-    try {
-      await deleteDoc(doc(db, 'urgent_posts', postId));
-      await deleteDoc(doc(db, URGENT_POST_PRIVATE_COLLECTION, postId)).catch(() => {
-        // Peut être refusé pour un post déjà publié ; non bloquant pour retirer la carte publique.
-      });
-      return true;
-    } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `urgent_posts/${postId}`);
-      return false;
-    }
-  };
-
-  const canDeleteOpportunityForCurrentUser = useCallback(
-    (post: UrgentPost): boolean => {
-      if (!user) return false;
-      if (viewerIsAdmin) return true;
-      return !!post.authorId && post.authorId === user.uid;
-    },
-    [user, viewerIsAdmin]
-  );
-
-  const openOpportunityDetail = useCallback((post: UrgentPost) => {
-    setOpportunityDetailModerationError(null);
-    setOpportunityDetailPost(post);
-  }, []);
-
-  const viewFullProfileFromOpportunityModal = useCallback(() => {
-    const id = opportunityDetailPost?.authorId;
-    if (!id) return;
-    const author = allProfiles.find((ap) => ap.uid === id);
-    if (author) setSelectedProfile(author);
-    setOpportunityDetailPost(null);
-  }, [opportunityDetailPost, allProfiles]);
-
-  const opportunityDetailAuthorProfile = useMemo(() => {
-    const id = opportunityDetailPost?.authorId;
-    if (!id) return null;
-    return allProfiles.find((ap) => ap.uid === id) ?? null;
-  }, [opportunityDetailPost?.authorId, allProfiles]);
 
   const generateOptimizationSuggestion = async (targetProfile: UserProfile) => {
     setOptimizationBusy(true);
@@ -3979,24 +3788,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     </span>
                   )}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpportunitiesModerationError(null);
-                    setShowOpportunitiesModerationPanel(true);
-                  }}
-                  className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-amber-50 px-1 py-1.5 text-amber-900 transition-colors hover:bg-amber-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
-                >
-                  <Zap className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                  <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
-                    {t('opportunitiesModerationTitle')}
-                  </span>
-                  {adminOpportunityReviewList.length > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-600 px-0.5 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:min-w-5 sm:text-[10px]">
-                      {adminOpportunityReviewList.length}
-                    </span>
-                  )}
-                </button>
+                {/* Opportunités retirées du produit */}
                 <button
                   type="button"
                   onClick={exportToExcel}
@@ -4151,7 +3943,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 onClick={() => {
                   setSelectedProfile(null);
                   setShowValidationPanel(false);
-                  setShowOpportunitiesModerationPanel(false);
                   setDirectoryDiscoveryStripsHidden(true);
                   window.location.assign('/dashboard');
                 }}
@@ -5278,58 +5069,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               <HomeFunFactStrip lang={lang} canLoadMemberProfiles={!guestDirectoryRestricted} />
             </div>
 
-            {!user && showDiscoveryStrips && urgentPostsListed.length === 0 && (
-              <OpportunitiesSection
-                copy={h}
-                t={t}
-                lang={lang}
-                posts={urgentPostsListed}
-                user={user}
-                compactLayout
-                canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
-                onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
-                onSeeAll={() => {
-                  setDirectoryDiscoveryStripsHidden(true);
-                  setViewMode('radar');
-                  requestAnimationFrame(() =>
-                    directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  );
-                }}
-                onPost={() => setShowUrgentPostModal(true)}
-                onCreateProfile={openAuthModal}
-                onOpenPost={openOpportunityDetail}
-              />
-            )}
-
-            {user && showDiscoveryStrips && (
-              <OpportunitiesSection
-                copy={h}
-                t={t}
-                lang={lang}
-                posts={urgentPostsListed}
-                user={user}
-                compactLayout
-                canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
-                onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
-                onSeeAll={() => {
-                  setDirectoryDiscoveryStripsHidden(true);
-                  setViewMode('radar');
-                  requestAnimationFrame(() =>
-                    directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  );
-                }}
-                onPost={() => setShowUrgentPostModal(true)}
-                onCreateProfile={openAuthModal}
-                onOpenPost={openOpportunityDetail}
-              />
-            )}
+            {/* Opportunités retirées du produit */}
 
             {/* [MEMBERS-COUNT] Bloc lancement / compteur dynamique */}
             <MembersCountBlock
               t={t}
               memberCount={stats.total}
               sectorCount={distinctSectorCount}
-              opportunitiesCount={urgentPostsListed.length}
               threshold={MEMBERS_THRESHOLD}
               registeredWithProfile={!!user && !!profile}
               onOpenInvite={() => setShowInviteNetworkModal(true)}
@@ -5381,27 +5127,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   }}
                 />
 
-                {urgentPostsListed.length > 0 && (
-                  <OpportunitiesSection
-                    copy={h}
-                    t={t}
-                    lang={lang}
-                    posts={urgentPostsListed}
-                    user={user}
-                    canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
-                    onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
-                    onSeeAll={() => {
-                      setDirectoryDiscoveryStripsHidden(true);
-                      setViewMode('radar');
-                      requestAnimationFrame(() =>
-                        directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                      );
-                    }}
-                    onPost={() => setShowUrgentPostModal(true)}
-                    onCreateProfile={openAuthModal}
-                    onOpenPost={openOpportunityDetail}
-                  />
-                )}
+                {/* Opportunités retirées du produit */}
               </>
             )}
 
@@ -5501,7 +5227,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   if (id === 'dashboard') {
                     setSelectedProfile(null);
                     setShowValidationPanel(false);
-                    setShowOpportunitiesModerationPanel(false);
                     window.location.assign('/dashboard');
                     return;
                   }
@@ -5738,8 +5463,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       lang={lang}
                       t={t}
                       allProfiles={allProfiles}
-                      urgentPosts={urgentPostsForNetworkRadar}
-                      opportunityKpiCount={urgentPostsListed.length}
                       viewerProfile={profile}
                       user={user}
                       copy={h}
@@ -5757,8 +5480,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         setHighlightedNeedFilter('');
                         setPassionIdFilter(passionId);
                       }}
-                      onOpportunityClick={openOpportunityDetail}
-                      onPostOpportunity={() => setShowUrgentPostModal(true)}
                       onCreateProfile={openAuthModal}
                       registeredWithProfile={!!user && !!profile}
                       onUnlockRadar={() => {
@@ -5768,8 +5489,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           setShowOnboarding(true);
                         }
                       }}
-                      canDeleteOpportunityForCurrentUser={canDeleteOpportunityForCurrentUser}
-                      onRequestDeleteOpportunity={(p) => setUrgentPostIdToDelete(p.id)}
                     />
                   </React.Suspense>
                 </SectionErrorBoundary>
@@ -6471,122 +6190,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showOpportunitiesModerationPanel && viewerIsAdmin && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => {
-                setOpportunitiesModerationError(null);
-                setShowOpportunitiesModerationPanel(false);
-              }}
-              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b border-stone-100 p-6">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-800">
-                    <Zap size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold">{t('opportunitiesModerationTitle')}</h3>
-                    {adminOpportunityReviewList.length > 0 ? (
-                      <p className="text-xs text-stone-500">
-                        {adminOpportunityReviewList.length}{' '}
-                        {t('opportunitiesModerationReviewCountLabel')}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-stone-500">
-                        {t('opportunitiesModerationPanelHint')}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpportunitiesModerationError(null);
-                    setShowOpportunitiesModerationPanel(false);
-                  }}
-                  className="rounded-full p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-900"
-                >
-                  <Plus size={24} className="rotate-45" />
-                </button>
-              </div>
-              {opportunitiesModerationError ? (
-                <div
-                  className="shrink-0 border-b border-red-100 bg-red-50 px-6 py-3 text-xs leading-snug text-red-800"
-                  role="alert"
-                >
-                  {opportunitiesModerationError}
-                </div>
-              ) : null}
-              <div className="flex-1 space-y-4 overflow-y-auto p-6">
-                {adminOpportunityReviewList.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <Zap size={48} className="mx-auto mb-4 text-stone-100" />
-                    <p className="font-medium text-stone-400">{t('opportunitiesModerationEmpty')}</p>
-                  </div>
-                ) : (
-                  adminOpportunityReviewList.map((post) => (
-                    <div
-                      key={post.id}
-                      className="rounded-2xl border border-stone-200 bg-stone-50/50 p-4"
-                    >
-                      <AiTranslatedFreeText
-                        lang={lang}
-                        t={t}
-                        text={post.text}
-                        className="text-sm font-semibold leading-snug text-stone-900"
-                      />
-                      <p className="mt-2 text-xs font-medium uppercase tracking-wide text-stone-500">
-                        {activityCategoryLabel(post.sector, lang)}
-                      </p>
-                      <p className="mt-2 text-xs text-stone-600">
-                        {post.authorName || '—'}
-                        {post.authorCompany ? ` · ${post.authorCompany}` : ''}
-                      </p>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            setOpportunitiesModerationError(null);
-                            const r = await handleRejectUrgentPost(post.id);
-                            if (!r.success) {
-                              setOpportunitiesModerationError(
-                                urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang, user?.uid ?? null)
-                              );
-                            }
-                          }}
-                          className="rounded-lg border border-stone-200 bg-white px-4 py-2 text-xs font-bold text-stone-700 hover:bg-stone-50"
-                        >
-                          {t('delete')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            openOpportunityDetail(post);
-                          }}
-                          className="rounded-lg border border-stone-200 bg-white px-4 py-2 text-xs font-bold text-stone-700 hover:bg-stone-50"
-                        >
-                          {t('details')}
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Opportunités retirées du produit */}
 
       <AnimatePresence>
         {showOnboarding && (
@@ -6629,185 +6233,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showUrgentPostModal && (
-          <div className="fixed inset-0 z-[160] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowUrgentPostModal(false)}
-              className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm"
-            />
-            <motion.div
-              data-testid="urgent-post-modal"
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl p-8"
-              role="dialog"
-              aria-modal="true"
-            >
-              <button
-                onClick={() => setShowUrgentPostModal(false)}
-                className="absolute top-6 right-6 p-2 hover:bg-stone-100 rounded-full transition-colors text-stone-400 hover:text-stone-900"
-              >
-                <Plus size={20} className="rotate-45" />
-              </button>
-
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600">
-                  <Zap size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-stone-900">{t('postUrgentNeed')}</h3>
-                  <p className="mt-1 text-xs leading-snug text-amber-800">{t('opportunityModerationPendingNote')}</p>
-                </div>
-              </div>
-
-              <form onSubmit={async (e) => {
-                e.preventDefault();
-                setUrgentPostModalError(null);
-                if (!user) {
-                  setUrgentPostModalError(t('urgentPostMustSignIn'));
-                  return;
-                }
-                const formData = new FormData(e.currentTarget);
-                const text = String(formData.get('text') ?? '').trim();
-                const sector = String(formData.get('sector') ?? '').trim();
-                if (!text || !sector) {
-                  setUrgentPostModalError(t('urgentPostFormInvalid'));
-                  return;
-                }
-                const authorNameRaw =
-                  profile?.fullName?.trim() ||
-                  user.displayName?.trim() ||
-                  user.email?.split('@')[0]?.trim() ||
-                  '';
-                const authorName = authorNameRaw.trim() || 'Membre';
-                const authorCompany = profile?.companyName?.trim() ?? '';
-                const authorPhoto = String(
-                  profile?.photoURL?.trim() || user.photoURL || ''
-                );
-                const createdAt = Date.now();
-                const expiresAt = createdAt + (7 * 24 * 60 * 60 * 1000);
-
-                setUrgentPostModalSaving(true);
-                try {
-                  /** Un seul doc `urgent_posts` (format historique) : même modèle que les annonces déjà visibles dans la console, évite le batch public + privé. */
-                  const postRef = doc(collection(db, 'urgent_posts'));
-                  await setDoc(postRef, {
-                    authorId: user.uid,
-                    authorName,
-                    authorCompany,
-                    authorPhoto,
-                    text,
-                    sector,
-                    createdAt,
-                    expiresAt,
-                    isPublished: true,
-                  });
-                  setShowUrgentPostModal(false);
-                } catch (error) {
-                  const code =
-                    error instanceof FirebaseError ? error.code : '';
-                  const errInfo: FirestoreErrorInfo = {
-                    error: error instanceof Error ? error.message : String(error),
-                    authInfo: {
-                      userId: auth.currentUser?.uid,
-                      email: auth.currentUser?.email,
-                      emailVerified: auth.currentUser?.emailVerified,
-                    },
-                    operationType: OperationType.CREATE,
-                    path: 'urgent_posts',
-                  };
-                  console.error('Firestore Error: ', JSON.stringify({ ...errInfo, code }));
-                  const devDetail =
-                    import.meta.env.DEV && error instanceof Error && error.message
-                      ? ` — ${error.message}`
-                      : '';
-                  if (code === 'permission-denied') {
-                    setUrgentPostModalError(t('urgentPostErrorPermissionDenied') + devDetail);
-                  } else if (
-                    code === 'unavailable' ||
-                    code === 'deadline-exceeded' ||
-                    code === 'resource-exhausted'
-                  ) {
-                    setUrgentPostModalError(t('urgentPostErrorNetwork') + devDetail);
-                  } else {
-                    setUrgentPostModalError(t('urgentPostSubmitErrorGeneric') + devDetail);
-                  }
-                } finally {
-                  setUrgentPostModalSaving(false);
-                }
-              }} className="space-y-6" data-testid="urgent-post-form">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
-                    {t('bio')}{' '}
-                    {pickLang('(max 200 caractères)', '(máx. 200 caracteres)', '(max 200 characters)', lang)}
-                  </label>
-                  <textarea 
-                    name="text" 
-                    required 
-                    maxLength={200}
-                    placeholder={pickLang(
-                      'Ex: Cherche distributeur logistique pour Guadalajara...',
-                      'Ej.: Busco distribuidor logístico en Guadalajara...',
-                      'E.g. Looking for a logistics distributor in Guadalajara...',
-                      lang
-                    )}
-                    onInvalid={(e) => {
-                      e.currentTarget.setCustomValidity(t('htmlValidationFillField'));
-                    }}
-                    onInput={(e) => {
-                      e.currentTarget.setCustomValidity('');
-                    }}
-                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all h-32 resize-none" 
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('activityCategory')}</label>
-                  <select
-                    name="sector"
-                    required
-                    onInvalid={(e) => {
-                      e.currentTarget.setCustomValidity(t('htmlValidationFillField'));
-                    }}
-                    onChange={(e) => {
-                      e.currentTarget.setCustomValidity('');
-                    }}
-                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                  >
-                    {ACTIVITY_CATEGORIES.map(c => <option key={c} value={c}>{activityCategoryLabel(c, lang)}</option>)}
-                  </select>
-                </div>
-                <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl">
-                  <p className="text-xs text-amber-800 leading-relaxed">
-                    {pickLang(
-                      "Votre annonce sera visible par tous les membres pendant 7 jours. Elle apparaîtra en priorité sur la page d'accueil.",
-                      'Tu anuncio será visible para todos los miembros durante 7 días y aparecerá con prioridad en la página de inicio.',
-                      'Your post will be visible to all members for 7 days and will appear prominently on the home page.',
-                      lang
-                    )}
-                  </p>
-                </div>
-                {urgentPostModalError ? (
-                  <p className="text-sm font-medium text-red-600" role="alert">
-                    {urgentPostModalError}
-                  </p>
-                ) : null}
-                <button 
-                  type="submit" 
-                  disabled={urgentPostModalSaving}
-                  className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-200 disabled:pointer-events-none disabled:opacity-60"
-                >
-                  {urgentPostModalSaving ? t('urgentPostSaving') : t('save')}
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Opportunités retirées du produit */}
 
       <AnimatePresence>
         {isLinkedInModalOpen && (
@@ -6909,59 +6335,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         )}
       </AnimatePresence>
 
-      {/* Admin : confirmation suppression opportunité publiée */}
-      <AnimatePresence>
-        {urgentPostIdToDelete && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setUrgentPostIdToDelete(null)}
-              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-2xl"
-            >
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500">
-                <Plus size={32} className="rotate-45" />
-              </div>
-              <h3 className="mb-2 text-xl font-bold text-stone-900">{t('delete')}</h3>
-              <p className="mb-8 text-sm leading-relaxed text-stone-500">
-                {t('confirmDeleteOpportunity')}
-              </p>
-              <div className="flex flex-col gap-3">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!urgentPostIdToDelete) return;
-                    const post = urgentPosts.find((p) => p.id === urgentPostIdToDelete);
-                    if (!post || !canDeleteOpportunityForCurrentUser(post)) {
-                      setUrgentPostIdToDelete(null);
-                      return;
-                    }
-                    const ok = await handleDeleteOpportunity(urgentPostIdToDelete);
-                    if (ok) setUrgentPostIdToDelete(null);
-                  }}
-                  className="w-full rounded-xl bg-red-600 py-3 font-bold text-white transition-all hover:bg-red-700"
-                >
-                  {t('delete')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUrgentPostIdToDelete(null)}
-                  className="w-full rounded-xl bg-stone-100 py-3 font-bold text-stone-600 transition-all hover:bg-stone-200"
-                >
-                  {t('cancel')}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Opportunités retirées du produit */}
 
       <footer className="mt-12 border-t border-stone-200 bg-white py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -7015,40 +6389,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         t={t}
       />
 
-      <OpportunityDetailModal
-        open={opportunityDetailPost !== null}
-        post={opportunityDetailPost}
-        authorProfile={opportunityDetailAuthorProfile}
-        viewerUser={user}
-        viewerProfile={profile}
-        lang={lang}
-        t={t}
-        activityCategoryLabel={activityCategoryLabel}
-        urgentNeedLabel={h.opportunityTypeUrgent}
-        showModerationActions={Boolean(
-          viewerIsAdmin &&
-            opportunityDetailPost &&
-            opportunityDetailPost.isPublished === false
-        )}
-        moderationActionError={opportunityDetailModerationError}
-        onModerationReject={async () => {
-          const p = opportunityDetailPost;
-          if (!p) return;
-          setOpportunityDetailModerationError(null);
-          const r = await handleRejectUrgentPost(p.id);
-          if (r.success) setOpportunityDetailPost(null);
-          else
-            setOpportunityDetailModerationError(
-              urgentModerationErrorMessage(r.code, t, user?.email ?? null, lang, user?.uid ?? null)
-            );
-        }}
-        onClose={() => {
-          setOpportunityDetailModerationError(null);
-          setOpportunityDetailPost(null);
-        }}
-        onOpenAuth={openAuthModal}
-        onViewFullProfile={viewFullProfileFromOpportunityModal}
-      />
+      {/* Opportunités retirées du produit */}
 
       <LegalInfoModal
         open={footerLegalModal !== null}

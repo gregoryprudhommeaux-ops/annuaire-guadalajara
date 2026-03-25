@@ -12,8 +12,8 @@ import {
   LabelList,
   Legend,
 } from 'recharts';
-import { Users, Target, Factory, Zap, Maximize2, Trash2 } from 'lucide-react';
-import type { UserProfile, Language, UrgentPost } from '../../types';
+import { Users, Target, Factory, Maximize2 } from 'lucide-react';
+import type { UserProfile, Language } from '../../types';
 import type { User } from 'firebase/auth';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
@@ -29,7 +29,6 @@ type Props = {
   lang: Language;
   t: TFn;
   allProfiles: UserProfile[];
-  urgentPosts: UrgentPost[];
   viewerProfile: UserProfile | null;
   user: User | null;
   copy: HomeLandingCopy;
@@ -39,17 +38,11 @@ type Props = {
   getPassionLabel: (id: string, lang: Language) => string;
   onNeedClick: (needId: string) => void;
   onPassionClick: (passionId: string) => void;
-  onOpportunityClick: (post: UrgentPost) => void;
-  onPostOpportunity: () => void;
   onCreateProfile: () => void;
   /** Utilisateur connecté avec fiche annuaire enregistrée (Firestore `users`). */
   registeredWithProfile: boolean;
   /** Ouvre la connexion, ou l’onboarding profil si déjà connecté sans fiche. */
   onUnlockRadar: () => void;
-  canDeleteOpportunityForCurrentUser?: (post: UrgentPost) => boolean;
-  onRequestDeleteOpportunity?: (post: UrgentPost) => void;
-  /** Compteur KPI « communauté » (ex. annonces publiées) ; si absent, dérivé de la longueur de `urgentPosts`. */
-  opportunityKpiCount?: number;
 };
 
 /** Découpe les libellés de besoins (souvent « a / b / c ») pour affichage multi-ligne sur l’axe Y. */
@@ -93,7 +86,6 @@ export default function NetworkRadarSection({
   lang,
   t,
   allProfiles,
-  urgentPosts,
   viewerProfile,
   user,
   copy,
@@ -103,14 +95,9 @@ export default function NetworkRadarSection({
   getPassionLabel,
   onNeedClick,
   onPassionClick,
-  onOpportunityClick,
-  onPostOpportunity,
   onCreateProfile,
   registeredWithProfile,
   onUnlockRadar,
-  canDeleteOpportunityForCurrentUser,
-  onRequestDeleteOpportunity,
-  opportunityKpiCount,
 }: Props) {
   const [activeRadarChart, setActiveRadarChart] = useState<null | 'sectors' | 'needs'>(null);
   const radarLocked = !registeredWithProfile;
@@ -142,8 +129,7 @@ export default function NetworkRadarSection({
     return s.size;
   }, [profilesForStats]);
 
-  const opportunitiesCount = opportunityKpiCount ?? urgentPosts.length;
-
+  // Opportunités retirées du produit.
   const sectorPieData = useMemo(() => {
     const map = new Map<string, number>();
     profilesForStats.forEach((p) => {
@@ -263,14 +249,7 @@ export default function NetworkRadarSection({
     return (Object.entries(counts) as [string, number][]).sort((a, b) => b[1] - a[1]);
   }, [profilesForStats]);
 
-  /** Les opportunités sont déjà triées par le parent (récentes d’abord). */
-  const recentOpportunities = urgentPosts.slice(0, 3);
-  const canDeleteOpportunity = (post: UrgentPost): boolean =>
-    Boolean(
-      onRequestDeleteOpportunity &&
-        canDeleteOpportunityForCurrentUser &&
-        canDeleteOpportunityForCurrentUser(post)
-    );
+  // Opportunités supprimées du produit : KPI reste à 0.
 
   const expandChartLabel =
     lang === 'en'
@@ -317,13 +296,12 @@ export default function NetworkRadarSection({
           aria-hidden={radarLocked}
         >
       {/* KPI bar */}
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 shadow-sm md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 shadow-sm md:grid-cols-3">
         {(
           [
             { icon: Users, value: activeMembersCount, labelKey: 'kpiMembers' },
             { icon: Target, value: structuredNeedsTotal, labelKey: 'kpiNeeds' },
             { icon: Factory, value: sectorCount, labelKey: 'kpiSectors' },
-            { icon: Zap, value: opportunitiesCount, labelKey: 'kpiOpportunities' },
           ] as const
         ).map(({ icon: Icon, value, labelKey }) => (
           <div
@@ -520,89 +498,7 @@ export default function NetworkRadarSection({
         )}
       </div>
 
-      {/* Opportunités récentes */}
-      <div className={cn('rounded-xl border border-slate-200 bg-white shadow-sm', cardPad)}>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-slate-800 break-words">
-            {t('radarRecentOpportunitiesTitle')}
-          </h3>
-          <button
-            type="button"
-            onClick={user ? onPostOpportunity : onCreateProfile}
-            className="shrink-0 rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-800 sm:px-4 sm:py-2 sm:text-sm"
-          >
-            {copy.opportunitiesCreateCta}
-          </button>
-        </div>
-        {recentOpportunities.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
-            <p className="text-[13px] text-slate-500">{t('radarRecentOpportunitiesEmpty')}</p>
-            {!user && (
-              <span className="text-[11px] text-slate-500">{copy.opportunitiesMembersOnly}</span>
-            )}
-          </div>
-        ) : (
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {recentOpportunities.map((post) => {
-              const cardInner = (
-                <>
-                  <div className="line-clamp-3 break-words text-[13px] font-medium leading-snug text-slate-800">
-                    <AiTranslatedFreeText
-                      lang={lang}
-                      t={t}
-                      text={post.text}
-                      as="span"
-                      omitAiDisclaimer
-                      className="font-medium leading-snug"
-                    />
-                  </div>
-                  {user ? (
-                    <p className="mt-2 text-[11px] text-slate-500">
-                      {post.authorName
-                        ? `${post.authorName}${post.authorCompany ? ` · ${post.authorCompany}` : ''}`
-                        : '—'}
-                    </p>
-                  ) : (
-                    <p className="mt-2 text-[11px] text-slate-500">{t('opportunityAuthorHiddenGuest')}</p>
-                  )}
-                  <span className="mt-2 inline-flex w-fit rounded-full bg-white px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">
-                    {activityCategoryLabel(post.sector, lang)}
-                  </span>
-                </>
-              );
-              return (
-                <li key={post.id} className="relative">
-                  {canDeleteOpportunity(post) ? (
-                    <button
-                      type="button"
-                      aria-label={t('deleteOpportunityAria')}
-                      title={t('deleteOpportunityAria')}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onRequestDeleteOpportunity!(post);
-                      }}
-                      className="absolute right-2 top-2 z-10 rounded-lg border border-slate-200 bg-white/95 p-1.5 text-slate-500 shadow-sm transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                    >
-                      <Trash2 className="h-4 w-4 shrink-0" strokeWidth={2} />
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => onOpportunityClick(post)}
-                    className={cn(
-                      'flex h-full w-full flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition-colors hover:border-slate-300 hover:bg-white',
-                      canDeleteOpportunity(post) && 'pr-10'
-                    )}
-                  >
-                    {cardInner}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+      {/* Opportunités retirées du produit */}
         </div>
 
         {radarLocked && (

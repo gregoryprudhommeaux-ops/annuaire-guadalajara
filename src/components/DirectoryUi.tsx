@@ -45,55 +45,7 @@ export const FunFactBlock: React.FC<{
   </div>
 );
 
-// ─── 2. Opportunités : deux boutons même hauteur ───
-
-export const OpportunityActions: React.FC<{
-  onSeeAll?: () => void;
-  onPost?: () => void;
-  seeAllLabel?: string;
-  postLabel?: string;
-  className?: string;
-}> = ({
-  onSeeAll,
-  onPost,
-  seeAllLabel = 'Toutes les opportunités',
-  postLabel = 'Poster une opportunité',
-  className,
-}) => (
-  <div className={cn('mt-3 flex gap-2 items-stretch', className)}>
-    <button
-      type="button"
-      onClick={onSeeAll}
-      title={seeAllLabel}
-      className={cn(
-        'flex min-h-9 min-w-0 flex-1 items-center justify-center rounded-lg border border-slate-300 bg-white px-1.5 py-2 text-center font-medium text-slate-700 transition-colors',
-        'sm:min-h-10 sm:px-2',
-        'hover:border-slate-400 hover:bg-slate-100'
-      )}
-    >
-      <span className="block w-full min-w-0 truncate text-[10px] leading-none sm:text-[11px] md:text-xs">
-        {seeAllLabel}
-      </span>
-    </button>
-    <button
-      type="button"
-      data-testid="cta-post-opportunity"
-      onClick={onPost}
-      title={postLabel}
-      className={cn(
-        'flex min-h-9 min-w-0 flex-1 items-center justify-center rounded-lg bg-blue-700 px-1.5 py-2 text-center font-medium text-white transition-colors',
-        'sm:min-h-10 sm:px-2',
-        'hover:bg-blue-800'
-      )}
-    >
-      <span className="block w-full min-w-0 truncate text-[10px] leading-none sm:text-[11px] md:text-xs">
-        {postLabel}
-      </span>
-    </button>
-  </div>
-);
-
-// ─── 3. Onglets listing ───
+// ─── 2. Onglets listing ───
 
 export type DirectoryTabItem = {
   id: string;

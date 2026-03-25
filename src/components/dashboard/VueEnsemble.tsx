@@ -21,6 +21,12 @@ import {
 
 type TFn = (key: string) => string;
 
+function compactLabel(label: string, max = 14): string {
+  const s = String(label ?? '').trim();
+  if (s.length <= max) return s;
+  return `${s.slice(0, Math.max(0, max - 1))}…`;
+}
+
 type Props = {
   lang: Language;
   t: TFn;

@@ -168,21 +168,6 @@ export interface NeedComment {
   createdAt: number;
 }
 
-export interface UrgentPost {
-  id: string;
-  text: string;
-  sector: string;
-  createdAt: number;
-  expiresAt: number;
-  /** false = en attente de validation admin ; absent sur anciennes annonces (= publiée). */
-  isPublished?: boolean;
-  /** Renseignés pour les membres connectés (données auteur) ; absents pour le modèle modéré côté invité. */
-  authorId?: string;
-  authorName?: string;
-  authorCompany?: string;
-  authorPhoto?: string;
-}
-
 export type Language = 'fr' | 'es' | 'en';
 
 export interface Translations {
