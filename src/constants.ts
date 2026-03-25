@@ -787,9 +787,9 @@ export const TRANSLATIONS: Translations = {
   },
   memberRequestsSectorLabel: { fr: "Secteur (optionnel)", es: "Sector (opcional)" },
   memberRequestsSectorOptional: { fr: "— Aucun —", es: "— Ninguno —" },
-  memberRequestsZoneLabel: { fr: "Zone / marché (optionnel)", es: "Zona / mercado (opcional)" },
+  memberRequestsZoneLabel: { fr: "Zones / marchés", es: "Zonas / mercados" },
   memberRequestsZonePlaceholder: { fr: "Ex. Jalisco, Mexique, UE…", es: "Ej. Jalisco, México, UE…" },
-  memberRequestsProductLabel: { fr: "Produit ou service (optionnel)", es: "Producto o servicio (opcional)" },
+  memberRequestsProductLabel: { fr: "Produits et services", es: "Productos y servicios" },
   memberRequestsProductPlaceholder: {
     fr: "Ex. vins, équipements industriels…",
     es: "Ej. vinos, equipos industriales…",
@@ -807,9 +807,23 @@ export const TRANSLATIONS: Translations = {
     fr: "Texte trop long (800 caractères maximum).",
     es: "Texto demasiado largo (máx. 800 caracteres).",
   },
+  memberRequestZoneRequired: {
+    fr: "Indiquez au moins une zone ou un marché ciblé.",
+    es: "Indica al menos una zona o mercado objetivo.",
+  },
+  memberRequestProductRequired: {
+    fr: "Indiquez le ou les produits / services concernés.",
+    es: "Indica el o los productos / servicios implicados.",
+  },
   memberRequestSubmitError: {
     fr: "Impossible de publier. Vérifiez votre connexion ou réessayez.",
     es: "No se pudo publicar. Comprueba la conexión o inténtalo de nuevo.",
+  },
+  memberRequestErrorPermissionDenied: {
+    fr:
+      "Publication refusée par Firestore : déployez les règles sur la même base que l’app (npm run firebase:deploy:rules) et remplissez zones/marchés ainsi que produits/services.",
+    es:
+      "Publicación rechazada por Firestore: despliega las reglas en la misma base que la app (npm run firebase:deploy:rules) y completa zonas/mercados y productos/servicios.",
   },
   memberRequestDeleteConfirm: {
     fr: "Supprimer cette demande ? Cette action est définitive.",

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Megaphone, Plus, Trash2 } from 'lucide-react';
+import { FirebaseError } from 'firebase/app';
 import type { User } from 'firebase/auth';
 import type { Language, MemberNetworkRequest, UserProfile } from '../../types';
 import { cn } from '../../cn';
@@ -86,6 +87,16 @@ export default function MemberRequestsSection({
       setFormError(t('memberRequestTextTooLong'));
       return;
     }
+    const zone = form.zone.trim();
+    if (zone.length < 1) {
+      setFormError(t('memberRequestZoneRequired'));
+      return;
+    }
+    const productOrService = form.productOrService.trim();
+    if (productOrService.length < 1) {
+      setFormError(t('memberRequestProductRequired'));
+      return;
+    }
     const now = Date.now();
     const payload: Record<string, unknown> = {
       authorId: user.uid,
@@ -93,22 +104,34 @@ export default function MemberRequestsSection({
       authorPhoto: profile.photoURL || user.photoURL || '',
       authorCompany: (profile.companyName || '').trim().slice(0, 200),
       text: text.slice(0, 800),
+      zone: zone.slice(0, 200),
+      productOrService: productOrService.slice(0, 200),
       createdAt: now,
       expiresAt: now + MEMBER_REQUEST_DEFAULT_DURATION_MS,
     };
     const sector = form.sector.trim();
     if (sector) payload.sector = sector.slice(0, 200);
-    const zone = form.zone.trim();
-    if (zone) payload.zone = zone.slice(0, 200);
-    const productOrService = form.productOrService.trim();
-    if (productOrService) payload.productOrService = productOrService.slice(0, 200);
 
     setSaving(true);
     setFormError(null);
     try {
       await onCreate(payload);
       closeModal();
-    } catch {
+    } catch (err) {
+      if (err instanceof FirebaseError) {
+        if (err.code === 'permission-denied') {
+          setFormError(t('memberRequestErrorPermissionDenied'));
+          return;
+        }
+        if (
+          err.code === 'unavailable' ||
+          err.code === 'deadline-exceeded' ||
+          err.code === 'resource-exhausted'
+        ) {
+          setFormError(t('urgentPostErrorNetwork'));
+          return;
+        }
+      }
       setFormError(t('memberRequestSubmitError'));
     } finally {
       setSaving(false);
@@ -322,6 +345,7 @@ export default function MemberRequestsSection({
                   value={form.zone}
                   onChange={(e) => setForm((f) => ({ ...f, zone: e.target.value }))}
                   maxLength={200}
+                  required
                   className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   placeholder={t('memberRequestsZonePlaceholder')}
                 />
@@ -340,6 +364,7 @@ export default function MemberRequestsSection({
                   value={form.productOrService}
                   onChange={(e) => setForm((f) => ({ ...f, productOrService: e.target.value }))}
                   maxLength={200}
+                  required
                   className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   placeholder={t('memberRequestsProductPlaceholder')}
                 />
