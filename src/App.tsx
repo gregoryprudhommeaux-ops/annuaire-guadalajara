@@ -1079,23 +1079,21 @@ const MatchCard = ({ m, p, onShare, expanded, onToggleHook }: {
     <div className="bg-white rounded-2xl border border-indigo-100 p-5 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
       <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-full -mr-12 -mt-12 blur-2xl opacity-50 group-hover:opacity-100 transition-opacity" />
       
-      <div className="flex items-start justify-between mb-4 relative">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 overflow-hidden rounded-xl border border-indigo-100">
-            <ProfileAvatar
-              photoURL={p.photoURL}
-              fullName={p.fullName}
-              className="h-full w-full bg-indigo-50"
-              iconSize={24}
-            />
-          </div>
-          <div>
-            <h4 className="font-bold text-stone-900 leading-tight">{p.fullName}</h4>
-            <p className="text-xs text-stone-500 font-medium">{p.companyName}</p>
-          </div>
+      <div className="relative mb-4 flex items-start gap-3">
+        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-indigo-100">
+          <ProfileAvatar
+            photoURL={p.photoURL}
+            fullName={p.fullName}
+            className="h-full w-full bg-indigo-50"
+            iconSize={24}
+          />
         </div>
-        <div className="px-2 py-1 bg-indigo-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm">
-          {m.type}
+        <div className="min-w-0 flex-1">
+          <h4 className="font-bold leading-tight text-stone-900">{p.fullName}</h4>
+          {/* Hauteur fixe 2 lignes pour aligner bio + boutons entre les cartes */}
+          <p className="mt-0.5 min-h-[2.0625rem] text-xs font-medium leading-snug text-stone-500 line-clamp-2 break-words">
+            {p.companyName}
+          </p>
         </div>
       </div>
 
