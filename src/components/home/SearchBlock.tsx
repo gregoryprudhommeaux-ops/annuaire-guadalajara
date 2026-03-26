@@ -105,7 +105,10 @@ export default function SearchBlock({
         <button
           type="button"
           onClick={() => setMobileOpen((v) => !v)}
-          className="mt-0.5 inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:hidden"
+          className={cn(
+            'mt-0.5 inline-flex shrink-0 items-center justify-center rounded-full p-2 text-slate-500 transition-colors sm:hidden',
+            'hover:bg-slate-200/60 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2'
+          )}
           aria-expanded={mobileOpen}
           aria-label={mobileOpen ? t('close') : t('searchButton')}
         >

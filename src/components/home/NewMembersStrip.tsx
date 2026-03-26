@@ -109,7 +109,10 @@ export default function NewMembersStrip({
         <button
           type="button"
           onClick={() => setMobileOpen((v) => !v)}
-          className="absolute right-0 top-0 mt-0.5 inline-flex shrink-0 items-center rounded-lg border border-stone-200 bg-white p-2 text-stone-600 shadow-sm hover:bg-stone-50 sm:hidden"
+          className={cn(
+            'absolute right-0 top-0 mt-0.5 inline-flex shrink-0 items-center justify-center rounded-full p-2 text-stone-500 transition-colors sm:hidden',
+            'hover:bg-stone-200/60 hover:text-stone-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2'
+          )}
           aria-expanded={mobileOpen}
           aria-label={mobileOpen ? pickLang('Fermer', 'Cerrar', 'Close', lang) : pickLang('Ouvrir', 'Abrir', 'Open', lang)}
         >
