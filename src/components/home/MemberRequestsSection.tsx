@@ -10,6 +10,8 @@ import { ACTIVITY_CATEGORIES, activityCategoryLabel } from '../../constants';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
 import ProfileAvatar from '../ProfileAvatar';
 import { MEMBER_REQUEST_DEFAULT_DURATION_MS } from '../../lib/memberRequests';
+import { getGeminiApiKey } from '../../lib/geminiEnv';
+import { translateFreeTextToUiLang } from '../../lib/aiTranslateFreeText';
 
 type TFn = (key: string) => string;
 
@@ -108,12 +110,28 @@ export default function MemberRequestsSection({
     }
     const now = Date.now();
     const rawPhoto = String(profile.photoURL || user.photoURL || '').trim();
+    const textTranslations: Partial<Record<Language, string>> = { [lang]: text.slice(0, 800) };
+    if (getGeminiApiKey()) {
+      const targets: Language[] = ['fr', 'es', 'en'];
+      const jobs = targets
+        .filter((target) => target !== lang)
+        .map(async (target) => {
+          try {
+            const out = await translateFreeTextToUiLang(text, target);
+            if (out.trim()) textTranslations[target] = out.trim().slice(0, 1200);
+          } catch {
+            // Keep graceful fallback to source text.
+          }
+        });
+      await Promise.all(jobs);
+    }
     const payload: Record<string, unknown> = {
       authorId: user.uid,
       authorName: (profile.fullName?.trim() || 'Membre').slice(0, 200),
       authorPhoto: rawPhoto.slice(0, 2048),
       authorCompany: (profile.companyName || '').trim().slice(0, 200),
       text: text.slice(0, 800),
+      textTranslations: Object.keys(textTranslations).length >= 2 ? textTranslations : undefined,
       zone: zone.slice(0, 200),
       productOrService: productOrService.slice(0, 200),
       createdAt: now,
@@ -235,6 +253,7 @@ export default function MemberRequestsSection({
                             text={r.text}
                             lang={lang}
                             as="div"
+                            pretranslatedByLang={r.textTranslations}
                             omitAiDisclaimer
                             className={cn(!expanded && 'line-clamp-2')}
                           />

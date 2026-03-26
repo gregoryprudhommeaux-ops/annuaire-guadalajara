@@ -177,6 +177,8 @@ export interface MemberNetworkRequest {
   /** Libellé société au moment de la publication */
   authorCompany?: string;
   text: string;
+  /** Pré-traductions du texte (clé = langue UI) pour limiter les appels IA en lecture. */
+  textTranslations?: Partial<Record<Language, string>>;
   sector?: string;
   zone?: string;
   productOrService?: string;

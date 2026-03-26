@@ -1,5 +1,5 @@
-import React from 'react';
-import { Lock } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, Lock } from 'lucide-react';
 import type { UserProfile } from '../../types';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
 import { formatHomeBadge } from '../../copy/homeLanding';
@@ -68,6 +68,7 @@ export default function NewMembersStrip({
   guestTeaser = false,
 }: Props) {
   const display = profiles.slice(0, 4);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <section
@@ -78,29 +79,56 @@ export default function NewMembersStrip({
       )}
       aria-labelledby="home-new-members-title"
     >
-      <div className="min-w-0">
-        <h2
-          id="home-new-members-title"
-          className="text-base font-bold tracking-tight text-stone-900 break-words hyphens-auto sm:text-lg"
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2
+              id="home-new-members-title"
+              className="text-base font-bold tracking-tight text-stone-900 break-words hyphens-auto sm:text-lg"
+            >
+              {copy.newMembersTitle}
+            </h2>
+            {totalNewThisWeek > 0 && (
+              <span className="inline-flex items-center justify-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
+                {totalNewThisWeek}
+              </span>
+            )}
+          </div>
+          {/* Desktop keeps the descriptive badge copy; mobile collapses by default. */}
+          {totalNewThisWeek > 0 && (
+            <p
+              className={cn(
+                'hidden text-xs font-semibold text-blue-800 sm:inline-flex sm:rounded-full sm:bg-blue-50 sm:px-2.5 sm:py-0.5',
+                compact ? 'sm:mt-1.5' : 'sm:mt-2'
+              )}
+            >
+              {formatHomeBadge(copy.newMembersBadge, totalNewThisWeek)}
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setMobileOpen((v) => !v)}
+          className="mt-0.5 inline-flex shrink-0 items-center rounded-lg border border-stone-200 bg-white p-2 text-stone-600 shadow-sm hover:bg-stone-50 sm:hidden"
+          aria-expanded={mobileOpen}
+          aria-label={mobileOpen ? pickLang('Fermer', 'Cerrar', 'Close', lang) : pickLang('Ouvrir', 'Abrir', 'Open', lang)}
         >
-          {copy.newMembersTitle}
-        </h2>
-        {totalNewThisWeek > 0 && (
-          <p className={cn('inline-flex rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-800', compact ? 'mt-1.5' : 'mt-2')}>
-            {formatHomeBadge(copy.newMembersBadge, totalNewThisWeek)}
-          </p>
-        )}
+          {mobileOpen ? <ChevronUp size={18} aria-hidden /> : <ChevronDown size={18} aria-hidden />}
+        </button>
       </div>
 
       {display.length === 0 ? (
-        <p className="mt-4 text-sm text-stone-500 break-words hyphens-auto">{copy.newMembersEmpty}</p>
+        <p className={cn('mt-4 text-sm text-stone-500 break-words hyphens-auto', !mobileOpen && 'hidden sm:block')}>
+          {copy.newMembersEmpty}
+        </p>
       ) : (
         <>
           {/* Max 2 colonnes ; secteur sans ville (mobile + desktop) */}
           <ul
             className={cn(
               'grid min-h-0 grid-cols-1 content-stretch gap-3 sm:grid-cols-2',
-              compact ? 'mt-3 sm:gap-3' : 'mt-4 sm:gap-4'
+              compact ? 'mt-3 sm:gap-3' : 'mt-4 sm:gap-4',
+              !mobileOpen && 'hidden sm:grid'
             )}
           >
           {display.map((p) => {
@@ -203,7 +231,13 @@ export default function NewMembersStrip({
         </>
       )}
 
-      <div className={cn('border-t border-stone-100', compact ? 'mt-2.5 pt-2 sm:mt-3 sm:pt-2.5' : 'mt-3 pt-2.5 sm:mt-4 sm:pt-3')}>
+      <div
+        className={cn(
+          'border-t border-stone-100',
+          compact ? 'mt-2.5 pt-2 sm:mt-3 sm:pt-2.5' : 'mt-3 pt-2.5 sm:mt-4 sm:pt-3',
+          !mobileOpen && 'hidden sm:block'
+        )}
+      >
         <button
           type="button"
           data-testid="new-members-see-all"

@@ -83,6 +83,13 @@ service cloud.firestore {
         && data.expiresAt is number
         && data.expiresAt > data.createdAt
         && data.expiresAt - data.createdAt <= 7776000000
+        && (!('textTranslations' in data) || (
+          data.textTranslations is map
+          && data.textTranslations.keys().hasOnly(['fr', 'es', 'en'])
+          && (!('fr' in data.textTranslations) || (data.textTranslations.fr is string && data.textTranslations.fr.size() <= 1200))
+          && (!('es' in data.textTranslations) || (data.textTranslations.es is string && data.textTranslations.es.size() <= 1200))
+          && (!('en' in data.textTranslations) || (data.textTranslations.en is string && data.textTranslations.en.size() <= 1200))
+        ))
         && (!('sector' in data) || (data.sector is string && data.sector.size() >= 1 && data.sector.size() <= 200));
     }
 

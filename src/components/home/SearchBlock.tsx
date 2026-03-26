@@ -1,5 +1,5 @@
-import React from 'react';
-import { Search } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { ACTIVITY_CATEGORIES, activityCategoryLabel } from '../../constants';
 import type { Language } from '../../types';
 import type { LocationFilterKey, ProfileTypeFilterKey } from '../../lib/directoryFilters';
@@ -76,6 +76,13 @@ export default function SearchBlock({
   showClearFilters,
   hideRandomButton = false,
 }: Props) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    // If there are active filters/search, expand on mobile so users see what’s applied.
+    if (showClearFilters) setMobileOpen(true);
+  }, [showClearFilters]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearchSubmit();
@@ -88,11 +95,22 @@ export default function SearchBlock({
         cardPad
       )}
     >
-      <header className="search-header mb-4 space-y-2">
-        <h2 className="hyphens-auto break-words text-base font-bold tracking-tight text-slate-800 sm:text-lg">
-          {t('searchBlockTitle')}
-        </h2>
-        <p className="text-sm leading-snug text-slate-600">{t('searchBlockSubtitle')}</p>
+      <header className="search-header mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-2">
+          <h2 className="hyphens-auto break-words text-base font-bold tracking-tight text-slate-800 sm:text-lg">
+            {t('searchBlockTitle')}
+          </h2>
+          <p className="text-sm leading-snug text-slate-600">{t('searchBlockSubtitle')}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setMobileOpen((v) => !v)}
+          className="mt-0.5 inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:hidden"
+          aria-expanded={mobileOpen}
+          aria-label={mobileOpen ? t('close') : t('searchButton')}
+        >
+          {mobileOpen ? <ChevronUp size={16} aria-hidden /> : <ChevronDown size={16} aria-hidden />}
+        </button>
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -128,7 +146,12 @@ export default function SearchBlock({
             </button>
           </div>
 
-          <div className="search-filters grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
+          <div
+            className={cn(
+              'search-filters grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3',
+              !mobileOpen && 'hidden sm:grid'
+            )}
+          >
             <select
               id="filter-sector"
               value={filterCategory}
@@ -184,11 +207,13 @@ export default function SearchBlock({
         {!hideRandomButton && (
           <div className="space-y-2">
             <p className="search-helper text-xs leading-relaxed text-slate-500">{t('searchHelperTip')}</p>
-            <DirectoryRandomProfileButton
-              t={t}
-              onRandomProfile={onRandomProfile}
-              randomDisabled={randomDisabled}
-            />
+            <div className={cn(!mobileOpen && 'hidden sm:block')}>
+              <DirectoryRandomProfileButton
+                t={t}
+                onRandomProfile={onRandomProfile}
+                randomDisabled={randomDisabled}
+              />
+            </div>
           </div>
         )}
       </form>

@@ -1,4 +1,4 @@
-import type { MemberNetworkRequest } from '../types';
+import type { Language, MemberNetworkRequest } from '../types';
 
 export const MEMBER_REQUESTS_COLLECTION = 'member_requests';
 
@@ -17,6 +17,25 @@ export function mapMemberRequestDoc(
     typeof data.expiresAt === 'number' && Number.isFinite(data.expiresAt)
       ? data.expiresAt
       : 0;
+  const textTranslationsRaw = data.textTranslations as unknown;
+  const textTranslations: Partial<Record<Language, string>> | undefined =
+    textTranslationsRaw && typeof textTranslationsRaw === 'object'
+      ? {
+          fr:
+            typeof (textTranslationsRaw as Record<string, unknown>).fr === 'string'
+              ? String((textTranslationsRaw as Record<string, unknown>).fr)
+              : undefined,
+          es:
+            typeof (textTranslationsRaw as Record<string, unknown>).es === 'string'
+              ? String((textTranslationsRaw as Record<string, unknown>).es)
+              : undefined,
+          en:
+            typeof (textTranslationsRaw as Record<string, unknown>).en === 'string'
+              ? String((textTranslationsRaw as Record<string, unknown>).en)
+              : undefined,
+        }
+      : undefined;
+
   return {
     id,
     authorId: String(data.authorId ?? ''),
@@ -27,6 +46,10 @@ export function mapMemberRequestDoc(
         ? String(data.authorCompany)
         : undefined,
     text: String(data.text ?? ''),
+    textTranslations:
+      textTranslations && Object.values(textTranslations).some((v) => typeof v === 'string' && v.trim() !== '')
+        ? textTranslations
+        : undefined,
     sector:
       data.sector != null && String(data.sector).trim() !== ''
         ? String(data.sector)
