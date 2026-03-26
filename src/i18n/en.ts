@@ -340,9 +340,13 @@ export const EN_STRINGS: Record<string, string> = {
   memberRequestProductRequired: "Please enter the product(s) or service(s) involved.",
   memberRequestSubmitError: "Could not publish. Check your connection and try again.",
   memberRequestErrorPermissionDenied:
-    "Firestore blocked the publish — deploy rules to the same database as the app (npm run firebase:deploy:rules), and fill in regions/markets and products/services.",
+    "Firestore blocked the save. In the Firebase console, open the « ai-studio-… » database (not only default), Rules tab, then run: npm run firebase:deploy:rules. Ensure the Firebase project matches this app.",
   memberRequestDeleteConfirm: "Delete this request? This cannot be undone.",
   memberRequestDeleteAria: "Delete request",
+  memberRequestRespondCta: "Contact",
+  memberRequestRespondHint: "Open the profile to see contact info.",
+  memberRequestGuestUnlockHint:
+    "Sign in and create your profile to see details and respond.",
   postUrgentNeed: "Post an urgent need",
   urgentPostSaving: "Saving…",
   urgentPostSubmitErrorGeneric:

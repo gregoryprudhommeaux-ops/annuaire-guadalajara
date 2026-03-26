@@ -821,15 +821,24 @@ export const TRANSLATIONS: Translations = {
   },
   memberRequestErrorPermissionDenied: {
     fr:
-      "Publication refusée par Firestore : déployez les règles sur la même base que l’app (npm run firebase:deploy:rules) et remplissez zones/marchés ainsi que produits/services.",
+      "Firestore a refusé l’enregistrement. Dans la console Firebase, ouvrez la base « ai-studio-… » (pas seulement default), onglet Règles, puis en terminal : npm run firebase:deploy:rules. Vérifiez aussi que le nom du projet Firebase correspond à l’app.",
     es:
-      "Publicación rechazada por Firestore: despliega las reglas en la misma base que la app (npm run firebase:deploy:rules) y completa zonas/mercados y productos/servicios.",
+      "Firestore rechazó el guardado. En la consola de Firebase, abre la base « ai-studio-… » (no solo default), pestaña Reglas, y en terminal: npm run firebase:deploy:rules. Comprueba que el proyecto Firebase coincide con la app.",
   },
   memberRequestDeleteConfirm: {
     fr: "Supprimer cette demande ? Cette action est définitive.",
     es: "¿Eliminar esta demanda? Esta acción es definitiva.",
   },
   memberRequestDeleteAria: { fr: "Supprimer la demande", es: "Eliminar la demanda" },
+  memberRequestRespondCta: { fr: "Contacter", es: "Contactar" },
+  memberRequestRespondHint: {
+    fr: "Ouvre la fiche pour voir les infos de contact.",
+    es: "Abre la ficha para ver la información de contacto.",
+  },
+  memberRequestGuestUnlockHint: {
+    fr: "Connectez-vous et créez votre profil pour voir les détails et répondre.",
+    es: "Inicia sesión y crea tu perfil para ver los detalles y responder.",
+  },
   postUrgentNeed: { fr: "Publier un besoin urgent", es: "Publicar necesidad urgente" },
   urgentPostSaving: { fr: "Enregistrement…", es: "Guardando…" },
   urgentPostSubmitErrorGeneric: {

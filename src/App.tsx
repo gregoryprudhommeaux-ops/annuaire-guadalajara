@@ -5182,6 +5182,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 profile={profile}
                 viewerIsAdmin={viewerIsAdmin}
                 onOpenAuth={openAuthModal}
+                onOpenAuthorProfile={(uid) => {
+                  const found = allProfiles.find((p) => p.uid === uid);
+                  if (found) setSelectedProfile(found);
+                }}
                 onCreate={handleCreateMemberRequest}
                 onDelete={handleDeleteMemberRequest}
               />

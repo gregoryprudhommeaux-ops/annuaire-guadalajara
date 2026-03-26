@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Megaphone, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Lock, Megaphone, Plus, Trash2 } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import type { User } from 'firebase/auth';
 import type { Language, MemberNetworkRequest, UserProfile } from '../../types';
@@ -28,6 +28,7 @@ type Props = {
   profile: UserProfile | null;
   viewerIsAdmin: boolean;
   onOpenAuth: () => void;
+  onOpenAuthorProfile: (uid: string) => void;
   onCreate: (payload: Record<string, unknown>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 };
@@ -47,6 +48,7 @@ export default function MemberRequestsSection({
   profile,
   viewerIsAdmin,
   onOpenAuth,
+  onOpenAuthorProfile,
   onCreate,
   onDelete,
 }: Props) {
@@ -55,6 +57,13 @@ export default function MemberRequestsSection({
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const requestUidSet = useMemo(
+    () => new Set(requests.map((r) => r.authorId).filter(Boolean)),
+    [requests]
+  );
+  const viewerIsSignedIn = Boolean(user);
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -98,10 +107,11 @@ export default function MemberRequestsSection({
       return;
     }
     const now = Date.now();
+    const rawPhoto = String(profile.photoURL || user.photoURL || '').trim();
     const payload: Record<string, unknown> = {
       authorId: user.uid,
-      authorName: profile.fullName?.trim() || 'Membre',
-      authorPhoto: profile.photoURL || user.photoURL || '',
+      authorName: (profile.fullName?.trim() || 'Membre').slice(0, 200),
+      authorPhoto: rawPhoto.slice(0, 2048),
       authorCompany: (profile.companyName || '').trim().slice(0, 200),
       text: text.slice(0, 800),
       zone: zone.slice(0, 200),
@@ -194,61 +204,133 @@ export default function MemberRequestsSection({
             {requests.map((r) => {
               const canDelete =
                 (user && r.authorId === user.uid) || viewerIsAdmin;
+              const expanded = expandedId === r.id;
+              const isLocked = !viewerIsSignedIn;
               return (
                 <li
                   key={r.id}
-                  className="rounded-xl border border-stone-100 bg-stone-50/40 p-4 shadow-sm"
+                  className={cn(
+                    'rounded-xl border border-stone-100 bg-stone-50/40 shadow-sm transition-colors',
+                    'hover:bg-stone-50/70'
+                  )}
                 >
-                  <div className="flex gap-3">
-                    <ProfileAvatar
-                      photoURL={r.authorPhoto}
-                      fullName={r.authorName}
-                      className="h-10 w-10 shrink-0 rounded-xl"
-                    />
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-stone-900">{r.authorName}</p>
-                          {r.authorCompany ? (
-                            <p className="text-xs text-stone-500">{r.authorCompany}</p>
+                  <button
+                    type="button"
+                    className="w-full p-4 text-left"
+                    onClick={() => {
+                      if (isLocked) {
+                        onOpenAuth();
+                        return;
+                      }
+                      setExpandedId(expanded ? null : r.id);
+                    }}
+                    aria-expanded={isLocked ? undefined : expanded}
+                    aria-controls={isLocked ? undefined : `member-request-${r.id}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <div className="text-[15px] font-semibold leading-snug text-stone-900">
+                          <AiTranslatedFreeText
+                            t={t}
+                            text={r.text}
+                            lang={lang}
+                            as="div"
+                            omitAiDisclaimer
+                            className={cn(!expanded && 'line-clamp-2')}
+                          />
+                        </div>
+                        {isLocked ? (
+                          <p className="text-xs text-stone-500">{t('memberRequestGuestUnlockHint')}</p>
+                        ) : (
+                          <p className="text-xs text-stone-500">
+                            <span className="font-semibold text-stone-700">{r.authorName}</span>
+                            {r.authorCompany ? <span className="text-stone-400"> · </span> : null}
+                            {r.authorCompany ? <span>{r.authorCompany}</span> : null}
+                          </p>
+                        )}
+                      </div>
+                      <div className="shrink-0 pt-1 text-stone-400">
+                        {isLocked ? (
+                          <Lock size={18} aria-hidden />
+                        ) : expanded ? (
+                          <ChevronUp size={18} aria-hidden />
+                        ) : (
+                          <ChevronDown size={18} aria-hidden />
+                        )}
+                      </div>
+                    </div>
+                  </button>
+
+                  {!isLocked && expanded && (
+                    <div
+                      id={`member-request-${r.id}`}
+                      className="border-t border-stone-100 px-4 pb-4"
+                    >
+                      <div className="pt-3 space-y-3">
+                        <div className="flex items-center gap-3">
+                          <ProfileAvatar
+                            photoURL={r.authorPhoto}
+                            fullName={r.authorName}
+                            className="h-11 w-11 shrink-0 rounded-xl"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-stone-900">{r.authorName}</p>
+                            {r.authorCompany ? (
+                              <p className="text-xs text-stone-500">{r.authorCompany}</p>
+                            ) : null}
+                          </div>
+                          {canDelete ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void handleDelete(r.id);
+                              }}
+                              disabled={deletingId === r.id}
+                              className="shrink-0 rounded-lg p-2 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                              aria-label={t('memberRequestDeleteAria')}
+                            >
+                              <Trash2 size={18} aria-hidden />
+                            </button>
                           ) : null}
                         </div>
-                        {canDelete ? (
-                          <button
-                            type="button"
-                            onClick={() => void handleDelete(r.id)}
-                            disabled={deletingId === r.id}
-                            className="shrink-0 rounded-lg p-2 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-                            aria-label={t('memberRequestDeleteAria')}
-                          >
-                            <Trash2 size={18} aria-hidden />
-                          </button>
-                        ) : null}
-                      </div>
-                      {(r.sector || r.zone || r.productOrService) && (
+
                         <div className="flex flex-wrap gap-1.5">
                           {r.sector ? (
                             <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-stone-600 ring-1 ring-stone-200">
                               {activityCategoryLabel(r.sector, lang)}
                             </span>
                           ) : null}
-                          {r.zone ? (
-                            <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-stone-600 ring-1 ring-stone-200">
-                              {r.zone}
-                            </span>
-                          ) : null}
-                          {r.productOrService ? (
-                            <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-stone-600 ring-1 ring-stone-200">
-                              {r.productOrService}
-                            </span>
-                          ) : null}
+                          <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-stone-600 ring-1 ring-stone-200">
+                            {r.zone}
+                          </span>
+                          <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-stone-600 ring-1 ring-stone-200">
+                            {r.productOrService}
+                          </span>
                         </div>
-                      )}
-                      <div className="text-sm leading-relaxed text-stone-800">
-                        <AiTranslatedFreeText t={t} text={r.text} lang={lang} as="p" />
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenAuthorProfile(r.authorId);
+                            }}
+                            disabled={!r.authorId || !requestUidSet.has(r.authorId)}
+                            className={cn(
+                              'rounded-xl bg-stone-900 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-800',
+                              'disabled:opacity-50 disabled:hover:bg-stone-900'
+                            )}
+                          >
+                            {t('memberRequestRespondCta')}
+                          </button>
+                          <span className="text-xs text-stone-500">
+                            {t('memberRequestRespondHint')}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </li>
               );
             })}
