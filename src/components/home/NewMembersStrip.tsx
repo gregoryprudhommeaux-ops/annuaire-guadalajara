@@ -79,9 +79,9 @@ export default function NewMembersStrip({
       )}
       aria-labelledby="home-new-members-title"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0 sm:text-left text-center sm:mx-0 mx-auto">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <h2
               id="home-new-members-title"
               className="text-base font-bold tracking-tight text-stone-900 break-words hyphens-auto sm:text-lg"
@@ -109,7 +109,7 @@ export default function NewMembersStrip({
         <button
           type="button"
           onClick={() => setMobileOpen((v) => !v)}
-          className="mt-0.5 inline-flex shrink-0 items-center rounded-lg border border-stone-200 bg-white p-2 text-stone-600 shadow-sm hover:bg-stone-50 sm:hidden"
+          className="absolute right-0 top-0 mt-0.5 inline-flex shrink-0 items-center rounded-lg border border-stone-200 bg-white p-2 text-stone-600 shadow-sm hover:bg-stone-50 sm:hidden"
           aria-expanded={mobileOpen}
           aria-label={mobileOpen ? pickLang('Fermer', 'Cerrar', 'Close', lang) : pickLang('Ouvrir', 'Abrir', 'Open', lang)}
         >
