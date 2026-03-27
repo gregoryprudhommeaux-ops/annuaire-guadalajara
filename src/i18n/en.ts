@@ -181,6 +181,23 @@ export const EN_STRINGS: Record<string, string> = {
   legalPrivacyTitle: "Privacy policy and personal data protection",
   legalTermsTitle: "Terms of use",
   footerLegalClose: "Close",
+  contactFormTitle: "Contact us",
+  contactFormIntro:
+    "Enter your name, email, and message. We will reply to the address you provide.",
+  contactFormName: "Name",
+  contactFormNamePlaceholder: "Your name",
+  contactFormEmail: "Email",
+  contactFormEmailPlaceholder: "you@example.com",
+  contactFormMessage: "Message",
+  contactFormMessagePlaceholder: "Your question or comment…",
+  contactFormSubmit: "Send",
+  contactFormSending: "Sending…",
+  contactFormSuccess: "Thank you! Your message has been sent.",
+  contactFormErrorGeneric:
+    "Sending failed. Please try again later or reach us through another channel.",
+  contactFormErrorConfig:
+    "This form is not configured on the server yet (email API key missing).",
+  contactFormHpLabel: "Leave blank",
   welcome: "Welcome to the directory of the French-speaking business community in Guadalajara.",
   welcomeIntro:
     "Discover companies and members already on the directory, filter by sector, profile type or location, then explore the first suggested profiles. Invite your network to join the platform and accelerate your connections in Guadalajara.",

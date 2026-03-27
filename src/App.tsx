@@ -156,6 +156,7 @@ import MemberRequestsSection from './components/home/MemberRequestsSection';
 import MembersCountBlock from './components/home/MembersCountBlock';
 import InviteNetworkModal from './components/home/InviteNetworkModal';
 import LegalInfoModal from './components/LegalInfoModal';
+import ContactFooterModal from './components/ContactFooterModal';
 import { LEGAL_PRIVACY_PARAGRAPHS, LEGAL_TERMS_PARAGRAPHS } from './legal/footerLegalContent';
 import NewMembersStrip from './components/home/NewMembersStrip';
 import AiTranslatedFreeText from './components/AiTranslatedFreeText';
@@ -1765,6 +1766,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [emailVerifySending, setEmailVerifySending] = useState(false);
   const [showInviteNetworkModal, setShowInviteNetworkModal] = useState(false);
   const [footerLegalModal, setFooterLegalModal] = useState<null | 'privacy' | 'terms'>(null);
+  const [footerContactOpen, setFooterContactOpen] = useState(false);
   const [profileSaveBusy, setProfileSaveBusy] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [profileSaveSuccess, setProfileSaveSuccess] = useState<string | null>(null);
@@ -6316,19 +6318,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               >
                 {t('footerTerms')}
               </button>
-              <a
-                href={`mailto:?subject=${encodeURIComponent(
-                  pickLang(
-                    'Annuaire Guadalajara — Contact',
-                    'Directorio Guadalajara — Contacto',
-                    'Guadalajara directory — Contact',
-                    lang
-                  )
-                )}`}
+              <button
+                type="button"
+                onClick={() => setFooterContactOpen(true)}
                 className="text-xs text-stone-400 underline-offset-2 transition-colors hover:text-stone-900 hover:underline"
               >
                 {t('footerContact')}
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -6362,6 +6358,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             : LEGAL_PRIVACY_PARAGRAPHS[lang]
         }
       />
+      <ContactFooterModal open={footerContactOpen} onClose={() => setFooterContactOpen(false)} t={t} />
     </div>
   );
 };

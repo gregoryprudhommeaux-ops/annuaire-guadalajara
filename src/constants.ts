@@ -494,6 +494,41 @@ export const TRANSLATIONS: Translations = {
     es: "Términos y condiciones de uso",
   },
   footerLegalClose: { fr: "Fermer", es: "Cerrar" },
+  contactFormTitle: { fr: "Nous écrire", es: "Escríbenos" },
+  contactFormIntro: {
+    fr: "Indiquez votre nom, votre e-mail et votre message. Nous vous répondrons à l’adresse que vous fournissez.",
+    es: "Indica tu nombre, tu correo y tu mensaje. Te responderemos en la dirección que indiques.",
+  },
+  contactFormName: { fr: "Nom", es: "Nombre" },
+  contactFormNamePlaceholder: {
+    fr: "Votre nom",
+    es: "Tu nombre",
+  },
+  contactFormEmail: { fr: "E-mail", es: "Correo electrónico" },
+  contactFormEmailPlaceholder: {
+    fr: "vous@exemple.com",
+    es: "tu@ejemplo.com",
+  },
+  contactFormMessage: { fr: "Message", es: "Mensaje" },
+  contactFormMessagePlaceholder: {
+    fr: "Votre question ou commentaire…",
+    es: "Tu pregunta o comentario…",
+  },
+  contactFormSubmit: { fr: "Envoyer", es: "Enviar" },
+  contactFormSending: { fr: "Envoi en cours…", es: "Enviando…" },
+  contactFormSuccess: {
+    fr: "Merci ! Votre message a bien été envoyé.",
+    es: "¡Gracias! Tu mensaje se ha enviado correctamente.",
+  },
+  contactFormErrorGeneric: {
+    fr: "L’envoi a échoué. Réessayez plus tard ou contactez-nous par un autre canal.",
+    es: "No se pudo enviar. Inténtalo más tarde o contáctanos por otro canal.",
+  },
+  contactFormErrorConfig: {
+    fr: "Le formulaire n’est pas encore configuré côté serveur (clé e-mail manquante).",
+    es: "El formulario aún no está configurado en el servidor (falta la clave de correo).",
+  },
+  contactFormHpLabel: { fr: "Ne pas remplir", es: "No rellenar" },
   welcome: {
     fr: "Bienvenue dans l'annuaire de la communauté d'affaires francophone de Guadalajara.",
     es: "Bienvenido al directorio de la comunidad de negocios francohablante de Guadalajara.",
