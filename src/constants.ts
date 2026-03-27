@@ -420,6 +420,17 @@ export const TRANSLATIONS: Translations = {
     fr: "Aucun profil disponible",
     es: "Ningún perfil disponible",
   },
+  /** CTA principal : suggestion aléatoire (colonne recherche annuaire). */
+  randomProfileSuggest: {
+    fr: '🎲 Me suggérer un contact',
+    es: '🎲 Sugiéreme un contacto',
+  },
+  /** Carte membre annuaire : action unique vers la fiche. */
+  directoryMemberCardCta: { fr: 'Voir le profil', es: 'Ver perfil' },
+  directoryCardNoStructuredNeeds: {
+    fr: 'Aucun besoin structuré renseigné.',
+    es: 'Sin necesidades estructuradas.',
+  },
   launchTitle: {
     fr: "Communauté en cours de lancement",
     es: "Comunidad en lanzamiento",

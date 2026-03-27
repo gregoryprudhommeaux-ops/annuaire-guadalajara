@@ -29,10 +29,15 @@ export default function MembersCountBlock({
   if (memberCount < threshold) {
     if (registeredWithProfile && onOpenInvite) {
       return (
-        <div className="min-w-0 rounded-[10px] border border-emerald-200 bg-emerald-50/90 p-3.5 sm:p-4">
+        <div
+          className={cn(
+            'min-w-0 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 shadow-sm',
+            cardPad
+          )}
+        >
           <div className="flex min-w-0 gap-3">
             <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-lg shadow-sm ring-1 ring-emerald-100"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-lg ring-1 ring-slate-100"
               aria-hidden
             >
               <Share2 className="h-5 w-5 text-emerald-700" strokeWidth={1.75} />
@@ -46,7 +51,7 @@ export default function MembersCountBlock({
                 type="button"
                 data-testid="invite-network-cta"
                 onClick={onOpenInvite}
-                className="mt-3 text-left text-sm font-semibold text-emerald-800 underline-offset-2 hover:text-emerald-950 hover:underline"
+                className="mt-3 text-left text-sm font-semibold text-blue-700 underline-offset-2 hover:text-blue-800 hover:underline"
               >
                 {t('inviteNetworkCta')}
               </button>
@@ -57,14 +62,22 @@ export default function MembersCountBlock({
     }
 
     return (
-      <div className="min-w-0 rounded-[10px] border border-blue-100 bg-blue-50/90 p-3.5 sm:p-4">
+      <div
+        className={cn(
+          'min-w-0 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 shadow-sm',
+          cardPad
+        )}
+      >
         <div className="flex min-w-0 gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-lg shadow-sm" aria-hidden>
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-lg ring-1 ring-slate-100"
+            aria-hidden
+          >
             <Sparkles className="h-5 w-5 text-blue-700" strokeWidth={1.75} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-slate-800 break-words">{t('launchTitle')}</p>
-            <p className="mt-1 text-[13px] leading-snug text-slate-500 break-words hyphens-auto">
+            <p className="text-sm font-semibold text-slate-900 break-words">{t('launchTitle')}</p>
+            <p className="mt-1 text-[13px] leading-snug text-slate-600 break-words hyphens-auto">
               {t('launchSubtitle')}
             </p>
             <button

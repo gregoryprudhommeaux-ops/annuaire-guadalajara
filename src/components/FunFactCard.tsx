@@ -244,7 +244,7 @@ export default function FunFactCard({
             <button
               type="button"
               onClick={() => setMobileOpen((v) => !v)}
-              className="-m-1 shrink-0 rounded-lg p-1.5 text-white/80 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:hidden"
+              className="-m-1 shrink-0 rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 sm:hidden"
               aria-expanded={mobileOpen}
               aria-controls={bodyId}
               title={mobileOpen ? mobileHideLabel : mobileShowLabel}

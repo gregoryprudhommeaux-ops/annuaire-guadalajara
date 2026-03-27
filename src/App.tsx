@@ -115,7 +115,6 @@ import {
 } from './lib/memberRequests';
 import {
   NEED_OPTIONS,
-  NEED_OPTION_VALUE_SET,
   formatHighlightedNeedsForText,
   needOptionLabel,
   sanitizeHighlightedNeeds,
@@ -162,7 +161,6 @@ import NewMembersStrip from './components/home/NewMembersStrip';
 import AiTranslatedFreeText from './components/AiTranslatedFreeText';
 import ProfileAvatar from './components/ProfileAvatar';
 import {
-  ProfileCardBio,
   ProfileCardEmailContact,
   ProfileCardWhatsappContactFooter,
 } from './components/profile/ProfileCardUi';
@@ -475,10 +473,6 @@ function LanguageProvider({ children }: { children: React.ReactNode }) {
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
-const EMPTY_URGENT_AUTHOR_IDS: ReadonlySet<string> = new Set();
-const PROFILE_CARD_TAG_GROUP_LIMIT = 3;
-const PROFILE_CARD_NEW_MS = 7 * 24 * 60 * 60 * 1000;
-
 function trimProfileWebsite(website: string | undefined | null): { href: string; label: string } | null {
   const w = website?.trim();
   if (!w) return null;
@@ -516,127 +510,44 @@ function ProfileWebsiteInlineLink({
   );
 }
 
-/** Tags listing (passions + besoins structurés), style unifié, max 3 + « +X » par groupe. */
-function ProfileCardTagsBlock({
-  profile: p,
-  urgentAuthorIds,
+/** Listing annuaire : besoins structurés + seul CTA « Voir le profil » (email / WhatsApp sur la fiche). */
+function ProfileCardListingFooter({
+  p,
+  lang,
+  t,
 }: {
-  profile: UserProfile;
-  urgentAuthorIds: ReadonlySet<string>;
+  p: UserProfile;
+  lang: Language;
+  t: (key: string) => string;
 }) {
-  const { lang, t } = useLanguage();
-  const [expandPassions, setExpandPassions] = useState(false);
-  const [expandNeeds, setExpandNeeds] = useState(false);
-
-  const passionIds = sanitizePassionIds(p.passionIds);
-  const needIds = sanitizeHighlightedNeeds(p.highlightedNeeds).filter((id) =>
-    NEED_OPTION_VALUE_SET.has(id)
-  );
-
-  const isNew =
-    p.createdAt.toMillis() > Date.now() - PROFILE_CARD_NEW_MS && p.isValidated !== false;
-  const isUrgentAuthor = urgentAuthorIds.has(p.uid);
-
-  if (passionIds.length === 0 && needIds.length === 0 && !isNew && !isUrgentAuthor) {
-    return null;
-  }
-
-  const tagPassion =
-    'inline-flex max-w-full items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600';
-  const tagNeed =
-    'inline-flex max-w-full items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-500';
-  const tagMore =
-    'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-slate-500 bg-slate-100 transition-colors hover:bg-slate-200';
-  const tagNew =
-    'inline-flex items-center rounded-full border border-blue-200 bg-blue-100 px-3 py-0.5 text-xs font-semibold text-blue-700';
-  const tagUrgent =
-    'inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-3 py-0.5 text-xs font-semibold text-amber-800';
-
-  const renderGroup = (
-    ids: string[],
-    getLabel: (id: string) => string,
-    expanded: boolean,
-    setExpanded: (v: boolean) => void,
-    Icon: typeof Briefcase,
-    tagClass: string
-  ) => {
-    if (ids.length === 0) return null;
-    const shown = expanded ? ids : ids.slice(0, PROFILE_CARD_TAG_GROUP_LIMIT);
-    const extra = ids.length - shown.length;
-    return (
-      <div className="flex flex-wrap items-start gap-x-1.5 gap-y-1">
-        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" strokeWidth={1.75} aria-hidden />
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
-          {shown.map((id) => (
-            <span key={id} className={cn(tagClass, 'max-w-full')}>
-              <span className="line-clamp-2 break-words">{getLabel(id)}</span>
-            </span>
-          ))}
-          {extra > 0 && !expanded && (
-            <button
-              type="button"
-              className={tagMore}
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpanded(true);
-              }}
-            >
-              {t('tagsMore').replace(/\{\{count\}\}/g, String(extra))}
-            </button>
-          )}
-          {expanded && ids.length > PROFILE_CARD_TAG_GROUP_LIMIT && (
-            <button
-              type="button"
-              className="text-xs font-medium text-slate-500 underline-offset-2 hover:underline"
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpanded(false);
-              }}
-            >
-              {t('tagsCollapse')}
-            </button>
-          )}
+  const ids = sanitizeHighlightedNeeds(p.highlightedNeeds);
+  return (
+    <div className="mt-3 flex min-h-0 flex-1 flex-col">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+        {t('profilePublicCurrentNeeds')}
+      </p>
+      <div className="mt-1.5 min-h-[2rem] flex-1">
+        {ids.length === 0 ? (
+          <p className="text-xs italic text-stone-400">{t('directoryCardNoStructuredNeeds')}</p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {ids.map((id) => (
+              <span
+                key={id}
+                className="inline-flex max-w-full rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900"
+              >
+                {needOptionLabel(id, lang)}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="mt-3 border-t border-slate-100 pt-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-semibold text-blue-700">{t('directoryMemberCardCta')}</span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
         </div>
       </div>
-    );
-  };
-
-  const hasStatus = isNew || isUrgentAuthor;
-  const hasTagsBelow = passionIds.length > 0 || needIds.length > 0;
-
-  return (
-    <div className="mb-1 mt-1 flex flex-col gap-2">
-      {hasStatus && (
-        <div
-          className={cn(
-            'flex flex-wrap gap-1.5',
-            hasTagsBelow && 'border-b border-slate-100 pb-2'
-          )}
-        >
-          {isNew && <span className={tagNew}>{t('tagNewMember')}</span>}
-          {isUrgentAuthor && <span className={tagUrgent}>{t('tagUrgentNeed')}</span>}
-        </div>
-      )}
-      {hasTagsBelow && (
-        <div className={cn('flex flex-col gap-2', hasStatus && 'pt-0.5')}>
-          {renderGroup(
-            passionIds,
-            (id) => getPassionLabel(id, lang),
-            expandPassions,
-            setExpandPassions,
-            Briefcase,
-            tagPassion
-          )}
-          {renderGroup(
-            needIds,
-            (id) => needOptionLabel(id, lang),
-            expandNeeds,
-            setExpandNeeds,
-            Target,
-            tagNeed
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -652,7 +563,6 @@ const ProfileCard = ({
   user,
   profile,
   variant = 'default',
-  urgentAuthorIds = EMPTY_URGENT_AUTHOR_IDS,
   guestDirectoryTeaser = false,
   onGuestJoin,
 }: {
@@ -664,33 +574,12 @@ const ProfileCard = ({
   user: any;
   profile: UserProfile | null;
   variant?: ProfileCardVariant;
-  urgentAuthorIds?: ReadonlySet<string>;
   /** Aperçu visiteur : bio courte + zone basse masquée par CTA */
   guestDirectoryTeaser?: boolean;
   onGuestJoin?: () => void;
 }) => {
   const isActive = Date.now() - (p.lastSeen ?? 0) < 2592000000; // 30 days
   const { lang, t } = useLanguage();
-  const [recCount, setRecCount] = useState(0);
-
-  useEffect(() => {
-    if (guestDirectoryTeaser) {
-      setRecCount(0);
-      return undefined;
-    }
-    const q = query(collection(db, 'recommendations'), where('profileId', '==', p.uid));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setRecCount(snapshot.size);
-    });
-    return unsubscribe;
-  }, [p.uid, guestDirectoryTeaser]);
-
-  const mobileSummaryLine = [
-    p.city,
-    p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '',
-  ]
-    .filter(Boolean)
-    .join(' · ');
 
   return (
     <motion.div 
@@ -774,215 +663,41 @@ const ProfileCard = ({
             )}
             {!guestDirectoryTeaser && variant === 'company' && (
               <>
-                <div className="flex items-center gap-2 mb-1">
-                  <Building2 size={18} className="text-stone-500 shrink-0" />
-                  <h3 className="text-lg sm:text-xl font-bold text-stone-900 group-hover:text-stone-800 transition-colors leading-tight truncate">
-                    {p.companyName}
-                  </h3>
+                <div className="mb-0.5 flex items-center gap-2">
+                  <Building2 size={18} className="shrink-0 text-stone-500" />
+                  <h3 className="truncate text-lg font-bold leading-tight text-stone-900">{p.companyName}</h3>
                 </div>
-                <ProfileWebsiteInlineLink
-                  website={p.website}
-                  className="mb-1 w-full text-xs sm:text-sm"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <p className="text-sm text-stone-600 font-medium flex items-center gap-1.5 flex-wrap">
-                  <UserIcon size={14} className="text-stone-400 shrink-0" />
-                  <span className="truncate">{p.fullName}</span>
+                <p className="truncate text-sm font-medium text-stone-600">{p.fullName}</p>
+                <p className="mt-0.5 line-clamp-2 text-xs text-stone-500">
+                  {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
                 </p>
-                {mobileSummaryLine ? (
-                  <p className="mt-0.5 truncate text-xs text-stone-500 sm:hidden">{mobileSummaryLine}</p>
-                ) : null}
-                {p.positionCategory ? (
-                  <div className="mt-1 hidden items-start gap-1.5 text-xs text-stone-500 sm:flex">
-                    <UserCog size={12} className="mt-0.5 shrink-0 text-stone-400" />
-                    <span className="line-clamp-2 break-words leading-snug">
-                      {workFunctionLabel(p.positionCategory, lang)}
-                    </span>
-                  </div>
-                ) : null}
-                <div className="mt-1 hidden items-start gap-1.5 text-xs text-stone-500 sm:flex">
-                  <MapPin size={12} className="shrink-0 mt-0.5 text-stone-400" />
-                  <span className="min-w-0 flex-1 leading-snug line-clamp-2 break-words">
-                    {[p.city, p.neighborhood, p.state || 'Jalisco'].filter(Boolean).join(', ')}
-                  </span>
-                </div>
-                <div className="mt-0.5 hidden items-start gap-1.5 text-xs text-stone-500 sm:flex">
-                  <Briefcase size={12} className="shrink-0 mt-0.5 text-stone-400" />
-                  <span className="min-w-0 flex-1 leading-snug line-clamp-2 break-words">
-                    {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
-                  </span>
-                </div>
-                {p.bio?.trim() ? (
-                  <ProfileCardBio
-                    text={p.bio}
-                    lang={lang}
-                    pretranslatedByLang={p.bioTranslations}
-                    t={t}
-                  />
-                ) : null}
               </>
             )}
             {!guestDirectoryTeaser && variant === 'activity' && (
               <>
-                <div className="flex items-start gap-2 mb-1">
-                  <Briefcase size={18} className="text-indigo-600 shrink-0 mt-0.5" />
-                  <h3 className="text-base sm:text-lg font-bold text-stone-900 leading-snug line-clamp-2 break-words">
-                    {p.activityCategory
-                      ? activityCategoryLabel(p.activityCategory, lang)
-                      : pickLang('Secteur non renseigné', 'Sector no indicado', 'Sector not specified', lang)}
-                  </h3>
-                </div>
-                <p className="text-sm font-semibold text-stone-800 truncate">{p.companyName}</p>
-                <ProfileWebsiteInlineLink
-                  website={p.website}
-                  className="mt-0.5 w-full text-xs sm:text-sm"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-stone-500">
-                  <span className="truncate">{p.fullName}</span>
-                </p>
-                {p.city ? (
-                  <p className="mt-0.5 truncate text-[11px] text-stone-500 sm:hidden">{p.city}</p>
-                ) : null}
-                {p.positionCategory ? (
-                  <div className="mt-1 hidden items-start gap-1.5 text-[11px] text-stone-500 sm:flex">
-                    <UserCog size={11} className="mt-0.5 shrink-0 text-stone-400" />
-                    <span className="line-clamp-2 leading-snug break-words">
-                      {workFunctionLabel(p.positionCategory, lang)}
-                    </span>
-                  </div>
-                ) : null}
-                <div className="mt-1 hidden items-start gap-1.5 text-[11px] text-stone-500 sm:flex">
-                  <MapPin size={11} className="shrink-0 mt-0.5 text-stone-400" />
-                  <span className="min-w-0 flex-1 leading-snug line-clamp-2 break-words">
-                    {[p.city, p.neighborhood, p.state || 'Jalisco'].filter(Boolean).join(', ')}
-                  </span>
-                </div>
-                {p.bio?.trim() ? (
-                  <ProfileCardBio
-                    text={p.bio}
-                    lang={lang}
-                    pretranslatedByLang={p.bioTranslations}
-                    t={t}
-                  />
-                ) : null}
+                <h3 className="line-clamp-2 break-words text-base font-bold leading-snug text-stone-900">
+                  {p.activityCategory
+                    ? activityCategoryLabel(p.activityCategory, lang)
+                    : pickLang('Secteur non renseigné', 'Sector no indicado', 'Sector not specified', lang)}
+                </h3>
+                <p className="mt-0.5 truncate text-sm font-semibold text-stone-800">{p.companyName}</p>
+                <p className="mt-0.5 truncate text-xs text-stone-500">{p.fullName}</p>
               </>
             )}
             {!guestDirectoryTeaser && variant === 'default' && (
               <>
-                <h3 className="font-bold text-stone-900 group-hover:text-stone-700 transition-colors leading-tight line-clamp-2 break-words">
+                <h3 className="line-clamp-2 break-words font-bold leading-tight text-stone-900 transition-colors group-hover:text-stone-700">
                   {p.fullName}
                 </h3>
-                <p className="text-xs text-stone-500 font-medium truncate mt-0.5">{p.companyName}</p>
-                <ProfileWebsiteInlineLink
-                  website={p.website}
-                  className="mt-0.5 w-full text-[11px] sm:text-xs"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                {mobileSummaryLine ? (
-                  <p className="mt-0.5 truncate text-xs text-stone-500 sm:hidden">{mobileSummaryLine}</p>
-                ) : null}
-                {p.positionCategory ? (
-                  <div className="mt-1 hidden items-start gap-1.5 text-xs text-stone-600 sm:flex">
-                    <UserCog size={12} className="mt-0.5 shrink-0 text-stone-400" />
-                    <span className="line-clamp-2 break-words leading-snug">
-                      {workFunctionLabel(p.positionCategory, lang)}
-                    </span>
-                  </div>
-                ) : null}
-                <div className="mt-1 hidden items-start gap-1.5 text-xs text-stone-500 sm:flex">
-                  <MapPin size={12} className="shrink-0 mt-0.5 text-stone-400" />
-                  <span className="min-w-0 flex-1 leading-snug line-clamp-2 break-words">
-                    {[p.city, p.neighborhood, p.state || 'Jalisco'].filter(Boolean).join(', ')}
-                  </span>
-                </div>
-                <div className="mt-0.5 hidden items-start gap-1.5 text-xs text-stone-500 sm:flex">
-                  <Briefcase size={12} className="shrink-0 mt-0.5 text-stone-400" />
-                  <span className="min-w-0 flex-1 leading-snug line-clamp-2 break-words">
-                    {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
-                  </span>
-                </div>
-                {p.bio?.trim() ? (
-                  <ProfileCardBio
-                    text={p.bio}
-                    lang={lang}
-                    pretranslatedByLang={p.bioTranslations}
-                    t={t}
-                  />
-                ) : null}
+                <p className="mt-0.5 truncate text-xs font-medium text-stone-600">{p.companyName}</p>
+                <p className="mt-0.5 line-clamp-2 text-xs text-stone-500">
+                  {p.activityCategory ? activityCategoryLabel(p.activityCategory, lang) : '—'}
+                </p>
               </>
             )}
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <div
-            className={cn(
-              'hidden flex-col items-center gap-2 pb-0.5 sm:flex',
-              guestDirectoryTeaser && 'sm:hidden'
-            )}
-          >
-            {recCount > 0 && (
-              <div
-                className="relative mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-700 text-white shadow-sm ring-1 ring-blue-700/20"
-                title={
-                  pickLang(
-                    `${recCount} recommandation(s)`,
-                    `${recCount} recomendacion(es)`,
-                    `${recCount} recommendation(s)`,
-                    lang
-                  )
-                }
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Star size={16} className="fill-white text-white" strokeWidth={1.5} />
-                <span className="absolute -bottom-1.5 left-1/2 min-w-[15px] -translate-x-1/2 rounded-full bg-white px-0.5 py-px text-center text-[8px] font-black leading-tight text-blue-700 shadow-sm ring-1 ring-blue-100">
-                  {recCount > 99 ? '99+' : recCount}
-                </span>
-              </div>
-            )}
-            {(p.linkedin || p.whatsapp) && (
-              <div className="flex flex-col items-center gap-1">
-                {p.linkedin && (
-                  <a 
-                    href={p.linkedin} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-stone-300 transition-colors hover:bg-stone-50 hover:text-[#0A66C2]"
-                    title="LinkedIn"
-                  >
-                    <Linkedin size={18} strokeWidth={1.75} className="shrink-0" />
-                  </a>
-                )}
-                {p.whatsapp && (
-                  (p.isWhatsappPublic || (user && profile?.isValidated)) ? (
-                    <a 
-                      href={`https://wa.me/${p.whatsapp.replace(/\D/g, '')}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-stone-300 transition-colors hover:bg-stone-50 hover:text-[#25D366]"
-                      title="WhatsApp"
-                    >
-                      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="currentColor" aria-hidden>
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                      </svg>
-                    </a>
-                  ) : (
-                    <span
-                      className="flex h-9 w-9 shrink-0 cursor-default items-center justify-center rounded-md text-stone-200"
-                      title={t('restrictedInfo')}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="currentColor" aria-hidden>
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                      </svg>
-                    </span>
-                  )
-                )}
-              </div>
-            )}
-          </div>
+        <div className="flex shrink-0 flex-col items-end gap-2">
           {profile?.role === 'admin' && (
             <div className="flex items-center gap-1">
               <button 
@@ -1037,32 +752,7 @@ const ProfileCard = ({
           </div>
         </div>
       ) : (
-        <>
-          <ProfileCardTagsBlock profile={p} urgentAuthorIds={urgentAuthorIds} />
-
-          <div className="mt-auto w-full shrink-0">
-            <div className="flex w-full shrink-0 flex-col gap-1.5 border-t border-slate-100 pt-2.5">
-              <div className="flex min-h-[2.25rem] w-full items-stretch">
-                <ProfileCardEmailContact
-                  email={p.email}
-                  canView={Boolean(p.isEmailPublic || (user && profile?.isValidated))}
-                  t={t}
-                />
-              </div>
-              <div className="flex min-h-[2.25rem] w-full items-stretch">
-                {p.whatsapp ? (
-                  <ProfileCardWhatsappContactFooter
-                    whatsapp={p.whatsapp}
-                    canView={Boolean(p.isWhatsappPublic || (user && profile?.isValidated))}
-                    t={t}
-                  />
-                ) : (
-                  <div className="min-h-[2.25rem] w-full rounded-lg border border-transparent bg-transparent px-3 py-2" aria-hidden />
-                )}
-              </div>
-            </div>
-          </div>
-        </>
+        <ProfileCardListingFooter p={p} lang={lang} t={t} />
       )}
       <div
         className="pointer-events-none absolute bottom-2 right-2 z-[1] text-stone-400 sm:hidden"
@@ -2346,7 +2036,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       last10: last10 as UserProfile[]
     };
   }, [allProfiles]);
-  const urgentAuthorIdSet = EMPTY_URGENT_AUTHOR_IDS;
 
   const profileUpdateBanner = useMemo(() => {
     if (!profile) {
@@ -3938,8 +3627,19 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 onClick={() => setIsProfileExpanded(!isProfileExpanded)}
               >
                 <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-stone-600 sm:mt-0">
-                    <UserIcon size={16} />
+                  <div className="mt-0.5 h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-stone-200 bg-stone-50 sm:mt-0">
+                    {profile ? (
+                      <ProfileAvatar
+                        photoURL={profile.photoURL}
+                        fullName={profile.fullName}
+                        className="h-full w-full"
+                        iconSize={22}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-stone-100 text-stone-500">
+                        <UserIcon size={18} aria-hidden />
+                      </div>
+                    )}
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -5397,7 +5097,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         onDelete={setProfileToDelete}
                         user={user}
                         profile={profile}
-                        urgentAuthorIds={urgentAuthorIdSet}
                         guestDirectoryTeaser={guestDirectoryRestricted}
                         onGuestJoin={onGuestDirectoryJoin}
                       />
@@ -5500,7 +5199,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           onDelete={setProfileToDelete}
                           user={user}
                           profile={profile}
-                          urgentAuthorIds={urgentAuthorIdSet}
                           guestDirectoryTeaser={guestDirectoryRestricted}
                           onGuestJoin={onGuestDirectoryJoin}
                         />
@@ -5567,7 +5265,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               onDelete={setProfileToDelete}
                               user={user}
                               profile={profile}
-                              urgentAuthorIds={urgentAuthorIdSet}
                               guestDirectoryTeaser={guestDirectoryRestricted}
                               onGuestJoin={onGuestDirectoryJoin}
                             />

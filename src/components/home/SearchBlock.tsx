@@ -29,8 +29,8 @@ type Props = {
 };
 
 const randomBtnClass = cn(
-  'btn-secondary random-profile-button flex min-h-[44px] w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition-colors',
-  'hover:border-slate-400 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400',
+  'random-profile-button flex min-h-[44px] w-full items-center justify-center rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors',
+  'hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700',
   'disabled:pointer-events-none disabled:opacity-40'
 );
 
@@ -52,7 +52,7 @@ export function DirectoryRandomProfileButton({
 }) {
   return (
     <button type="button" onClick={onRandomProfile} disabled={randomDisabled} className={randomBtnClass}>
-      {randomDisabled ? t('randomProfileEmpty') : t('randomProfile')}
+      {randomDisabled ? t('randomProfileEmpty') : t('randomProfileSuggest')}
     </button>
   );
 }
@@ -91,7 +91,7 @@ export default function SearchBlock({
   return (
     <section
       className={cn(
-        'search-section min-w-0 rounded-xl border border-slate-200 bg-slate-50/95 shadow-sm',
+        'search-section min-w-0 rounded-xl border border-slate-200 bg-white shadow-sm',
         cardPad
       )}
     >

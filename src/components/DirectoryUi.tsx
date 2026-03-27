@@ -1,5 +1,5 @@
 /**
- * Blocs UI annuaire : fun fact sombre, actions opportunités, barre d’onglets (fond slate-100).
+ * Blocs UI annuaire : fun fact (carte claire), barre d’onglets (fond slate-100).
  */
 
 import React from 'react';
@@ -29,17 +29,22 @@ export const FunFactBlock: React.FC<{
   bodyId,
   titleId = 'home-fun-fact-title',
 }) => (
-  <div className={cn('rounded-xl bg-slate-900 px-4 py-4', className)}>
+  <div
+    className={cn(
+      'rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm',
+      className
+    )}
+  >
     <div className="mb-2 flex items-start justify-between gap-3">
       <h2
         id={titleId}
-        className="min-w-0 flex-1 text-sm font-semibold leading-snug tracking-normal text-white break-words hyphens-auto"
+        className="min-w-0 flex-1 text-xs font-bold uppercase tracking-wider text-slate-500 break-words hyphens-auto"
       >
         {badgeLabel}
       </h2>
       {headerRight}
     </div>
-    <p id={bodyId} className={cn('text-sm leading-relaxed text-slate-200', bodyClassName)}>
+    <p id={bodyId} className={cn('text-sm leading-relaxed text-slate-600', bodyClassName)}>
       {text}
     </p>
   </div>

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Lock } from 'lucide-react';
 import type { UserProfile } from '../../types';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
-import { formatHomeBadge } from '../../copy/homeLanding';
 import { activityCategoryLabel, CITIES, cityOptionLabel } from '../../constants';
 import type { Language } from '../../types';
 import { cn } from '../../cn';
@@ -94,17 +93,6 @@ export default function NewMembersStrip({
               </span>
             )}
           </div>
-          {/* Desktop keeps the descriptive badge copy; mobile collapses by default. */}
-          {totalNewThisWeek > 0 && (
-            <p
-              className={cn(
-                'hidden text-xs font-semibold text-blue-800 sm:inline-flex sm:rounded-full sm:bg-blue-50 sm:px-2.5 sm:py-0.5',
-                compact ? 'sm:mt-1.5' : 'sm:mt-2'
-              )}
-            >
-              {formatHomeBadge(copy.newMembersBadge, totalNewThisWeek)}
-            </p>
-          )}
         </div>
         <button
           type="button"
