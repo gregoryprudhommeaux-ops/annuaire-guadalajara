@@ -3709,6 +3709,31 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         </div>
                       </div>
                     ) : null}
+                    {isProfileExpanded && profile ? (
+                      <div
+                        className="mt-2 border-t border-stone-100 pt-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <p className="truncate text-sm font-semibold text-stone-900">{profile.fullName}</p>
+                        <p className="mt-0.5 truncate text-xs text-stone-600">{profile.companyName}</p>
+                        {profile.linkedin?.trim() ? (
+                          <a
+                            href={
+                              profile.linkedin.trim().startsWith('http')
+                                ? profile.linkedin.trim()
+                                : `https://${profile.linkedin.trim()}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 inline-flex text-[#0A66C2] transition-opacity hover:opacity-80"
+                            aria-label={t('openLinkedin')}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Linkedin size={16} strokeWidth={2} aria-hidden />
+                          </a>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -4618,10 +4643,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           )}
                         </form>
                       ) : profile ? (
+                        <>
                         <div className="space-y-6">
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            <div className="flex items-center gap-4">
-                            <div className="h-16 w-16 overflow-hidden rounded-2xl bg-stone-100">
+                          <div className="flex justify-start">
+                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-stone-100 ring-1 ring-stone-200/80">
                               <ProfileAvatar
                                 photoURL={profile.photoURL}
                                 fullName={profile.fullName}
@@ -4629,17 +4654,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 initialsClassName="text-sm font-bold text-stone-500"
                                 iconSize={32}
                               />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-lg leading-tight">{profile.fullName}</h3>
-                              </div>
-                              <p className="text-stone-500 text-sm">{profile.companyName}</p>
-                              {profile.linkedin && (
-                                <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="text-stone-400 hover:text-blue-700 transition-colors mt-1 inline-block">
-                                  <Linkedin size={16} />
-                                </a>
-                              )}
                             </div>
                           </div>
 
@@ -4804,7 +4818,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </div>
                           );
                         })()}
-                      </div>
+                        </>
                     ) : (
                         <div className="text-center py-8">
                           <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center text-stone-300 mx-auto mb-4">
