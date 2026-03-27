@@ -12,6 +12,12 @@ import {
 import { pickLang } from '../../lib/uiLocale';
 import { cn } from '../../cn';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
+import {
+  profileCardClass,
+  profileNeedPillClass,
+  profileNeutralPillClass,
+  profileSectionTitleClass,
+} from './profileSectionStyles';
 
 function trimProfileWebsite(website: string | undefined | null): { href: string; label: string } | null {
   const w = website?.trim();
@@ -127,25 +133,18 @@ export function MemberPublicProfile({
           className={cn('grid gap-4', hasGoal && hasNeeds ? 'md:grid-cols-2' : 'md:grid-cols-1')}
         >
           {hasGoal ? (
-            <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
-              <h2 className="text-[11px] font-semibold uppercase tracking-wide text-blue-800">
-                {t('profileNetworkGoalLabel')}
-              </h2>
-              <p className="mt-1 text-sm text-blue-950">{profile.networkGoal}</p>
+            <div className={profileCardClass}>
+              <h2 className={profileSectionTitleClass}>{t('profileNetworkGoalLabel')}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-stone-800">{profile.networkGoal}</p>
             </div>
           ) : null}
 
           {hasNeeds ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-              <h2 className="text-[11px] font-semibold uppercase tracking-wide text-amber-800">
-                {t('profilePublicCurrentNeeds')}
-              </h2>
-              <ul className="mt-1 flex list-none flex-wrap gap-1.5 p-0">
+            <div className={profileCardClass}>
+              <h2 className={profileSectionTitleClass}>{t('profilePublicCurrentNeeds')}</h2>
+              <ul className="mt-2 flex list-none flex-wrap gap-1.5 p-0">
                 {needs.map((id) => (
-                  <li
-                    key={id}
-                    className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-900"
-                  >
+                  <li key={id} className={profileNeedPillClass}>
                     {needOptionLabel(id, lang)}
                   </li>
                 ))}
@@ -154,7 +153,7 @@ export function MemberPublicProfile({
                 <button
                   type="button"
                   onClick={onViewNeed}
-                  className="mt-2 inline-flex items-center gap-1 rounded-lg bg-amber-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-800"
+                  className="mt-3 inline-flex items-center gap-1 rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-800"
                 >
                   {pickLang('Voir le besoin', 'Ver la necesidad', 'View need', lang)}
                   <ChevronRight size={14} aria-hidden />
@@ -166,19 +165,17 @@ export function MemberPublicProfile({
       )}
 
       {profile.helpNewcomers?.trim() ? (
-        <section className="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2">
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800">
-            {t('profileHelpNewcomersLabel')}
-          </h2>
-          <p className="mt-1 whitespace-pre-wrap text-sm text-emerald-950">{profile.helpNewcomers}</p>
+        <section className={profileCardClass}>
+          <h2 className={profileSectionTitleClass}>{t('profileHelpNewcomersLabel')}</h2>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-stone-700">
+            {profile.helpNewcomers}
+          </p>
         </section>
       ) : null}
 
       {profile.bio?.trim() ? (
         <section>
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-700">
-            {t('profilePublicAboutTitle')}
-          </h2>
+          <h2 className={cn('mb-2', profileSectionTitleClass)}>{t('profilePublicAboutTitle')}</h2>
           <AiTranslatedFreeText
             lang={lang}
             t={t}
@@ -194,14 +191,12 @@ export function MemberPublicProfile({
         <section className="grid gap-4 md:grid-cols-2">
           {passions.length > 0 ? (
             <div>
-              <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-700">
-                {t('passions')}
-              </h2>
+              <h2 className={cn('mb-2', profileSectionTitleClass)}>{t('passions')}</h2>
               <div className="flex flex-wrap gap-1.5">
                 {passions.map((id) => (
                   <span
                     key={id}
-                    className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-[11px] text-stone-800"
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-800"
                   >
                     <span aria-hidden>{getPassionEmoji(id)}</span>
                     {getPassionLabel(id, lang)}
@@ -213,14 +208,12 @@ export function MemberPublicProfile({
 
           {langs.length > 0 ? (
             <div>
-              <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-700">
-                {t('contactPrefsWorkingLangLabel')}
-              </h2>
+              <h2 className={cn('mb-2', profileSectionTitleClass)}>{t('contactPrefsWorkingLangLabel')}</h2>
               <div className="flex flex-wrap gap-1.5">
                 {langs.map((code) => (
                   <span
                     key={code}
-                    className="inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-[11px] text-stone-800"
+                    className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-800"
                   >
                     {workingLanguageLabel(code, lang)}
                   </span>
@@ -235,15 +228,10 @@ export function MemberPublicProfile({
         <section className="space-y-3">
           {keywords.length > 0 ? (
             <div>
-              <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-700">
-                {t('targetSectors')}
-              </h2>
+              <h2 className={cn('mb-2', profileSectionTitleClass)}>{t('targetSectors')}</h2>
               <div className="flex flex-wrap gap-1.5">
                 {keywords.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-[11px] text-stone-800"
-                  >
+                  <span key={tag} className={profileNeutralPillClass}>
                     {tag}
                   </span>
                 ))}
@@ -253,9 +241,7 @@ export function MemberPublicProfile({
 
           {profile.typicalClientSize ? (
             <div>
-              <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-700">
-                {t('contactPrefsClientSizeLabel')}
-              </h2>
+              <h2 className={cn('mb-2', profileSectionTitleClass)}>{t('contactPrefsClientSizeLabel')}</h2>
               <p className="text-sm text-stone-800">
                 {typicalClientSizeLabel(profile.typicalClientSize, lang)}
               </p>
@@ -264,15 +250,10 @@ export function MemberPublicProfile({
 
           {openToLabels.length > 0 ? (
             <div>
-              <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-700">
-                {t('contactPrefsOpenToLabel')}
-              </h2>
+              <h2 className={cn('mb-2', profileSectionTitleClass)}>{t('contactPrefsOpenToLabel')}</h2>
               <div className="flex flex-wrap gap-1.5">
                 {openToLabels.map((item) => (
-                  <span
-                    key={item}
-                    className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] text-indigo-900"
-                  >
+                  <span key={item} className={profileNeutralPillClass}>
                     {item}
                   </span>
                 ))}

@@ -170,6 +170,13 @@ import HomeFunFactStrip from './components/home/HomeFunFactStrip';
 import { homeLanding } from './copy/homeLanding';
 import AffinityScore from './components/AffinityScore';
 import { MemberPublicProfile } from './components/profile/MemberPublicProfile';
+import {
+  profileCardClass,
+  profileFieldLabelClass,
+  profileNeedPillClass,
+  profileNeutralPillClass,
+  profileSectionTitleClass,
+} from './components/profile/profileSectionStyles';
 import { profileMatchesSearchQuery } from './profileSearch';
 import {
   GUEST_DIRECTORY_PREVIEW_LIMIT,
@@ -5391,12 +5398,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
             />
             <motion.div 
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="profile-modal-title"
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+              className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
             >
-              <div className="p-6 sm:p-8 overflow-y-auto">
+              <div className="min-h-0 flex-1 overflow-y-auto p-6 sm:p-8">
                 <button 
                   onClick={() => setSelectedProfile(null)}
                   className="absolute top-6 right-6 p-2 hover:bg-stone-100 rounded-full transition-colors text-stone-400 hover:text-stone-900"
@@ -5455,8 +5465,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   </div>
                 ) : (
                 <>
-                <div className="flex flex-col sm:flex-row gap-5 items-start mb-5">
-                  <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-3xl bg-stone-100">
+                <div className="mb-6 flex flex-col gap-4 border-b border-slate-100 pb-6 sm:flex-row sm:items-start">
+                  <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-stone-100 ring-1 ring-slate-200">
                     <ProfileAvatar
                       photoURL={selectedProfile.photoURL}
                       fullName={selectedProfile.fullName}
@@ -5465,9 +5475,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       iconSize={48}
                     />
                   </div>
-                  <div className="min-w-0 flex-1 pt-2 pr-10 sm:pr-12">
-                    <h2 className="mb-1 inline-flex max-w-full flex-wrap items-center gap-2 text-3xl font-bold tracking-tight text-stone-900">
-                      <span className="min-w-0 break-words">{selectedProfile.fullName}</span>
+                  <div className="min-w-0 flex-1 pr-10 sm:pr-12">
+                    <h2
+                      id="profile-modal-title"
+                      className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl"
+                    >
+                      <span className="break-words">{selectedProfile.fullName}</span>
+                    </h2>
+                    <p className="mt-1 text-lg font-medium text-stone-600 sm:text-xl">{selectedProfile.companyName}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                       {selectedProfile.linkedin?.trim() ? (
                         <a
                           href={
@@ -5477,19 +5493,22 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           }
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="shrink-0 text-[#0A66C2] transition-opacity hover:opacity-80 focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#0A66C2] focus-visible:ring-offset-2"
-                          aria-label="LinkedIn"
+                          className="inline-flex items-center gap-1 font-medium text-blue-700 underline-offset-2 hover:text-blue-800 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={t('openLinkedin')}
                         >
-                          <Linkedin className="size-[0.82em]" strokeWidth={2} aria-hidden />
+                          <Linkedin className="size-4 shrink-0 text-[#0A66C2]" strokeWidth={2} aria-hidden />
+                          {pickLang('LinkedIn', 'LinkedIn', 'LinkedIn', lang)}
                         </a>
                       ) : null}
-                    </h2>
-                    <p className="text-xl font-medium text-stone-500">{selectedProfile.companyName}</p>
-                    <ProfileWebsiteInlineLink
-                      website={selectedProfile.website}
-                      className="mt-1 w-full text-sm"
-                      onClick={(e) => e.stopPropagation()}
-                    />
+                      {selectedProfile.website?.trim() ? (
+                        <ProfileWebsiteInlineLink
+                          website={selectedProfile.website}
+                          className="text-sm font-medium"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : null}
+                    </div>
                     {selectedProfile.positionCategory && (
                       <p className="mt-2 flex items-center gap-2 text-sm text-stone-600">
                         <UserCog size={16} className="shrink-0 text-stone-400" />
@@ -5497,12 +5516,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       </p>
                     )}
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <span className="px-3 py-1 bg-stone-100 text-stone-600 rounded-full text-xs font-bold uppercase tracking-wider">
+                      <span className={profileNeutralPillClass}>
                         {activityCategoryLabel(selectedProfile.activityCategory, lang)}
                       </span>
-                      <span className="px-3 py-1 bg-stone-100 text-stone-600 rounded-full text-xs font-bold uppercase tracking-wider">
-                        {selectedProfile.city}
-                      </span>
+                      <span className={profileNeutralPillClass}>{selectedProfile.city}</span>
                     </div>
                     {profile?.role === 'admin' &&
                       (selectedProfile.needsAdminReview === true || selectedProfile.isValidated === false) && (
@@ -5547,8 +5564,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     {profile?.role === 'admin' &&
                       (selectedProfile.needsAdminReview === true || selectedProfile.isValidated === false) &&
                       selectedProfile.optimizationSuggestion && (
-                      <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl space-y-3">
-                        <p className="text-xs font-bold text-indigo-900">
+                      <div className={cn(profileCardClass, 'mt-4 space-y-3 border-l-4 border-l-slate-300')}>
+                        <p className="text-xs font-semibold text-slate-800">
                           {pickLang(
                             'Resume des optimisations proposees:',
                             'Resumen de optimizaciones propuestas:',
@@ -5556,14 +5573,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             lang
                           )}
                         </p>
-                        <ul className="text-xs text-indigo-800 list-disc pl-4 space-y-1">
+                        <ul className="list-disc space-y-1 pl-4 text-xs text-slate-700">
                           {selectedProfile.optimizationSuggestion.summary.map((item) => (
                             <li key={item}>{item}</li>
                           ))}
                         </ul>
                         <button
                           onClick={() => sendOptimizationEmail(selectedProfile)}
-                          className="px-4 py-2 bg-white text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all"
+                          className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition-colors hover:bg-slate-50"
                         >
                           {pickLang(
                             'Envoyer ces suggestions par email',
@@ -5580,6 +5597,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   </div>
                 </div>
 
+                <div className="mb-6 space-y-4 md:mb-8">
                 {user && profile && profile.uid !== selectedProfile.uid && (
                   <AffinityScore
                     viewer={profile}
@@ -5587,40 +5605,32 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     lang={lang}
                     t={t}
                     canRevealPrivateWhatsApp={!!user}
+                    suppressCommonNeedLabels
                   />
                 )}
 
-                <div className="mb-4 space-y-3 md:mb-5">
-                  <div className="rounded-2xl border border-indigo-100/50 bg-indigo-50/50 p-4">
-                    <h3 className="mb-1.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-indigo-400">
-                      <Search size={12} />
-                      {t('needsSought')}
-                    </h3>
+                <div className="space-y-4">
+                  <div className={profileCardClass}>
+                    <h3 className={profileSectionTitleClass}>{t('needsSought')}</h3>
                     {sanitizeHighlightedNeeds(selectedProfile.highlightedNeeds).length > 0 && (
-                      <div className="mb-2 flex flex-wrap gap-1">
+                      <div className="mt-2 flex flex-wrap gap-1.5">
                         {sanitizeHighlightedNeeds(selectedProfile.highlightedNeeds).map((id) => (
-                          <span
-                            key={id}
-                            className="rounded-lg border border-violet-200 bg-white px-2 py-0.5 text-[10px] font-bold text-violet-800"
-                          >
+                          <span key={id} className={profileNeedPillClass}>
                             {needOptionLabel(id, lang)}
                           </span>
                         ))}
                       </div>
                     )}
                     {sanitizeHighlightedNeeds(selectedProfile.highlightedNeeds).length === 0 && (
-                      <p className="text-sm font-medium text-indigo-900">{t('noNeedsSpecified')}</p>
+                      <p className="mt-2 text-sm text-stone-600">{t('noNeedsSpecified')}</p>
                     )}
                   </div>
                   {selectedProfile.targetSectors && selectedProfile.targetSectors.length > 0 && (
-                    <div className="rounded-xl border border-indigo-100/40 bg-indigo-50/30 px-4 py-3">
-                      <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-indigo-400">{t('targetSectors')}</p>
-                      <div className="flex flex-wrap gap-2">
+                    <div className={profileCardClass}>
+                      <p className={profileSectionTitleClass}>{t('targetSectors')}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
                         {selectedProfile.targetSectors.map((s) => (
-                          <span
-                            key={s}
-                            className="rounded-full bg-stone-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-stone-600"
-                          >
+                          <span key={s} className={profileNeutralPillClass}>
                             {s}
                           </span>
                         ))}
@@ -5628,33 +5638,32 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     </div>
                   )}
                   {selectedProfile.helpNewcomers?.trim() ? (
-                    <div className="rounded-xl border border-emerald-100/50 bg-emerald-50/40 px-4 py-3">
-                      <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-700">
-                        {t('profileHelpNewcomersLabel')}
-                      </p>
-                      <p className="text-sm text-stone-700 whitespace-pre-wrap leading-relaxed">
+                    <div className={profileCardClass}>
+                      <p className={profileSectionTitleClass}>{t('profileHelpNewcomersLabel')}</p>
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-stone-700">
                         {selectedProfile.helpNewcomers}
                       </p>
                     </div>
                   ) : null}
                   {selectedProfile.networkGoal?.trim() ? (
-                    <div className="rounded-xl border border-amber-100/50 bg-amber-50/40 px-4 py-3">
-                      <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-800">
-                        {t('profileNetworkGoalLabel')}
+                    <div className={profileCardClass}>
+                      <p className={profileSectionTitleClass}>{t('profileNetworkGoalLabel')}</p>
+                      <p className="mt-2 text-sm font-medium leading-relaxed text-stone-800">
+                        {selectedProfile.networkGoal}
                       </p>
-                      <p className="text-sm font-medium text-stone-800">{selectedProfile.networkGoal}</p>
                     </div>
                   ) : null}
                 </div>
+                </div>
 
                 <div className="space-y-5">
-                  <div className="rounded-2xl border border-stone-100 bg-stone-50 p-4 md:p-5">
-                    <div className="grid grid-cols-1 gap-y-3 md:grid-cols-2 md:gap-x-8 md:gap-y-3">
-                      <h3 className="order-1 text-[10px] uppercase tracking-[0.2em] text-stone-400 font-black md:order-1">
-                        {t('companyDescription')}
+                  <div className={profileCardClass}>
+                    <div className="grid grid-cols-1 gap-y-4 md:grid-cols-2 md:gap-x-8 md:gap-y-4">
+                      <h3 className="order-1 md:order-1">
+                        <span className={profileSectionTitleClass}>{t('companyDescription')}</span>
                       </h3>
-                      <h3 className="order-3 text-[10px] uppercase tracking-[0.2em] text-stone-400 font-black md:order-2">
-                        {t('company')}
+                      <h3 className="order-3 md:order-2">
+                        <span className={profileSectionTitleClass}>{t('company')}</span>
                       </h3>
                       <div className="order-2 min-w-0 md:order-3">
                         {selectedProfile.bio?.trim() ? (
@@ -5673,34 +5682,34 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         )}
                       </div>
                       <div className="order-4 space-y-2 md:order-4">
-                        <div className="flex items-center gap-3 group">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-stone-400 shadow-sm ring-1 ring-stone-100 group-hover:bg-stone-100 transition-colors">
+                        <div className="group flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-stone-400 ring-1 ring-slate-100 transition-colors group-hover:bg-slate-100">
                             <Building2 size={16} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{t('creationYear')}</p>
+                            <p className={profileFieldLabelClass}>{t('creationYear')}</p>
                             <p className="text-sm font-medium text-stone-900">{selectedProfile.creationYear || '-'}</p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 group">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-stone-400 shadow-sm ring-1 ring-stone-100 group-hover:bg-stone-100 transition-colors">
+                        <div className="group flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-stone-400 ring-1 ring-slate-100 transition-colors group-hover:bg-slate-100">
                             <Users size={16} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{t('employeeCount')}</p>
+                            <p className={profileFieldLabelClass}>{t('employeeCount')}</p>
                             <p className="text-sm font-medium text-stone-900">
                               {formatEmployeeCountDisplay(selectedProfile.employeeCount) || '-'}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 group">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-stone-400 shadow-sm ring-1 ring-stone-100 group-hover:bg-stone-100 transition-colors">
+                        <div className="group flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-stone-400 ring-1 ring-slate-100 transition-colors group-hover:bg-slate-100">
                             <Calendar size={16} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{t('arrivalYear')}</p>
+                            <p className={profileFieldLabelClass}>{t('arrivalYear')}</p>
                             <p className="text-sm font-medium text-stone-900">
                               {selectedProfile.arrivalYear
                                 ? `${selectedProfile.arrivalYear} (${new Date().getFullYear() - selectedProfile.arrivalYear} ans)`
@@ -5709,18 +5718,18 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 group">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-stone-400 shadow-sm ring-1 ring-stone-100 group-hover:bg-stone-100 transition-colors">
+                        <div className="group flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-stone-400 ring-1 ring-slate-100 transition-colors group-hover:bg-slate-100">
                             <Heart size={16} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[10px] font-bold tracking-wide text-stone-400">{t('passions')}</p>
+                            <p className={profileFieldLabelClass}>{t('passions')}</p>
                             {sanitizePassionIds(selectedProfile.passionIds).length > 0 ? (
                               <div className="mt-1 flex flex-wrap gap-1.5">
                                 {sanitizePassionIds(selectedProfile.passionIds).map((id) => (
                                   <span
                                     key={id}
-                                    className="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-900 ring-1 ring-rose-100"
+                                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-800"
                                   >
                                     <span aria-hidden>{getPassionEmoji(id)}</span>
                                     {getPassionLabel(id, lang)}
@@ -5736,46 +5745,51 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+                  <div
+                    className={cn(
+                      profileCardClass,
+                      'grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8'
+                    )}
+                  >
                   <div>
-                      <h3 className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">{t('details')}</h3>
+                      <h3 className={cn('mb-3', profileSectionTitleClass)}>{t('details')}</h3>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-x-8">
                         <div className="min-w-0 space-y-3">
-                          <div className="flex items-center gap-4 group">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-50 text-stone-400 transition-colors group-hover:bg-stone-100">
+                          <div className="group flex items-center gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-stone-400 transition-colors group-hover:bg-slate-100">
                               <MapPin size={18} />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{t('city')}</p>
+                              <p className={profileFieldLabelClass}>{t('city')}</p>
                               <p className="text-sm font-medium text-stone-900">{selectedProfile.city}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-4 group">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-50 text-stone-400 transition-colors group-hover:bg-stone-100">
+                          <div className="group flex items-center gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-stone-400 transition-colors group-hover:bg-slate-100">
                               <MapPin size={18} />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{t('neighborhood')}</p>
+                              <p className={profileFieldLabelClass}>{t('neighborhood')}</p>
                               <p className="text-sm font-medium text-stone-900">{selectedProfile.neighborhood || '—'}</p>
                             </div>
                           </div>
                         </div>
                         <div className="min-w-0 space-y-3">
-                          <div className="flex items-center gap-4 group">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-50 text-stone-400 transition-colors group-hover:bg-stone-100">
+                          <div className="group flex items-center gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-stone-400 transition-colors group-hover:bg-slate-100">
                               <MapPin size={18} />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{t('state')}</p>
+                              <p className={profileFieldLabelClass}>{t('state')}</p>
                               <p className="text-sm font-medium text-stone-900">{selectedProfile.state || 'Jalisco'}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-4 group">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-50 text-stone-400 transition-colors group-hover:bg-stone-100">
+                          <div className="group flex items-center gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-stone-400 transition-colors group-hover:bg-slate-100">
                               <MapPin size={18} />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{t('country')}</p>
+                              <p className={profileFieldLabelClass}>{t('country')}</p>
                               <p className="text-sm font-medium text-stone-900">
                                 {selectedProfile.country?.trim() ||
                                   pickLang('Mexique', 'México', 'Mexico', lang)}
@@ -5786,8 +5800,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       </div>
                   </div>
 
-                  <div className="border-t border-stone-200 pt-6 md:border-t-0 md:border-l md:border-stone-200 md:pt-0 md:pl-8">
-                      <h3 className="text-[10px] uppercase tracking-[0.2em] text-stone-400 font-black mb-2">
+                  <div className="hidden border-t border-slate-200 pt-6 md:block md:border-t-0 md:border-l md:border-slate-200 md:pt-0 md:pl-8">
+                      <h3 className={cn('mb-3', profileSectionTitleClass)}>
                         {pickLang('Contact', 'Contacto', 'Contact', lang)}
                       </h3>
                       <div className="space-y-2">
@@ -5814,12 +5828,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                 {profile?.role === 'admin' && (
                   <div
-                    className="mt-6 rounded-xl border border-amber-200 bg-amber-50/90 p-4"
+                    className={cn(profileCardClass, 'mt-6 border-l-4 border-l-amber-400')}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-amber-900 mb-3">
-                      {t('adminInternalDataTitle')}
-                    </p>
+                    <p className={cn('mb-3', profileSectionTitleClass)}>{t('adminInternalDataTitle')}</p>
                     {adminModalPrivateLoading ? (
                       <p className="text-sm text-stone-500">
                         {pickLang('Chargement…', 'Cargando…', 'Loading…', lang)}
@@ -5876,10 +5888,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   (!selectedProfile.isEmailPublic ||
                     (selectedProfile.whatsapp && !selectedProfile.isWhatsappPublic)) && (
                   <div
-                    className="mt-8 p-6 bg-stone-900 rounded-2xl text-white text-center"
+                    className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <p className="text-sm font-medium mb-4 opacity-90">{t('registerPrompt')}</p>
+                    <p className="mb-4 text-sm font-medium text-stone-800">{t('registerPrompt')}</p>
                     <button
                       type="button"
                       onClick={() => {
@@ -5887,7 +5899,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         openAuthModal();
                       }}
                       disabled={authProviderBusy !== null || authEmailBusy}
-                      className="w-full rounded-xl bg-white py-3 text-sm font-bold text-stone-900 transition-colors hover:bg-stone-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="w-full rounded-xl bg-blue-700 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {t('register')}
                     </button>
@@ -5896,6 +5908,68 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </>
                 )}
               </div>
+
+              {selectedProfile &&
+                !guestDirectoryRestricted &&
+                (() => {
+                  const p = selectedProfile;
+                  const canEmail = Boolean(
+                    p.email?.trim() &&
+                      (p.isEmailPublic || (user && profile?.isValidated))
+                  );
+                  const canWhatsapp = Boolean(
+                    p.whatsapp &&
+                      (p.isWhatsappPublic || (user && profile?.isValidated))
+                  );
+                  if (!canEmail && !canWhatsapp) return null;
+                  const mailto = p.email?.trim()
+                    ? `mailto:${encodeURIComponent(p.email.trim())}`
+                    : '#';
+                  const waHref = p.whatsapp
+                    ? `https://wa.me/${p.whatsapp.replace(/\D/g, '')}`
+                    : '#';
+                  return (
+                    <div
+                      role="region"
+                      aria-label={t('contact')}
+                      className="shrink-0 border-t border-slate-200 bg-white/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md supports-[backdrop-filter]:bg-white/90 md:hidden"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <p className="mb-2 text-center text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                        {t('contact')}
+                      </p>
+                      <div className="flex gap-2">
+                        {canEmail ? (
+                          <a
+                            href={mailto}
+                            className="flex min-h-[44px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-700 px-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800"
+                          >
+                            <Mail className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                            <span className="truncate">{t('cardContactByEmail')}</span>
+                          </a>
+                        ) : null}
+                        {canWhatsapp ? (
+                          <a
+                            href={waHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex min-h-[44px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-4 w-4 shrink-0"
+                              fill="currentColor"
+                              aria-hidden
+                            >
+                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                            </svg>
+                            <span className="truncate">{t('cardContactByWhatsapp')}</span>
+                          </a>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })()}
             </motion.div>
           </div>
         )}

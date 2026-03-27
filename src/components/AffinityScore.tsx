@@ -51,6 +51,8 @@ export interface AffinityScoreProps {
   t: (key: string) => string;
   /** Même règle que les fiches : WhatsApp si public ou membre connecté. */
   canRevealPrivateWhatsApp: boolean;
+  /** Quand la liste complète des besoins est affichée juste en dessous, évite de répéter les libellés. */
+  suppressCommonNeedLabels?: boolean;
 }
 
 export default function AffinityScore({
@@ -59,6 +61,7 @@ export default function AffinityScore({
   lang,
   t,
   canRevealPrivateWhatsApp,
+  suppressCommonNeedLabels = false,
 }: AffinityScoreProps) {
   if (viewer.uid === target.uid) return null;
 
@@ -93,11 +96,12 @@ export default function AffinityScore({
   };
 
   return (
-    <div className="rounded-xl border border-violet-100 bg-violet-50/80 p-4 space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-violet-600 flex items-center gap-1.5 flex-wrap">
+    <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-slate-600">
         <span aria-hidden>🤝</span>
         <span>
-          {t('affinityWith')} <span className="normal-case font-bold text-stone-800">{target.fullName}</span>
+          {t('affinityWith')}{' '}
+          <span className="font-bold text-stone-900">{target.fullName}</span>
         </span>
       </p>
 
@@ -106,9 +110,11 @@ export default function AffinityScore({
           <span className="text-sm shrink-0" aria-hidden>
             ✅
           </span>
-          <p className="text-sm text-stone-700 min-w-0">
+          <p className="min-w-0 text-sm text-stone-700">
             <span className="font-semibold">{needsHeading}</span>
-            <span className="text-stone-500"> — {needsLabels.join(', ')}</span>
+            {!suppressCommonNeedLabels && (
+              <span className="text-stone-500"> — {needsLabels.join(', ')}</span>
+            )}
           </p>
         </div>
       )}
@@ -129,12 +135,12 @@ export default function AffinityScore({
         <button
           type="button"
           onClick={openWhatsApp}
-          className="w-full rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-violet-700 shadow-sm"
+          className="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
         >
           💬 {t('affinitySuggestMeet')}
         </button>
       ) : (
-        <p className="text-xs text-stone-500 italic">{t('affinityWhatsAppMissing')}</p>
+        <p className="text-xs italic text-stone-500">{t('affinityWhatsAppMissing')}</p>
       )}
     </div>
   );
