@@ -229,6 +229,7 @@ import { cardPad, pageMainPad, pageSectionPad } from './lib/pageLayout';
 import {
   firebaseAuthCodeToTranslationKey,
   firebaseAuthErrorUserMessage,
+  getAuthActionCodeSettings,
 } from './lib/firebaseAuthUi';
 import EmailAuthPanel from './components/EmailAuthPanel';
 
@@ -1852,7 +1853,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     setEmailVerifySending(true);
     setEmailVerifyNotice(null);
     try {
-      await sendEmailVerification(u);
+      await sendEmailVerification(u, getAuthActionCodeSettings());
       setEmailVerifyNotice(t('authVerificationSentShort'));
     } catch (err) {
       const host = typeof window !== 'undefined' ? window.location.host : '';

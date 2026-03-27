@@ -8,7 +8,10 @@ import {
 import { auth } from '../firebase';
 import type { Language } from '../types';
 import { cn } from '../cn';
-import { formatFirebaseAuthErrorMessage } from '../lib/firebaseAuthUi';
+import {
+  formatFirebaseAuthErrorMessage,
+  getAuthActionCodeSettings,
+} from '../lib/firebaseAuthUi';
 import { pickLang } from '../lib/uiLocale';
 
 type Step = 'signin' | 'signup' | 'forgot';
@@ -103,7 +106,7 @@ export default function EmailAuthPanel({
     setEmailBusy(true);
     try {
       const cred = await createUserWithEmailAndPassword(auth, em, password);
-      await sendEmailVerification(cred.user);
+      await sendEmailVerification(cred.user, getAuthActionCodeSettings());
       setPassword('');
       setConfirm('');
       /* Utilisateur connecté : le modal se ferme via onAuthStateChanged ; bannière vérif. e-mail dans l’app. */
@@ -125,7 +128,7 @@ export default function EmailAuthPanel({
     }
     setEmailBusy(true);
     try {
-      await sendPasswordResetEmail(auth, em);
+      await sendPasswordResetEmail(auth, em, getAuthActionCodeSettings());
       setInfoMessage(t('authResetEmailSent'));
     } catch (err) {
       onError(formatFirebaseAuthErrorMessage(err, t, host));

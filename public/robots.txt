@@ -1,0 +1,9 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Espace connecté / admin (évite d’indexer l’URL comme page vide côté crawler)
+Disallow: /dashboard
+
+# Sitemap (à décommenter quand un sitemap.xml sera publié)
+# Sitemap: https://franconetwork.app/sitemap.xml

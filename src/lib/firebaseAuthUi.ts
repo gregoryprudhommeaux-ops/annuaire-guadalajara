@@ -1,4 +1,16 @@
 import { FirebaseError } from 'firebase/app';
+import type { ActionCodeSettings } from 'firebase/auth';
+
+/** URL de retour après clic sur lien e-mail (vérif / reset) : domaine courant (ex. franconetwork.app). */
+export function getAuthActionCodeSettings(): ActionCodeSettings {
+  if (typeof window === 'undefined') {
+    return { url: '/', handleCodeInApp: false };
+  }
+  return {
+    url: `${window.location.origin}/`,
+    handleCodeInApp: false,
+  };
+}
 
 const CODE_TO_KEY: Record<string, string> = {
   'auth/email-already-in-use': 'authErrEmailAlreadyInUse',
