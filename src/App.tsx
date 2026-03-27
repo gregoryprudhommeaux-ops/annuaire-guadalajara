@@ -2029,6 +2029,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
+  /** URL photo profil (formulaire édition) — synchronisée avec le champ masqué `photoURL` à l’enregistrement. */
+  const [profilePhotoUrlDraft, setProfilePhotoUrlDraft] = useState('');
   const directoryMainRef = useRef<HTMLDivElement>(null);
   const [membersSortMode, setMembersSortMode] = useState<MembersSortMode>('default');
   const [showValidationPanel, setShowValidationPanel] = useState(false);
@@ -2301,6 +2303,16 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       prev.length > 0 ? prev : sanitizeWorkingLanguageCodes(profile.workingLanguageCodes)
     );
   }, [isEditing, editingProfile, profile]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setProfilePhotoUrlDraft('');
+      return;
+    }
+    const src = editingProfile ?? profile;
+    if (!src) return;
+    setProfilePhotoUrlDraft(String(src.photoURL ?? '').trim());
+  }, [isEditing, editingProfile?.uid, profile?.uid]);
 
   const toggleWorkingLanguageDraft = (code: string) => {
     setWorkingLanguagesDraft((prev) => {
@@ -4073,34 +4085,47 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           </p>
 
                           <section className="space-y-4">
-                            <h2 className="text-sm font-semibold text-stone-900">{t('profileFormSectionIdentity')}</h2>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <h2 className="mb-4 text-sm font-semibold text-stone-900">{t('profileFormSectionIdentity')}</h2>
+
+                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('fullName')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
                                 </label>
-                                <input name="fullName" defaultValue={editingProfile?.fullName || profile?.fullName} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
+                                <input
+                                  name="fullName"
+                                  defaultValue={editingProfile?.fullName || profile?.fullName}
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('companyName')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
                                 </label>
-                                <input name="companyName" defaultValue={editingProfile?.companyName || profile?.companyName} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
+                                <input
+                                  name="companyName"
+                                  defaultValue={editingProfile?.companyName || profile?.companyName}
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('activityCategory')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
                                 </label>
-                                <select name="activityCategory" defaultValue={editingProfile?.activityCategory || profile?.activityCategory} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all">
+                                <select
+                                  name="activityCategory"
+                                  defaultValue={editingProfile?.activityCategory || profile?.activityCategory}
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                >
                                   {ACTIVITY_CATEGORIES.map((c) => (
                                     <option key={c} value={c}>
                                       {activityCategoryLabel(c, lang)}
@@ -4108,14 +4133,21 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   ))}
                                 </select>
                               </div>
+                            </div>
+
+                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('city')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
                                 </label>
-                                <select name="city" defaultValue={editingProfile?.city || profile?.city} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all">
+                                <select
+                                  name="city"
+                                  defaultValue={editingProfile?.city || profile?.city}
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                >
                                   {CITIES.map((c) => (
                                     <option key={c} value={c}>
                                       {cityOptionLabel(c, lang)}
@@ -4124,11 +4156,17 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 </select>
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('neighborhood')}</label>
-                                <input name="neighborhood" defaultValue={editingProfile?.neighborhood || profile?.neighborhood} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                  {t('neighborhood')}
+                                </label>
+                                <input
+                                  name="neighborhood"
+                                  defaultValue={editingProfile?.neighborhood || profile?.neighborhood}
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('state')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
@@ -4138,24 +4176,19 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   name="state"
                                   defaultValue={editingProfile?.state || profile?.state || 'Jalisco'}
                                   placeholder={pickLang('Jalisco', 'Jalisco', 'Jalisco', lang)}
-                                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
                               </div>
+                            </div>
+
+                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('country')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
                                 </label>
-                                <p className="text-[10px] leading-snug text-stone-400">
-                                  {pickLang(
-                                    'Indiquez le pays d’implantation ou de résidence pour la fiche.',
-                                    'Indica el país de implantación o residencia para la ficha.',
-                                    'Enter the country of operation or residence for your profile.',
-                                    lang
-                                  )}
-                                </p>
                                 <input
                                   name="country"
                                   defaultValue={
@@ -4164,29 +4197,44 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     ''
                                   }
                                   placeholder={pickLang('Mexique', 'México', 'Mexico', lang)}
-                                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
+                                <p className="mt-1 text-[10px] text-stone-400">{t('profileFormCountryFootnote')}</p>
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('email')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
                                 </label>
-                                <input type="email" name="email" defaultValue={editingProfile?.email || profile?.email || user.email || ''} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
+                                <input
+                                  type="email"
+                                  name="email"
+                                  defaultValue={editingProfile?.email || profile?.email || user.email || ''}
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('whatsapp')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
                                 </label>
-                                <input name="whatsapp" defaultValue={editingProfile?.whatsapp || profile?.whatsapp} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" />
+                                <input
+                                  type="tel"
+                                  name="whatsapp"
+                                  defaultValue={editingProfile?.whatsapp || profile?.whatsapp}
+                                  placeholder={pickLang('+52 …', '+52 …', '+52 …', lang)}
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                />
                               </div>
+                            </div>
+
+                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('website')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
@@ -4199,21 +4247,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   autoComplete="url"
                                   placeholder="https://..."
                                   defaultValue={editingProfile?.website || profile?.website}
-                                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
                               </div>
-                              <div className="space-y-1 md:col-span-3">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                              <div className="space-y-1 md:col-span-2">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('workFunction')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
                                 </label>
-                                <p className="text-[10px] text-stone-400 leading-snug">{t('workFunctionHint')}</p>
                                 <select
                                   name="positionCategory"
                                   defaultValue={editingProfile?.positionCategory || profile?.positionCategory || ''}
-                                  className="mt-1 w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all text-sm"
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 >
                                   <option value="">{t('selectWorkFunction')}</option>
                                   {WORK_FUNCTION_OPTIONS.map((opt) => (
@@ -4222,20 +4269,22 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     </option>
                                   ))}
                                 </select>
+                                <p className="mt-1 text-[10px] text-stone-400">{t('workFunctionHint')}</p>
                               </div>
                             </div>
                           </section>
 
-                          <section className="space-y-4 rounded-lg border border-amber-200 bg-amber-50/40 p-4 md:p-5">
+                          <section className="space-y-4 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
                             <h2 className="text-sm font-semibold text-stone-900">{t('profileFormSectionCore')}</h2>
-                            <div className="space-y-1">
+
+                            {/* Ligne 1 : objectif réseau — pleine largeur */}
+                            <div>
                               <label
                                 htmlFor="networkGoal"
-                                className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
+                                className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
                               >
                                 {t('profileNetworkGoalLabel')}
                               </label>
-                              <p className="text-[10px] text-stone-400 leading-relaxed">{t('profileNetworkGoalHint')}</p>
                               <input
                                 id="networkGoal"
                                 name="networkGoal"
@@ -4243,39 +4292,113 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 maxLength={200}
                                 defaultValue={(editingProfile?.networkGoal ?? profile?.networkGoal) || ''}
                                 placeholder={t('profileNetworkGoalPlaceholder')}
-                                className="mt-1 w-full rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                                className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
                               />
+                              <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('profileNetworkGoalHint')}</p>
                             </div>
-                            <div className="space-y-3 rounded-lg border border-amber-200/60 bg-white/80 p-3 md:p-4">
-                              <div>
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider block">
-                                  {t('highlightedNeedsTitle')}{' '}
-                                  <span className="font-normal normal-case text-stone-400">
-                                    {t('highlightedNeedsOptional')}
-                                  </span>
-                                </label>
-                                <p className="text-[10px] text-stone-500 mt-1 leading-relaxed">{t('highlightedNeedsHint')}</p>
-                                <p className="text-xs font-bold text-amber-800 mt-2">
-                                  {highlightedNeedsDraft.length}/3 — {t('highlightedNeedsCount')}
-                                </p>
+
+                            {/* Ligne 2 : besoins actuels — pleine largeur */}
+                            <div>
+                              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                {t('highlightedNeedsTitle')}{' '}
+                                <span className="text-[10px] font-normal normal-case text-stone-400">
+                                  {t('highlightedNeedsOptional')}
+                                </span>
+                              </label>
+                              <div className="space-y-2">
+                                {NEED_OPTIONS.map((group) => (
+                                  <div key={group.label.fr} className="space-y-2">
+                                    <p className="text-[10px] font-black uppercase tracking-wider text-stone-400">
+                                      {group.label[lang]}
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {group.options.map((opt) => {
+                                        const selected = highlightedNeedsDraft.includes(opt.value);
+                                        const disabled = !selected && highlightedNeedsDraft.length >= 3;
+                                        return (
+                                          <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => toggleHighlightedNeedDraft(opt.value)}
+                                            disabled={disabled}
+                                            className={cn(
+                                              'max-w-[260px] rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-all',
+                                              selected
+                                                ? 'border-amber-600 bg-amber-700 text-white shadow-sm'
+                                                : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300',
+                                              disabled && !selected && 'cursor-not-allowed opacity-40 hover:border-stone-200'
+                                            )}
+                                          >
+                                            {opt.label[lang]}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                              {NEED_OPTIONS.map((group) => (
-                                <div key={group.label.fr} className="space-y-2">
-                                  <p className="text-[10px] font-black text-stone-400 uppercase tracking-wider">
-                                    {group.label[lang]}
-                                  </p>
+                              <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('highlightedNeedsHint')}</p>
+                            </div>
+
+                            {/* Ligne 3 : aide nouveaux arrivants | préf. contact + langues */}
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                              <div className="space-y-1">
+                                <label
+                                  htmlFor="helpNewcomers"
+                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                >
+                                  {t('profileHelpNewcomersLabel')}
+                                </label>
+                                <textarea
+                                  id="helpNewcomers"
+                                  name="helpNewcomers"
+                                  rows={3}
+                                  maxLength={800}
+                                  defaultValue={
+                                    (editingProfile?.helpNewcomers ?? profile?.helpNewcomers) || ''
+                                  }
+                                  placeholder={t('profileHelpNewcomersPlaceholder')}
+                                  className="w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                                />
+                                <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('profileHelpNewcomersHint')}</p>
+                              </div>
+
+                              <div className="flex flex-col gap-4">
+                                <div className="space-y-1">
+                                  <label
+                                    htmlFor="contactPreferenceCta"
+                                    className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                  >
+                                    {t('contactPrefsCtaLabel')}
+                                  </label>
+                                  <input
+                                    id="contactPreferenceCta"
+                                    name="contactPreferenceCta"
+                                    type="text"
+                                    defaultValue={
+                                      (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta) || ''
+                                    }
+                                    placeholder={t('contactPrefsCtaPlaceholder')}
+                                    className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                                  />
+                                  <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsCtaHint')}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                    {t('contactPrefsWorkingLangLabel')}
+                                  </span>
                                   <div className="flex flex-wrap gap-2">
-                                    {group.options.map((opt) => {
-                                      const selected = highlightedNeedsDraft.includes(opt.value);
-                                      const disabled = !selected && highlightedNeedsDraft.length >= 3;
+                                    {WORKING_LANGUAGE_OPTIONS.map((opt) => {
+                                      const selected = workingLanguagesDraft.includes(opt.code);
+                                      const disabled = !selected && workingLanguagesDraft.length >= 3;
                                       return (
                                         <button
-                                          key={opt.value}
+                                          key={opt.code}
                                           type="button"
-                                          onClick={() => toggleHighlightedNeedDraft(opt.value)}
+                                          onClick={() => toggleWorkingLanguageDraft(opt.code)}
                                           disabled={disabled}
                                           className={cn(
-                                            'max-w-[260px] rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-all',
+                                            'rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-all',
                                             selected
                                               ? 'border-amber-600 bg-amber-700 text-white shadow-sm'
                                               : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300',
@@ -4287,103 +4410,35 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                       );
                                     })}
                                   </div>
+                                  <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsWorkingLangTip')}</p>
                                 </div>
-                              ))}
-                            </div>
-                            <div className="space-y-1">
-                              <label
-                                htmlFor="helpNewcomers"
-                                className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
-                              >
-                                {t('profileHelpNewcomersLabel')}
-                              </label>
-                              <p className="text-[10px] text-stone-500 leading-relaxed">{t('profileHelpNewcomersHint')}</p>
-                              <textarea
-                                id="helpNewcomers"
-                                name="helpNewcomers"
-                                rows={3}
-                                maxLength={800}
-                                defaultValue={
-                                  (editingProfile?.helpNewcomers ?? profile?.helpNewcomers) || ''
-                                }
-                                placeholder={t('profileHelpNewcomersPlaceholder')}
-                                className="mt-1 w-full min-h-[70px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
-                              />
-                            </div>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                              <div className="space-y-1">
-                                <label
-                                  htmlFor="contactPreferenceCta"
-                                  className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
-                                >
-                                  {t('contactPrefsCtaLabel')}
-                                </label>
-                                <p className="text-[10px] text-stone-500 leading-relaxed">{t('contactPrefsCtaHint')}</p>
-                                <input
-                                  id="contactPreferenceCta"
-                                  name="contactPreferenceCta"
-                                  type="text"
-                                  defaultValue={
-                                    (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta) || ''
-                                  }
-                                  placeholder={t('contactPrefsCtaPlaceholder')}
-                                  className="mt-1 w-full rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <span className="block text-xs font-semibold uppercase tracking-wider text-stone-500">
-                                  {t('contactPrefsWorkingLangLabel')}
-                                </span>
-                                <p className="text-[10px] text-stone-500 leading-relaxed">{t('contactPrefsWorkingLangHint')}</p>
-                                <p className="text-xs font-bold text-amber-800 mt-2">
-                                  {workingLanguagesDraft.length}/3
-                                </p>
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  {WORKING_LANGUAGE_OPTIONS.map((opt) => {
-                                    const selected = workingLanguagesDraft.includes(opt.code);
-                                    const disabled = !selected && workingLanguagesDraft.length >= 3;
-                                    return (
-                                      <button
-                                        key={opt.code}
-                                        type="button"
-                                        onClick={() => toggleWorkingLanguageDraft(opt.code)}
-                                        disabled={disabled}
-                                        className={cn(
-                                          'rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-all',
-                                          selected
-                                            ? 'border-amber-600 bg-amber-700 text-white shadow-sm'
-                                            : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300',
-                                          disabled && !selected && 'cursor-not-allowed opacity-40 hover:border-stone-200'
-                                        )}
-                                      >
-                                        {opt.label[lang]}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                                <p className="text-[10px] text-stone-500 mt-1">{t('contactPrefsWorkingLangTip')}</p>
                               </div>
                             </div>
                           </section>
 
-                          <section className="space-y-4">
-                            <h2 className="text-sm font-semibold text-stone-900">{t('profileFormSectionCompanyDetails')}</h2>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                          <section>
+                            <h2 className="mb-1 text-sm font-semibold text-stone-900">
+                              {t('profileFormSectionCompanyDetails')}
+                            </h2>
+                            <p className="mb-4 text-[10px] text-stone-400">{t('profileFormCompanyDetailsIntro')}</p>
+
+                            {/* Ligne 1 : création / effectifs / arrivée au Mexique */}
+                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('creationYear')}
                                 </label>
                                 <input
                                   type="number"
                                   name="creationYear"
                                   defaultValue={editingProfile?.creationYear || profile?.creationYear}
-                                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('employeeCount')}{' '}
-                                  <span className="font-normal normal-case text-stone-400">
+                                  <span className="text-[10px] font-normal normal-case text-stone-400">
                                     {t('employeeCountOptional')}
                                   </span>
                                 </label>
@@ -4392,7 +4447,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   defaultValue={employeeCountToSelectDefault(
                                     editingProfile?.employeeCount ?? profile?.employeeCount
                                   )}
-                                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 >
                                   <option value="">
                                     {pickLang(
@@ -4410,25 +4465,24 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 </select>
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('arrivalYear')}</label>
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                  {t('arrivalYear')}
+                                </label>
                                 <input
                                   type="number"
                                   name="arrivalYear"
                                   defaultValue={editingProfile?.arrivalYear || profile?.arrivalYear}
-                                  className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
-                                <p className="text-[10px] text-stone-400 leading-snug">
-                                  {pickLang(
-                                    'Sert au tableau de bord pour estimer l’ancienneté sur la région (à partir de l’année d’arrivée au Mexique).',
-                                    'Alimenta el panel para estimar la antigüedad en la región (año de llegada a México).',
-                                    'Feeds the dashboard seniority estimate from your year of arrival in Mexico.',
-                                    lang
-                                  )}
-                                </p>
+                                <p className="mt-1 text-[10px] text-stone-400">{t('profileFormArrivalRegionHint')}</p>
                               </div>
+                            </div>
+
+                            {/* Ligne 2 : type d'entreprise / statut pro / taille clients */}
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-600">
-                                  {pickLang('Type d’entreprise (analytics)', 'Tipo de empresa (analytics)', 'Company type (analytics)', lang)}
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                  {t('profileFormCompanyType')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
@@ -4441,7 +4495,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     profile?.communityCompanyKind ??
                                     ''
                                   }
-                                  className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 >
                                   <option value="" disabled>
                                     {pickLang('— Choisir —', '— Elegir —', '— Choose —', lang)}
@@ -4453,8 +4507,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 </select>
                               </div>
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-600">
-                                  {pickLang('Statut pro (analytics)', 'Estatus profesional (analytics)', 'Professional status (analytics)', lang)}
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                  {t('profileFormProfessionalStatus')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
@@ -4467,7 +4521,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     profile?.communityMemberStatus ??
                                     ''
                                   }
-                                  className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all"
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 >
                                   <option value="" disabled>
                                     {pickLang('— Choisir —', '— Elegir —', '— Choose —', lang)}
@@ -4480,18 +4534,17 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               <div className="space-y-1">
                                 <label
                                   htmlFor="typicalClientSize"
-                                  className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
+                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
                                 >
                                   {t('contactPrefsClientSizeLabel')}
                                 </label>
-                                <p className="text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsClientSizeHint')}</p>
                                 <select
                                   id="typicalClientSize"
                                   name="typicalClientSize"
                                   defaultValue={
                                     (editingProfile?.typicalClientSize ?? profile?.typicalClientSize) || ''
                                   }
-                                  className="mt-1 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 >
                                   <option value="">{t('contactPrefsClientSizeEmpty')}</option>
                                   {(TYPICAL_CLIENT_SIZE_VALUES as readonly TypicalClientSize[]).map((v) => (
@@ -4500,54 +4553,118 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     </option>
                                   ))}
                                 </select>
+                                <p className="mt-1 text-[10px] text-stone-400">{t('contactPrefsClientSizeHint')}</p>
                               </div>
                             </div>
                           </section>
 
-                          <section className="space-y-4">
-                            <h2 className="text-sm font-semibold text-stone-900">{t('profileFormSectionAbout')}</h2>
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                          <section>
+                            <h2 className="mb-4 text-sm font-semibold text-stone-900">{t('profileFormSectionAbout')}</h2>
+                            <input type="hidden" name="photoURL" value={profilePhotoUrlDraft} />
+
+                            {/* Ligne 1 : LinkedIn / photo */}
+                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('linkedin')}</label>
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                  {t('linkedin')}
+                                </label>
                                 <div className="flex gap-2">
-                                  <input 
-                                    name="linkedin" 
+                                  <input
+                                    name="linkedin"
                                     id="linkedin-input"
-                                    defaultValue={editingProfile?.linkedin || profile?.linkedin} 
+                                    type="url"
+                                    autoComplete="url"
+                                    defaultValue={editingProfile?.linkedin || profile?.linkedin}
                                     placeholder="https://linkedin.com/in/..."
-                                    className="flex-1 px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all" 
+                                    className="h-10 min-w-0 flex-1 rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                   />
                                   <button
                                     type="button"
                                     onClick={() => setIsLinkedInModalOpen(true)}
-                                    className="px-3 py-2 bg-stone-100 text-stone-600 rounded-lg hover:bg-stone-200 transition-all flex items-center gap-2 text-xs font-medium"
+                                    className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-lg border border-stone-300 px-3 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-50"
                                   >
-                                    <Linkedin size={14} />
-                                    {t('fetchPhoto')}
+                                    <span className="inline-flex items-center gap-1.5">
+                                      <Linkedin size={14} aria-hidden />
+                                      {t('fetchPhoto')}
+                                    </span>
                                   </button>
                                 </div>
                               </div>
+
                               <div className="space-y-1">
-                                <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t('photoURL')}</label>
-                                <p className="text-[10px] text-stone-400 leading-snug">{t('photoUrlHint')}</p>
-                                <input
-                                  name="photoURL"
-                                  id="profile-photo-url-input"
-                                  defaultValue={editingProfile?.photoURL || profile?.photoURL}
-                                  placeholder="https://media.licdn.com/..."
-                                  className="mt-1 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                  {t('profileFormProfilePhotoLabel')}
+                                </label>
+                                <div className="flex min-h-10 items-center gap-3">
+                                  {profilePhotoUrlDraft ? (
+                                    <img
+                                      src={profilePhotoUrlDraft}
+                                      alt={t('profileFormProfilePhotoLabel')}
+                                      className="h-10 w-10 shrink-0 rounded-full border border-stone-200 object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-stone-300 bg-stone-100 text-[10px] text-stone-400">
+                                      {t('profileFormPhotoPlaceholder')}
+                                    </div>
+                                  )}
+                                  <div className="flex min-w-0 flex-col justify-center gap-0.5 leading-tight">
+                                    {profilePhotoUrlDraft ? (
+                                      <span
+                                        className={cn(
+                                          'text-xs font-medium',
+                                          /licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft)
+                                            ? 'text-emerald-600'
+                                            : 'text-stone-700'
+                                        )}
+                                      >
+                                        {/licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft)
+                                          ? `✓ ${t('profileFormPhotoLinkedInOk')}`
+                                          : `✓ ${t('profileFormPhotoDefined')}`}
+                                      </span>
+                                    ) : (
+                                      <span className="block text-[11px] text-stone-400">{t('profileFormAboutPhotoEmpty')}</span>
+                                    )}
+                                    <button
+                                      type="button"
+                                      className="text-left text-[11px] text-blue-600 underline decoration-blue-600/80 underline-offset-2 hover:text-blue-800"
+                                      onClick={() => {
+                                        const next = window.prompt(
+                                          t('profileFormPhotoUrlPrompt'),
+                                          profilePhotoUrlDraft
+                                        );
+                                        if (next !== null) setProfilePhotoUrlDraft(next.trim());
+                                      }}
+                                    >
+                                      {t('profileFormEditPhotoUrlManually')}
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
                             </div>
 
-                            <div className="space-y-1">
-                              <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
-                                Bio / Description
+                            {/* Ligne 2 : bio */}
+                            <div className="mb-4 space-y-1">
+                              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                {pickLang('Bio / description', 'Bio / descripción', 'Bio / description', lang)}
                                 <span className="text-red-500 font-semibold" aria-hidden>
                                   {' *'}
                                 </span>
                               </label>
-                              <p className="text-[10px] text-stone-400 leading-snug">
+                              <textarea
+                                name="bio"
+                                defaultValue={editingProfile?.bio || profile?.bio}
+                                placeholder={pickLang(
+                                  'Décrivez votre activité ou votre parcours...',
+                                  'Describe tu actividad o tu trayectoria...',
+                                  'Describe your activity or background...',
+                                  lang
+                                )}
+                                className="min-h-[90px] w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                              />
+                              <p className="mt-1 text-[10px] text-stone-400">
                                 {pickLang(
                                   'Minimum 15 caractères pour la validation de la fiche.',
                                   'Mínimo 15 caracteres para validar la ficha.',
@@ -4555,7 +4672,27 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   lang
                                 )}
                               </p>
-                              <textarea name="bio" defaultValue={editingProfile?.bio || profile?.bio} placeholder="Décrivez votre activité ou votre parcours..." className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all min-h-[6rem]" />
+                            </div>
+
+                            {/* Ligne 3 : mots-clés (targetSectors) */}
+                            <div className="mb-4 space-y-1">
+                              <label
+                                htmlFor="targetSectors-about"
+                                className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                              >
+                                {t('profileFormAboutKeywordsLabel')}{' '}
+                                <span className="text-[10px] font-normal normal-case text-stone-400">
+                                  {t('targetSectorsOptional')}
+                                </span>
+                              </label>
+                              <input
+                                id="targetSectors-about"
+                                name="targetSectors"
+                                defaultValue={(editingProfile?.targetSectors || profile?.targetSectors || []).join(', ')}
+                                placeholder={t('needKeywordsPlaceholder')}
+                                className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                              />
+                              <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('needKeywordsHint')}</p>
                             </div>
 
                             <IceBreakerInterests
@@ -4569,30 +4706,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           <section className="space-y-4">
                             <h2 className="text-sm font-semibold text-stone-900">{t('profileFormSectionVisibility')}</h2>
                             <div className="space-y-1">
-                              <label
-                                htmlFor="targetSectors-contact"
-                                className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
-                              >
-                                {t('targetSectors')}{' '}
-                                <span className="font-normal normal-case text-stone-400">
-                                  {t('targetSectorsOptional')}
-                                </span>
-                              </label>
-                              <p className="text-[10px] text-stone-400 leading-relaxed">{t('needKeywordsHint')}</p>
-                              <input
-                                id="targetSectors-contact"
-                                name="targetSectors"
-                                defaultValue={(editingProfile?.targetSectors || profile?.targetSectors || []).join(', ')}
-                                placeholder={t('needKeywordsPlaceholder')}
-                                className="mt-1 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <span className="block text-xs font-semibold uppercase tracking-wider text-stone-500">
+                              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                 {t('contactPrefsOpenToLabel')}
                               </span>
-                              <p className="text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsOpenToHint')}</p>
-                              <div className="mt-2 space-y-2">
+                              <div className="mt-0 space-y-2">
                                 <label className="flex cursor-pointer items-start gap-3 rounded-lg p-1 hover:bg-stone-50">
                                   <input
                                     type="checkbox"
@@ -4645,30 +4762,27 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   </label>
                                 )}
                               </div>
+                              <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsOpenToHint')}</p>
                             </div>
                           </section>
 
-                          <section className="space-y-6 border-t border-stone-200 pt-6">
-                            <h2 className="text-sm font-semibold text-stone-900">{t('profileFormSectionUnpublished')}</h2>
-                          {formAdminPrivateReady && formAdminPrivate !== null && (
-                            <div
-                              key={`admin-priv-${editingProfile?.uid ?? profile?.uid}`}
-                              className="rounded-xl border border-violet-200/70 bg-violet-50/50 p-4 md:p-5 space-y-4"
-                            >
-                              <div>
-                                <p className="text-xs font-bold text-violet-950">{t('statsOnlySectionTitle')}</p>
-                                <p className="text-[10px] text-violet-900/80 mt-1 leading-relaxed">{t('statsOnlySectionHint')}</p>
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <section className="border-t border-stone-200 pt-4">
+                            <h2 className="mb-1 text-sm font-semibold text-stone-900">{t('profileFormSectionUnpublished')}</h2>
+                            <p className="mb-4 text-[10px] text-stone-400">{t('profileFormUnpublishedIntro')}</p>
+
+                            {formAdminPrivateReady && formAdminPrivate !== null && (
+                              <div
+                                key={`admin-priv-${editingProfile?.uid ?? profile?.uid}`}
+                                className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2"
+                              >
                                 <div className="space-y-1">
-                                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                     {t('genderStatLabel')}
                                   </label>
-                                  <p className="text-[10px] text-stone-400 leading-snug">{t('genderStatHint')}</p>
                                   <select
                                     name="genderStat"
                                     defaultValue={formAdminPrivate.genderStat ?? ''}
-                                    className="mt-1 w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all text-sm"
+                                    className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                   >
                                     <option value="">{t('genderStatSelectPlaceholder')}</option>
                                     <option value="male">{t('genderStatMale')}</option>
@@ -4676,16 +4790,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     <option value="other">{t('genderStatOther')}</option>
                                     <option value="prefer_not_say">{t('genderStatPreferNotSay')}</option>
                                   </select>
+                                  <p className="mt-1 text-[10px] text-stone-400 leading-snug">{t('genderStatHint')}</p>
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                     {t('nationalityLabel')}
                                   </label>
-                                  <p className="text-[10px] text-stone-400 leading-snug">{t('nationalityHint')}</p>
                                   <select
                                     name="nationality"
                                     defaultValue={formAdminPrivate.nationality ?? ''}
-                                    className="mt-1 w-full px-3 py-2 bg-white border border-stone-200 rounded-lg focus:ring-2 focus:ring-stone-900 outline-none transition-all text-sm"
+                                    className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                   >
                                     <option value="">{t('nationalitySelectPlaceholder')}</option>
                                     {NATIONALITY_OPTIONS.map((o) => (
@@ -4696,57 +4810,92 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   </select>
                                 </div>
                               </div>
-                              <label className="flex items-start gap-3 cursor-pointer group rounded-lg p-2 -m-2 hover:bg-white/60 transition-colors">
+                            )}
+
+                            <div className="mb-4 flex flex-col gap-2">
+                              <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700 hover:text-stone-900">
                                 <input
                                   type="checkbox"
-                                  name="acceptsDelegationVisits"
-                                  defaultChecked={formAdminPrivate.acceptsDelegationVisits === true}
-                                  className="mt-1 w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900 shrink-0"
+                                  name="isEmailPublic"
+                                  defaultChecked={editingProfile?.isEmailPublic ?? profile?.isEmailPublic}
+                                  className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
                                 />
-                                <span className="min-w-0">
-                                  <span className="block text-sm text-stone-700 group-hover:text-stone-900">
-                                    {t('acceptsDelegationVisitsLabel')}
+                                <span>{t('isEmailPublic')}</span>
+                              </label>
+                              <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700 hover:text-stone-900">
+                                <input
+                                  type="checkbox"
+                                  name="isWhatsappPublic"
+                                  defaultChecked={editingProfile?.isWhatsappPublic ?? profile?.isWhatsappPublic}
+                                  className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                />
+                                <span>{t('isWhatsappPublic')}</span>
+                              </label>
+                              {formAdminPrivateReady && formAdminPrivate !== null && (
+                                <label className="flex cursor-pointer items-start gap-2 rounded-lg p-1 text-sm text-stone-700 hover:bg-stone-50 hover:text-stone-900">
+                                  <input
+                                    type="checkbox"
+                                    name="acceptsDelegationVisits"
+                                    defaultChecked={formAdminPrivate.acceptsDelegationVisits === true}
+                                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                  />
+                                  <span className="min-w-0">
+                                    <span className="block">{t('acceptsDelegationVisitsLabel')}</span>
+                                    <span className="mt-0.5 block text-[10px] text-stone-500">{t('acceptsDelegationVisitsHint')}</span>
                                   </span>
-                                  <span className="block text-[10px] text-stone-500 mt-0.5">
-                                    {t('acceptsDelegationVisitsHint')}
-                                  </span>
-                                </span>
-                            </label>
-                          </div>
-                          )}
-
-                          <div className="flex flex-wrap gap-6 py-2">
-                            <label className="flex items-center gap-3 cursor-pointer group">
-                              <input type="checkbox" name="isEmailPublic" defaultChecked={editingProfile?.isEmailPublic ?? profile?.isEmailPublic} className="w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900" />
-                              <span className="text-sm text-stone-600 group-hover:text-stone-900 transition-colors">{t('isEmailPublic')}</span>
-                            </label>
-                            <label className="flex items-center gap-3 cursor-pointer group">
-                              <input type="checkbox" name="isWhatsappPublic" defaultChecked={editingProfile?.isWhatsappPublic ?? profile?.isWhatsappPublic} className="w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900" />
-                              <span className="text-sm text-stone-600 group-hover:text-stone-900 transition-colors">{t('isWhatsappPublic')}</span>
-                            </label>
-                          </div>
+                                </label>
+                              )}
+                            </div>
                           </section>
 
-                          <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-stone-100">
-                            <button type="submit" disabled={profileSaveBusy} className="px-8 bg-stone-900 text-white py-2 rounded-lg hover:bg-stone-800 transition-all font-medium disabled:opacity-60 disabled:cursor-not-allowed">
+                          <div className="flex justify-end gap-3 border-t border-stone-200 pt-6">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsEditing(false);
+                                setEditingProfile(null);
+                              }}
+                              className="rounded-lg border border-stone-300 px-4 py-2 text-sm text-stone-700 transition-colors hover:bg-stone-50"
+                            >
+                              {t('cancel')}
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={profileSaveBusy}
+                              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
                               {profileSaveBusy
                                 ? pickLang('Enregistrement...', 'Guardando...', 'Saving...', lang)
                                 : t('save')}
                             </button>
-                            <button type="button" onClick={() => { setIsEditing(false); setEditingProfile(null); }} className="px-8 bg-stone-100 text-stone-600 py-2 rounded-lg hover:bg-stone-200 transition-all font-medium">{t('cancel')}</button>
-                            {profile?.uid ? (
+                          </div>
+
+                          {profile?.uid ? (
+                            <div className="mt-8 border-t border-red-100 pt-4">
+                              <p className="mb-2 text-xs text-stone-400">{t('profileFormDangerZoneLabel')}</p>
                               <button
                                 type="button"
-                                onClick={() => setProfileToDelete(profile.uid)}
-                                className="ml-auto inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50"
+                                className="text-xs text-red-500 underline decoration-red-500/80 underline-offset-2 hover:text-red-700"
+                                onClick={() => {
+                                  if (
+                                    !window.confirm(
+                                      profile.uid === user?.uid
+                                        ? t('profileFormDeleteOwnConfirm')
+                                        : t('confirmDelete')
+                                    )
+                                  ) {
+                                    return;
+                                  }
+                                  void handleDeleteProfile(profile.uid);
+                                }}
                               >
-                                <Plus size={14} className="rotate-45" aria-hidden />
                                 {t('deleteProfile')}
                               </button>
-                            ) : null}
-                          </div>
+                            </div>
+                          ) : null}
+
                           {profileSaveError && (
-                            <p className="text-xs text-red-600">{profileSaveError}</p>
+                            <p className="mt-3 text-xs text-red-600">{profileSaveError}</p>
                           )}
                         </form>
                       ) : profile ? (

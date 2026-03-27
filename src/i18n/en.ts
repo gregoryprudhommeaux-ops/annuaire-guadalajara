@@ -83,7 +83,7 @@ export const EN_STRINGS: Record<string, string> = {
   statsOnlySectionHint:
     "These fields are used for internal statistics and network organization (aligned with European practice and GDPR). They are never shown on the public directory.",
   genderStatLabel: "Gender",
-  genderStatHint: "For statistics only — not shown on your public profile.",
+  genderStatHint: "For statistics only.",
   genderStatMale: "Male",
   genderStatFemale: "Female",
   genderStatOther: "Other",
@@ -191,6 +191,9 @@ export const EN_STRINGS: Record<string, string> = {
   loading: "Loading…",
   deleteProfile: "Delete my profile",
   confirmDelete: "Are you sure you want to delete this profile? This cannot be undone.",
+  profileFormDangerZoneLabel: "Danger zone",
+  profileFormDeleteOwnConfirm:
+    "Are you sure you want to delete your profile? This cannot be undone.",
   delete: "Delete",
   allIndustries: "All industries",
   filterSectorHint: "Narrow the profile list by sector (same filter as in the left column).",
@@ -223,11 +226,27 @@ export const EN_STRINGS: Record<string, string> = {
   profileFormSubsectionEntreprise: "Company",
   profileFormSubsectionRH: "Human resources",
   profileFormSectionIdentity: "Identity",
+  profileFormCountryFootnote: "Country of operation or residence.",
   profileFormSectionCore: "What you’re looking for and what you can offer",
   profileFormSectionCompanyDetails: "Company details",
+  profileFormCompanyDetailsIntro:
+    "This information is only used for our internal statistics.",
+  profileFormCompanyType: "Company type",
+  profileFormProfessionalStatus: "Professional status",
+  profileFormArrivalRegionHint: "Used to estimate how long you’ve been in the region.",
   profileFormSectionAbout: "About you",
+  profileFormAboutPhotoEmpty:
+    'Use “Fetch photo” after entering your LinkedIn link.',
+  profileFormPhotoLinkedInOk: "Photo retrieved from LinkedIn",
+  profileFormPhotoDefined: "Profile photo set",
+  profileFormEditPhotoUrlManually: "Edit URL manually",
+  profileFormPhotoUrlPrompt: "Paste the photo URL:",
+  profileFormProfilePhotoLabel: "Profile photo",
+  profileFormPhotoPlaceholder: "Photo",
   profileFormSectionVisibility: "Visibility & network",
   profileFormSectionUnpublished: "Unpublished data",
+  profileFormUnpublishedIntro:
+    "These fields are for internal statistics. They are never shown on the public directory.",
   profileBannerMandatory:
     "Please update your profile with the new required fields (marked *) so it can be validated.",
   profileBannerAi:
@@ -270,14 +289,13 @@ export const EN_STRINGS: Record<string, string> = {
   noNeedsSpecified: "No specific needs for now.",
   targetSectors: "Keywords (industry, field, area…)",
   targetSectorsOptional: "(optional)",
-  needKeywordsHint:
-    "Enter keywords separated by commas (sector, customer type, geography, technology…).",
+  needKeywordsHint: "Comma-separated: sector, customer type, geography…",
+  profileFormAboutKeywordsLabel: "Keywords",
   needKeywordsPlaceholder: "e.g. automotive suppliers, Jalisco, export France",
   profilePublicCurrentNeeds: "Current needs",
   profilePublicAboutTitle: "About",
   profileHelpNewcomersLabel: "I can help with…",
-  profileHelpNewcomersHint:
-    "For people arriving in the city: first supplier contacts, banking, legal setup, early business intros…",
+  profileHelpNewcomersHint: "For people arriving in the city.",
   profileHelpNewcomersPlaceholder:
     "e.g. intros to local suppliers, practical setup tips, first business meetings…",
   profileNetworkGoalLabel: "What I’m looking for from this network",
@@ -379,8 +397,7 @@ export const EN_STRINGS: Record<string, string> = {
   contactLinks: "Contact & links",
   contactPrefsTitle: "Contact & collaboration preferences",
   contactPrefsCtaLabel: "Preferred first contact channel…",
-  contactPrefsCtaHint:
-    "Indicate the channel you prefer for a first contact (WhatsApp, email, LinkedIn…).",
+  contactPrefsCtaHint: "Channel to prefer for a first contact.",
   contactPrefsCtaPlaceholder: "e.g. WhatsApp during the day, email for formal requests",
   contactPrefsWorkingLangLabel: "Working languages (max. 3)",
   contactPrefsWorkingLangHint: "Select your priority business languages in the region.",
@@ -399,7 +416,7 @@ export const EN_STRINGS: Record<string, string> = {
   highlightedNeedsTitle: "Current needs (0–3)",
   highlightedNeedsOptional: "(optional)",
   highlightedNeedsHint:
-    "You can pick 0 to 3 needs; if you add any, they will appear on your directory profile.",
+    "If filled in, they will stand out on your public profile.",
   highlightedNeedsCount: "selected",
   typedNeedsRadar: "Structured needs (network)",
   typedNeedsRadarEmpty: "No structured needs yet (optional field, up to 3).",

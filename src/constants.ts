@@ -320,8 +320,8 @@ export const TRANSLATIONS: Translations = {
   },
   genderStatLabel: { fr: "Genre", es: "Género" },
   genderStatHint: {
-    fr: "À fins statistiques uniquement — non affiché sur votre profil public.",
-    es: "Solo con fines estadísticos — no se muestra en tu perfil público.",
+    fr: "À fins statistiques uniquement.",
+    es: "Solo con fines estadísticos.",
   },
   genderStatMale: { fr: "Homme", es: "Hombre" },
   genderStatFemale: { fr: "Femme", es: "Mujer" },
@@ -513,6 +513,11 @@ export const TRANSLATIONS: Translations = {
   loading: { fr: "Chargement...", es: "Cargando..." },
   deleteProfile: { fr: "Supprimer mon profil", es: "Eliminar mi perfil" },
   confirmDelete: { fr: "Êtes-vous sûr de vouloir supprimer ce profil ? Cette action est irréversible.", es: "¿Seguro que quieres eliminar este perfil? Esta acción no se puede deshacer." },
+  profileFormDangerZoneLabel: { fr: 'Zone de danger', es: 'Zona de peligro' },
+  profileFormDeleteOwnConfirm: {
+    fr: "Êtes-vous sûr de vouloir supprimer votre profil ? Cette action est irréversible.",
+    es: '¿Seguro que quieres eliminar tu perfil? Esta acción no se puede deshacer.',
+  },
   delete: { fr: "Supprimer", es: "Eliminar" },
   allIndustries: { fr: "Toutes les industries", es: "Todas las industrias" },
   filterSectorHint: {
@@ -556,6 +561,11 @@ export const TRANSLATIONS: Translations = {
     es: 'Recursos humanos',
   },
   profileFormSectionIdentity: { fr: 'Identité', es: 'Identidad' },
+  /** Sous le champ pays (formulaire identité) — court, pour aligner la grille. */
+  profileFormCountryFootnote: {
+    fr: "Pays d'implantation ou de résidence.",
+    es: 'País de implantación o residencia.',
+  },
   profileFormSectionCore: {
     fr: 'Ce que vous cherchez et ce que vous pouvez apporter',
     es: 'Lo que buscas y lo que puedes aportar',
@@ -564,7 +574,44 @@ export const TRANSLATIONS: Translations = {
     fr: "Détails de l'entreprise",
     es: 'Detalles de la empresa',
   },
+  /** Sous-titre sous le titre de section « Détails de l'entreprise » (formulaire profil). */
+  profileFormCompanyDetailsIntro: {
+    fr: 'Ces informations servent uniquement à nos statistiques internes.',
+    es: 'Esta información solo se usa para nuestras estadísticas internas.',
+  },
+  profileFormCompanyType: { fr: "Type d'entreprise", es: 'Tipo de empresa' },
+  profileFormProfessionalStatus: {
+    fr: 'Statut professionnel',
+    es: 'Estatus profesional',
+  },
+  /** Court texte sous le libellé « année d'arrivée » (formulaire profil). */
+  profileFormArrivalRegionHint: {
+    fr: "Sert à estimer l'ancienneté sur la région.",
+    es: 'Sirve para estimar la antigüedad en la región.',
+  },
   profileFormSectionAbout: { fr: 'À propos de vous', es: 'Sobre ti' },
+  profileFormAboutPhotoEmpty: {
+    fr: 'Utilisez le bouton « Récupérer la photo » après avoir renseigné votre lien LinkedIn.',
+    es: 'Usa el botón « Obtener la foto » después de indicar tu enlace de LinkedIn.',
+  },
+  profileFormPhotoLinkedInOk: {
+    fr: 'Photo récupérée depuis LinkedIn',
+    es: 'Foto obtenida desde LinkedIn',
+  },
+  profileFormPhotoDefined: {
+    fr: 'Photo de profil définie',
+    es: 'Foto de perfil definida',
+  },
+  profileFormEditPhotoUrlManually: {
+    fr: "Modifier l'URL manuellement",
+    es: 'Editar la URL manualmente',
+  },
+  profileFormPhotoUrlPrompt: {
+    fr: "Coller l'URL de la photo :",
+    es: 'Pega la URL de la foto:',
+  },
+  profileFormProfilePhotoLabel: { fr: 'Photo de profil', es: 'Foto de perfil' },
+  profileFormPhotoPlaceholder: { fr: 'Photo', es: 'Foto' },
   profileFormSectionVisibility: {
     fr: 'Visibilité & réseau',
     es: 'Visibilidad y red',
@@ -572,6 +619,11 @@ export const TRANSLATIONS: Translations = {
   profileFormSectionUnpublished: {
     fr: 'Données non publiées',
     es: 'Datos no publicados',
+  },
+  /** Sous le titre de section « Données non publiées » (formulaire profil). */
+  profileFormUnpublishedIntro: {
+    fr: "Ces champs servent à des statistiques internes. Ils ne sont jamais affichés sur l'annuaire public.",
+    es: 'Estos campos sirven para estadísticas internas. Nunca se muestran en el directorio público.',
   },
   profileBannerMandatory: {
     fr: 'Merci de mettre à jour votre profil avec les nouveaux champs obligatoires (marqués *) pour permettre sa validation.',
@@ -668,9 +720,11 @@ export const TRANSLATIONS: Translations = {
   },
   targetSectorsOptional: { fr: "(facultatif)", es: "(opcional)" },
   needKeywordsHint: {
-    fr: "Indiquez des mots-clés séparés par des virgules (secteur, type de clientèle, zone géographique, technologie…).",
-    es: "Indica palabras clave separadas por comas (sector, tipo de cliente, zona, tecnología…).",
+    fr: "Séparés par des virgules : secteur, type de clientèle, zone géographique…",
+    es: "Separados por comas: sector, tipo de cliente, zona geográfica…",
   },
+  /** Libellé court du champ mots-clés (formulaire « À propos »). */
+  profileFormAboutKeywordsLabel: { fr: 'Mots-clés', es: 'Palabras clave' },
   needKeywordsPlaceholder: {
     fr: "Ex. fournisseurs automotive, Jalisco, export France…",
     es: "Ej. proveedores automotriz, Jalisco, exportación Francia…",
@@ -680,8 +734,8 @@ export const TRANSLATIONS: Translations = {
     es: "Puedo ayudar en…",
   },
   profileHelpNewcomersHint: {
-    fr: "Pour les personnes qui arrivent dans la ville : premiers contacts fournisseurs, banque, implantation juridique, intros business…",
-    es: "Para quien llega a la ciudad: primeros contactos, banca, legal, intros comerciales…",
+    fr: "Pour les personnes qui arrivent dans la ville.",
+    es: "Para quienes llegan a la ciudad.",
   },
   profileHelpNewcomersPlaceholder: {
     fr: "Ex. mise en relation avec des fournisseurs locaux, conseils d’implantation, premières intros…",
@@ -921,8 +975,8 @@ export const TRANSLATIONS: Translations = {
     es: 'Contactar de preferencia por…',
   },
   contactPrefsCtaHint: {
-    fr: 'Indiquez le canal à privilégier pour un premier contact (WhatsApp, email, LinkedIn…).',
-    es: 'Indica el canal preferido para un primer contacto (WhatsApp, correo, LinkedIn…).',
+    fr: 'Canal à privilégier pour un premier contact.',
+    es: 'Canal a priorizar para un primer contacto.',
   },
   contactPrefsCtaPlaceholder: {
     fr: 'Ex. WhatsApp en journée, email pour les demandes formelles',
@@ -992,8 +1046,8 @@ export const TRANSLATIONS: Translations = {
   },
   highlightedNeedsOptional: { fr: "(facultatif)", es: "(opcional)" },
   highlightedNeedsHint: {
-    fr: "Vous pouvez sélectionner entre 0 et 3 besoins ; s’ils sont renseignés, ils apparaîtront sur votre fiche dans l’annuaire.",
-    es: "Puedes elegir entre 0 y 3 necesidades; si las indicas, aparecerán en tu ficha del directorio.",
+    fr: "S’ils sont renseignés, ils apparaîtront en évidence sur votre fiche publique.",
+    es: "Si los indicas, aparecerán destacados en tu ficha pública.",
   },
   highlightedNeedsCount: {
     fr: "sélectionné(s)",
