@@ -2187,6 +2187,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [profileCoachLine, setProfileCoachLine] = useState('');
   const [profileCoachSource, setProfileCoachSource] = useState<'local' | 'ai' | null>(null);
   const [profileCoachLoading, setProfileCoachLoading] = useState(false);
+  const authInitPromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     if (!profileSaveSuccess) return;
@@ -2762,12 +2763,16 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   }, [user]);
 
   useEffect(() => {
-    setPersistence(auth, browserLocalPersistence).catch((error) => {
-      console.warn('Failed to set auth persistence', error);
-    });
+    // Init auth once (persistence + redirect handling). Keep a promise so sign-in clicks can await it.
+    const init = (async () => {
+      try {
+        await setPersistence(auth, browserLocalPersistence);
+      } catch (error) {
+        console.warn('Failed to set auth persistence', error);
+      }
 
-    getRedirectResult(auth)
-      .then((result) => {
+      try {
+        const result = await getRedirectResult(auth);
         if (result?.user) {
           setUser(result.user);
           setAuthError(null);
@@ -2800,12 +2805,13 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
             /* ignore */
           }
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         const code = (error as { code?: string })?.code ?? '';
         if (!code || code === 'auth/popup-closed-by-user') return;
         setAuthError(`${getAuthErrorMessage(code)}${code ? ` (code: ${code})` : ''}`);
-      });
+      }
+    })();
+    authInitPromiseRef.current = init;
   }, []);
 
   useEffect(() => {
@@ -2823,6 +2829,16 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     setAuthProviderBusy(which);
     setAuthError(null);
     try {
+      // Avoid first-click flakiness: wait for persistence + redirect result handling.
+      try {
+        await Promise.race([
+          authInitPromiseRef.current ?? Promise.resolve(),
+          new Promise<void>((resolve) => setTimeout(resolve, 2500)),
+        ]);
+      } catch {
+        /* ignore */
+      }
+
       // In Cursor/Electron, popup auth can stall on passkey prompts.
       // Prefer redirect there; otherwise keep popup first and fallback to redirect.
       const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
