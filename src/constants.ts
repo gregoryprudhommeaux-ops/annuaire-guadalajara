@@ -654,8 +654,32 @@ export const TRANSLATIONS: Translations = {
     es: "Indica palabras clave separadas por comas (sector, tipo de cliente, zona, tecnología…).",
   },
   needKeywordsPlaceholder: {
-    fr: "Ex. agroalimentaire, SaaS B2B, Zapopan, export UE…",
-    es: "Ej. agro, SaaS B2B, Zapopan, export UE…",
+    fr: "Ex. fournisseurs automotive, Jalisco, export France…",
+    es: "Ej. proveedores automotriz, Jalisco, exportación Francia…",
+  },
+  profileHelpNewcomersLabel: {
+    fr: "Je peux aider sur…",
+    es: "Puedo ayudar en…",
+  },
+  profileHelpNewcomersHint: {
+    fr: "Pour les personnes qui arrivent dans la ville : premiers contacts fournisseurs, banque, implantation juridique, intros business…",
+    es: "Para quien llega a la ciudad: primeros contactos, banca, legal, intros comerciales…",
+  },
+  profileHelpNewcomersPlaceholder: {
+    fr: "Ex. mise en relation avec des fournisseurs locaux, conseils d’implantation, premières intros…",
+    es: "Ej. contactos con proveedores locales, consejos de implantación, primeras intros…",
+  },
+  profileNetworkGoalLabel: {
+    fr: "Ce que je cherche via ce réseau",
+    es: "Lo que busco con esta red",
+  },
+  profileNetworkGoalHint: {
+    fr: "Phrase courte : clients, partenaires, idées, opportunités…",
+    es: "Frase breve: clientes, socios, ideas, oportunidades…",
+  },
+  profileNetworkGoalPlaceholder: {
+    fr: "Ex. identifier 3 partenaires industriels à Monterrey d’ici 6 mois",
+    es: "Ej. identificar 3 socios industriales en Monterrey en 6 meses",
   },
   keywordsTopRadar: {
     fr: "Mots-clés les plus cités",
@@ -937,6 +961,11 @@ export const TRANSLATIONS: Translations = {
   contactPrefsOpenEventSponsoringPrivateHint: {
     fr: 'Enregistré dans vos données non publiées (comme le genre et les délégations).',
     es: 'Se guarda en tus datos no publicados (como género y delegaciones).',
+  },
+  /** Titre court sur la fiche publique (sans mention 0–3). */
+  profilePublicCurrentNeeds: {
+    fr: "Besoins actuels",
+    es: "Necesidades actuales",
   },
   highlightedNeedsTitle: {
     fr: "Besoins actuels (0 à 3)",

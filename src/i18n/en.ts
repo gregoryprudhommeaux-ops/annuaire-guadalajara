@@ -266,7 +266,17 @@ export const EN_STRINGS: Record<string, string> = {
   targetSectorsOptional: "(optional)",
   needKeywordsHint:
     "Enter keywords separated by commas (sector, customer type, geography, technology…).",
-  needKeywordsPlaceholder: "E.g. food & beverage, B2B SaaS, Zapopan, EU export…",
+  needKeywordsPlaceholder: "e.g. automotive suppliers, Jalisco, export France",
+  profilePublicCurrentNeeds: "Current needs",
+  profileHelpNewcomersLabel: "I can help with…",
+  profileHelpNewcomersHint:
+    "For people arriving in the city: first supplier contacts, banking, legal setup, early business intros…",
+  profileHelpNewcomersPlaceholder:
+    "e.g. intros to local suppliers, practical setup tips, first business meetings…",
+  profileNetworkGoalLabel: "What I’m looking for from this network",
+  profileNetworkGoalHint: "One short line: clients, partners, ideas, opportunities…",
+  profileNetworkGoalPlaceholder:
+    "e.g. find 3 industrial partners in Monterrey within 6 months",
   keywordsTopRadar: "Most cited keywords",
   keywordsUniqueStat: "Unique keywords",
   accountType: "Account type",

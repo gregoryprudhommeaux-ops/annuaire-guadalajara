@@ -115,6 +115,10 @@ export interface UserProfile {
   lookingFor?: string;
   /** Mots-clés libres (industrie, zone, domaine…), saisis séparés par virgules côté UI */
   targetSectors?: string[];
+  /** Aide concrète proposée aux nouveaux arrivants (texte libre). */
+  helpNewcomers?: string;
+  /** Objectif réseau en une phrase (ce que le membre cherche via la communauté). */
+  networkGoal?: string;
   /** Canal privilégié pour un premier contact (texte libre) */
   contactPreferenceCta?: string;
   /** Pré-traductions du CTA de contact (clé = langue UI). */

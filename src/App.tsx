@@ -1529,6 +1529,56 @@ const ProfilePage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="md:col-span-2 space-y-8">
+                {sanitizeHighlightedNeeds(profile.highlightedNeeds).length > 0 && (
+                  <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 shadow-sm">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+                      {tp('profilePublicCurrentNeeds')}
+                    </h3>
+                    <ul className="mt-2 flex list-none flex-wrap gap-1.5 p-0">
+                      {sanitizeHighlightedNeeds(profile.highlightedNeeds).map((id) => (
+                        <li
+                          key={id}
+                          className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-medium text-amber-900"
+                        >
+                          {needOptionLabel(id, lang)}
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/besoin/${profile.uid}`)}
+                      className="mt-3 inline-flex items-center gap-2 rounded-xl bg-amber-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-amber-800"
+                    >
+                      {pickLang('Voir le besoin', 'Ver la necesidad', 'View need', lang)}
+                      <ChevronRight size={14} aria-hidden />
+                    </button>
+                  </div>
+                )}
+
+                {sanitizeHighlightedNeeds(profile.highlightedNeeds).length === 0 && (
+                  <p className="text-sm italic text-stone-500">{tp('noNeedsSpecified')}</p>
+                )}
+
+                {profile.networkGoal?.trim() ? (
+                  <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 shadow-sm">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-blue-800">
+                      {tp('profileNetworkGoalLabel')}
+                    </h3>
+                    <p className="mt-1 text-sm leading-snug text-blue-950">{profile.networkGoal}</p>
+                  </div>
+                ) : null}
+
+                {profile.helpNewcomers?.trim() ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-sm">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                      {tp('profileHelpNewcomersLabel')}
+                    </h3>
+                    <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-emerald-950">
+                      {profile.helpNewcomers}
+                    </p>
+                  </div>
+                ) : null}
+
                 <section>
                   <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">{tp('companyDescription')}</h2>
                   {profile.bio?.trim() ? (
@@ -1562,34 +1612,21 @@ const ProfilePage = () => {
                   </section>
                 )}
 
-                <section className="bg-indigo-50/60 p-6 rounded-3xl border border-indigo-100">
-                  <h2 className="text-xs font-black text-indigo-500 uppercase tracking-[0.2em] mb-3">{tp('needsSought')}</h2>
-                  {sanitizeHighlightedNeeds(profile.highlightedNeeds).length > 0 && (
-                    <div className="mb-4 flex flex-wrap gap-2">
-                      {sanitizeHighlightedNeeds(profile.highlightedNeeds).map((id) => (
+                {profile.targetSectors && profile.targetSectors.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-stone-600">{tp('targetSectors')}</h3>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {profile.targetSectors.map((s) => (
                         <span
-                          key={id}
-                          className="rounded-xl border border-violet-200 bg-white px-3 py-1.5 text-sm font-bold text-violet-900 shadow-sm"
+                          key={s}
+                          className="inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-800"
                         >
-                          {needOptionLabel(id, lang)}
+                          {s}
                         </span>
                       ))}
                     </div>
-                  )}
-                  {sanitizeHighlightedNeeds(profile.highlightedNeeds).length === 0 && (
-                    <p className="text-stone-800 leading-relaxed text-lg font-medium">{tp('noNeedsSpecified')}</p>
-                  )}
-                  {sanitizeHighlightedNeeds(profile.highlightedNeeds).length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/besoin/${profile.uid}`)}
-                      className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-2xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200"
-                    >
-                      {pickLang('Voir le besoin', 'Ver la necesidad', 'View need', lang)}
-                      <ChevronRight size={16} />
-                    </button>
-                  )}
-                </section>
+                  </div>
+                )}
 
                 {profile.pitchVideoUrl && (
                   <section>
@@ -1746,19 +1783,6 @@ const ProfilePage = () => {
                     ) : null}
                   </div>
                 </div>
-
-                {profile.targetSectors && profile.targetSectors.length > 0 && (
-                  <div>
-                    <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">{tp('targetSectors')}</h2>
-                    <div className="flex flex-wrap gap-2">
-                      {profile.targetSectors.map(s => (
-                        <span key={s} className="px-3 py-1.5 bg-white border border-stone-200 rounded-xl text-xs font-bold text-stone-700 shadow-sm">
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -3220,6 +3244,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       }
     }
 
+    const helpNewcomersVal = optionalString('helpNewcomers');
+    const networkGoalVal = optionalString('networkGoal');
+
     const newProfile = {
       uid: targetUid,
       fullName: getTrimmed('fullName'),
@@ -3245,6 +3272,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       highlightedNeeds: sanitizeHighlightedNeeds(highlightedNeedsDraft),
       passionIds: sanitizePassionIds(passionIdsDraft),
       targetSectors: (formData.get('targetSectors') as string)?.split(',').map(s => s.trim()).filter(Boolean) || [],
+      helpNewcomers: helpNewcomersVal !== undefined ? helpNewcomersVal : deleteField(),
+      networkGoal: networkGoalVal !== undefined ? networkGoalVal : deleteField(),
       contactPreferenceCta: nextContactCta ?? deleteField(),
       contactPreferenceCtaTranslations: nextContactCtaTranslations,
       workingLanguageCodes: sanitizeWorkingLanguageCodes(workingLanguagesDraft),
@@ -4606,6 +4635,44 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </div>
                             <div className="space-y-1">
                               <label
+                                htmlFor="helpNewcomers"
+                                className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
+                              >
+                                {t('profileHelpNewcomersLabel')}
+                              </label>
+                              <p className="text-[10px] text-stone-400 leading-relaxed">{t('profileHelpNewcomersHint')}</p>
+                              <textarea
+                                id="helpNewcomers"
+                                name="helpNewcomers"
+                                rows={3}
+                                maxLength={800}
+                                defaultValue={
+                                  (editingProfile?.helpNewcomers ?? profile?.helpNewcomers) || ''
+                                }
+                                placeholder={t('profileHelpNewcomersPlaceholder')}
+                                className="mt-1 w-full min-h-[60px] rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label
+                                htmlFor="networkGoal"
+                                className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
+                              >
+                                {t('profileNetworkGoalLabel')}
+                              </label>
+                              <p className="text-[10px] text-stone-400 leading-relaxed">{t('profileNetworkGoalHint')}</p>
+                              <input
+                                id="networkGoal"
+                                name="networkGoal"
+                                type="text"
+                                maxLength={200}
+                                defaultValue={(editingProfile?.networkGoal ?? profile?.networkGoal) || ''}
+                                placeholder={t('profileNetworkGoalPlaceholder')}
+                                className="mt-1 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label
                                 htmlFor="typicalClientSize"
                                 className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
                               >
@@ -5864,6 +5931,24 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       </div>
                     </div>
                   )}
+                  {selectedProfile.helpNewcomers?.trim() ? (
+                    <div className="rounded-xl border border-emerald-100/50 bg-emerald-50/40 px-4 py-3">
+                      <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-700">
+                        {t('profileHelpNewcomersLabel')}
+                      </p>
+                      <p className="text-sm text-stone-700 whitespace-pre-wrap leading-relaxed">
+                        {selectedProfile.helpNewcomers}
+                      </p>
+                    </div>
+                  ) : null}
+                  {selectedProfile.networkGoal?.trim() ? (
+                    <div className="rounded-xl border border-amber-100/50 bg-amber-50/40 px-4 py-3">
+                      <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-800">
+                        {t('profileNetworkGoalLabel')}
+                      </p>
+                      <p className="text-sm font-medium text-stone-800">{selectedProfile.networkGoal}</p>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="space-y-5">
