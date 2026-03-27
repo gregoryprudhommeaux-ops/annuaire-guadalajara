@@ -222,6 +222,12 @@ export const EN_STRINGS: Record<string, string> = {
     "Fields marked with an asterisk (*) are required for the team to validate your directory profile.",
   profileFormSubsectionEntreprise: "Company",
   profileFormSubsectionRH: "Human resources",
+  profileFormSectionIdentity: "Identity",
+  profileFormSectionCore: "What you’re looking for and what you can offer",
+  profileFormSectionCompanyDetails: "Company details",
+  profileFormSectionAbout: "About you",
+  profileFormSectionVisibility: "Visibility & network",
+  profileFormSectionUnpublished: "Unpublished data",
   profileBannerMandatory:
     "Please update your profile with the new required fields (marked *) so it can be validated.",
   profileBannerAi:
@@ -268,6 +274,7 @@ export const EN_STRINGS: Record<string, string> = {
     "Enter keywords separated by commas (sector, customer type, geography, technology…).",
   needKeywordsPlaceholder: "e.g. automotive suppliers, Jalisco, export France",
   profilePublicCurrentNeeds: "Current needs",
+  profilePublicAboutTitle: "About",
   profileHelpNewcomersLabel: "I can help with…",
   profileHelpNewcomersHint:
     "For people arriving in the city: first supplier contacts, banking, legal setup, early business intros…",

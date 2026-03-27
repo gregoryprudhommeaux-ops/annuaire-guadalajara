@@ -555,6 +555,24 @@ export const TRANSLATIONS: Translations = {
     fr: 'Ressources humaines',
     es: 'Recursos humanos',
   },
+  profileFormSectionIdentity: { fr: 'Identité', es: 'Identidad' },
+  profileFormSectionCore: {
+    fr: 'Ce que vous cherchez et ce que vous pouvez apporter',
+    es: 'Lo que buscas y lo que puedes aportar',
+  },
+  profileFormSectionCompanyDetails: {
+    fr: "Détails de l'entreprise",
+    es: 'Detalles de la empresa',
+  },
+  profileFormSectionAbout: { fr: 'À propos de vous', es: 'Sobre ti' },
+  profileFormSectionVisibility: {
+    fr: 'Visibilité & réseau',
+    es: 'Visibilidad y red',
+  },
+  profileFormSectionUnpublished: {
+    fr: 'Données non publiées',
+    es: 'Datos no publicados',
+  },
   profileBannerMandatory: {
     fr: 'Merci de mettre à jour votre profil avec les nouveaux champs obligatoires (marqués *) pour permettre sa validation.',
     es: 'Actualiza tu perfil con los nuevos campos obligatorios (marcados con *) para poder validarlo.',
@@ -967,6 +985,7 @@ export const TRANSLATIONS: Translations = {
     fr: "Besoins actuels",
     es: "Necesidades actuales",
   },
+  profilePublicAboutTitle: { fr: "À propos", es: "Sobre ti" },
   highlightedNeedsTitle: {
     fr: "Besoins actuels (0 à 3)",
     es: "Necesidades actuales (0 a 3)",
