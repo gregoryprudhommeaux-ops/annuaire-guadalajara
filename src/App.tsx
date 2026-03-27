@@ -599,13 +599,23 @@ const ProfileCard = ({
       data-testid="member-card"
       onClick={() => onSelect(p)}
       className={cn(
-        'relative flex min-h-0 cursor-pointer flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow group hover:shadow-md sm:p-5',
-        guestDirectoryTeaser ? 'h-auto' : 'h-full'
+        'relative flex min-h-0 cursor-pointer flex-col rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow group hover:shadow-md',
+        guestDirectoryTeaser ? 'h-auto p-3 sm:p-5' : 'h-full p-4 sm:p-5'
       )}
     >
-      <div className="mb-2 flex shrink-0 justify-between items-start gap-2">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-stone-200">
+      <div
+        className={cn(
+          'flex shrink-0 items-start justify-between gap-2',
+          guestDirectoryTeaser ? 'mb-1.5 sm:mb-2' : 'mb-2'
+        )}
+      >
+        <div className={cn('flex min-w-0 flex-1 items-start', guestDirectoryTeaser ? 'gap-2.5 sm:gap-3' : 'gap-3')}>
+          <div
+            className={cn(
+              'relative shrink-0 overflow-hidden rounded-xl border border-stone-200',
+              guestDirectoryTeaser ? 'h-10 w-10 sm:h-12 sm:w-12' : 'h-12 w-12'
+            )}
+          >
             {guestDirectoryTeaser ? (
               <>
                 <div
@@ -616,7 +626,7 @@ const ProfileCard = ({
                     photoURL={p.photoURL}
                     fullName={p.fullName}
                     className="h-full w-full"
-                    iconSize={24}
+                    iconSize={20}
                   />
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center bg-stone-100/35">
@@ -638,13 +648,13 @@ const ProfileCard = ({
           <div className="min-w-0 flex-1">
             {guestDirectoryTeaser && variant === 'company' && (
               <>
-                <div className="mb-1 flex items-center gap-2">
-                  <Building2 size={18} className="shrink-0 text-stone-500" />
-                  <h3 className="truncate text-lg font-bold leading-tight text-stone-900 transition-colors group-hover:text-stone-800 sm:text-xl">
+                <div className="mb-0.5 flex items-center gap-1.5 sm:mb-1 sm:gap-2">
+                  <Building2 className="h-4 w-4 shrink-0 text-stone-500 sm:h-[18px] sm:w-[18px]" strokeWidth={1.75} />
+                  <h3 className="truncate text-base font-bold leading-tight text-stone-900 transition-colors group-hover:text-stone-800 sm:text-lg md:text-xl">
                     {p.companyName}
                   </h3>
                 </div>
-                <p className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-stone-600">
+                <p className="flex flex-wrap items-center gap-1.5 text-[13px] font-medium text-stone-600 sm:text-sm">
                   <UserIcon size={14} className="shrink-0 text-stone-400" />
                   <span className="truncate">{p.fullName}</span>
                 </p>
@@ -653,7 +663,7 @@ const ProfileCard = ({
             {guestDirectoryTeaser && variant === 'activity' && (
               <>
                 <div
-                  className="mb-2 h-9 max-w-[90%] rounded-lg bg-slate-200/90 blur-[8px]"
+                  className="mb-1.5 h-7 max-w-[88%] rounded-lg bg-slate-200/90 blur-[6px] sm:mb-2 sm:h-9 sm:max-w-[90%] sm:blur-[8px]"
                   aria-hidden
                 />
                 <p className="truncate text-sm font-semibold text-stone-800">{p.companyName}</p>
@@ -662,10 +672,10 @@ const ProfileCard = ({
             )}
             {guestDirectoryTeaser && variant === 'default' && (
               <>
-                <h3 className="line-clamp-2 break-words font-bold leading-tight text-stone-900 transition-colors group-hover:text-stone-700">
+                <h3 className="line-clamp-2 break-words text-base font-bold leading-snug text-stone-900 transition-colors group-hover:text-stone-700 sm:text-lg sm:leading-tight">
                   {p.fullName}
                 </h3>
-                <p className="mt-0.5 truncate text-xs font-medium text-stone-500">{p.companyName}</p>
+                <p className="mt-0.5 truncate text-[11px] font-medium text-stone-500 sm:text-xs">{p.companyName}</p>
               </>
             )}
             {!guestDirectoryTeaser && variant === 'company' && (
@@ -727,46 +737,41 @@ const ProfileCard = ({
       </div>
 
       {guestDirectoryTeaser ? (
-        <div className="relative mt-1.5 h-[100px] w-full shrink-0 sm:h-[104px]">
-          <div
-            className="pointer-events-none absolute inset-0 flex flex-col justify-end space-y-1.5 pb-0.5 opacity-50 blur-sm select-none"
-            aria-hidden
-          >
+        <div className="mt-1.5 w-full shrink-0 rounded-lg border border-slate-100 bg-slate-50/60 p-2.5 sm:mt-2 sm:rounded-xl sm:border-slate-200 sm:bg-slate-50/40 sm:p-3">
+          <div className="mb-2 space-y-1.5 sm:mb-2.5 sm:space-y-2" aria-hidden>
             <div className="flex flex-wrap gap-1.5">
-              <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-400">······</span>
-              <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-xs text-amber-200">······</span>
+              <span className="h-3.5 w-12 rounded-full bg-slate-200/90 sm:h-4 sm:w-14 sm:bg-slate-100" />
+              <span className="h-3.5 w-11 rounded-full bg-amber-100/90 sm:h-4 sm:w-12" />
             </div>
-            <div className="h-2.5 w-3/4 max-w-[12rem] rounded bg-slate-100" />
-            <div className="h-2.5 w-1/2 max-w-[9rem] rounded bg-slate-100" />
-            <div className="h-7 w-full rounded-lg bg-slate-100" />
-            <div className="h-7 w-full rounded-lg bg-emerald-50" />
+            <div className="h-1.5 w-[92%] rounded bg-slate-200/80 sm:h-2 sm:w-3/4 sm:max-w-[12rem] sm:bg-slate-100" />
+            <div className="hidden h-1.5 w-1/2 max-w-[9rem] rounded bg-slate-100 sm:block" />
           </div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-white/85 px-3 py-2 text-center backdrop-blur-[2px]">
-            <div className="flex items-center gap-1.5 text-[11px] font-medium leading-tight text-slate-600 sm:text-xs">
-              <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
-              {t('guestOverlayTitle')}
-            </div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onGuestJoin?.();
-              }}
-              className="w-full max-w-[16rem] rounded-lg bg-blue-700 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-blue-800"
-            >
-              {t('guestJoinCta')}
-            </button>
-          </div>
+          <p className="mb-2 flex items-start gap-2 text-left text-[11px] font-medium leading-snug text-slate-600 sm:mb-2.5 sm:text-xs">
+            <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" strokeWidth={2} aria-hidden />
+            <span className="min-w-0">{t('guestOverlayTitle')}</span>
+          </p>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onGuestJoin?.();
+            }}
+            className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-800 active:bg-blue-800"
+          >
+            {t('guestJoinCta')}
+          </button>
         </div>
       ) : (
         <ProfileCardListingFooter p={p} lang={lang} t={t} />
       )}
-      <div
-        className="pointer-events-none absolute bottom-2 right-2 z-[1] text-stone-400 sm:hidden"
-        aria-hidden
-      >
-        <Maximize2 size={15} strokeWidth={2} className="opacity-75" />
-      </div>
+      {!guestDirectoryTeaser ? (
+        <div
+          className="pointer-events-none absolute bottom-2 right-2 z-[1] text-stone-400 sm:hidden"
+          aria-hidden
+        >
+          <Maximize2 size={15} strokeWidth={2} className="opacity-75" />
+        </div>
+      ) : null}
     </motion.div>
   );
 };
@@ -3633,21 +3638,28 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 className="flex items-center justify-between gap-3 p-4 cursor-pointer hover:bg-stone-50 transition-colors"
                 onClick={() => setIsProfileExpanded(!isProfileExpanded)}
               >
-                <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
-                  <div className="mt-0.5 h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-stone-200 bg-stone-50 sm:mt-0">
-                    {profile ? (
-                      <ProfileAvatar
-                        photoURL={profile.photoURL}
-                        fullName={profile.fullName}
-                        className="h-full w-full"
-                        iconSize={22}
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-stone-100 text-stone-500">
-                        <UserIcon size={18} aria-hidden />
-                      </div>
-                    )}
-                  </div>
+                <div
+                  className={cn(
+                    'flex min-w-0 flex-1 gap-3',
+                    isProfileExpanded ? 'items-center' : 'items-start sm:items-center'
+                  )}
+                >
+                  {!isProfileExpanded ? (
+                    <div className="mt-0.5 h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-stone-200 bg-stone-50 sm:mt-0">
+                      {profile ? (
+                        <ProfileAvatar
+                          photoURL={profile.photoURL}
+                          fullName={profile.fullName}
+                          className="h-full w-full"
+                          iconSize={22}
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-stone-100 text-stone-500">
+                          <UserIcon size={18} aria-hidden />
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-lg font-semibold tracking-tight">{t('myProfile')}</h2>
