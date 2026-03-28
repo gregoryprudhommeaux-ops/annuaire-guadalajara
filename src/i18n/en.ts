@@ -182,8 +182,6 @@ export const EN_STRINGS: Record<string, string> = {
   legalTermsTitle: "Terms of use",
   footerLegalClose: "Close",
   contactFormTitle: "Contact us",
-  contactFormIntro:
-    "Enter your name, email, and message. We will reply to the address you provide.",
   contactFormName: "Name",
   contactFormNamePlaceholder: "Your name",
   contactFormEmail: "Email",
@@ -192,7 +190,8 @@ export const EN_STRINGS: Record<string, string> = {
   contactFormMessagePlaceholder: "Your question or comment…",
   contactFormSubmit: "Send",
   contactFormSending: "Sending…",
-  contactFormSuccess: "Thank you! Your message has been sent.",
+  contactFormSuccess:
+    "Thank you! Your message has been sent. We should get back to you shortly!",
   contactFormErrorGeneric:
     "Sending failed. Please try again later or reach us through another channel.",
   contactFormErrorConfig:

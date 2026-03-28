@@ -113,10 +113,8 @@ export default function ContactFooterModal({ open, onClose, t }: Props) {
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
-              <p className="mb-4 text-sm leading-relaxed text-stone-600">{t('contactFormIntro')}</p>
-
               {status === 'success' ? (
-                <p className="text-sm font-medium text-emerald-800">{t('contactFormSuccess')}</p>
+                <p className="text-sm font-medium leading-relaxed text-emerald-800">{t('contactFormSuccess')}</p>
               ) : (
                 <form onSubmit={submit} className="space-y-4">
                   <div className="pointer-events-none absolute -left-[9999px] opacity-0" aria-hidden>

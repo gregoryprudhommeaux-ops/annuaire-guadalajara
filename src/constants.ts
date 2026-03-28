@@ -495,10 +495,6 @@ export const TRANSLATIONS: Translations = {
   },
   footerLegalClose: { fr: "Fermer", es: "Cerrar" },
   contactFormTitle: { fr: "Nous écrire", es: "Escríbenos" },
-  contactFormIntro: {
-    fr: "Indiquez votre nom, votre e-mail et votre message. Nous vous répondrons à l’adresse que vous fournissez.",
-    es: "Indica tu nombre, tu correo y tu mensaje. Te responderemos en la dirección que indiques.",
-  },
   contactFormName: { fr: "Nom", es: "Nombre" },
   contactFormNamePlaceholder: {
     fr: "Votre nom",
@@ -517,8 +513,8 @@ export const TRANSLATIONS: Translations = {
   contactFormSubmit: { fr: "Envoyer", es: "Enviar" },
   contactFormSending: { fr: "Envoi en cours…", es: "Enviando…" },
   contactFormSuccess: {
-    fr: "Merci ! Votre message a bien été envoyé.",
-    es: "¡Gracias! Tu mensaje se ha enviado correctamente.",
+    fr: "Merci ! Votre message a bien été envoyé. Nous devrions pouvoir rapidement venir vers vous !",
+    es: "¡Gracias! Tu mensaje se ha enviado correctamente. ¡Deberíamos poder responderte pronto!",
   },
   contactFormErrorGeneric: {
     fr: "L’envoi a échoué. Réessayez plus tard ou contactez-nous par un autre canal.",
