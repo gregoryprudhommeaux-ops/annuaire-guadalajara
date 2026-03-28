@@ -1,6 +1,8 @@
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { db } from '../firebase';
 
+/** Types alignés sur `firestore.rules` (eventType + champs autorisés). */
 export type EventType =
   | 'click_linkedin'
   | 'click_email'
@@ -9,29 +11,58 @@ export type EventType =
   | 'click_invite'
   | 'search'
   | 'filter_used'
-  | 'profile_view';
+  | 'profile_view'
+  | 'spa_route';
 
-export interface TrackEventPayload {
+type MemberLogInput = {
   eventType: EventType;
-  targetProfileId?: string;
-  targetProfileName?: string;
-  actorUserId?: string;
+  targetId?: string;
+  targetType?: string;
+  source?: string;
   metadata?: Record<string, string>;
-}
+};
 
 /**
- * Enregistre un evenement dans la collection Firestore "events_log".
- * Fire-and-forget : ne bloque jamais l'UI, les erreurs sont silencieuses.
+ * Vues de route SPA sans compte (rules : `spa_route` + metadata.path uniquement).
+ * Appelé depuis le routeur ; silencieux en cas d’erreur.
  */
-export async function trackEvent(payload: TrackEventPayload): Promise<void> {
+export async function trackSpaRoute(pathname: string): Promise<void> {
+  const path = pathname.slice(0, 240) || '/';
   try {
     await addDoc(collection(db, 'events_log'), {
-      ...payload,
+      eventType: 'spa_route',
+      metadata: { path },
       createdAt: serverTimestamp(),
     });
   } catch (err) {
-    // Silencieux pour ne pas impacter l'UX
-    console.warn('[trackEvent] Failed to log event:', err);
+    console.warn('[trackSpaRoute] Failed:', err);
   }
 }
 
+/**
+ * Événements membres connectés (rules : authentifié + schéma isValidEventLog).
+ */
+export async function trackMemberInteraction(input: MemberLogInput): Promise<void> {
+  const auth = getAuth();
+  const u = auth.currentUser;
+  if (!u) return;
+
+  const doc: Record<string, unknown> = {
+    eventType: input.eventType,
+    actorUid: u.uid,
+    createdAt: serverTimestamp(),
+  };
+  if (u.email) doc.actorEmail = u.email;
+  if (input.targetId) doc.targetId = input.targetId;
+  if (input.targetType) doc.targetType = input.targetType;
+  if (input.source) doc.source = input.source;
+  if (input.metadata && Object.keys(input.metadata).length > 0) {
+    doc.metadata = input.metadata;
+  }
+
+  try {
+    await addDoc(collection(db, 'events_log'), doc);
+  } catch (err) {
+    console.warn('[trackMemberInteraction] Failed:', err);
+  }
+}

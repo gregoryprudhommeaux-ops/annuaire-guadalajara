@@ -7,6 +7,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { getProfileAiRecommendationReadiness, type UserProfile } from '../types';
 
 export type PeriodKey = 'today' | 'week' | 'month' | 'all';
 
@@ -35,6 +36,20 @@ export interface AdminStats {
   topViewedProfiles: ProfileStat[];
   topContactedProfiles: ProfileStat[];
   profilesNeverUpdated: number;
+  /** Score 0–100 (champs profil / matching IA). */
+  avgProfileCompletionPct: number;
+  medianProfileCompletionPct: number;
+  completionHistogram: { label: string; count: number }[];
+  profilesUpdatedInPeriod: number;
+  validatedProfiles: number;
+  pendingReviewProfiles: number;
+  registrationsByDay: { date: string; count: number }[];
+  eventCountsByType: { name: string; value: number }[];
+  spaRouteTopPaths: { path: string; count: number }[];
+  totalProfileViewEvents: number;
+  totalSpaRouteEvents: number;
+  searchEvents: number;
+  filterEvents: number;
   loading: boolean;
   error: string | null;
 }
@@ -57,6 +72,20 @@ function getStartDate(period: PeriodKey): Date | null {
   return null;
 }
 
+function rowToUserProfile(row: Record<string, unknown> & { id: string }): UserProfile {
+  const { id, ...rest } = row;
+  return { ...rest, uid: id } as UserProfile;
+}
+
+function profileReadinessPct(p: Record<string, unknown> & { id: string }): number {
+  try {
+    const v = Math.round(getProfileAiRecommendationReadiness(rowToUserProfile(p)) * 1000) / 10;
+    return Math.min(100, Math.max(0, v));
+  } catch {
+    return 0;
+  }
+}
+
 export function useAdminStats(period: PeriodKey): AdminStats {
   const [stats, setStats] = useState<AdminStats>({
     totalProfiles: 0,
@@ -77,6 +106,19 @@ export function useAdminStats(period: PeriodKey): AdminStats {
     topViewedProfiles: [],
     topContactedProfiles: [],
     profilesNeverUpdated: 0,
+    avgProfileCompletionPct: 0,
+    medianProfileCompletionPct: 0,
+    completionHistogram: [],
+    profilesUpdatedInPeriod: 0,
+    validatedProfiles: 0,
+    pendingReviewProfiles: 0,
+    registrationsByDay: [],
+    eventCountsByType: [],
+    spaRouteTopPaths: [],
+    totalProfileViewEvents: 0,
+    totalSpaRouteEvents: 0,
+    searchEvents: 0,
+    filterEvents: 0,
     loading: true,
     error: null,
   });
@@ -110,6 +152,9 @@ export function useAdminStats(period: PeriodKey): AdminStats {
         const bySector: Record<string, number> = {};
         let incomplete = 0;
 
+        let validatedProfiles = 0;
+        let pendingReviewProfiles = 0;
+
         allProfiles.forEach((p: Record<string, unknown>) => {
           const t = (p.type as string) || 'membre';
           if (t === 'entreprise') byType.entreprise++;
@@ -134,14 +179,72 @@ export function useAdminStats(period: PeriodKey): AdminStats {
             !!(p.email as string) ||
             !!(p.whatsapp as string);
           if (!hasContact) incomplete++;
+
+          if (p.isValidated === true) validatedProfiles++;
+          if (p.needsAdminReview === true || p.isValidated === false) {
+            pendingReviewProfiles++;
+          }
         });
 
         const completionRate =
           allProfiles.length > 0
-            ? Math.round(
-                ((allProfiles.length - incomplete) / allProfiles.length) * 100
-              )
+            ? Math.round(((allProfiles.length - incomplete) / allProfiles.length) * 100)
             : 0;
+
+        const readinessScores = allProfiles.map((p) => profileReadinessPct(p));
+        const avgProfileCompletionPct =
+          readinessScores.length > 0
+            ? Math.round((readinessScores.reduce((a, b) => a + b, 0) / readinessScores.length) * 10) / 10
+            : 0;
+        const sortedReadiness = [...readinessScores].sort((a, b) => a - b);
+        const mid = Math.floor(sortedReadiness.length / 2);
+        const medianProfileCompletionPct =
+          sortedReadiness.length === 0
+            ? 0
+            : sortedReadiness.length % 2 === 1
+              ? sortedReadiness[mid]
+              : Math.round(((sortedReadiness[mid - 1] + sortedReadiness[mid]) / 2) * 10) / 10;
+
+        const buckets = [
+          { label: '0–20%', count: 0 },
+          { label: '21–40%', count: 0 },
+          { label: '41–60%', count: 0 },
+          { label: '61–80%', count: 0 },
+          { label: '81–100%', count: 0 },
+        ];
+        readinessScores.forEach((s) => {
+          if (s <= 20) buckets[0].count++;
+          else if (s <= 40) buckets[1].count++;
+          else if (s <= 60) buckets[2].count++;
+          else if (s <= 80) buckets[3].count++;
+          else buckets[4].count++;
+        });
+        const completionHistogram = buckets;
+
+        const updateCutoff =
+          startDate ??
+          (() => {
+            const d = new Date();
+            d.setDate(d.getDate() - 30);
+            return d;
+          })();
+        let profilesUpdatedInPeriod = 0;
+        allProfiles.forEach((p) => {
+          const ua = (p.updatedAt as Timestamp)?.toDate?.();
+          if (ua && ua >= updateCutoff) profilesUpdatedInPeriod++;
+        });
+
+        const regByDay: Record<string, number> = {};
+        allProfiles.forEach((p) => {
+          const createdAt = (p.createdAt as Timestamp)?.toDate?.();
+          if (!createdAt) return;
+          if (startDate && createdAt < startDate) return;
+          const key = createdAt.toISOString().split('T')[0];
+          regByDay[key] = (regByDay[key] || 0) + 1;
+        });
+        const registrationsByDay = Object.keys(regByDay)
+          .sort()
+          .map((date) => ({ date, count: regByDay[date] }));
 
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -183,7 +286,6 @@ export function useAdminStats(period: PeriodKey): AdminStats {
           const eventsSnap = await getDocs(eventsQuery);
           events = eventsSnap.docs.map((d) => d.data() as Record<string, unknown>);
         } catch (eventsErr) {
-          // Non bloquant : le dashboard reste utile même sans accès events_log.
           console.warn('[useAdminStats] events_log read failed:', eventsErr);
           events = [];
         }
@@ -193,25 +295,46 @@ export function useAdminStats(period: PeriodKey): AdminStats {
         let whatsapp = 0;
         const viewCount: Record<string, { name: string; count: number }> = {};
         const contactCount: Record<string, { name: string; count: number }> = {};
+        const typeCount: Record<string, number> = {};
+        const spaPaths: Record<string, number> = {};
+        let totalProfileViewEvents = 0;
+        let totalSpaRouteEvents = 0;
+        let searchEvents = 0;
+        let filterEvents = 0;
 
         events.forEach((e) => {
           const type = e.eventType as string;
+          typeCount[type] = (typeCount[type] || 0) + 1;
+
           if (type === 'click_linkedin') linkedin++;
           if (type === 'click_email') email++;
           if (type === 'click_whatsapp') whatsapp++;
+          if (type === 'profile_view') totalProfileViewEvents++;
+          if (type === 'spa_route') {
+            totalSpaRouteEvents++;
+            const meta = e.metadata as Record<string, unknown> | undefined;
+            const path = typeof meta?.path === 'string' ? meta.path : '';
+            if (path) spaPaths[path] = (spaPaths[path] || 0) + 1;
+          }
+          if (type === 'search') searchEvents++;
+          if (type === 'filter_used') filterEvents++;
 
-          const pid = e.targetProfileId as string;
-          const pname = (e.targetProfileName as string) || pid;
+          const pid = (e.targetId as string) || (e.targetProfileId as string);
+          const meta = e.metadata as Record<string, unknown> | undefined;
+          const pname =
+            (typeof meta?.profileName === 'string' && meta.profileName) ||
+            (e.targetProfileName as string) ||
+            pid;
 
           if (pid && type === 'profile_view') {
-            if (!viewCount[pid]) viewCount[pid] = { name: pname, count: 0 };
+            if (!viewCount[pid]) viewCount[pid] = { name: pname || pid, count: 0 };
             viewCount[pid].count++;
           }
           if (
             pid &&
             ['click_linkedin', 'click_email', 'click_whatsapp'].includes(type)
           ) {
-            if (!contactCount[pid]) contactCount[pid] = { name: pname, count: 0 };
+            if (!contactCount[pid]) contactCount[pid] = { name: pname || pid, count: 0 };
             contactCount[pid].count++;
           }
         });
@@ -225,6 +348,15 @@ export function useAdminStats(period: PeriodKey): AdminStats {
           .map(([id, v]) => ({ id, name: v.name, clickCount: v.count }))
           .sort((a, b) => b.clickCount - a.clickCount)
           .slice(0, 5);
+
+        const eventCountsByType = Object.entries(typeCount)
+          .map(([name, value]) => ({ name, value }))
+          .sort((a, b) => b.value - a.value);
+
+        const spaRouteTopPaths = Object.entries(spaPaths)
+          .map(([path, count]) => ({ path, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 12);
 
         if (!cancelled) {
           setStats({
@@ -250,6 +382,19 @@ export function useAdminStats(period: PeriodKey): AdminStats {
             topViewedProfiles: topViewed,
             topContactedProfiles: topContacted,
             profilesNeverUpdated: neverUpdated,
+            avgProfileCompletionPct,
+            medianProfileCompletionPct,
+            completionHistogram,
+            profilesUpdatedInPeriod,
+            validatedProfiles,
+            pendingReviewProfiles,
+            registrationsByDay,
+            eventCountsByType,
+            spaRouteTopPaths,
+            totalProfileViewEvents,
+            totalSpaRouteEvents,
+            searchEvents,
+            filterEvents,
             loading: false,
             error: null,
           });
@@ -269,9 +414,10 @@ export function useAdminStats(period: PeriodKey): AdminStats {
     }
 
     fetchStats();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [period]);
 
   return stats;
 }
-

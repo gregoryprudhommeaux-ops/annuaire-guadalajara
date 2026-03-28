@@ -157,6 +157,8 @@ import MembersCountBlock from './components/home/MembersCountBlock';
 import InviteNetworkModal from './components/home/InviteNetworkModal';
 import LegalInfoModal from './components/LegalInfoModal';
 import ContactFooterModal from './components/ContactFooterModal';
+import SpaRouteAnalytics from './components/SpaRouteAnalytics';
+import { trackMemberInteraction } from './utils/trackEvent';
 import { LEGAL_PRIVACY_PARAGRAPHS, LEGAL_TERMS_PARAGRAPHS } from './legal/footerLegalContent';
 import NewMembersStrip from './components/home/NewMembersStrip';
 import AiTranslatedFreeText from './components/AiTranslatedFreeText';
@@ -1333,6 +1335,14 @@ const ProfilePage = () => {
                         profile.isEmailPublic || (currentUser && currentProfile?.isValidated)
                       )}
                       t={t}
+                      trackProfile={
+                        currentUser
+                          ? {
+                              profileId: profile.uid,
+                              profileName: profile.fullName || profile.companyName || profile.uid,
+                            }
+                          : undefined
+                      }
                     />
                     {profile.whatsapp ? (
                       <ProfileCardWhatsappContactFooter
@@ -1341,6 +1351,14 @@ const ProfilePage = () => {
                           profile.isWhatsappPublic || (currentUser && currentProfile?.isValidated)
                         )}
                         t={t}
+                        trackProfile={
+                          currentUser
+                            ? {
+                                profileId: profile.uid,
+                                profileName: profile.fullName || profile.companyName || profile.uid,
+                              }
+                            : undefined
+                        }
                       />
                     ) : null}
                   </div>
@@ -1731,6 +1749,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [filterLocation, setFilterLocation] = useState<LocationFilterKey>('');
   const [filterProfileType, setFilterProfileType] = useState<ProfileTypeFilterKey>('');
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
+  const lastProfileViewLoggedRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
   /** URL photo profil (formulaire édition) — synchronisée avec le champ masqué `photoURL` à l’enregistrement. */
@@ -2359,6 +2378,25 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   useEffect(() => {
     if (user) setShowAuthModal(false);
   }, [user]);
+
+  useEffect(() => {
+    if (!selectedProfile) {
+      lastProfileViewLoggedRef.current = null;
+      return;
+    }
+    if (!user) return;
+    const id = selectedProfile.uid;
+    if (lastProfileViewLoggedRef.current === id) return;
+    lastProfileViewLoggedRef.current = id;
+    void trackMemberInteraction({
+      eventType: 'profile_view',
+      targetId: id,
+      targetType: 'profile',
+      metadata: {
+        profileName: (selectedProfile.fullName || selectedProfile.companyName || id).slice(0, 120),
+      },
+    });
+  }, [selectedProfile, user]);
 
   useEffect(() => {
     // Init auth once (persistence + redirect handling). Keep a promise so sign-in clicks can await it.
@@ -5523,7 +5561,22 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 font-medium text-blue-700 underline-offset-2 hover:text-blue-800 hover:underline"
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (user) {
+                              void trackMemberInteraction({
+                                eventType: 'click_linkedin',
+                                targetId: selectedProfile.uid,
+                                targetType: 'profile',
+                                metadata: {
+                                  profileName: (selectedProfile.fullName || selectedProfile.companyName || '').slice(
+                                    0,
+                                    120
+                                  ),
+                                },
+                              });
+                            }
+                          }}
                           aria-label={t('openLinkedin')}
                         >
                           <Linkedin className="size-4 shrink-0 text-[#0A66C2]" strokeWidth={2} aria-hidden />
@@ -5840,6 +5893,17 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             selectedProfile.isEmailPublic || (user && profile?.isValidated)
                           )}
                           t={t}
+                          trackProfile={
+                            user
+                              ? {
+                                  profileId: selectedProfile.uid,
+                                  profileName:
+                                    selectedProfile.fullName ||
+                                    selectedProfile.companyName ||
+                                    selectedProfile.uid,
+                                }
+                              : undefined
+                          }
                         />
                         {selectedProfile.whatsapp ? (
                           <ProfileCardWhatsappContactFooter
@@ -5848,6 +5912,17 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               selectedProfile.isWhatsappPublic || (user && profile?.isValidated)
                             )}
                             t={t}
+                            trackProfile={
+                              user
+                                ? {
+                                    profileId: selectedProfile.uid,
+                                    profileName:
+                                      selectedProfile.fullName ||
+                                      selectedProfile.companyName ||
+                                      selectedProfile.uid,
+                                  }
+                                : undefined
+                            }
                           />
                         ) : null}
                       </div>
@@ -6368,6 +6443,7 @@ const App = () => {
     <HelmetProvider>
       <LanguageProvider>
         <BrowserRouter>
+          <SpaRouteAnalytics />
           <Routes>
             <Route path="/" element={<MainApp />} />
             <Route path="/membres" element={<MainApp />} />

@@ -133,6 +133,18 @@ service cloud.firestore {
         && data.createdAt is timestamp;
     }
 
+    /** Vues de route anonymes (pas de compte) — schéma minimal pour limiter l’abus. */
+    function isAnonymousSpaRouteEvent(data) {
+      return data.keys().hasOnly(['eventType', 'metadata', 'createdAt'])
+        && data.eventType == 'spa_route'
+        && data.metadata is map
+        && data.metadata.keys().hasOnly(['path'])
+        && data.metadata.path is string
+        && data.metadata.path.size() >= 1
+        && data.metadata.path.size() <= 240
+        && data.createdAt is timestamp;
+    }
+
     /** Données non publiques (genre, nationalité, délégations, sponsoring) : propriétaire + admin uniquement. */
     function isValidUserAdminPrivate(data, userId) {
       return data.uid == userId
@@ -215,7 +227,9 @@ service cloud.firestore {
 
     match /events_log/{eventId} {
       allow read: if isAdmin();
-      allow create: if isAuthenticated() && isValidEventLog(request.resource.data);
+      allow create: if
+        (isAuthenticated() && isValidEventLog(request.resource.data))
+        || isAnonymousSpaRouteEvent(request.resource.data);
       allow update, delete: if isAdmin();
     }
 

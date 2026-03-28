@@ -3,6 +3,7 @@ import { Mail } from 'lucide-react';
 import { cn } from '../../cn';
 import type { Language } from '../../types';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
+import { trackMemberInteraction } from '../../utils/trackEvent';
 
 /** Bio : pas d’italique, line-clamp-3 + Voir plus / Voir moins (clics ne propagent pas vers la carte). */
 export function ProfileCardBio({
@@ -50,10 +51,13 @@ export function ProfileCardEmailContact({
   email,
   canView,
   t,
+  trackProfile,
 }: {
   email: string;
   canView: boolean;
   t: (key: string) => string;
+  /** Si défini et membre connecté : journalise un clic email (admin analytics). */
+  trackProfile?: { profileId: string; profileName: string };
 }) {
   if (!canView) {
     return (
@@ -73,6 +77,14 @@ export function ProfileCardEmailContact({
       onClick={(e) => {
         e.stopPropagation();
         if (!trimmed) e.preventDefault();
+        else if (trackProfile) {
+          void trackMemberInteraction({
+            eventType: 'click_email',
+            targetId: trackProfile.profileId,
+            targetType: 'profile',
+            metadata: { profileName: trackProfile.profileName.slice(0, 120) },
+          });
+        }
       }}
       className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
     >
@@ -87,10 +99,12 @@ export function ProfileCardWhatsappContactFooter({
   whatsapp,
   canView,
   t,
+  trackProfile,
 }: {
   whatsapp: string;
   canView: boolean;
   t: (key: string) => string;
+  trackProfile?: { profileId: string; profileName: string };
 }) {
   const [revealed, setReveal] = useState(false);
   const href = `https://wa.me/${whatsapp.replace(/\D/g, '')}`;
@@ -110,7 +124,17 @@ export function ProfileCardWhatsappContactFooter({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (trackProfile) {
+            void trackMemberInteraction({
+              eventType: 'click_whatsapp',
+              targetId: trackProfile.profileId,
+              targetType: 'profile',
+              metadata: { profileName: trackProfile.profileName.slice(0, 120) },
+            });
+          }
+        }}
         className="flex w-full min-w-0 items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
       >
         <span className="text-emerald-600">{waIcon}</span>

@@ -17,6 +17,8 @@ import {
 import { Maximize2 } from 'lucide-react';
 import { useAdminStats, type PeriodKey } from '@/hooks/useAdminStats';
 import type { Language } from '@/types';
+import AdminProfileInsights from '@/components/dashboard/AdminProfileInsights';
+import AdminSiteInsights from '@/components/dashboard/AdminSiteInsights';
 
 type TFn = (key: string) => string;
 
@@ -147,7 +149,10 @@ function ChartCard({
   );
 }
 
+type AdminInsightTab = 'overview' | 'profiles' | 'site';
+
 export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
+  const [insightTab, setInsightTab] = useState<AdminInsightTab>('overview');
   const [period, setPeriod] = useState<PeriodKey>('week');
   const [activeChart, setActiveChart] = useState<
     | null
@@ -198,20 +203,84 @@ export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
         ? 'Ampliar el gráfico'
         : 'Agrandir le graphique';
 
-  if (stats.loading) {
-    return <p className="text-sm text-stone-500">{loadingLabel}</p>;
-  }
-
-  if (stats.error) {
-    return (
-      <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
-        {stats.error}
-      </p>
-    );
-  }
-
   return (
     <section className="space-y-6">
+      <div className="flex flex-wrap gap-2 border-b border-stone-200 pb-3">
+        {(
+          [
+            ['overview', t('adminTabOverview')],
+            ['profiles', t('adminTabProfiles')],
+            ['site', t('adminTabSite')],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setInsightTab(key)}
+            className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:text-sm ${
+              insightTab === key
+                ? 'bg-stone-900 text-white'
+                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {stats.loading ? <p className="text-sm text-stone-500">{loadingLabel}</p> : null}
+      {!stats.loading && stats.error ? (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+          {stats.error}
+        </p>
+      ) : null}
+
+      {!stats.loading && !stats.error && insightTab === 'profiles' ? (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            {(['today', 'week', 'month', 'all'] as PeriodKey[]).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriod(p)}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  period === p
+                    ? 'bg-blue-700 text-white'
+                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                }`}
+              >
+                {p === 'today' ? 'Aujourd’hui' : p === 'week' ? '7 jours' : p === 'month' ? '30 jours' : 'Tout'}
+              </button>
+            ))}
+          </div>
+          <AdminProfileInsights stats={stats} lang={lang} t={t} />
+        </>
+      ) : null}
+
+      {!stats.loading && !stats.error && insightTab === 'site' ? (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            {(['today', 'week', 'month', 'all'] as PeriodKey[]).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriod(p)}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  period === p
+                    ? 'bg-blue-700 text-white'
+                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                }`}
+              >
+                {p === 'today' ? 'Aujourd’hui' : p === 'week' ? '7 jours' : p === 'month' ? '30 jours' : 'Tout'}
+              </button>
+            ))}
+          </div>
+          <AdminSiteInsights stats={stats} lang={lang} t={t} />
+        </>
+      ) : null}
+
+      {!stats.loading && !stats.error && insightTab === 'overview' ? (
+        <>
       <div className="flex flex-wrap items-center gap-2">
         {(['today', 'week', 'month', 'all'] as PeriodKey[]).map((p) => (
           <button
@@ -508,6 +577,8 @@ export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
           </div>
         </div>
       )}
+        </>
+      ) : null}
     </section>
   );
 }
