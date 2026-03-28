@@ -16,6 +16,7 @@ export default function ContactFooterModal({ open, onClose, t }: Props) {
   const [message, setMessage] = useState('');
   const [hp, setHp] = useState('');
   const [status, setStatus] = useState<FormStatus>('idle');
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -33,6 +34,7 @@ export default function ContactFooterModal({ open, onClose, t }: Props) {
       setMessage('');
       setHp('');
       setStatus('idle');
+      setErrorDetail(null);
     }
   }, [open]);
 
@@ -40,6 +42,7 @@ export default function ContactFooterModal({ open, onClose, t }: Props) {
     e.preventDefault();
     if (status === 'sending') return;
     setStatus('sending');
+    setErrorDetail(null);
     try {
       const apiBase = import.meta.env.VITE_CONTACT_API_URL?.replace(/\/$/, '') ?? '';
       const url = `${apiBase}/api/contact`;
@@ -48,17 +51,23 @@ export default function ContactFooterModal({ open, onClose, t }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, message, website: hp }),
       });
-      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; code?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        code?: string;
+        detail?: string;
+      };
       if (res.status === 503 && data.code === 'not_configured') {
         setStatus('not_configured');
         return;
       }
       if (!res.ok || !data.ok) {
+        setErrorDetail(typeof data.detail === 'string' && data.detail.trim() ? data.detail.trim() : null);
         setStatus('error');
         return;
       }
       setStatus('success');
     } catch {
+      setErrorDetail(null);
       setStatus('error');
     }
   };
@@ -170,7 +179,12 @@ export default function ContactFooterModal({ open, onClose, t }: Props) {
                     />
                   </div>
                   {status === 'error' ? (
-                    <p className="text-sm text-red-700">{t('contactFormErrorGeneric')}</p>
+                    <div className="space-y-1">
+                      <p className="text-sm text-red-700">{t('contactFormErrorGeneric')}</p>
+                      {errorDetail ? (
+                        <p className="text-xs leading-snug text-stone-600 break-words">{errorDetail}</p>
+                      ) : null}
+                    </div>
                   ) : null}
                   {status === 'not_configured' ? (
                     <p className="text-sm text-amber-800">{t('contactFormErrorConfig')}</p>

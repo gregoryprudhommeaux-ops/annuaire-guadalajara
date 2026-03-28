@@ -90,6 +90,8 @@ export default async function handler(request: Request): Promise<Response> {
 
   const html = `<pre style="font-family:system-ui,sans-serif;white-space:pre-wrap">${escapeHtml(text)}</pre>`;
 
+  const subject = `[Annuaire] Contact - ${name}`.slice(0, 998);
+
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -99,8 +101,8 @@ export default async function handler(request: Request): Promise<Response> {
     body: JSON.stringify({
       from,
       to: [to],
-      reply_to: [email],
-      subject: `[Annuaire] Contact — ${name}`,
+      reply_to: email,
+      subject,
       text,
       html,
     }),
@@ -109,7 +111,19 @@ export default async function handler(request: Request): Promise<Response> {
   if (!res.ok) {
     const errText = await res.text().catch(() => '');
     console.error('Resend error', res.status, errText);
-    return json({ ok: false, code: 'send_failed' }, 502);
+    let detail = '';
+    try {
+      const parsed = JSON.parse(errText) as { message?: string | string[] };
+      const msg = parsed.message;
+      if (typeof msg === 'string') {
+        detail = msg.slice(0, 280);
+      } else if (Array.isArray(msg) && msg.length > 0) {
+        detail = String(msg[0]).slice(0, 280);
+      }
+    } catch {
+      /* ignore */
+    }
+    return json({ ok: false, code: 'send_failed', detail }, 502);
   }
 
   return json({ ok: true }, 200);
