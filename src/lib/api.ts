@@ -24,6 +24,7 @@ import type {
 import { isNeedCategory } from '@/lib/communityMemberExtended';
 import { sanitizeHighlightedNeeds } from '@/needOptions';
 import type { Language, UserProfile } from '@/types';
+import { profileDistinctActivityCategories } from '@/lib/companyActivities';
 import type { MemberForFun, NeedForFun } from '@/components/FunFactCard';
 import {
   filterNeedsSince,
@@ -84,8 +85,12 @@ function interestTagsForVenn(p: UserProfile): string[] {
     if (NETWORKING_NEED_IDS.has(n)) tags.add('Networking');
   }
 
-  const cat = p.activityCategory ?? '';
-  if (cat === 'Hôtellerie & Restauration' || cat === 'Agriculture & Agroalimentaire') {
+  const sectorCodes = profileDistinctActivityCategories(p);
+  if (
+    sectorCodes.some(
+      (c) => c === 'Hôtellerie & Restauration' || c === 'Agriculture & Agroalimentaire'
+    )
+  ) {
     tags.add('F&B');
   }
 
@@ -101,9 +106,9 @@ function interestTagsForVenn(p: UserProfile): string[] {
 
   if (
     passions.length > 0 ||
-    cat === 'Tourisme' ||
-    cat === 'Culture & Loisirs' ||
-    cat === 'Hôtellerie & Restauration'
+    sectorCodes.includes('Tourisme') ||
+    sectorCodes.includes('Culture & Loisirs') ||
+    sectorCodes.includes('Hôtellerie & Restauration')
   ) {
     tags.add('Afterwork');
   }
@@ -153,11 +158,9 @@ function radarScoresFromProfile(p: UserProfile): Pick<
 }
 
 export function profileSector(p: UserProfile): string {
-  return (
-    (p.activityCategory && p.activityCategory.trim()) ||
-    (p.targetSectors && String(p.targetSectors).split(',')[0]?.trim()) ||
-    '—'
-  );
+  const cats = profileDistinctActivityCategories(p);
+  if (cats.length > 0) return cats.join(' · ');
+  return (p.targetSectors && String(p.targetSectors).split(',')[0]?.trim()) || '—';
 }
 
 function profileToCompanyKind(p: UserProfile): CompanyKind {

@@ -3,9 +3,16 @@
  * Distinct de `ExplorerMember` / `UserProfile` — à mapper depuis Firestore quand les champs existeront.
  */
 
-export type MemberStatus = 'freelance' | 'employee' | 'owner';
+export type MemberStatus = 'freelance' | 'employee' | 'owner' | 'volunteer';
 
-export type CompanyKind = 'startup' | 'pme' | 'corporate' | 'independent';
+export type CompanyKind =
+  | 'startup'
+  | 'pme'
+  | 'corporate'
+  | 'independent'
+  | 'association'
+  | 'nonprofit'
+  | 'club';
 
 export type MemberExtended = {
   id: string;

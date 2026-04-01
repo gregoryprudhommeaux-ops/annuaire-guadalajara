@@ -21,6 +21,7 @@ import { sanitizeHighlightedNeeds, NEED_OPTION_VALUE_SET } from '../../needOptio
 import { sanitizePassionIds } from '../../lib/passionConfig';
 import { cn } from '../../cn';
 import { cardPad } from '../../lib/pageLayout';
+import { profileDistinctActivityCategories } from '../../lib/companyActivities';
 const DONUT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316', '#6B7280'];
 
 type TFn = (key: string) => string;
@@ -123,8 +124,7 @@ export default function NetworkRadarSection({
   const sectorCount = useMemo(() => {
     const s = new Set<string>();
     profilesForStats.forEach((p) => {
-      const c = (p.activityCategory || '').trim();
-      if (c) s.add(c);
+      profileDistinctActivityCategories(p).forEach((c) => s.add(c));
     });
     return s.size;
   }, [profilesForStats]);
@@ -133,9 +133,10 @@ export default function NetworkRadarSection({
   const sectorPieData = useMemo(() => {
     const map = new Map<string, number>();
     profilesForStats.forEach((p) => {
-      const c = (p.activityCategory || '').trim();
-      if (!c) return;
-      map.set(c, (map.get(c) || 0) + 1);
+      const cats = profileDistinctActivityCategories(p);
+      (cats.length > 0 ? cats : []).forEach((c) => {
+        map.set(c, (map.get(c) || 0) + 1);
+      });
     });
     return [...map.entries()]
       .map(([name, value]) => ({

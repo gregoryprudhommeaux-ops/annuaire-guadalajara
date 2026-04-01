@@ -1,14 +1,31 @@
 import type { UserProfile } from './types';
 import { normalizedTargetKeywords } from './types';
 import { activityCategoryLabel, workFunctionLabel } from './constants';
+import {
+  profileDistinctActivityCategories,
+  effectiveMemberBio,
+  allActivityDescriptionTexts,
+} from './lib/companyActivities';
 import { needOptionLabel } from './needOptions';
 import { getPassionLabel, sanitizePassionIds } from './lib/passionConfig';
 
 /**
  * Texte concaténé (minuscules) pour la recherche plein texte sur l’annuaire :
- * nom, société, secteur / fonction (FR + ES), bio, lieu, passions (hors business), mots-clés, besoins structurés (libellés FR + ES + codes).
+ * nom, société, secteur / fonction (FR + ES), bio membre, descriptions d’activité, lieu, passions, mots-clés, besoins structurés (libellés FR + ES + codes).
  */
 export function buildProfileSearchBlob(p: UserProfile): string {
+  const sectorParts: string[] = [];
+  for (const code of profileDistinctActivityCategories(p)) {
+    sectorParts.push(
+      code,
+      activityCategoryLabel(code, 'fr'),
+      activityCategoryLabel(code, 'es'),
+      activityCategoryLabel(code, 'en')
+    );
+  }
+  const memberBio = effectiveMemberBio(p);
+  const memberBioTrans = Object.values(p.memberBioTranslations ?? {}).join(' ');
+  const activityDescJoined = allActivityDescriptionTexts(p).join(' ');
   const parts: string[] = [
     p.fullName,
     p.companyName,
@@ -16,10 +33,10 @@ export function buildProfileSearchBlob(p: UserProfile): string {
     workFunctionLabel(p.positionCategory, 'fr'),
     workFunctionLabel(p.positionCategory, 'es'),
     workFunctionLabel(p.positionCategory, 'en'),
-    p.activityCategory || '',
-    activityCategoryLabel(p.activityCategory, 'fr'),
-    activityCategoryLabel(p.activityCategory, 'es'),
-    activityCategoryLabel(p.activityCategory, 'en'),
+    ...sectorParts,
+    memberBio,
+    memberBioTrans,
+    activityDescJoined,
     p.bio || '',
     p.city || '',
     p.state || '',

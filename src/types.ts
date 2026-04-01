@@ -26,10 +26,17 @@ export const EMPLOYEE_COUNT_RANGES = [
 export type EmployeeCountRange = (typeof EMPLOYEE_COUNT_RANGES)[number];
 
 /** Taille d’entreprise pour analytics dashboard (optionnel sur `users`). */
-export type CommunityCompanyKind = 'startup' | 'pme' | 'corporate' | 'independent';
+export type CommunityCompanyKind =
+  | 'startup'
+  | 'pme'
+  | 'corporate'
+  | 'independent'
+  | 'association'
+  | 'nonprofit'
+  | 'club';
 
 /** Statut pro pour analytics dashboard (optionnel sur `users`). */
-export type CommunityMemberStatus = 'freelance' | 'employee' | 'owner';
+export type CommunityMemberStatus = 'freelance' | 'employee' | 'owner' | 'volunteer';
 
 /**
  * Une ligne « entreprise ou activité » (implantation, site, fonction, stats).
@@ -38,6 +45,8 @@ export type CommunityMemberStatus = 'freelance' | 'employee' | 'owner';
 export interface CompanyActivitySlot {
   id: string;
   companyName: string;
+  /** Secteur d’activité propre à cette ligne (synchronisé sur `UserProfile.activityCategory` pour la 1ʳᵉ entrée). */
+  activityCategory?: string;
   website?: string;
   city?: string;
   state?: string;
@@ -50,6 +59,8 @@ export interface CompanyActivitySlot {
   communityCompanyKind?: CommunityCompanyKind;
   communityMemberStatus?: CommunityMemberStatus;
   typicalClientSize?: 'independant' | 'pme' | 'corporate' | 'mixte';
+  /** Présentation de l’activité pour cette ligne (recherche par société / fiche). */
+  activityDescription?: string;
 }
 
 export interface OptimizationSuggestion {
@@ -81,13 +92,24 @@ export function normalizedTargetKeywords(p: UserProfile): string[] {
  * Aligné sur les champs réellement envoyés au prompt de matching.
  */
 export function getProfileAiRecommendationReadiness(p: UserProfile): number {
+  const memberPresentation = (p.memberBio ?? '').trim() || (p.bio ?? '').trim();
+  const rawSlots = p.companyActivities as unknown;
+  let firstActivityDesc = '';
+  if (Array.isArray(rawSlots) && rawSlots.length > 0) {
+    firstActivityDesc = String(
+      (rawSlots[0] as { activityDescription?: string })?.activityDescription ?? ''
+    ).trim();
+  }
+  if (!firstActivityDesc && !String(p.memberBio ?? '').trim()) {
+    firstActivityDesc = String(p.bio ?? '').trim();
+  }
   const passionsOk = sanitizePassionIds(p.passionIds).length >= 1;
   const checks = [
     !!(p.fullName?.trim()),
     !!(p.companyName?.trim()),
     !!(p.email?.trim()),
     !!(p.activityCategory?.trim()),
-    !!(p.bio?.trim() && p.bio.trim().length >= 15),
+    !!(memberPresentation.length >= 15 && firstActivityDesc.length >= 15),
     passionsOk,
     !!(p.positionCategory?.trim()),
     !!(p.city?.trim()),
@@ -128,9 +150,16 @@ export interface UserProfile {
   isValidated?: boolean;
   /** Revue admin en attente (accès membre déjà autorisé). */
   needsAdminReview?: boolean;
+  /**
+   * @deprecated Ancien texte unique. Les nouveaux profils utilisent `memberBio` et `activityDescription` par entreprise.
+   */
   bio?: string;
-  /** Pré-traductions de la bio (clé = langue UI) pour limiter les appels IA en lecture. */
+  /** @deprecated Voir `memberBioTranslations`. */
   bioTranslations?: Partial<Record<Language, string>>;
+  /** Présentation personnelle (mise en avant recherche membres). */
+  memberBio?: string;
+  /** Pré-traductions de la bio membre (clé = langue UI). */
+  memberBioTranslations?: Partial<Record<Language, string>>;
   /** Jusqu’à 3 codes NEED_* (voir `NEED_OPTIONS`) mis en avant sur le profil */
   highlightedNeeds?: string[];
   lookingFor?: string;

@@ -8,6 +8,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { getProfileAiRecommendationReadiness, type UserProfile } from '../types';
+import { profileDistinctActivityCategories } from '../lib/companyActivities';
 
 export type PeriodKey = 'today' | 'week' | 'month' | 'all';
 
@@ -171,8 +172,15 @@ export function useAdminStats(period: PeriodKey): AdminStats {
           const city = (p.city as string) || 'Autre';
           byCity[city] = (byCity[city] || 0) + 1;
 
-          const sector = (p.activityCategory as string) || (p.sector as string) || 'Autre';
-          bySector[sector] = (bySector[sector] || 0) + 1;
+          const sectors = profileDistinctActivityCategories(p as unknown as UserProfile);
+          if (sectors.length === 0) {
+            const fallback = (p.sector as string) || 'Autre';
+            bySector[fallback] = (bySector[fallback] || 0) + 1;
+          } else {
+            sectors.forEach((code) => {
+              bySector[code] = (bySector[code] || 0) + 1;
+            });
+          }
 
           const hasContact =
             !!(p.linkedin as string) ||

@@ -72,6 +72,12 @@ export function formatCompanyKind(kind: CompanyKind, lang: Language): string {
       return pickLang('Grande entreprise', 'Gran empresa', 'Corporate', lang);
     case 'independent':
       return pickLang('Indépendant / freelance', 'Independiente / freelance', 'Independent / freelance', lang);
+    case 'association':
+      return pickLang('Association', 'Asociación', 'Association', lang);
+    case 'nonprofit':
+      return pickLang('Non profit', 'Sin fines de lucro', 'Non-profit', lang);
+    case 'club':
+      return pickLang('Club', 'Club', 'Club', lang);
     default:
       return kind;
   }
@@ -85,6 +91,8 @@ export function formatMemberStatus(status: MemberStatus, lang: Language): string
       return pickLang('Salarié(e)', 'Empleado(a)', 'Employee', lang);
     case 'owner':
       return pickLang('Dirigeant / propriétaire', 'Directivo / propietario', 'Owner / executive', lang);
+    case 'volunteer':
+      return pickLang('Bénévole', 'Voluntario(a)', 'Volunteer', lang);
     default:
       return status;
   }

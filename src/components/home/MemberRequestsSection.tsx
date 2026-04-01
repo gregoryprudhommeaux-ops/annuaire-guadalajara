@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, Lock, Megaphone, Plus, Trash2 } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
@@ -33,6 +33,8 @@ type Props = {
   onOpenAuthorProfile: (uid: string) => void;
   onCreate: (payload: Record<string, unknown>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  /** Incrémenté depuis l’extérieur pour ouvrir le modal « poster une demande » (ex. raccourci bandeau profil). */
+  postModalOpenNonce?: number;
 };
 
 const emptyForm: MemberRequestFormValues = {
@@ -53,6 +55,7 @@ export default function MemberRequestsSection({
   onOpenAuthorProfile,
   onCreate,
   onDelete,
+  postModalOpenNonce,
 }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<MemberRequestFormValues>(emptyForm);
@@ -66,6 +69,19 @@ export default function MemberRequestsSection({
     [requests]
   );
   const viewerIsSignedIn = Boolean(user);
+  const canPost = Boolean(user && profile?.uid);
+  const lastPostModalNonceRef = useRef(0);
+
+  useEffect(() => {
+    if (postModalOpenNonce === undefined) return;
+    if (postModalOpenNonce <= lastPostModalNonceRef.current) return;
+    lastPostModalNonceRef.current = postModalOpenNonce;
+    if (!canPost) {
+      onOpenAuth();
+      return;
+    }
+    setModalOpen(true);
+  }, [postModalOpenNonce, canPost, onOpenAuth]);
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -75,8 +91,6 @@ export default function MemberRequestsSection({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [modalOpen]);
-
-  const canPost = Boolean(user && profile?.uid);
   const closeModal = useCallback(() => {
     setModalOpen(false);
     setForm(emptyForm);

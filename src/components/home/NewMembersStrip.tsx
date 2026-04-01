@@ -6,7 +6,7 @@ import { activityCategoryLabel, CITIES, cityOptionLabel } from '../../constants'
 import type { Language } from '../../types';
 import { cn } from '../../cn';
 import { pickLang } from '../../lib/uiLocale';
-import { companyActivityNamesJoined } from '../../lib/companyActivities';
+import { companyActivityNamesJoined, profileDistinctActivityCategories } from '../../lib/companyActivities';
 import ProfileAvatar from '../ProfileAvatar';
 
 type Props = {
@@ -124,11 +124,11 @@ export default function NewMembersStrip({
             )}
           >
           {display.map((p) => {
-            const sectorLabel = stripTrailingCityFromSectorLine(
-              activityCategoryLabel(p.activityCategory, lang),
-              lang,
-              p.city
-            );
+            const cats = profileDistinctActivityCategories(p);
+            const sectorLine = cats.length
+              ? cats.map((c) => activityCategoryLabel(c, lang)).join(' · ')
+              : '';
+            const sectorLabel = stripTrailingCityFromSectorLine(sectorLine, lang, p.city);
             const cardInner = (
               <>
                 <div

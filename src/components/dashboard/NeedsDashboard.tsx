@@ -34,7 +34,15 @@ const chartTheme = {
   },
 };
 
-const SIZE_OPTIONS: CompanyKind[] = ['startup', 'pme', 'corporate', 'independent'];
+const SIZE_OPTIONS: CompanyKind[] = [
+  'startup',
+  'pme',
+  'corporate',
+  'independent',
+  'association',
+  'nonprofit',
+  'club',
+];
 
 type AxisTick = {
   x: number;
@@ -53,6 +61,12 @@ function sizeOptionLabel(kind: CompanyKind, lang: Language): string {
       return pickLang('Corporate', 'Corporativo', 'Corporate', lang);
     case 'independent':
       return pickLang('Indépendant', 'Independiente', 'Independent', lang);
+    case 'association':
+      return pickLang('Association', 'Asociación', 'Association', lang);
+    case 'nonprofit':
+      return pickLang('Non profit', 'Sin fines de lucro', 'Non-profit', lang);
+    case 'club':
+      return pickLang('Club', 'Club', 'Club', lang);
     default:
       return kind;
   }

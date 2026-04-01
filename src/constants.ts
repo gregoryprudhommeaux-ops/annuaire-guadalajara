@@ -266,6 +266,8 @@ export const TRANSLATIONS: Translations = {
   logout: { fr: "Se déconnecter", es: "Cerrar sesión" },
   register: { fr: "S'enregistrer", es: "Registrarse" },
   myProfile: { fr: "Mon Profil", es: "Mi Perfil" },
+  profileSharePublicCta: { fr: "Partager le profil", es: "Compartir perfil" },
+  profileCreateEventCta: { fr: "Créer un événement", es: "Crear un evento" },
   directory: { fr: "Annuaire", es: "Directorio" },
   fullName: { fr: "Nom complet", es: "Nombre completo" },
   companyName: { fr: "Nom de la société", es: "Nombre de la empresa" },
@@ -698,6 +700,18 @@ export const TRANSLATIONS: Translations = {
     fr: 'Au moins une entreprise ou activité avec un nom est requise.',
     es: 'Se requiere al menos una empresa o actividad con nombre.',
   },
+  profileFormActivityDescriptionLabel: {
+    fr: 'Description de l’activité',
+    es: 'Descripción de la actividad',
+  },
+  profileFormActivityDescriptionHint: {
+    fr: 'Minimum 15 caractères pour chaque entreprise nommée. Sert surtout à la recherche par société.',
+    es: 'Mínimo 15 caracteres por cada empresa indicada. Sirve sobre todo para la búsqueda por empresa.',
+  },
+  profileFormMemberBioHint: {
+    fr: 'Minimum 15 caractères. Présentation personnelle, mise en avant dans la recherche par membre.',
+    es: 'Mínimo 15 caracteres. Presentación personal, destacada en la búsqueda por miembro.',
+  },
   profileActivityToggleExpand: { fr: 'Afficher le détail', es: 'Mostrar detalle' },
   profileActivityToggleCollapse: { fr: 'Masquer le détail', es: 'Ocultar detalle' },
   /** Sous le champ pays (formulaire identité) — court, pour aligner la grille. */
@@ -835,7 +849,12 @@ export const TRANSLATIONS: Translations = {
     fr: "Gratuit · Communauté francophone · Guadalajara",
     es: "Gratis · Comunidad francófona · Guadalajara",
   },
-  bio: { fr: "Bio / Description", es: "PRESENTACIÓN / BIO" },
+  bio: { fr: "Bio (personne)", es: "Bio (persona)" },
+  memberBio: { fr: "Bio", es: "Bio" },
+  activityDescription: {
+    fr: "Description de l’activité (entreprise)",
+    es: "Descripción de la actividad (empresa)",
+  },
   companyDescription: {
     fr: "Description de l'entreprise",
     es: "Descripción de la empresa",

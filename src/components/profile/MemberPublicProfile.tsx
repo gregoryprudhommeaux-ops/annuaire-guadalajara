@@ -10,7 +10,13 @@ import {
   workingLanguageLabel,
 } from '../../lib/contactPreferences';
 import { pickLang } from '../../lib/uiLocale';
-import { companyActivityNamesJoined } from '../../lib/companyActivities';
+import {
+  companyActivityNamesJoined,
+  profileDistinctActivityCategories,
+  normalizeProfileCompanyActivities,
+  effectiveMemberBio,
+  displayActivityDescriptionForSlot,
+} from '../../lib/companyActivities';
 import { cn } from '../../cn';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
 import {
@@ -49,12 +55,10 @@ export function MemberPublicProfile({
     .filter(Boolean)
     .join(', ');
 
-  const sector = profile.activityCategory
-    ? activityCategoryLabel(profile.activityCategory, lang)
-    : '';
+  const sectorCodes = profileDistinctActivityCategories(profile);
   const fonction = profile.positionCategory ? workFunctionLabel(profile.positionCategory, lang) : '';
 
-  const metaParts = [fonction, location, sector].filter(Boolean);
+  const metaParts = [fonction, location].filter(Boolean);
   const metaLine = metaParts.join(' · ');
 
   const needs = sanitizeHighlightedNeeds(profile.highlightedNeeds);
@@ -97,6 +101,18 @@ export function MemberPublicProfile({
             {companyActivityNamesJoined(profile) || profile.companyName}
           </p>
           {metaLine ? <p className="mt-1 text-xs text-stone-500">{metaLine}</p> : null}
+          {sectorCodes.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {sectorCodes.map((code) => (
+                <span
+                  key={code}
+                  className="rounded-full border border-stone-200 bg-stone-50 px-2.5 py-0.5 text-[11px] font-semibold text-stone-700"
+                >
+                  {activityCategoryLabel(code, lang)}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -176,19 +192,52 @@ export function MemberPublicProfile({
         </section>
       ) : null}
 
-      {profile.bio?.trim() ? (
+      {effectiveMemberBio(profile).trim() ? (
         <section>
-          <h2 className={cn('mb-2', profileSectionTitleClass)}>{t('profilePublicAboutTitle')}</h2>
+          <h2 className={cn('mb-2', profileSectionTitleClass)}>{t('memberBio')}</h2>
           <AiTranslatedFreeText
             lang={lang}
             t={t}
-            text={profile.bio}
-            pretranslatedByLang={profile.bioTranslations}
+            text={effectiveMemberBio(profile)}
+            pretranslatedByLang={
+              profile.memberBio?.trim() ? profile.memberBioTranslations : profile.bioTranslations
+            }
             className="text-sm leading-relaxed text-stone-800"
             whitespace="pre-wrap"
           />
         </section>
       ) : null}
+
+      {(() => {
+        const slots = normalizeProfileCompanyActivities(profile);
+        const blocks = slots
+          .map((slot) => {
+            const text = displayActivityDescriptionForSlot(slot);
+            if (!text.trim() || !slot.companyName.trim()) return null;
+            return { slot, text };
+          })
+          .filter(Boolean) as { slot: (typeof slots)[0]; text: string }[];
+        if (blocks.length === 0) return null;
+        return (
+          <section className="space-y-4">
+            <h2 className={profileSectionTitleClass}>{t('profileFormActivityDescriptionLabel')}</h2>
+            {blocks.map(({ slot, text }) => (
+              <div key={slot.id} className={profileCardClass}>
+                <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                  {slot.companyName.trim()}
+                </p>
+                <AiTranslatedFreeText
+                  lang={lang}
+                  t={t}
+                  text={text}
+                  className="mt-2 text-sm leading-relaxed text-stone-800"
+                  whitespace="pre-wrap"
+                />
+              </div>
+            ))}
+          </section>
+        );
+      })()}
 
       {(passions.length > 0 || langs.length > 0) && (
         <section className="grid gap-4 md:grid-cols-2">

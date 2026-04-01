@@ -7,6 +7,7 @@ import {
   PUBLICATION_BIO_MIN_LEN,
   profileMeetsPublicationRequirements,
 } from './profilePublicationRules';
+import { effectiveMemberBio, firstSlotActivityDescription } from './companyActivities';
 import { GoogleGenAI } from '@google/genai';
 
 export function profileCoachFingerprint(p: UserProfile): string {
@@ -14,7 +15,8 @@ export function profileCoachFingerprint(p: UserProfile): string {
     p.website ?? '',
     p.whatsapp ?? '',
     p.city ?? '',
-    (p.bio ?? '').length,
+    (effectiveMemberBio(p) ?? '').length,
+    (firstSlotActivityDescription(p) ?? '').length,
     p.activityCategory ?? '',
     p.positionCategory ?? '',
     p.employeeCount ?? '',
@@ -37,8 +39,10 @@ export function collectProfileCoachGapKeys(p: UserProfile): string[] {
   if (!web || !/^https?:\/\/.+/i.test(web)) keys.push('website');
   if (!p.whatsapp?.trim()) keys.push('whatsapp');
   if (!p.city?.trim()) keys.push('city');
-  const bio = p.bio?.trim() ?? '';
-  if (bio.length < PUBLICATION_BIO_MIN_LEN) keys.push('bio');
+  const mb = effectiveMemberBio(p);
+  if (mb.length < PUBLICATION_BIO_MIN_LEN) keys.push('memberBio');
+  const ad = firstSlotActivityDescription(p);
+  if (ad.length < PUBLICATION_BIO_MIN_LEN) keys.push('activityDescription');
   if (!p.activityCategory?.trim()) keys.push('activityCategory');
   if (!p.positionCategory?.trim()) keys.push('workFunction');
   const passions = sanitizePassionIds(p.passionIds);
@@ -65,9 +69,10 @@ export function getProfileCoachCompletionFraction(p: UserProfile): number {
     websiteOk,
     !!(p.whatsapp?.trim()),
     !!(p.city?.trim()),
-    (p.bio?.trim() ?? '').length >= PUBLICATION_BIO_MIN_LEN,
     !!(p.activityCategory?.trim()),
     !!(p.positionCategory?.trim()),
+    effectiveMemberBio(p).length >= PUBLICATION_BIO_MIN_LEN,
+    firstSlotActivityDescription(p).length >= PUBLICATION_BIO_MIN_LEN,
     sanitizePassionIds(p.passionIds).length >= 1,
   ];
   const primaryPassed = primaryChecks.filter(Boolean).length;
@@ -132,7 +137,8 @@ function summarizeProfileForPrompt(p: UserProfile): string {
     `city:${p.city ?? '—'}`,
     `website_ok:${webOk}`,
     `whatsapp:${p.whatsapp?.trim() ? 'yes' : 'no'}`,
-    `bio_len:${(p.bio ?? '').trim().length}`,
+    `member_bio_len:${effectiveMemberBio(p).trim().length}`,
+    `activity_desc_len:${firstSlotActivityDescription(p).trim().length}`,
     `employee_info:${hasEmployeeInfo(p) ? 'yes' : 'no'}`,
     `highlighted_needs:${sanitizeHighlightedNeeds(p.highlightedNeeds).length}`,
     `passions:${sanitizePassionIds(p.passionIds).length}`,

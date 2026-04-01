@@ -16,6 +16,7 @@ import { Copy, Plus, Save, Search, Trash2, X } from 'lucide-react';
 import type { Language, AdminEvent, AdminEventParticipation, EventParticipationStatus, EventStatusSource, UserProfile } from '@/types';
 import { db } from '@/firebase';
 import { PASSIONS_CATEGORIES, getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/passionConfig';
+import { profileDistinctActivityCategories } from '@/lib/companyActivities';
 
 type TFn = (key: string) => string;
 
@@ -382,8 +383,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
   const allSectors = useMemo(() => {
     const set = new Set<string>();
     memberIndex.forEach((m) => {
-      const s = String(m.activityCategory ?? '').trim();
-      if (s) set.add(s);
+      profileDistinctActivityCategories(m).forEach((s) => set.add(s));
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [memberIndex]);
@@ -394,7 +394,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     const passion = editorPassionFilter.trim();
     return memberIndex
       .filter((m) => {
-        if (sector && String(m.activityCategory ?? '').trim() !== sector) return false;
+        if (sector && !profileDistinctActivityCategories(m).includes(sector)) return false;
         if (passion) {
           const ids = sanitizePassionIds(m.passionIds);
           if (!ids.includes(passion)) return false;
@@ -809,7 +809,11 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                               >
                                 <p className="truncate font-semibold text-stone-900">{m.fullName}</p>
                                 <p className="truncate text-xs text-stone-600">
-                                  {m.companyName} · {m.activityCategory || uiLabel(lang, '—', '—', '—')}
+                                  {m.companyName} ·{' '}
+                                  {(() => {
+                                    const cats = profileDistinctActivityCategories(m);
+                                    return cats.length ? cats.join(' · ') : uiLabel(lang, '—', '—', '—');
+                                  })()}
                                 </p>
                                 {passions.length > 0 ? (
                                   <p className="mt-1 truncate text-[11px] text-stone-500">

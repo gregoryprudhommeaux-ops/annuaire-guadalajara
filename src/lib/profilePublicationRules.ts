@@ -1,6 +1,7 @@
 import type { CommunityCompanyKind, CommunityMemberStatus, UserProfile } from '../types';
 import { isEmployeeCountRange } from '../constants';
 import { sanitizePassionIds } from './passionConfig';
+import { effectiveMemberBio, firstSlotActivityDescription } from './companyActivities';
 
 /** Longueur minimale de la bio pour considérer la fiche « publiable ». */
 export const PUBLICATION_BIO_MIN_LEN = 15;
@@ -33,11 +34,15 @@ const PUBLICATION_COMMUNITY_COMPANY_KINDS: readonly CommunityCompanyKind[] = [
   'pme',
   'corporate',
   'independent',
+  'association',
+  'nonprofit',
+  'club',
 ];
 const PUBLICATION_COMMUNITY_MEMBER_STATUSES: readonly CommunityMemberStatus[] = [
   'freelance',
   'employee',
   'owner',
+  'volunteer',
 ];
 
 export type ProfilePublicationBlockReason =
@@ -51,6 +56,7 @@ export type ProfilePublicationBlockReason =
   | 'website'
   | 'whatsapp'
   | 'bio'
+  | 'activityDescription'
   | 'passions';
 
 export function getProfilePublicationBlockReason(
@@ -73,8 +79,10 @@ export function getProfilePublicationBlockReason(
   const web = p.website?.trim() ?? '';
   if (!web || !/^https?:\/\/.+/i.test(web)) return 'website';
   if (!p.whatsapp?.trim()) return 'whatsapp';
-  const bio = p.bio?.trim() ?? '';
-  if (bio.length < PUBLICATION_BIO_MIN_LEN) return 'bio';
+  const memberBio = effectiveMemberBio(p);
+  if (memberBio.length < PUBLICATION_BIO_MIN_LEN) return 'bio';
+  const actDesc = firstSlotActivityDescription(p);
+  if (actDesc.length < PUBLICATION_BIO_MIN_LEN) return 'activityDescription';
   if (sanitizePassionIds(p.passionIds).length < 1) return 'passions';
   return null;
 }
