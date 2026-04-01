@@ -73,7 +73,12 @@ import {
   type EmployeeCountRange,
   getProfileAiRecommendationReadiness,
   normalizedTargetKeywords,
+  type AdminEvent,
+  type CompanyActivitySlot,
 } from './types';
+import AdminMemberEventHistory from './components/admin/AdminMemberEventHistory';
+import AdminEvents from './components/dashboard/AdminEvents';
+import PublicEventPage from './components/events/PublicEventPage';
 import {
   TRANSLATIONS,
   ACTIVITY_CATEGORIES,
@@ -97,6 +102,22 @@ import {
   type ProfileTypeFilterKey,
 } from './lib/directoryFilters';
 import { NATIONALITY_OPTIONS, nationalityLabel } from './lib/nationalityOptions';
+import {
+  DEFAULT_PHONE_DIAL,
+  dialLabelForLang,
+  mergePhoneDialLocal,
+  splitStoredPhone,
+  isKnownPhoneDial,
+  phoneDialRowsOrderedForUi,
+} from './lib/phoneDialCodes';
+import {
+  companyActivityNamesJoined,
+  denormalizeFirstCompanySlot,
+  emptyCompanyActivitySlot,
+  employeeCountFromSlotField,
+  normalizeProfileCompanyActivities,
+  slotsToFirestoreList,
+} from './lib/companyActivities';
 import {
   loadUserAdminPrivate,
   saveUserAdminPrivate,
@@ -224,7 +245,9 @@ import {
   Sparkles,
   Maximize2,
   LogIn,
-  Lock
+  Lock,
+  X,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from './cn';
@@ -1763,6 +1786,22 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [viewMode, setViewMode] = useState<
     'companies' | 'members' | 'activities' | 'radar' | 'dashboard'
   >(initialViewMode);
+  const [dashboardInitialAdminTab, setDashboardInitialAdminTab] = useState<
+    'overview' | 'profiles' | 'site' | 'events'
+  >('overview');
+  const isPublicEventRoute = location.pathname.startsWith('/e/');
+  const publicEventSlug = useMemo(() => {
+    if (!location.pathname.startsWith('/e/')) return '';
+    return decodeURIComponent(location.pathname.replace(/^\/e\//, '')).trim();
+  }, [location.pathname]);
+  const [publicEvent, setPublicEvent] = useState<AdminEvent | null>(null);
+  const [publicEventLoading, setPublicEventLoading] = useState(false);
+  const [publicEventError, setPublicEventError] = useState<string | null>(null);
+  const [showRsvpModal, setShowRsvpModal] = useState(false);
+  const [rsvpDoneForEventId, setRsvpDoneForEventId] = useState<string | null>(null);
+  const [rsvpCheckDoneForEventId, setRsvpCheckDoneForEventId] = useState<string | null>(null);
+  const [rsvpBusy, setRsvpBusy] = useState(false);
+  const [rsvpError, setRsvpError] = useState<string | null>(null);
   /** Masque « Nouveaux membres » et « Opportunités » après interaction avec les onglets du listing (remonte le bloc principal). */
   const [directoryDiscoveryStripsHidden, setDirectoryDiscoveryStripsHidden] = useState(false);
   const [matches, setMatches] = useState<MatchSuggestion[]>([]);
@@ -1774,6 +1813,21 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [highlightedNeedsDraft, setHighlightedNeedsDraft] = useState<string[]>([]);
   const [passionIdsDraft, setPassionIdsDraft] = useState<string[]>([]);
   const [workingLanguagesDraft, setWorkingLanguagesDraft] = useState<string[]>([]);
+  const profileWhatsappSplit = useMemo(
+    () => splitStoredPhone(editingProfile?.whatsapp ?? profile?.whatsapp),
+    [editingProfile?.whatsapp, profile?.whatsapp]
+  );
+  const profileWhatsappDialDefault = isKnownPhoneDial(profileWhatsappSplit.dial)
+    ? profileWhatsappSplit.dial
+    : DEFAULT_PHONE_DIAL;
+  const profileWhatsappLocalDefault = isKnownPhoneDial(profileWhatsappSplit.dial)
+    ? profileWhatsappSplit.local
+    : (editingProfile?.whatsapp ?? profile?.whatsapp ?? '').replace(/\s/g, '');
+  const [companyActivitiesDraft, setCompanyActivitiesDraft] = useState<CompanyActivitySlot[]>([]);
+  const [companyActivityEditCollapsed, setCompanyActivityEditCollapsed] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [profileActivityCollapsed, setProfileActivityCollapsed] = useState<Record<string, boolean>>({});
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [expandedHookId, setExpandedHookId] = useState<string | null>(null);
   const [authProviderBusy, setAuthProviderBusy] = useState<SocialAuthProvider | null>(null);
@@ -1839,16 +1893,107 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   }, [profile?.role]);
 
   const isMembersDirectoryRoute = location.pathname === '/membres';
+  const isEventsAdminRoute = location.pathname === '/evenements';
 
   useLayoutEffect(() => {
     if (location.pathname === '/membres') {
       setViewMode('members');
       setDirectoryDiscoveryStripsHidden(true);
       setMembersSortMode(parseMembersSortFromSearch(location.search));
+    } else if (location.pathname === '/dashboard') {
+      setViewMode('dashboard');
+      setDirectoryDiscoveryStripsHidden(true);
     } else {
       setMembersSortMode('default');
     }
   }, [location.pathname, location.search]);
+
+  useLayoutEffect(() => {
+    if (location.pathname === '/evenements') {
+      setViewMode('dashboard');
+      setDirectoryDiscoveryStripsHidden(true);
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isPublicEventRoute) {
+      setPublicEvent(null);
+      setPublicEventError(null);
+      setPublicEventLoading(false);
+      setShowRsvpModal(false);
+      setRsvpError(null);
+      setRsvpDoneForEventId(null);
+      setRsvpCheckDoneForEventId(null);
+      return;
+    }
+    if (!publicEventSlug) return;
+    let cancelled = false;
+    setPublicEventLoading(true);
+    setPublicEventError(null);
+    (async () => {
+      try {
+        const q = query(collection(db, 'events'), where('slug', '==', publicEventSlug), limit(1));
+        const snap = await getDocs(q);
+        const docSnap = snap.docs[0];
+        const row = docSnap ? ({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) } as AdminEvent) : null;
+        if (!cancelled) setPublicEvent(row);
+      } catch (e) {
+        if (!cancelled) setPublicEventError(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (!cancelled) setPublicEventLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isPublicEventRoute, publicEventSlug]);
+
+  useEffect(() => {
+    // Si on a déjà une réponse enregistrée, ne pas re-demander.
+    if (!isPublicEventRoute || !publicEvent?.id || !user?.uid) return;
+    if (rsvpCheckDoneForEventId === publicEvent.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const id = `${publicEvent.id}_${user.uid}`;
+        const snap = await getDoc(doc(db, 'event_participations', id));
+        if (cancelled) return;
+        if (snap.exists()) {
+          const data = snap.data() as { status?: string };
+          if (data?.status === 'present' || data?.status === 'declined') {
+            setRsvpDoneForEventId(publicEvent.id);
+            setShowRsvpModal(false);
+          }
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setRsvpCheckDoneForEventId(publicEvent.id);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isPublicEventRoute, publicEvent?.id, user?.uid, rsvpCheckDoneForEventId]);
+
+  useEffect(() => {
+    if (!isPublicEventRoute) return;
+    // Objectif: /e/:slug doit pousser vers création de profil, puis RSVP.
+    if (!user) {
+      setAuthError(null);
+      setAuthModalResetKey((k) => k + 1);
+      setShowAuthModal(true);
+      return;
+    }
+    if (!profile) {
+      setIsEditing(true);
+      setIsProfileExpanded(true);
+      return;
+    }
+    if (publicEvent && !showRsvpModal && rsvpDoneForEventId !== publicEvent.id) {
+      setShowRsvpModal(true);
+    }
+  }, [isPublicEventRoute, user, profile, publicEvent, showRsvpModal, rsvpDoneForEventId]);
 
   const getAuthErrorMessage = (code: string) => {
     const host = typeof window !== 'undefined' ? window.location.host : '';
@@ -2000,6 +2145,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
    * l’écran semble rempli).
    */
   const publicationDraftsHydratedUidRef = useRef<string | null>(null);
+  const companyActivitiesHydratedUidRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isEditing) {
       publicationDraftsHydratedUidRef.current = null;
@@ -2030,6 +2176,28 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   useEffect(() => {
     if (!isEditing) {
+      companyActivitiesHydratedUidRef.current = null;
+      return;
+    }
+    const src = editingProfile ?? profile;
+    if (!src) return;
+    setCompanyActivitiesDraft(normalizeProfileCompanyActivities(src));
+    setCompanyActivityEditCollapsed({});
+  }, [isEditing, editingProfile?.uid]);
+
+  useEffect(() => {
+    setProfileActivityCollapsed({});
+  }, [profile?.uid]);
+
+  useEffect(() => {
+    if (!isEditing || editingProfile || !profile) return;
+    if (companyActivitiesHydratedUidRef.current === profile.uid) return;
+    companyActivitiesHydratedUidRef.current = profile.uid;
+    setCompanyActivitiesDraft(normalizeProfileCompanyActivities(profile));
+  }, [isEditing, editingProfile, profile]);
+
+  useEffect(() => {
+    if (!isEditing) {
       setProfilePhotoUrlDraft('');
       return;
     }
@@ -2052,6 +2220,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       if (prev.length >= 3) return prev;
       return [...prev, id];
     });
+  };
+
+  const updateCompanyActivitySlot = (id: string, patch: Partial<CompanyActivitySlot>) => {
+    setCompanyActivitiesDraft((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   };
 
   const stats = useMemo(() => {
@@ -2560,13 +2732,101 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       const n = Number(raw);
       return Number.isFinite(n) ? n : undefined;
     };
-    const ecRaw = getTrimmed('employeeCount');
-    let employeeCountVal: EmployeeCountRange | undefined;
-    if (ecRaw === '') {
-      employeeCountVal = undefined;
-    } else if (isEmployeeCountRange(ecRaw)) {
-      employeeCountVal = ecRaw;
-    } else {
+    let whatsappDialRaw = getTrimmed('whatsappDial');
+    if (!isKnownPhoneDial(whatsappDialRaw)) whatsappDialRaw = DEFAULT_PHONE_DIAL;
+    const whatsappLocalRaw = String(formData.get('whatsappLocal') ?? '').trim();
+    const whatsappMerged = mergePhoneDialLocal(whatsappDialRaw, whatsappLocalRaw);
+
+    const slotsWithName = companyActivitiesDraft.filter((s) => s.companyName.trim());
+    if (slotsWithName.length === 0) {
+      setProfileSaveError(t('profileFormCompanyActivityMinOne'));
+      setProfileSaveBusy(false);
+      return;
+    }
+
+    const tagAt = (i: number) =>
+      pickLang(` — Entreprise ${i + 1}`, ` — Empresa ${i + 1}`, ` — Company ${i + 1}`, lang);
+
+    for (let i = 0; i < slotsWithName.length; i++) {
+      const s = slotsWithName[i];
+      const tag = slotsWithName.length > 1 ? tagAt(i) : '';
+      const web = s.website?.trim() ?? '';
+      if (!web || !/^https?:\/\/.+/i.test(web)) {
+        setProfileSaveError(
+          pickLang(
+            `Indiquez une URL de site web valide (https://…)${tag}.`,
+            `Indica una URL web válida (https://…)${tag}.`,
+            `Enter a valid website URL (https://…)${tag}.`,
+            lang
+          )
+        );
+        setProfileSaveBusy(false);
+        return;
+      }
+      if (!s.city?.trim()) {
+        setProfileSaveError(
+          pickLang(`Choisissez une ville${tag}.`, `Elige una ciudad${tag}.`, `Please choose a city${tag}.`, lang)
+        );
+        setProfileSaveBusy(false);
+        return;
+      }
+      if (!s.state?.trim()) {
+        setProfileSaveError(
+          pickLang(`Indiquez l’état / région${tag}.`, `Indica el estado / región${tag}.`, `Please enter state / region${tag}.`, lang)
+        );
+        setProfileSaveBusy(false);
+        return;
+      }
+      if (!s.country?.trim()) {
+        setProfileSaveError(
+          pickLang(`Indiquez le pays${tag}.`, `Indica el país${tag}.`, `Please enter the country${tag}.`, lang)
+        );
+        setProfileSaveBusy(false);
+        return;
+      }
+      if (!s.positionCategory?.trim()) {
+        setProfileSaveError(
+          pickLang(
+            `Choisissez la fonction dans l’entreprise${tag}.`,
+            `Elige la función en la empresa${tag}.`,
+            `Choose your role in the company${tag}.`,
+            lang
+          )
+        );
+        setProfileSaveBusy(false);
+        return;
+      }
+      const cck = s.communityCompanyKind;
+      if (!cck || !(['startup', 'pme', 'corporate', 'independent'] as const).includes(cck)) {
+        setProfileSaveError(
+          pickLang(
+            `Choisissez le type d’entreprise${tag}.`,
+            `Elige el tipo de empresa${tag}.`,
+            `Choose the company type${tag}.`,
+            lang
+          )
+        );
+        setProfileSaveBusy(false);
+        return;
+      }
+      const cms = s.communityMemberStatus;
+      if (!cms || !(['freelance', 'employee', 'owner'] as const).includes(cms)) {
+        setProfileSaveError(
+          pickLang(
+            `Choisissez le statut professionnel${tag}.`,
+            `Elige el estatus profesional${tag}.`,
+            `Choose your professional status${tag}.`,
+            lang
+          )
+        );
+        setProfileSaveBusy(false);
+        return;
+      }
+    }
+
+    const firstSlot = slotsWithName[0];
+    let employeeCountVal = employeeCountFromSlotField(firstSlot.employeeCount);
+    if (firstSlot.employeeCount !== '' && firstSlot.employeeCount != null && employeeCountVal === undefined) {
       setProfileSaveError(
         pickLang(
           "La fourchette « Nombre d'employés » sélectionnée est invalide.",
@@ -2587,27 +2847,19 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const targetSectorListProbe =
       (formData.get('targetSectors') as string)?.split(',').map((s) => s.trim()).filter(Boolean) || [];
 
-    const cckProbe = getTrimmed('communityCompanyKind');
-    const cmsProbe = getTrimmed('communityMemberStatus');
     const publicationProbe: Partial<UserProfile> = {
       fullName: getTrimmed('fullName'),
-      companyName: getTrimmed('companyName'),
+      companyName: firstSlot.companyName.trim(),
       email: getTrimmed('email'),
       activityCategory: getTrimmed('activityCategory'),
-      positionCategory: getTrimmed('positionCategory'),
-      city: getTrimmed('city'),
-      state: getTrimmed('state'),
-      country: getTrimmed('country'),
-      communityCompanyKind:
-        cckProbe === ''
-          ? undefined
-          : (cckProbe as UserProfile['communityCompanyKind']),
-      communityMemberStatus:
-        cmsProbe === ''
-          ? undefined
-          : (cmsProbe as UserProfile['communityMemberStatus']),
-      website: getTrimmed('website'),
-      whatsapp: getTrimmed('whatsapp'),
+      positionCategory: firstSlot.positionCategory?.trim(),
+      city: firstSlot.city?.trim(),
+      state: firstSlot.state?.trim(),
+      country: firstSlot.country?.trim(),
+      communityCompanyKind: firstSlot.communityCompanyKind,
+      communityMemberStatus: firstSlot.communityMemberStatus,
+      website: firstSlot.website?.trim(),
+      whatsapp: whatsappMerged,
       bio: getTrimmed('bio'),
       employeeCount: employeeCountVal,
       companySize: computedCompanySizeProbe,
@@ -2660,7 +2912,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       return;
     }
 
-    const posVal = getTrimmed('positionCategory');
+    const posVal = firstSlot.positionCategory?.trim() ?? '';
     if (posVal && !(WORK_FUNCTION_OPTIONS as readonly string[]).includes(posVal)) {
       setProfileSaveError(
         pickLang(
@@ -2724,7 +2976,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       'owner',
     ];
 
-    const cckRaw = getTrimmed('communityCompanyKind');
+    const cckRaw = firstSlot.communityCompanyKind ?? '';
     let communityCompanyKind: CommunityCompanyKind | ReturnType<typeof deleteField>;
     if (cckRaw === '') {
       communityCompanyKind = deleteField();
@@ -2743,7 +2995,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       return;
     }
 
-    const cmsRaw = getTrimmed('communityMemberStatus');
+    const cmsRaw = firstSlot.communityMemberStatus ?? '';
     let communityMemberStatus: CommunityMemberStatus | ReturnType<typeof deleteField>;
     if (cmsRaw === '') {
       communityMemberStatus = deleteField();
@@ -2762,7 +3014,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       return;
     }
 
-    const tcsRaw = getTrimmed('typicalClientSize');
+    const tcsRaw = firstSlot.typicalClientSize ?? '';
     let typicalClientSize: TypicalClientSize | ReturnType<typeof deleteField>;
     if (tcsRaw === '') {
       typicalClientSize = deleteField();
@@ -2859,23 +3111,18 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const helpNewcomersVal = optionalString('helpNewcomers');
     const networkGoalVal = optionalString('networkGoal');
 
+    const companySlotsPayload = slotsToFirestoreList(slotsWithName);
+
     const newProfile = {
       uid: targetUid,
       fullName: getTrimmed('fullName'),
-      companyName: getTrimmed('companyName'),
-      creationYear: optionalNumber('creationYear'),
-      city: optionalString('city'),
-      state: getTrimmed('state'),
-      neighborhood: optionalString('neighborhood'),
-      country: getTrimmed('country'),
+      ...denormalizeFirstCompanySlot(slotsWithName[0]),
+      companyActivities: companySlotsPayload,
       activityCategory: optionalString('activityCategory'),
-      positionCategory: optionalString('positionCategory'),
       email: getTrimmed('email'),
-      website: optionalString('website'),
-      whatsapp: optionalString('whatsapp'),
+      whatsapp: whatsappMerged || undefined,
       linkedin: optionalString('linkedin'),
       photoURL: optionalString('photoURL'),
-      arrivalYear: optionalNumber('arrivalYear'),
       employeeCount: employeeCountVal,
       isEmailPublic: formData.get('isEmailPublic') === 'on',
       isWhatsappPublic: formData.get('isWhatsappPublic') === 'on',
@@ -2946,6 +3193,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       );
       setIsEditing(false);
       setEditingProfile(null);
+      if (isPublicEventRoute && publicEvent) {
+        setShowRsvpModal(true);
+      }
     } catch (error) {
       console.error('Profile save failed', error);
       const code = (error as { code?: string })?.code || '';
@@ -2971,6 +3221,42 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       return;
     } finally {
       setProfileSaveBusy(false);
+    }
+  };
+
+  const submitRsvp = async (status: 'present' | 'declined') => {
+    if (!user || !profile || !publicEvent) return;
+    // UX: fermer immédiatement, puis enregistrer (ré-ouvre en cas d’erreur).
+    setRsvpDoneForEventId(publicEvent.id);
+    setShowRsvpModal(false);
+    setRsvpBusy(true);
+    setRsvpError(null);
+    try {
+      const now = Timestamp.now();
+      const id = `${publicEvent.id}_${user.uid}`;
+      await setDoc(
+        doc(db, 'event_participations', id),
+        {
+          eventId: publicEvent.id,
+          uid: user.uid,
+          email: String(profile.email ?? user.email ?? '').trim().toLowerCase(),
+          fullName: profile.fullName ?? user.displayName ?? null,
+          companyName: profile.companyName ?? null,
+          status,
+          statusSource: 'guest',
+          createdAt: now,
+          updatedAt: now,
+        },
+        { merge: true }
+      );
+      setRsvpError(null);
+      // Après RSVP: rester sur la page (V1). On pourra rediriger vers /membres plus tard.
+    } catch (e) {
+      setRsvpError(e instanceof Error ? e.message : String(e));
+      setRsvpDoneForEventId(null);
+      setShowRsvpModal(true);
+    } finally {
+      setRsvpBusy(false);
     }
   };
 
@@ -3498,6 +3784,22 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     {t('exportData')}
                   </span>
                 </button>
+                <Link
+                  to="/evenements"
+                  onClick={() => setDashboardInitialAdminTab('events')}
+                  className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-white px-1 py-1.5 text-slate-800 transition-colors hover:bg-slate-50 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2 border border-slate-200"
+                  title={pickLang(
+                    'Ouvrir la page Événements',
+                    'Abrir la página de Eventos',
+                    'Open Events page',
+                    lang
+                  )}
+                >
+                  <Calendar className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
+                  <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                    {t('adminTabEvents')}
+                  </span>
+                </Link>
             </div>
           ) : undefined
         }
@@ -3869,123 +4171,32 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             {t('profileFormRequiredLegend')}
                           </p>
 
-                          <section className="space-y-4">
-                            <h2 className="mb-4 text-sm font-semibold text-stone-900">{t('profileFormSectionIdentity')}</h2>
+                          <section className="space-y-4 rounded-xl border border-stone-200 bg-stone-50/40 p-4">
+                            <h2 className="mb-1 text-sm font-semibold text-stone-900">{t('profileFormSectionPerson')}</h2>
+                            <p className="mb-4 text-[10px] text-stone-500">
+                              {pickLang(
+                                'Identité affichée, moyens de contact et langues d’échange.',
+                                'Identidad mostrada, contacto e idiomas de intercambio.',
+                                'Display identity, contact channels and languages you use.',
+                                lang
+                              )}
+                            </p>
 
-                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('fullName')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
-                                </label>
-                                <input
-                                  name="fullName"
-                                  defaultValue={editingProfile?.fullName || profile?.fullName}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('companyName')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
-                                </label>
-                                <input
-                                  name="companyName"
-                                  defaultValue={editingProfile?.companyName || profile?.companyName}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('activityCategory')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
-                                </label>
-                                <select
-                                  name="activityCategory"
-                                  defaultValue={editingProfile?.activityCategory || profile?.activityCategory}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                >
-                                  {ACTIVITY_CATEGORIES.map((c) => (
-                                    <option key={c} value={c}>
-                                      {activityCategoryLabel(c, lang)}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
+                            <div className="mb-4 space-y-1">
+                              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                {t('fullName')}
+                                <span className="text-red-500 font-semibold" aria-hidden>
+                                  {' *'}
+                                </span>
+                              </label>
+                              <input
+                                name="fullName"
+                                defaultValue={editingProfile?.fullName || profile?.fullName}
+                                className="h-10 w-full max-w-xl rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                              />
                             </div>
 
-                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('city')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
-                                </label>
-                                <select
-                                  name="city"
-                                  defaultValue={editingProfile?.city || profile?.city}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                >
-                                  {CITIES.map((c) => (
-                                    <option key={c} value={c}>
-                                      {cityOptionLabel(c, lang)}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('neighborhood')}
-                                </label>
-                                <input
-                                  name="neighborhood"
-                                  defaultValue={editingProfile?.neighborhood || profile?.neighborhood}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('state')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
-                                </label>
-                                <input
-                                  name="state"
-                                  defaultValue={editingProfile?.state || profile?.state || 'Jalisco'}
-                                  placeholder={pickLang('Jalisco', 'Jalisco', 'Jalisco', lang)}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('country')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
-                                </label>
-                                <input
-                                  name="country"
-                                  defaultValue={
-                                    editingProfile?.country?.trim() ||
-                                    profile?.country?.trim() ||
-                                    ''
-                                  }
-                                  placeholder={pickLang('Mexique', 'México', 'Mexico', lang)}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                                <p className="mt-1 text-[10px] text-stone-400">{t('profileFormCountryFootnote')}</p>
-                              </div>
+                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div className="space-y-1">
                                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('email')}
@@ -3997,72 +4208,628 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   type="email"
                                   name="email"
                                   defaultValue={editingProfile?.email || profile?.email || user.email || ''}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
                               </div>
                               <div className="space-y-1">
                                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('whatsapp')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
+                                  {t('linkedin')}
                                 </label>
-                                <input
-                                  type="tel"
-                                  name="whatsapp"
-                                  defaultValue={editingProfile?.whatsapp || profile?.whatsapp}
-                                  placeholder={pickLang('+52 …', '+52 …', '+52 …', lang)}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
+                                <div className="flex gap-2">
+                                  <input
+                                    name="linkedin"
+                                    id="linkedin-input"
+                                    type="url"
+                                    autoComplete="url"
+                                    defaultValue={editingProfile?.linkedin || profile?.linkedin}
+                                    placeholder="https://linkedin.com/in/..."
+                                    className="h-10 min-w-0 flex-1 rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsLinkedInModalOpen(true)}
+                                    className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-lg border border-stone-300 px-3 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-50"
+                                  >
+                                    <span className="inline-flex items-center gap-1.5">
+                                      <Linkedin size={14} aria-hidden />
+                                      {t('fetchPhoto')}
+                                    </span>
+                                  </button>
+                                </div>
                               </div>
                             </div>
 
-                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-[minmax(9rem,12rem)_1fr]">
                               <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('website')}
+                                <label
+                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                  htmlFor="whatsappDial"
+                                >
+                                  {t('profileFormPhoneCountryLabel')}
+                                </label>
+                                <select
+                                  id="whatsappDial"
+                                  name="whatsappDial"
+                                  defaultValue={profileWhatsappDialDefault}
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                >
+                                  {phoneDialRowsOrderedForUi().map((row) => (
+                                    <option key={row.dial} value={row.dial}>
+                                      {dialLabelForLang(row.dial, lang)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="space-y-1">
+                                <label
+                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                  htmlFor="whatsappLocal"
+                                >
+                                  {t('profileFormPhoneLocalLabel')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
                                 </label>
                                 <input
-                                  name="website"
-                                  type="url"
-                                  inputMode="url"
-                                  autoComplete="url"
-                                  placeholder="https://..."
-                                  defaultValue={editingProfile?.website || profile?.website}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                  id="whatsappLocal"
+                                  type="tel"
+                                  name="whatsappLocal"
+                                  defaultValue={profileWhatsappLocalDefault}
+                                  placeholder={pickLang('ex. 33 1234 5678', 'ej. 33 1234 5678', 'e.g. 33 1234 5678', lang)}
+                                  autoComplete="tel-national"
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
+                                <p className="mt-1 text-[10px] text-stone-400">{t('profileFormPhoneLocalHint')}</p>
                               </div>
-                              <div className="space-y-1 md:col-span-2">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('workFunction')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
-                                </label>
-                                <select
-                                  name="positionCategory"
-                                  defaultValue={editingProfile?.positionCategory || profile?.positionCategory || ''}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                >
-                                  <option value="">{t('selectWorkFunction')}</option>
-                                  {WORK_FUNCTION_OPTIONS.map((opt) => (
-                                    <option key={opt} value={opt}>
-                                      {workFunctionLabel(opt, lang)}
-                                    </option>
-                                  ))}
-                                </select>
-                                <p className="mt-1 text-[10px] text-stone-400">{t('workFunctionHint')}</p>
+                            </div>
+
+                            <div className="mb-4 flex flex-col gap-2">
+                              <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700 hover:text-stone-900">
+                                <input
+                                  type="checkbox"
+                                  name="isEmailPublic"
+                                  defaultChecked={editingProfile?.isEmailPublic ?? profile?.isEmailPublic}
+                                  className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                />
+                                <span>{t('isEmailPublic')}</span>
+                              </label>
+                              <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700 hover:text-stone-900">
+                                <input
+                                  type="checkbox"
+                                  name="isWhatsappPublic"
+                                  defaultChecked={editingProfile?.isWhatsappPublic ?? profile?.isWhatsappPublic}
+                                  className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                />
+                                <span>{t('isWhatsappPublic')}</span>
+                              </label>
+                            </div>
+
+                            <div className="mb-4 space-y-1">
+                              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                {t('contactPrefsWorkingLangLabel')}
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {WORKING_LANGUAGE_OPTIONS.map((opt) => {
+                                  const selected = workingLanguagesDraft.includes(opt.code);
+                                  const disabled = !selected && workingLanguagesDraft.length >= 3;
+                                  return (
+                                    <button
+                                      key={opt.code}
+                                      type="button"
+                                      onClick={() => toggleWorkingLanguageDraft(opt.code)}
+                                      disabled={disabled}
+                                      className={cn(
+                                        'rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-all',
+                                        selected
+                                          ? 'border-blue-600 bg-blue-700 text-white shadow-sm'
+                                          : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300',
+                                        disabled && !selected && 'cursor-not-allowed opacity-40 hover:border-stone-200'
+                                      )}
+                                    >
+                                      {opt.label[lang]}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsWorkingLangTip')}</p>
+                            </div>
+
+                            {formAdminPrivateReady && formAdminPrivate !== null ? (
+                              <div
+                                key={`person-admin-${editingProfile?.uid ?? profile?.uid}`}
+                                className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2"
+                              >
+                                <div className="space-y-1">
+                                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                    {t('genderStatLabel')}
+                                  </label>
+                                  <select
+                                    name="genderStat"
+                                    defaultValue={formAdminPrivate.genderStat ?? ''}
+                                    className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                  >
+                                    <option value="">{t('genderStatSelectPlaceholder')}</option>
+                                    <option value="male">{t('genderStatMale')}</option>
+                                    <option value="female">{t('genderStatFemale')}</option>
+                                    <option value="other">{t('genderStatOther')}</option>
+                                    <option value="prefer_not_say">{t('genderStatPreferNotSay')}</option>
+                                  </select>
+                                  <p className="mt-1 text-[10px] text-stone-400 leading-snug">{t('genderStatHint')}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                    {t('nationalityLabel')}
+                                  </label>
+                                  <select
+                                    name="nationality"
+                                    defaultValue={formAdminPrivate.nationality ?? ''}
+                                    className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                  >
+                                    <option value="">{t('nationalitySelectPlaceholder')}</option>
+                                    {NATIONALITY_OPTIONS.map((o) => (
+                                      <option key={o.code} value={o.code}>
+                                        {nationalityLabel(o.code, lang)}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            ) : null}
+
+                            <input type="hidden" name="photoURL" value={profilePhotoUrlDraft} />
+                            <div className="space-y-1">
+                              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                {t('profileFormProfilePhotoLabel')}
+                              </label>
+                              <div className="flex min-h-10 items-center gap-3">
+                                {profilePhotoUrlDraft ? (
+                                  <img
+                                    src={profilePhotoUrlDraft}
+                                    alt={t('profileFormProfilePhotoLabel')}
+                                    className="h-10 w-10 shrink-0 rounded-full border border-stone-200 object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-stone-300 bg-stone-100 text-[10px] text-stone-400">
+                                    {t('profileFormPhotoPlaceholder')}
+                                  </div>
+                                )}
+                                <div className="flex min-w-0 flex-col justify-center gap-0.5 leading-tight">
+                                  {profilePhotoUrlDraft ? (
+                                    <span
+                                      className={cn(
+                                        'text-xs font-medium',
+                                        /licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft)
+                                          ? 'text-emerald-600'
+                                          : 'text-stone-700'
+                                      )}
+                                    >
+                                      {/licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft)
+                                        ? `✓ ${t('profileFormPhotoLinkedInOk')}`
+                                        : `✓ ${t('profileFormPhotoDefined')}`}
+                                    </span>
+                                  ) : (
+                                    <span className="block text-[11px] text-stone-400">{t('profileFormAboutPhotoEmpty')}</span>
+                                  )}
+                                  <button
+                                    type="button"
+                                    className="text-left text-[11px] text-blue-600 underline decoration-blue-600/80 underline-offset-2 hover:text-blue-800"
+                                    onClick={() => {
+                                      const next = window.prompt(
+                                        t('profileFormPhotoUrlPrompt'),
+                                        profilePhotoUrlDraft
+                                      );
+                                      if (next !== null) setProfilePhotoUrlDraft(next.trim());
+                                    }}
+                                  >
+                                    {t('profileFormEditPhotoUrlManually')}
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </section>
 
-                          <section className="space-y-4 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
-                            <h2 className="text-sm font-semibold text-stone-900">{t('profileFormSectionCore')}</h2>
+                          <section className="space-y-4 rounded-xl border border-stone-200 bg-white p-4">
+                            <h2 className="mb-2 text-sm font-semibold text-stone-900">{t('profileFormSectionPassions')}</h2>
+                            <IceBreakerInterests
+                              lang={lang}
+                              value={passionIdsDraft}
+                              onChange={(ids) => setPassionIdsDraft(sanitizePassionIds(ids))}
+                              markRequired
+                            />
+                          </section>
 
-                            {/* Ligne 1 : objectif réseau — pleine largeur */}
+                          <section className="space-y-4 rounded-xl border border-stone-200 bg-stone-50/40 p-4">
+                            <h2 className="mb-1 text-sm font-semibold text-stone-900">{t('profileFormSectionCompanyActivity')}</h2>
+                            <p className="mb-2 text-[10px] text-stone-400">{t('profileFormCompanyDetailsIntro')}</p>
+                            <p className="mb-4 text-xs font-medium text-stone-700">
+                              {companyActivitiesDraft
+                                .map((s) => s.companyName.trim())
+                                .filter(Boolean)
+                                .join(' | ') ||
+                                pickLang('—', '—', '—', lang)}
+                            </p>
+
+                            <div className="space-y-4">
+                              {companyActivitiesDraft.map((slot, idx) => {
+                                const collapsed = companyActivityEditCollapsed[slot.id] === true;
+                                return (
+                                  <div
+                                    key={slot.id}
+                                    className="rounded-xl border border-stone-200 bg-white p-3 shadow-sm"
+                                  >
+                                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                                      <button
+                                        type="button"
+                                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-stone-200 bg-stone-50 text-stone-600 hover:bg-stone-100"
+                                        aria-expanded={!collapsed}
+                                        onClick={() =>
+                                          setCompanyActivityEditCollapsed((p) => ({
+                                            ...p,
+                                            [slot.id]: !(p[slot.id] === true),
+                                          }))
+                                        }
+                                      >
+                                        {collapsed ? (
+                                          <ChevronRight className="h-4 w-4" aria-hidden />
+                                        ) : (
+                                          <ChevronDown className="h-4 w-4" aria-hidden />
+                                        )}
+                                      </button>
+                                      <span className="min-w-0 flex-1 text-xs font-bold uppercase tracking-wide text-stone-800">
+                                        {t('profileFormCompanyActivityBlockTitle')} {idx + 1}
+                                        {slot.companyName.trim() ? (
+                                          <span className="ml-1 font-semibold normal-case text-stone-600">
+                                            — {slot.companyName.trim()}
+                                          </span>
+                                        ) : null}
+                                      </span>
+                                      {companyActivitiesDraft.length > 1 ? (
+                                        <button
+                                          type="button"
+                                          className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-800 hover:bg-rose-100"
+                                          onClick={() =>
+                                            setCompanyActivitiesDraft((prev) =>
+                                              prev.length <= 1 ? prev : prev.filter((s) => s.id !== slot.id)
+                                            )
+                                          }
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                                          {t('profileFormRemoveCompanyActivity')}
+                                        </button>
+                                      ) : null}
+                                    </div>
+
+                                    {!collapsed ? (
+                                      <div className="space-y-4 border-t border-stone-100 pt-3">
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                          <div className="space-y-1">
+                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                              {t('companyName')}
+                                              <span className="text-red-500 font-semibold" aria-hidden>
+                                                {' *'}
+                                              </span>
+                                            </label>
+                                            <input
+                                              value={slot.companyName}
+                                              onChange={(e) =>
+                                                updateCompanyActivitySlot(slot.id, {
+                                                  companyName: e.target.value,
+                                                })
+                                              }
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            />
+                                          </div>
+                                          <div className="space-y-1">
+                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                              {t('website')}
+                                              <span className="text-red-500 font-semibold" aria-hidden>
+                                                {' *'}
+                                              </span>
+                                            </label>
+                                            <input
+                                              type="url"
+                                              inputMode="url"
+                                              autoComplete="url"
+                                              placeholder="https://..."
+                                              value={slot.website ?? ''}
+                                              onChange={(e) =>
+                                                updateCompanyActivitySlot(slot.id, { website: e.target.value })
+                                              }
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                          <div className="space-y-1">
+                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                              {t('city')}
+                                              <span className="text-red-500 font-semibold" aria-hidden>
+                                                {' *'}
+                                              </span>
+                                            </label>
+                                            <select
+                                              value={slot.city || ''}
+                                              onChange={(e) =>
+                                                updateCompanyActivitySlot(slot.id, { city: e.target.value })
+                                              }
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            >
+                                              <option value="">
+                                                {pickLang('— Ville —', '— Ciudad —', '— City —', lang)}
+                                              </option>
+                                              {CITIES.map((c) => (
+                                                <option key={c} value={c}>
+                                                  {cityOptionLabel(c, lang)}
+                                                </option>
+                                              ))}
+                                            </select>
+                                          </div>
+                                          <div className="space-y-1">
+                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                              {t('neighborhood')}
+                                            </label>
+                                            <input
+                                              value={slot.neighborhood ?? ''}
+                                              onChange={(e) =>
+                                                updateCompanyActivitySlot(slot.id, {
+                                                  neighborhood: e.target.value,
+                                                })
+                                              }
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            />
+                                          </div>
+                                          <div className="space-y-1">
+                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                              {t('state')}
+                                              <span className="text-red-500 font-semibold" aria-hidden>
+                                                {' *'}
+                                              </span>
+                                            </label>
+                                            <input
+                                              value={slot.state ?? ''}
+                                              placeholder={pickLang('Jalisco', 'Jalisco', 'Jalisco', lang)}
+                                              onChange={(e) =>
+                                                updateCompanyActivitySlot(slot.id, { state: e.target.value })
+                                              }
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                          <div className="space-y-1 md:col-span-2">
+                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                              {t('country')}
+                                              <span className="text-red-500 font-semibold" aria-hidden>
+                                                {' *'}
+                                              </span>
+                                            </label>
+                                            <input
+                                              value={slot.country ?? ''}
+                                              placeholder={pickLang('Mexique', 'México', 'Mexico', lang)}
+                                              onChange={(e) =>
+                                                updateCompanyActivitySlot(slot.id, { country: e.target.value })
+                                              }
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            />
+                                            <p className="mt-1 text-[10px] text-stone-400">
+                                              {t('profileFormCountryFootnote')}
+                                            </p>
+                                          </div>
+                                          <div className="space-y-1 md:col-span-1">
+                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                              {t('workFunction')}
+                                              <span className="text-red-500 font-semibold" aria-hidden>
+                                                {' *'}
+                                              </span>
+                                            </label>
+                                            <select
+                                              value={slot.positionCategory || ''}
+                                              onChange={(e) =>
+                                                updateCompanyActivitySlot(slot.id, {
+                                                  positionCategory: e.target.value,
+                                                })
+                                              }
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            >
+                                              <option value="">{t('selectWorkFunction')}</option>
+                                              {WORK_FUNCTION_OPTIONS.map((opt) => (
+                                                <option key={opt} value={opt}>
+                                                  {workFunctionLabel(opt, lang)}
+                                                </option>
+                                              ))}
+                                            </select>
+                                            <p className="mt-1 text-[10px] text-stone-400">{t('workFunctionHint')}</p>
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                          <div className="space-y-1">
+                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                              {t('creationYear')}
+                                            </label>
+                                            <input
+                                              type="number"
+                                              value={slot.creationYear ?? ''}
+                                              onChange={(e) => {
+                                                const v = e.target.value;
+                                                updateCompanyActivitySlot(slot.id, {
+                                                  creationYear: v === '' ? undefined : Number(v),
+                                                });
+                                              }}
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            />
+                                          </div>
+                                          <div className="space-y-1">
+                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                              {t('employeeCount')}{' '}
+                                              <span className="text-[10px] font-normal normal-case text-stone-400">
+                                                {t('employeeCountOptional')}
+                                              </span>
+                                            </label>
+                                            <select
+                                              value={employeeCountToSelectDefault(slot.employeeCount)}
+                                              onChange={(e) =>
+                                                updateCompanyActivitySlot(slot.id, {
+                                                  employeeCount: e.target.value === '' ? '' : e.target.value,
+                                                })
+                                              }
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            >
+                                              <option value="">
+                                                {pickLang(
+                                                  '— Choisir une fourchette —',
+                                                  '— Elegir un rango —',
+                                                  '— Choose a range —',
+                                                  lang
+                                                )}
+                                              </option>
+                                              {EMPLOYEE_COUNT_RANGES.map((r) => (
+                                                <option key={r} value={r}>
+                                                  {r}
+                                                </option>
+                                              ))}
+                                            </select>
+                                          </div>
+                                          <div className="space-y-1">
+                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                              {t('arrivalYear')}
+                                            </label>
+                                            <input
+                                              type="number"
+                                              value={slot.arrivalYear ?? ''}
+                                              onChange={(e) => {
+                                                const v = e.target.value;
+                                                updateCompanyActivitySlot(slot.id, {
+                                                  arrivalYear: v === '' ? undefined : Number(v),
+                                                });
+                                              }}
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            />
+                                            <p className="mt-1 text-[10px] text-stone-400">
+                                              {t('profileFormArrivalRegionHint')}
+                                            </p>
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                          <div className="space-y-1">
+                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                              {t('profileFormCompanyType')}
+                                              <span className="text-red-500 font-semibold" aria-hidden>
+                                                {' *'}
+                                              </span>
+                                            </label>
+                                            <select
+                                              required
+                                              value={slot.communityCompanyKind ?? ''}
+                                              onChange={(e) =>
+                                                updateCompanyActivitySlot(slot.id, {
+                                                  communityCompanyKind:
+                                                    (e.target.value as CommunityCompanyKind) || undefined,
+                                                })
+                                              }
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            >
+                                              <option value="" disabled>
+                                                {pickLang('— Choisir —', '— Elegir —', '— Choose —', lang)}
+                                              </option>
+                                              <option value="startup">Startup</option>
+                                              <option value="pme">PME / SME</option>
+                                              <option value="corporate">Corporate</option>
+                                              <option value="independent">
+                                                {pickLang('Indépendant', 'Independiente', 'Independent', lang)}
+                                              </option>
+                                            </select>
+                                          </div>
+                                          <div className="space-y-1">
+                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                              {t('profileFormProfessionalStatus')}
+                                              <span className="text-red-500 font-semibold" aria-hidden>
+                                                {' *'}
+                                              </span>
+                                            </label>
+                                            <select
+                                              required
+                                              value={slot.communityMemberStatus ?? ''}
+                                              onChange={(e) =>
+                                                updateCompanyActivitySlot(slot.id, {
+                                                  communityMemberStatus:
+                                                    (e.target.value as CommunityMemberStatus) || undefined,
+                                                })
+                                              }
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            >
+                                              <option value="" disabled>
+                                                {pickLang('— Choisir —', '— Elegir —', '— Choose —', lang)}
+                                              </option>
+                                              <option value="freelance">Freelance</option>
+                                              <option value="employee">
+                                                {pickLang('Salarié', 'Asalariado', 'Employee', lang)}
+                                              </option>
+                                              <option value="owner">
+                                                {pickLang('Dirigeant / fondateur', 'Director / fundador', 'Owner / founder', lang)}
+                                              </option>
+                                            </select>
+                                          </div>
+                                          <div className="space-y-1">
+                                            <label
+                                              htmlFor={`typicalClientSize-${slot.id}`}
+                                              className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                            >
+                                              {t('contactPrefsClientSizeLabel')}
+                                            </label>
+                                            <select
+                                              id={`typicalClientSize-${slot.id}`}
+                                              value={slot.typicalClientSize ?? ''}
+                                              onChange={(e) =>
+                                                updateCompanyActivitySlot(slot.id, {
+                                                  typicalClientSize:
+                                                    (e.target.value as TypicalClientSize) || undefined,
+                                                })
+                                              }
+                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            >
+                                              <option value="">{t('contactPrefsClientSizeEmpty')}</option>
+                                              {(TYPICAL_CLIENT_SIZE_VALUES as readonly TypicalClientSize[]).map((v) => (
+                                                <option key={v} value={v}>
+                                                  {typicalClientSizeLabel(v, lang)}
+                                                </option>
+                                              ))}
+                                            </select>
+                                            <p className="mt-1 text-[10px] text-stone-400">
+                                              {t('contactPrefsClientSizeHint')}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setCompanyActivitiesDraft((prev) => [...prev, emptyCompanyActivitySlot()])
+                              }
+                              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-stone-300 bg-white py-2.5 text-xs font-semibold text-stone-700 hover:border-stone-400 hover:bg-stone-50"
+                            >
+                              <Plus className="h-4 w-4" aria-hidden />
+                              {t('profileFormAddCompanyActivity')}
+                            </button>
+                          </section>
+
+
+                          <section className="space-y-4 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
+                            <h2 className="text-sm font-semibold text-stone-900">{t('profileFormSectionNeedsKeywords')}</h2>
+                            <p className="mb-3 text-[10px] text-stone-500 leading-relaxed">{t('profileFormSectionCore')}</p>
+
                             <div>
                               <label
                                 htmlFor="networkGoal"
@@ -4082,7 +4849,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('profileNetworkGoalHint')}</p>
                             </div>
 
-                            {/* Ligne 2 : besoins actuels — pleine largeur */}
                             <div>
                               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                 {t('highlightedNeedsTitle')}{' '}
@@ -4125,7 +4891,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('highlightedNeedsHint')}</p>
                             </div>
 
-                            {/* Ligne 3 : aide nouveaux arrivants | préf. contact + langues */}
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div className="space-y-1">
                                 <label
@@ -4148,290 +4913,68 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('profileHelpNewcomersHint')}</p>
                               </div>
 
-                              <div className="flex flex-col gap-4">
-                                <div className="space-y-1">
-                                  <label
-                                    htmlFor="contactPreferenceCta"
-                                    className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                  >
-                                    {t('contactPrefsCtaLabel')}
-                                  </label>
-                                  <input
-                                    id="contactPreferenceCta"
-                                    name="contactPreferenceCta"
-                                    type="text"
-                                    defaultValue={
-                                      (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta) || ''
-                                    }
-                                    placeholder={t('contactPrefsCtaPlaceholder')}
-                                    className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
-                                  />
-                                  <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsCtaHint')}</p>
-                                </div>
-                                <div className="space-y-1">
-                                  <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                    {t('contactPrefsWorkingLangLabel')}
-                                  </span>
-                                  <div className="flex flex-wrap gap-2">
-                                    {WORKING_LANGUAGE_OPTIONS.map((opt) => {
-                                      const selected = workingLanguagesDraft.includes(opt.code);
-                                      const disabled = !selected && workingLanguagesDraft.length >= 3;
-                                      return (
-                                        <button
-                                          key={opt.code}
-                                          type="button"
-                                          onClick={() => toggleWorkingLanguageDraft(opt.code)}
-                                          disabled={disabled}
-                                          className={cn(
-                                            'rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-all',
-                                            selected
-                                              ? 'border-amber-600 bg-amber-700 text-white shadow-sm'
-                                              : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300',
-                                            disabled && !selected && 'cursor-not-allowed opacity-40 hover:border-stone-200'
-                                          )}
-                                        >
-                                          {opt.label[lang]}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                  <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsWorkingLangTip')}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </section>
-
-                          <section>
-                            <h2 className="mb-1 text-sm font-semibold text-stone-900">
-                              {t('profileFormSectionCompanyDetails')}
-                            </h2>
-                            <p className="mb-4 text-[10px] text-stone-400">{t('profileFormCompanyDetailsIntro')}</p>
-
-                            {/* Ligne 1 : création / effectifs / arrivée au Mexique */}
-                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('creationYear')}
-                                </label>
-                                <input
-                                  type="number"
-                                  name="creationYear"
-                                  defaultValue={editingProfile?.creationYear || profile?.creationYear}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('employeeCount')}{' '}
-                                  <span className="text-[10px] font-normal normal-case text-stone-400">
-                                    {t('employeeCountOptional')}
-                                  </span>
-                                </label>
-                                <select
-                                  name="employeeCount"
-                                  defaultValue={employeeCountToSelectDefault(
-                                    editingProfile?.employeeCount ?? profile?.employeeCount
-                                  )}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                >
-                                  <option value="">
-                                    {pickLang(
-                                      '— Choisir une fourchette —',
-                                      '— Elegir un rango —',
-                                      '— Choose a range —',
-                                      lang
-                                    )}
-                                  </option>
-                                  {EMPLOYEE_COUNT_RANGES.map((r) => (
-                                    <option key={r} value={r}>
-                                      {r}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('arrivalYear')}
-                                </label>
-                                <input
-                                  type="number"
-                                  name="arrivalYear"
-                                  defaultValue={editingProfile?.arrivalYear || profile?.arrivalYear}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                                <p className="mt-1 text-[10px] text-stone-400">{t('profileFormArrivalRegionHint')}</p>
-                              </div>
-                            </div>
-
-                            {/* Ligne 2 : type d'entreprise / statut pro / taille clients */}
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('profileFormCompanyType')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
-                                </label>
-                                <select
-                                  name="communityCompanyKind"
-                                  required
-                                  defaultValue={
-                                    editingProfile?.communityCompanyKind ??
-                                    profile?.communityCompanyKind ??
-                                    ''
-                                  }
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                >
-                                  <option value="" disabled>
-                                    {pickLang('— Choisir —', '— Elegir —', '— Choose —', lang)}
-                                  </option>
-                                  <option value="startup">Startup</option>
-                                  <option value="pme">PME / SME</option>
-                                  <option value="corporate">Corporate</option>
-                                  <option value="independent">{pickLang('Indépendant', 'Independiente', 'Independent', lang)}</option>
-                                </select>
-                              </div>
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('profileFormProfessionalStatus')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
-                                </label>
-                                <select
-                                  name="communityMemberStatus"
-                                  required
-                                  defaultValue={
-                                    editingProfile?.communityMemberStatus ??
-                                    profile?.communityMemberStatus ??
-                                    ''
-                                  }
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                >
-                                  <option value="" disabled>
-                                    {pickLang('— Choisir —', '— Elegir —', '— Choose —', lang)}
-                                  </option>
-                                  <option value="freelance">Freelance</option>
-                                  <option value="employee">{pickLang('Salarié', 'Asalariado', 'Employee', lang)}</option>
-                                  <option value="owner">{pickLang('Dirigeant / fondateur', 'Director / fundador', 'Owner / founder', lang)}</option>
-                                </select>
-                              </div>
                               <div className="space-y-1">
                                 <label
-                                  htmlFor="typicalClientSize"
+                                  htmlFor="contactPreferenceCta"
                                   className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
                                 >
-                                  {t('contactPrefsClientSizeLabel')}
+                                  {t('contactPrefsCtaLabel')}
                                 </label>
-                                <select
-                                  id="typicalClientSize"
-                                  name="typicalClientSize"
+                                <input
+                                  id="contactPreferenceCta"
+                                  name="contactPreferenceCta"
+                                  type="text"
                                   defaultValue={
-                                    (editingProfile?.typicalClientSize ?? profile?.typicalClientSize) || ''
+                                    (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta) || ''
                                   }
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                >
-                                  <option value="">{t('contactPrefsClientSizeEmpty')}</option>
-                                  {(TYPICAL_CLIENT_SIZE_VALUES as readonly TypicalClientSize[]).map((v) => (
-                                    <option key={v} value={v}>
-                                      {typicalClientSizeLabel(v, lang)}
-                                    </option>
-                                  ))}
-                                </select>
-                                <p className="mt-1 text-[10px] text-stone-400">{t('contactPrefsClientSizeHint')}</p>
-                              </div>
-                            </div>
-                          </section>
-
-                          <section>
-                            <h2 className="mb-4 text-sm font-semibold text-stone-900">{t('profileFormSectionAbout')}</h2>
-                            <input type="hidden" name="photoURL" value={profilePhotoUrlDraft} />
-
-                            {/* Ligne 1 : LinkedIn / photo */}
-                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('linkedin')}
-                                </label>
-                                <div className="flex gap-2">
-                                  <input
-                                    name="linkedin"
-                                    id="linkedin-input"
-                                    type="url"
-                                    autoComplete="url"
-                                    defaultValue={editingProfile?.linkedin || profile?.linkedin}
-                                    placeholder="https://linkedin.com/in/..."
-                                    className="h-10 min-w-0 flex-1 rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => setIsLinkedInModalOpen(true)}
-                                    className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-lg border border-stone-300 px-3 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-50"
-                                  >
-                                    <span className="inline-flex items-center gap-1.5">
-                                      <Linkedin size={14} aria-hidden />
-                                      {t('fetchPhoto')}
-                                    </span>
-                                  </button>
-                                </div>
-                              </div>
-
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('profileFormProfilePhotoLabel')}
-                                </label>
-                                <div className="flex min-h-10 items-center gap-3">
-                                  {profilePhotoUrlDraft ? (
-                                    <img
-                                      src={profilePhotoUrlDraft}
-                                      alt={t('profileFormProfilePhotoLabel')}
-                                      className="h-10 w-10 shrink-0 rounded-full border border-stone-200 object-cover"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                      }}
-                                    />
-                                  ) : (
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-stone-300 bg-stone-100 text-[10px] text-stone-400">
-                                      {t('profileFormPhotoPlaceholder')}
-                                    </div>
-                                  )}
-                                  <div className="flex min-w-0 flex-col justify-center gap-0.5 leading-tight">
-                                    {profilePhotoUrlDraft ? (
-                                      <span
-                                        className={cn(
-                                          'text-xs font-medium',
-                                          /licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft)
-                                            ? 'text-emerald-600'
-                                            : 'text-stone-700'
-                                        )}
-                                      >
-                                        {/licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft)
-                                          ? `✓ ${t('profileFormPhotoLinkedInOk')}`
-                                          : `✓ ${t('profileFormPhotoDefined')}`}
-                                      </span>
-                                    ) : (
-                                      <span className="block text-[11px] text-stone-400">{t('profileFormAboutPhotoEmpty')}</span>
-                                    )}
-                                    <button
-                                      type="button"
-                                      className="text-left text-[11px] text-blue-600 underline decoration-blue-600/80 underline-offset-2 hover:text-blue-800"
-                                      onClick={() => {
-                                        const next = window.prompt(
-                                          t('profileFormPhotoUrlPrompt'),
-                                          profilePhotoUrlDraft
-                                        );
-                                        if (next !== null) setProfilePhotoUrlDraft(next.trim());
-                                      }}
-                                    >
-                                      {t('profileFormEditPhotoUrlManually')}
-                                    </button>
-                                  </div>
-                                </div>
+                                  placeholder={t('contactPrefsCtaPlaceholder')}
+                                  className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                                />
+                                <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsCtaHint')}</p>
                               </div>
                             </div>
 
-                            {/* Ligne 2 : bio */}
-                            <div className="mb-4 space-y-1">
+                            <div className="space-y-1">
+                              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                {t('activityCategory')}
+                                <span className="text-red-500 font-semibold" aria-hidden>
+                                  {' *'}
+                                </span>
+                              </label>
+                              <select
+                                name="activityCategory"
+                                defaultValue={editingProfile?.activityCategory || profile?.activityCategory}
+                                className="h-10 w-full max-w-xl rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                              >
+                                {ACTIVITY_CATEGORIES.map((c) => (
+                                  <option key={c} value={c}>
+                                    {activityCategoryLabel(c, lang)}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="space-y-1">
+                              <label
+                                htmlFor="targetSectors-needs"
+                                className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                              >
+                                {t('profileFormAboutKeywordsLabel')}{' '}
+                                <span className="text-[10px] font-normal normal-case text-stone-400">
+                                  {t('targetSectorsOptional')}
+                                </span>
+                              </label>
+                              <input
+                                id="targetSectors-needs"
+                                name="targetSectors"
+                                defaultValue={(editingProfile?.targetSectors || profile?.targetSectors || []).join(', ')}
+                                placeholder={t('needKeywordsPlaceholder')}
+                                className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                              />
+                              <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('needKeywordsHint')}</p>
+                            </div>
+
+                            <div className="space-y-1">
                               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                 {pickLang('Bio / description', 'Bio / descripción', 'Bio / description', lang)}
                                 <span className="text-red-500 font-semibold" aria-hidden>
@@ -4447,7 +4990,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   'Describe your activity or background...',
                                   lang
                                 )}
-                                className="min-h-[90px] w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                className="min-h-[90px] w-full rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
                               />
                               <p className="mt-1 text-[10px] text-stone-400">
                                 {pickLang(
@@ -4458,35 +5001,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 )}
                               </p>
                             </div>
-
-                            {/* Ligne 3 : mots-clés (targetSectors) */}
-                            <div className="mb-4 space-y-1">
-                              <label
-                                htmlFor="targetSectors-about"
-                                className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                              >
-                                {t('profileFormAboutKeywordsLabel')}{' '}
-                                <span className="text-[10px] font-normal normal-case text-stone-400">
-                                  {t('targetSectorsOptional')}
-                                </span>
-                              </label>
-                              <input
-                                id="targetSectors-about"
-                                name="targetSectors"
-                                defaultValue={(editingProfile?.targetSectors || profile?.targetSectors || []).join(', ')}
-                                placeholder={t('needKeywordsPlaceholder')}
-                                className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                              />
-                              <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('needKeywordsHint')}</p>
-                            </div>
-
-                            <IceBreakerInterests
-                              lang={lang}
-                              value={passionIdsDraft}
-                              onChange={(ids) => setPassionIdsDraft(sanitizePassionIds(ids))}
-                              markRequired
-                            />
                           </section>
+
 
                           <section className="space-y-4">
                             <h2 className="text-sm font-semibold text-stone-900">{t('profileFormSectionVisibility')}</h2>
@@ -4555,68 +5071,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             <h2 className="mb-1 text-sm font-semibold text-stone-900">{t('profileFormSectionUnpublished')}</h2>
                             <p className="mb-4 text-[10px] text-stone-400">{t('profileFormUnpublishedIntro')}</p>
 
-                            {formAdminPrivateReady && formAdminPrivate !== null && (
-                              <div
-                                key={`admin-priv-${editingProfile?.uid ?? profile?.uid}`}
-                                className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2"
-                              >
-                                <div className="space-y-1">
-                                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                    {t('genderStatLabel')}
-                                  </label>
-                                  <select
-                                    name="genderStat"
-                                    defaultValue={formAdminPrivate.genderStat ?? ''}
-                                    className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                  >
-                                    <option value="">{t('genderStatSelectPlaceholder')}</option>
-                                    <option value="male">{t('genderStatMale')}</option>
-                                    <option value="female">{t('genderStatFemale')}</option>
-                                    <option value="other">{t('genderStatOther')}</option>
-                                    <option value="prefer_not_say">{t('genderStatPreferNotSay')}</option>
-                                  </select>
-                                  <p className="mt-1 text-[10px] text-stone-400 leading-snug">{t('genderStatHint')}</p>
-                                </div>
-                                <div className="space-y-1">
-                                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                    {t('nationalityLabel')}
-                                  </label>
-                                  <select
-                                    name="nationality"
-                                    defaultValue={formAdminPrivate.nationality ?? ''}
-                                    className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                  >
-                                    <option value="">{t('nationalitySelectPlaceholder')}</option>
-                                    {NATIONALITY_OPTIONS.map((o) => (
-                                      <option key={o.code} value={o.code}>
-                                        {nationalityLabel(o.code, lang)}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="mb-4 flex flex-col gap-2">
-                              <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700 hover:text-stone-900">
-                                <input
-                                  type="checkbox"
-                                  name="isEmailPublic"
-                                  defaultChecked={editingProfile?.isEmailPublic ?? profile?.isEmailPublic}
-                                  className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                />
-                                <span>{t('isEmailPublic')}</span>
-                              </label>
-                              <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700 hover:text-stone-900">
-                                <input
-                                  type="checkbox"
-                                  name="isWhatsappPublic"
-                                  defaultChecked={editingProfile?.isWhatsappPublic ?? profile?.isWhatsappPublic}
-                                  className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                />
-                                <span>{t('isWhatsappPublic')}</span>
-                              </label>
-                              {formAdminPrivateReady && formAdminPrivate !== null && (
+                            {formAdminPrivateReady && formAdminPrivate !== null ? (
+                              <div className="mb-4 flex flex-col gap-2">
                                 <label className="flex cursor-pointer items-start gap-2 rounded-lg p-1 text-sm text-stone-700 hover:bg-stone-50 hover:text-stone-900">
                                   <input
                                     type="checkbox"
@@ -4629,8 +5085,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     <span className="mt-0.5 block text-[10px] text-stone-500">{t('acceptsDelegationVisitsHint')}</span>
                                   </span>
                                 </label>
-                              )}
-                            </div>
+                              </div>
+                            ) : null}
                           </section>
 
                           <div className="flex justify-end gap-3 border-t border-stone-200 pt-6">
@@ -4705,18 +5161,95 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 {activityCategoryLabel(profile.activityCategory, lang)}
                               </span>
                             </div>
-                            {profile.positionCategory && (
-                              <div className="flex items-center gap-3 text-stone-600">
-                                <UserCog size={16} className="text-stone-400 shrink-0" />
-                                <span className="text-sm">
-                                  {workFunctionLabel(profile.positionCategory, lang)}
-                                </span>
-                              </div>
-                            )}
-                            <div className="flex items-center gap-3 text-stone-600">
-                              <MapPin size={16} className="text-stone-400" />
-                              <span className="text-sm">{profile.city}, {profile.neighborhood}, {profile.state || 'Jalisco'}</span>
-                            </div>
+                            <p className="text-sm font-semibold leading-snug text-stone-900">
+                              {companyActivityNamesJoined(profile) || profile.companyName}
+                            </p>
+                          </div>
+
+                          <div className="space-y-2">
+                            {normalizeProfileCompanyActivities(profile).map((slot) => {
+                              const collapsed = profileActivityCollapsed[slot.id] === true;
+                              const title =
+                                slot.companyName.trim() ||
+                                pickLang('Activité', 'Actividad', 'Activity', lang);
+                              return (
+                                <div
+                                  key={slot.id}
+                                  className="rounded-xl border border-stone-200 bg-stone-50/60 overflow-hidden"
+                                >
+                                  <button
+                                    type="button"
+                                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left hover:bg-stone-100/80"
+                                    onClick={() =>
+                                      setProfileActivityCollapsed((p) => ({
+                                        ...p,
+                                        [slot.id]: !(p[slot.id] === true),
+                                      }))
+                                    }
+                                  >
+                                    {collapsed ? (
+                                      <ChevronRight className="h-4 w-4 shrink-0 text-stone-500" aria-hidden />
+                                    ) : (
+                                      <ChevronDown className="h-4 w-4 shrink-0 text-stone-500" aria-hidden />
+                                    )}
+                                    <span className="min-w-0 flex-1 text-sm font-semibold text-stone-800">
+                                      {title}
+                                    </span>
+                                    <span className="sr-only">
+                                      {collapsed ? t('profileActivityToggleExpand') : t('profileActivityToggleCollapse')}
+                                    </span>
+                                  </button>
+                                  {!collapsed ? (
+                                    <div className="space-y-2 border-t border-stone-200 bg-white px-3 py-3 text-stone-600">
+                                      {slot.positionCategory ? (
+                                        <div className="flex items-center gap-3">
+                                          <UserCog size={16} className="text-stone-400 shrink-0" />
+                                          <span className="text-sm">
+                                            {workFunctionLabel(slot.positionCategory, lang)}
+                                          </span>
+                                        </div>
+                                      ) : null}
+                                      {slot.city ? (
+                                        <div className="flex items-center gap-3">
+                                          <MapPin size={16} className="text-stone-400 shrink-0" />
+                                          <span className="text-sm">
+                                            {slot.city}
+                                            {slot.neighborhood ? `, ${slot.neighborhood}` : ''}
+                                            {slot.state ? `, ${slot.state}` : ''}
+                                          </span>
+                                        </div>
+                                      ) : null}
+                                      {trimProfileWebsite(slot.website) ? (
+                                        <div className="flex items-center gap-3">
+                                          <Globe size={16} className="text-stone-400 shrink-0" />
+                                          <ProfileWebsiteInlineLink website={slot.website} />
+                                        </div>
+                                      ) : null}
+                                      <div className="grid grid-cols-2 gap-3 pt-1">
+                                        <div>
+                                          <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-0.5">
+                                            {t('arrivalYear')}
+                                          </p>
+                                          <p className="text-sm font-medium">
+                                            {slot.arrivalYear
+                                              ? `${slot.arrivalYear} (${new Date().getFullYear() - slot.arrivalYear} ${pickLang('ans', 'años', 'years', lang)})`
+                                              : '—'}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-0.5">
+                                            {t('employeeCount')}
+                                          </p>
+                                          <p className="text-sm font-medium">
+                                            {formatEmployeeCountDisplay(slot.employeeCount) || '—'}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              );
+                            })}
                           </div>
 
                           <div className="space-y-3">
@@ -4732,23 +5265,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             )}
                           </div>
 
-                          <div className="flex items-start justify-between">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold mb-1">{t('arrivalYear')}</p>
-                                <p className="text-sm font-medium">
-                                  {profile.arrivalYear
-                                    ? `${profile.arrivalYear} (${new Date().getFullYear() - profile.arrivalYear} ${pickLang('ans', 'años', 'years', lang)})`
-                                    : '-'}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] uppercase tracking-widest text-stone-400 font-bold mb-1">{t('employeeCount')}</p>
-                                <p className="text-sm font-medium">
-                                  {formatEmployeeCountDisplay(profile.employeeCount) || '-'}
-                                </p>
-                              </div>
-                            </div>
+                          <div className="flex items-start justify-end">
                             <div className="flex flex-col gap-2">
                               <button 
                                 onClick={() => setProfileToDelete(profile.uid)}
@@ -5407,7 +5924,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </SectionErrorBoundary>
               )}
 
-              {isAdminDashboard && (
+              {isAdminDashboard && !isEventsAdminRoute && !location.pathname.startsWith('/e/') && (
                 <SectionErrorBoundary
                   fallback={
                     <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
@@ -5426,6 +5943,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       lang={lang}
                       t={t}
                       registeredWithProfile={!!user && !!profile}
+                      initialAdminTab={dashboardInitialAdminTab}
                       onUnlockRadar={() => {
                         if (!user) {
                           openAuthModal();
@@ -5436,6 +5954,58 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       user={user}
                     />
                   </React.Suspense>
+                </SectionErrorBoundary>
+              )}
+
+              {isEventsAdminRoute && (
+                <SectionErrorBoundary
+                  fallback={
+                    <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+                      {pickLang('La page Événements a rencontré une erreur.', 'La página de Eventos encontró un error.', 'Events page crashed.', lang)}
+                    </div>
+                  }
+                >
+                  <div className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-6">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <h2 className="text-lg font-bold text-stone-900">
+                          {pickLang('Événements', 'Eventos', 'Events', lang)}
+                        </h2>
+                        <p className="text-sm text-stone-500">
+                          {pickLang(
+                            'Piloter les invitations, présences/refus et notes.',
+                            'Gestionar invitaciones, presentes/rechazados y notas.',
+                            'Manage invitations, present/declined and notes.',
+                            lang
+                          )}
+                        </p>
+                      </div>
+                      <Link
+                        to="/dashboard"
+                        className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100"
+                      >
+                        {pickLang('Retour tableau de bord', 'Volver al panel', 'Back to dashboard', lang)}
+                      </Link>
+                    </div>
+
+                    <div className="space-y-6">
+                      <AdminEvents lang={lang} t={t} adminUid={user?.uid ?? null} />
+                    </div>
+                  </div>
+                </SectionErrorBoundary>
+              )}
+
+              {location.pathname.startsWith('/e/') && (
+                <SectionErrorBoundary
+                  fallback={
+                    <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+                      {pickLang('La page inscription a rencontré une erreur.', 'La página de inscripción encontró un error.', 'RSVP page crashed.', lang)}
+                    </div>
+                  }
+                >
+                  <div className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-6">
+                    <PublicEventPage lang={lang} t={t} />
+                  </div>
                 </SectionErrorBoundary>
               )}
 
@@ -5504,7 +6074,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       <h2 className="break-words text-2xl font-bold tracking-tight text-stone-900">
                         {selectedProfile.fullName}
                       </h2>
-                      <p className="mt-1 text-lg font-medium text-stone-500">{selectedProfile.companyName}</p>
+                      <p className="mt-1 text-lg font-medium text-stone-500">
+                        {companyActivityNamesJoined(selectedProfile) || selectedProfile.companyName}
+                      </p>
                     </div>
                     <div className="relative mt-2 w-full min-h-[200px] overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
                       <div
@@ -5549,7 +6121,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     >
                       <span className="break-words">{selectedProfile.fullName}</span>
                     </h2>
-                    <p className="mt-1 text-lg font-medium text-stone-600 sm:text-xl">{selectedProfile.companyName}</p>
+                    <p className="mt-1 text-lg font-medium text-stone-600 sm:text-xl">
+                      {companyActivityNamesJoined(selectedProfile) || selectedProfile.companyName}
+                    </p>
                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                       {selectedProfile.linkedin?.trim() ? (
                         <a
@@ -5680,6 +6254,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </div>
 
                 <div className="mb-6 space-y-4 md:mb-8">
+                {profile?.role === 'admin' ? (
+                  <AdminMemberEventHistory
+                    lang={lang}
+                    t={t}
+                    uid={selectedProfile.uid}
+                    email={selectedProfile.email}
+                  />
+                ) : null}
                 {user && profile && profile.uid !== selectedProfile.uid && (
                   <AffinityScore
                     viewer={profile}
@@ -6418,6 +7000,86 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         t={t}
       />
 
+      <AnimatePresence>
+        {showRsvpModal && publicEvent && (
+          <div className="fixed inset-0 z-[230] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              onClick={() => {
+                if (!rsvpBusy) setShowRsvpModal(false);
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 10 }}
+              className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-lg font-bold text-stone-900">
+                    {pickLang('Participation à l’événement', 'Participación al evento', 'Event RSVP', lang)}
+                  </h3>
+                  <p className="mt-1 text-sm text-stone-600">
+                    {pickLang('Souhaitez-vous participer à', '¿Quieres participar en', 'Do you want to attend', lang)}{' '}
+                    <span className="font-semibold text-stone-900">{publicEvent.title}</span> ?
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!rsvpBusy) setShowRsvpModal(false);
+                  }}
+                  className="rounded-md p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-900"
+                  aria-label={pickLang('Fermer', 'Cerrar', 'Close', lang)}
+                >
+                  <X className="h-5 w-5" aria-hidden />
+                </button>
+              </div>
+
+              {rsvpError ? (
+                <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+                  {rsvpError}
+                </p>
+              ) : null}
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => void submitRsvp('present')}
+                  disabled={rsvpBusy}
+                  className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {pickLang('Je participe', 'Sí, participaré', 'Yes, I will attend', lang)}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void submitRsvp('declined')}
+                  disabled={rsvpBusy}
+                  className="rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {pickLang('Je ne pourrai pas', 'No podré asistir', "No, I can't attend", lang)}
+                </button>
+              </div>
+              <p className="mt-3 text-xs text-stone-500">
+                {pickLang(
+                  'Votre réponse sera visible uniquement par les administrateurs.',
+                  'Tu respuesta será visible solo para administradores.',
+                  'Your response is visible to admins only.',
+                  lang
+                )}
+              </p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Opportunités retirées du produit */}
 
       <LegalInfoModal
@@ -6448,6 +7110,8 @@ const App = () => {
             <Route path="/" element={<MainApp />} />
             <Route path="/membres" element={<MainApp />} />
             <Route path="/dashboard" element={<MainApp initialViewMode="dashboard" />} />
+            <Route path="/evenements" element={<MainApp initialViewMode="dashboard" />} />
+            <Route path="/e/:slug" element={<MainApp />} />
             <Route path="/profil/:profileId" element={<ProfilePage />} />
             <Route path="/besoin/:needId" element={<NeedPage />} />
           </Routes>

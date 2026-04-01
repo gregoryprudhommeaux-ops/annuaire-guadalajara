@@ -29,6 +29,7 @@ export type DashboardPageProps = {
   onUnlockRadar: () => void;
   user: User | null;
   className?: string;
+  initialAdminTab?: 'overview' | 'profiles' | 'site' | 'events';
 };
 
 type SectionErrorBoundaryProps = {
@@ -72,6 +73,7 @@ export default function DashboardPage({
   onUnlockRadar,
   user,
   className,
+  initialAdminTab,
 }: DashboardPageProps) {
   const [profiles, setProfiles] = useState<UserProfile[] | null>(null);
   const [needs, setNeeds] = useState<MemberNeed[] | null>(null);
@@ -172,7 +174,7 @@ export default function DashboardPage({
         </p>
       )}
 
-      {isAdmin ? <AdminDashboard lang={lang} t={t} /> : null}
+      {isAdmin ? <AdminDashboard lang={lang} t={t} initialTab={initialAdminTab} /> : null}
 
       {!mobileAdminOnly && (
         <SectionErrorBoundary

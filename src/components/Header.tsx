@@ -193,7 +193,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="flex shrink-0 items-center gap-2 self-start pt-0.5">{topRight}</div>
               ) : null}
             </div>
-            <div className="w-full min-w-0">{fullWidthRow}</div>
+            <div className="relative z-[70] w-full min-w-0 pointer-events-auto">{fullWidthRow}</div>
           </div>
         ) : (
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-3">

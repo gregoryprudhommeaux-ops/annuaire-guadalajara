@@ -234,6 +234,45 @@ service cloud.firestore {
     }
 
     /**
+     * Événements (CRM interne) — V1 : admin uniquement.
+     * La page publique d’inscription sera ajoutée ensuite (écritures encadrées via Auth / Function).
+     */
+    match /events/{eventId} {
+      // Lecture publique uniquement pour les événements publiés.
+      allow read: if (resource.data.status == 'published') || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * Participations / invitations par événement — V1 : admin uniquement.
+     * Statuts suivis : invited | present | declined + notes admin privées.
+     */
+    match /event_participations/{docId} {
+      function isValidGuestParticipation(data) {
+        return isAuthenticated()
+          && data.keys().hasOnly([
+            'eventId', 'uid', 'email', 'fullName', 'companyName',
+            'status', 'statusSource', 'createdAt', 'updatedAt'
+          ])
+          && data.uid == request.auth.uid
+          && data.eventId is string
+          && data.email is string && data.email.size() <= 320
+          && (data.status in ['present', 'declined'])
+          && data.statusSource == 'guest'
+          && data.createdAt is timestamp
+          && data.updatedAt is timestamp;
+      }
+
+      allow read, delete: if isAdmin();
+      // Guest ne peut écrire que pour des événements publiés (sinon fuite de brouillons).
+      allow create, update: if isAdmin() || (
+        isValidGuestParticipation(request.resource.data)
+        && exists(/databases/$(database)/documents/events/$(request.resource.data.eventId))
+        && get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.status == 'published'
+      );
+    }
+
+    /**
      * Admins : un document par UID Firebase Auth, ID du doc = même chaîne que l’UID (création / suppression
      * uniquement depuis la console ou Admin SDK). L’app cliente ne peut pas lire ni écrire cette collection.
      */

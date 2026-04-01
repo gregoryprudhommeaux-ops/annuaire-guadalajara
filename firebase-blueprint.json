@@ -18,7 +18,7 @@
         "whatsapp": { "type": "string", "description": "Numéro WhatsApp" },
         "linkedin": { "type": "string", "description": "Lien LinkedIn" },
         "photoURL": { "type": "string", "description": "URL de la photo" },
-        "passionIds": { "type": "array", "items": { "type": "string" }, "description": "En dehors du business : jusqu'à 3 ids de passions (voir passionConfig). Ancien champ `hobby` (string) obsolète." },
+        "passionIds": { "type": "array", "items": { "type": "string" }, "description": "En dehors du business : jusqu'à 5 ids de passions (voir passionConfig). Ancien champ `hobby` (string) obsolète." },
         "arrivalYear": { "type": "number", "description": "Année d'arrivée au Mexique" },
         "employeeCount": { "type": "string|number", "description": "Nombre d'employés (fourchette: 1-5, 5-15, … 1000+ ; anciens profils: nombre)" },
         "isEmailPublic": { "type": "boolean", "description": "Rendre l'email public" },

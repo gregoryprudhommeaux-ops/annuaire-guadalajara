@@ -6,6 +6,7 @@ import { activityCategoryLabel, CITIES, cityOptionLabel } from '../../constants'
 import type { Language } from '../../types';
 import { cn } from '../../cn';
 import { pickLang } from '../../lib/uiLocale';
+import { companyActivityNamesJoined } from '../../lib/companyActivities';
 import ProfileAvatar from '../ProfileAvatar';
 
 type Props = {
@@ -168,8 +169,11 @@ export default function NewMembersStrip({
                   <p className="truncate text-sm font-semibold leading-tight text-stone-900 sm:text-[15px]" title={p.fullName}>
                     {p.fullName}
                   </p>
-                  <p className="truncate text-xs leading-tight text-stone-600 sm:text-sm" title={p.companyName}>
-                    {p.companyName}
+                  <p
+                    className="truncate text-xs leading-tight text-stone-600 sm:text-sm"
+                    title={companyActivityNamesJoined(p) || p.companyName}
+                  >
+                    {companyActivityNamesJoined(p) || p.companyName}
                   </p>
                   {guestTeaser ? (
                     <p

@@ -288,8 +288,8 @@ export const TRANSLATIONS: Translations = {
   whatsapp: { fr: "WhatsApp", es: "WhatsApp" },
   passions: { fr: "En dehors du business :", es: "Más allá del negocio :" },
   passionsHint: {
-    fr: "Choisissez jusqu’à 3 centres d’intérêt (hors cœur de métier).",
-    es: "Elige hasta 3 intereses (fuera de tu actividad principal).",
+    fr: "Choisissez jusqu’à 5 centres d’intérêt (hors cœur de métier).",
+    es: "Elige hasta 5 intereses (fuera de tu actividad principal).",
   },
   passionsMaxReached: {
     fr: "Maximum atteint — décochez une passion pour en choisir une autre.",
@@ -528,6 +528,7 @@ export const TRANSLATIONS: Translations = {
   adminTabOverview: { fr: "Synthèse", es: "Resumen" },
   adminTabProfiles: { fr: "Analytics profils", es: "Analítica de perfiles" },
   adminTabSite: { fr: "Analytics site", es: "Analítica del sitio" },
+  adminTabEvents: { fr: "Événements", es: "Eventos" },
   adminProfileInsightsIntro: {
     fr: "Indicateurs sur les fiches membres : complétude (score interne), inscriptions, mises à jour et validation.",
     es: "Indicadores sobre las fichas: completitud (puntuación interna), altas, actualizaciones y validación.",
@@ -658,6 +659,47 @@ export const TRANSLATIONS: Translations = {
     es: 'Recursos humanos',
   },
   profileFormSectionIdentity: { fr: 'Identité', es: 'Identidad' },
+  /** Regroupement formulaire profil : la personne (contact, langues, etc.). */
+  profileFormSectionPerson: {
+    fr: 'Vous et vos coordonnées',
+    es: 'Tú y tus datos de contacto',
+  },
+  profileFormSectionPassions: {
+    fr: 'Passions et loisirs',
+    es: 'Pasiones y aficiones',
+  },
+  profileFormSectionCompanyActivity: {
+    fr: 'Société et implantation',
+    es: 'Empresa e implantación',
+  },
+  profileFormSectionNeedsKeywords: {
+    fr: 'Besoins, secteur et présentation',
+    es: 'Necesidades, sector y presentación',
+  },
+  profileFormPhoneCountryLabel: { fr: 'Indicatif pays', es: 'Prefijo país' },
+  profileFormPhoneLocalLabel: { fr: 'Téléphone / WhatsApp', es: 'Teléfono / WhatsApp' },
+  profileFormPhoneLocalHint: {
+    fr: 'Numéro sans répéter l’indicatif (chiffres uniquement).',
+    es: 'Número sin repetir el prefijo (solo dígitos).',
+  },
+  profileFormAddCompanyActivity: {
+    fr: 'Ajouter une entreprise ou une activité',
+    es: 'Añadir una empresa o actividad',
+  },
+  profileFormCompanyActivityBlockTitle: {
+    fr: 'Entreprise ou activité',
+    es: 'Empresa o actividad',
+  },
+  profileFormRemoveCompanyActivity: {
+    fr: 'Retirer cette activité',
+    es: 'Quitar esta actividad',
+  },
+  profileFormCompanyActivityMinOne: {
+    fr: 'Au moins une entreprise ou activité avec un nom est requise.',
+    es: 'Se requiere al menos una empresa o actividad con nombre.',
+  },
+  profileActivityToggleExpand: { fr: 'Afficher le détail', es: 'Mostrar detalle' },
+  profileActivityToggleCollapse: { fr: 'Masquer le détail', es: 'Ocultar detalle' },
   /** Sous le champ pays (formulaire identité) — court, pour aligner la grille. */
   profileFormCountryFootnote: {
     fr: "Pays d'implantation ou de résidence.",
@@ -1171,8 +1213,8 @@ export const TRANSLATIONS: Translations = {
     es: "Filtrado por pasión:",
   },
   passionsRadarEmpty: {
-    fr: "Aucune passion structurée renseignée pour l’instant. Complétez votre profil (max. 3).",
-    es: "Aún no hay pasiones estructuradas. Completa tu perfil (máx. 3).",
+    fr: "Aucune passion structurée renseignée pour l’instant. Complétez votre profil (max. 5).",
+    es: "Aún no hay pasiones estructuradas. Completa tu perfil (máx. 5).",
   },
   dashboardTab: { fr: "Tableau de bord", es: "Panel" },
   vueTitle: { fr: "Vue d’ensemble de la communauté", es: "Vista general de la comunidad" },

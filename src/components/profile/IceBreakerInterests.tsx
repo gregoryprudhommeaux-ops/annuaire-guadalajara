@@ -8,6 +8,7 @@ import {
   type PassionLocale,
 } from '@/lib/passionConfig';
 import { cardPad } from '@/lib/pageLayout';
+import { pickLang } from '@/lib/uiLocale';
 
 export type IceBreakerInterestsProps = {
   lang: Language;
@@ -55,58 +56,70 @@ const OPTION_ICONS: Record<string, string> = {
   ecommerce: '🛒',
 };
 
-const headerTexts: Record<
-  Language,
-  { title: string; subtitle: string; counter: string }
-> = {
+const headerTexts: Record<Language, { title: string; counter: string }> = {
   fr: {
     title: 'En dehors du business : qui es-tu ?',
-    subtitle:
-      'Choisis entre 1 et 3 centres d’intérêt. Parfait pour briser la glace avec les autres membres.',
     counter: 'sélectionné(s)',
   },
   en: {
     title: 'Beyond business: who are you?',
-    subtitle: 'Pick 1 to 3 interests. Perfect to break the ice with other members.',
     counter: 'selected',
   },
   es: {
     title: 'Fuera del negocio: ¿quién eres?',
-    subtitle: 'Elige entre 1 y 3 intereses. Perfecto para romper el hielo con otros miembros.',
     counter: 'seleccionado(s)',
   },
 };
 
-const iceBreakerMessages: Record<
-  Language,
-  { none: string; one: string; two: string; three: string }
-> = {
-  fr: {
-    none: 'Choisis au moins 1 centre d’intérêt (3 au maximum).',
-    one: 'On commence à te connaître — tu peux en ajouter jusqu’à 3.',
-    two: 'On a déjà deux bons sujets pour lancer la discussion.',
-    three: 'Maximum atteint (3) — parfait pour le prochain afterwork.',
-  },
-  en: {
-    none: 'Pick at least 1 interest (3 maximum).',
-    one: 'We’re starting to get to know you — you can add up to 3.',
-    two: 'We already have two great conversation starters.',
-    three: 'Max reached (3) — you’re set for the next meetup.',
-  },
-  es: {
-    none: 'Elige al menos 1 interés (3 como máximo).',
-    one: 'Empezamos a conocerte — puedes añadir hasta 3.',
-    two: 'Ya tenemos dos buenos temas de conversación.',
-    three: 'Máximo alcanzado (3) — listo/a para el próximo afterwork.',
-  },
-};
+function iceBreakerSubtitle(lang: Language, max: number) {
+  return pickLang(
+    `Choisis entre 1 et ${max} centres d’intérêt. Parfait pour briser la glace avec les autres membres.`,
+    `Elige entre 1 y ${max} intereses. Perfecto para romper el hielo con otros miembros.`,
+    `Pick 1 to ${max} interests. Perfect to break the ice with other members.`,
+    lang
+  );
+}
 
-function getIceBreakerText(lang: Language, count: number) {
-  const msgs = iceBreakerMessages[lang] ?? iceBreakerMessages.fr;
-  if (count === 0) return msgs.none;
-  if (count === 1) return msgs.one;
-  if (count === 2) return msgs.two;
-  return msgs.three;
+function iceBreakerFooterHint(lang: Language, count: number, max: number) {
+  if (count === 0) {
+    return pickLang(
+      `Choisis au moins 1 centre d’intérêt (${max} au maximum).`,
+      `Elige al menos 1 interés (${max} como máximo).`,
+      `Pick at least 1 interest (${max} maximum).`,
+      lang
+    );
+  }
+  if (count >= max) {
+    return pickLang(
+      `Maximum atteint (${max}) — parfait pour le prochain afterwork.`,
+      `Máximo alcanzado (${max}) — listo/a para el próximo afterwork.`,
+      `Max reached (${max}) — you’re set for the next meetup.`,
+      lang
+    );
+  }
+  if (count === 1) {
+    return pickLang(
+      `On commence à te connaître — tu peux en ajouter jusqu’à ${max}.`,
+      `Empezamos a conocerte — puedes añadir hasta ${max}.`,
+      `We’re starting to get to know you — you can add up to ${max}.`,
+      lang
+    );
+  }
+  if (count === 2) {
+    return pickLang(
+      'On a déjà deux bons sujets pour lancer la discussion.',
+      'Ya tenemos dos buenos temas de conversación.',
+      'We already have two great conversation starters.',
+      lang
+    );
+  }
+  const left = max - count;
+  return pickLang(
+    `Encore ${left} passion(s) au choix si tu veux compléter ta fiche.`,
+    `Aún puedes elegir ${left} pasión(es) más si quieres completar tu perfil.`,
+    `You can still pick ${left} more interest(s) to round out your profile.`,
+    lang
+  );
 }
 
 /**
@@ -156,7 +169,7 @@ export function IceBreakerInterests({
             ) : null}
           </h3>
           <p className="mt-1 text-xs text-slate-500 md:text-sm break-words hyphens-auto">
-            {header.subtitle}
+            {iceBreakerSubtitle(lang, maxSelected)}
           </p>
         </div>
         <div
@@ -228,7 +241,7 @@ export function IceBreakerInterests({
               : 'text-slate-500'
         )}
       >
-        {getIceBreakerText(lang, count)}
+        {iceBreakerFooterHint(lang, count, maxSelected)}
       </p>
     </section>
   );

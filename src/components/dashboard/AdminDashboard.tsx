@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -19,12 +19,14 @@ import { useAdminStats, type PeriodKey } from '@/hooks/useAdminStats';
 import type { Language } from '@/types';
 import AdminProfileInsights from '@/components/dashboard/AdminProfileInsights';
 import AdminSiteInsights from '@/components/dashboard/AdminSiteInsights';
+import AdminEvents from '@/components/dashboard/AdminEvents';
 
 type TFn = (key: string) => string;
 
 type AdminDashboardProps = {
   lang: Language;
   t: TFn;
+  initialTab?: 'overview' | 'profiles' | 'site' | 'events';
 };
 
 function StatCard({ label, value }: { label: string; value: number }) {
@@ -149,9 +151,9 @@ function ChartCard({
   );
 }
 
-type AdminInsightTab = 'overview' | 'profiles' | 'site';
+type AdminInsightTab = 'overview' | 'profiles' | 'site' | 'events';
 
-export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
+export default function AdminDashboard({ lang, t, initialTab }: AdminDashboardProps) {
   const [insightTab, setInsightTab] = useState<AdminInsightTab>('overview');
   const [period, setPeriod] = useState<PeriodKey>('week');
   const [activeChart, setActiveChart] = useState<
@@ -202,6 +204,11 @@ export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
       : lang === 'es'
         ? 'Ampliar el gráfico'
         : 'Agrandir le graphique';
+
+  useEffect(() => {
+    if (!initialTab) return;
+    setInsightTab(initialTab);
+  }, [initialTab]);
 
   return (
     <section className="space-y-6">
@@ -578,6 +585,10 @@ export default function AdminDashboard({ lang, t }: AdminDashboardProps) {
         </div>
       )}
         </>
+      ) : null}
+
+      {insightTab === 'events' ? (
+        <AdminEvents lang={lang} t={t} />
       ) : null}
     </section>
   );

@@ -31,6 +31,27 @@ export type CommunityCompanyKind = 'startup' | 'pme' | 'corporate' | 'independen
 /** Statut pro pour analytics dashboard (optionnel sur `users`). */
 export type CommunityMemberStatus = 'freelance' | 'employee' | 'owner';
 
+/**
+ * Une ligne « entreprise ou activité » (implantation, site, fonction, stats).
+ * Plusieurs entrées possibles ; les champs plats du profil restent synchronisés sur la première.
+ */
+export interface CompanyActivitySlot {
+  id: string;
+  companyName: string;
+  website?: string;
+  city?: string;
+  state?: string;
+  neighborhood?: string;
+  country?: string;
+  positionCategory?: string;
+  creationYear?: number;
+  employeeCount?: EmployeeCountRange | number | '';
+  arrivalYear?: number;
+  communityCompanyKind?: CommunityCompanyKind;
+  communityMemberStatus?: CommunityMemberStatus;
+  typicalClientSize?: 'independant' | 'pme' | 'corporate' | 'mixte';
+}
+
 export interface OptimizationSuggestion {
   bioSuggested: string;
   /** Anciennes fiches uniquement (plus généré après suppression du champ libre « ce que je cherche »). */
@@ -93,7 +114,7 @@ export interface UserProfile {
   email: string;
   website?: string;
   whatsapp?: string;
-  /** Jusqu’à 3 passions « hors business » (ids stables, voir `passionConfig.ts`) */
+  /** Jusqu’à 5 passions « hors business » (ids stables, voir `passionConfig.ts`) */
   passionIds?: string[];
   arrivalYear?: number;
   /** Fourchette (string) ou ancien nombre saisi à la main */
@@ -142,6 +163,8 @@ export interface UserProfile {
   communityCompanyKind?: CommunityCompanyKind;
   /** Remplace l’inférence freelance / owner pour les graphiques « statut ». */
   communityMemberStatus?: CommunityMemberStatus;
+  /** Plusieurs sociétés / activités ; la première est aussi recopiée dans les champs plats ci-dessus. */
+  companyActivities?: CompanyActivitySlot[];
 }
 
 export interface MatchSuggestion {
@@ -197,4 +220,38 @@ export interface Translations {
     fr: string;
     es: string;
   };
+}
+
+export type EventParticipationStatus = 'invited' | 'present' | 'declined';
+export type EventStatusSource = 'admin' | 'guest';
+
+export interface AdminEvent {
+  id: string;
+  slug: string;
+  title: string;
+  introText?: string;
+  address?: string;
+  startsAt: Timestamp;
+  capacity?: number;
+  status?: 'draft' | 'published' | 'closed';
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  createdByUid?: string;
+}
+
+export interface AdminEventParticipation {
+  id: string;
+  eventId: string;
+  /** UID du compte (si membre existant). */
+  uid?: string;
+  /** Email obligatoire (clé fonctionnelle anti-doublons). */
+  email: string;
+  fullName?: string;
+  companyName?: string;
+  status: EventParticipationStatus;
+  statusSource: EventStatusSource;
+  declineReason?: string;
+  adminNote?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }

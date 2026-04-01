@@ -10,6 +10,7 @@ import {
   workingLanguageLabel,
 } from '../../lib/contactPreferences';
 import { pickLang } from '../../lib/uiLocale';
+import { companyActivityNamesJoined } from '../../lib/companyActivities';
 import { cn } from '../../cn';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
 import {
@@ -92,7 +93,9 @@ export function MemberPublicProfile({
               </a>
             ) : null}
           </h1>
-          <p className="mt-1 text-lg font-medium text-stone-600">{profile.companyName}</p>
+          <p className="mt-1 text-lg font-medium text-stone-600">
+            {companyActivityNamesJoined(profile) || profile.companyName}
+          </p>
           {metaLine ? <p className="mt-1 text-xs text-stone-500">{metaLine}</p> : null}
         </div>
 
