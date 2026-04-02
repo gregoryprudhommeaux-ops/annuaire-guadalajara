@@ -198,6 +198,7 @@ import {
 import { Header as AppHeader, LanguageDropdownMobile } from './components/Header';
 import { DirectoryTabBar } from './components/DirectoryUi';
 import HomeFunFactStrip from './components/home/HomeFunFactStrip';
+import SignupInviteCard from './components/home/SignupInviteCard';
 import { homeLanding } from './copy/homeLanding';
 import AffinityScore from './components/AffinityScore';
 import { MemberPublicProfile } from './components/profile/MemberPublicProfile';
@@ -1859,6 +1860,16 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [dashboardInitialAdminTab, setDashboardInitialAdminTab] = useState<
     'overview' | 'profiles' | 'site' | 'events'
   >('overview');
+  const isSignupLandingRoute = useMemo(
+    () =>
+      location.pathname === '/inscription' ||
+      location.pathname === '/rejoindre' ||
+      location.pathname === '/join',
+    [location.pathname]
+  );
+  const isSignupMinimal = isSignupLandingRoute && !user;
+  const signupAuthOpenedRef = useRef(false);
+
   const isPublicEventRoute = location.pathname.startsWith('/e/');
   const publicEventSlug = useMemo(() => {
     if (!location.pathname.startsWith('/e/')) return '';
@@ -2782,6 +2793,27 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     setAuthModalResetKey((k) => k + 1);
     setShowAuthModal(true);
   }, []);
+
+  useEffect(() => {
+    if (!isSignupLandingRoute) {
+      signupAuthOpenedRef.current = false;
+    }
+  }, [isSignupLandingRoute]);
+
+  useEffect(() => {
+    if (!isSignupMinimal || loading) return;
+    if (signupAuthOpenedRef.current) return;
+    signupAuthOpenedRef.current = true;
+    setAuthError(null);
+    setShowAuthModal(true);
+  }, [isSignupMinimal, loading]);
+
+  useEffect(() => {
+    if (!isSignupLandingRoute || loading) return;
+    if (user) {
+      navigate('/', { replace: true });
+    }
+  }, [isSignupLandingRoute, user, loading, navigate]);
 
   const handleSaveProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -5421,9 +5453,25 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       <main
         className={cn(pageMainPad, isAdminDashboard ? 'max-w-none' : 'max-w-7xl')}
       >
+        {isSignupMinimal ? (
+          <>
+            <Helmet>
+              <title>{`${t('signupPageDocumentTitle')} · ${t('title')}`}</title>
+              <meta name="description" content={t('signupPageMetaDescription')} />
+            </Helmet>
+            <div className="flex min-h-[min(70vh,640px)] w-full items-center justify-center py-10 sm:py-14">
+              <SignupInviteCard
+                lang={lang}
+                t={t}
+                onOpenAuth={openAuthModal}
+                authBusy={authProviderBusy !== null || authEmailBusy}
+              />
+            </div>
+          </>
+        ) : (
         <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
           {/* Ligne 1 (desktop) : Bienvenue | Hero — même hauteur de ligne */}
-          {!user && !isAdminDashboard && (
+          {!user && !isAdminDashboard && !isSignupLandingRoute && (
             <>
               <div className="order-1 h-full min-h-0 min-w-0 lg:order-none lg:col-span-4">
                 <WelcomeContextCard
@@ -6039,6 +6087,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           </div>
         </div>
       </div>
+        )}
     </main>
 
       {/* Profile Detail Modal */}
@@ -7171,6 +7220,9 @@ const App = () => {
           <SpaRouteAnalytics />
           <Routes>
             <Route path="/" element={<MainApp />} />
+            <Route path="/inscription" element={<MainApp />} />
+            <Route path="/rejoindre" element={<MainApp />} />
+            <Route path="/join" element={<MainApp />} />
             <Route path="/membres" element={<MainApp />} />
             <Route path="/dashboard" element={<MainApp initialViewMode="dashboard" />} />
             <Route path="/evenements" element={<MainApp initialViewMode="dashboard" />} />

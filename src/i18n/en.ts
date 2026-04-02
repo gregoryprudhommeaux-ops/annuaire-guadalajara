@@ -159,7 +159,7 @@ export const EN_STRINGS: Record<string, string> = {
   inviteNetworkMessageLabel: "Invitation message",
   inviteEmailSubject: "Join the French-speaking business directory in Guadalajara",
   inviteShareBody:
-    "Hi,\n\nI’d like to invite you to join the French-speaking business community directory in Guadalajara:\n\n{url}\n\nSee you soon!",
+    "Hi,\n\nI’d like to invite you to join the French-speaking business community directory in Guadalajara — quick sign-up here:\n\n{url}\n\nSee you soon!",
   inviteShareWhatsApp: "WhatsApp",
   inviteShareEmail: "Email",
   inviteShareCopy: "Copy message",
@@ -345,6 +345,18 @@ export const EN_STRINGS: Record<string, string> = {
   adminOAuthLeadsEmailVerified: "verified email",
   guestOverlayTitle: "Full profile available to registered members",
   guestJoinCta: "Join the directory",
+  signupPageTitle: "Create your directory access",
+  signupPageSubtitle:
+    "A few seconds with Google, LinkedIn, or email — then complete your profile at your own pace.",
+  signupPageOpenAuth: "Sign up or sign in",
+  signupPageHint: "Free · French-speaking community · Guadalajara",
+  signupPageBrowseFullSite: "Browse the full site and directory first",
+  signupPageDocumentTitle: "Sign up",
+  signupPageMetaDescription:
+    "Join the business directory: quick sign-up without exploring the whole site first.",
+  signupPageShareLinkLabel: "Link to share",
+  signupPageCopyJoinLink: "Copy",
+  signupPageJoinLinkCopied: "Link copied",
   guestInterstitialHeadline: "{{count}} more member(s) in the directory",
   guestInterstitialBody:
     "Create your free profile to see every member and contact details.",

@@ -462,8 +462,8 @@ export const TRANSLATIONS: Translations = {
     es: "Únete al directorio de negocios francófono de Guadalajara",
   },
   inviteShareBody: {
-    fr: "Bonjour,\n\nJe t’invite à rejoindre l’annuaire de la communauté d’affaires francophone de Guadalajara :\n\n{url}\n\nÀ bientôt !",
-    es: "Hola,\n\nTe invito a unirte al directorio de la comunidad de negocios francófona de Guadalajara:\n\n{url}\n\n¡Nos vemos!",
+    fr: "Bonjour,\n\nJe t’invite à rejoindre l’annuaire de la communauté d’affaires francophone de Guadalajara — inscription simple sur cette page :\n\n{url}\n\nÀ bientôt !",
+    es: "Hola,\n\nTe invito a unirte al directorio de la comunidad de negocios francófona de Guadalajara — registro sencillo en esta página:\n\n{url}\n\n¡Nos vemos!",
   },
   inviteShareWhatsApp: { fr: "WhatsApp", es: "WhatsApp" },
   inviteShareEmail: { fr: "E-mail", es: "Correo" },
@@ -835,6 +835,47 @@ export const TRANSLATIONS: Translations = {
   guestJoinCta: {
     fr: "Rejoindre l'annuaire",
     es: "Unirse al directorio",
+  },
+  /** Page dédiée partageable : inscription sans passer par la landing. */
+  signupPageTitle: {
+    fr: 'Créer votre accès à l’annuaire',
+    es: 'Crea tu acceso al directorio',
+  },
+  signupPageSubtitle: {
+    fr: 'Quelques secondes avec Google, LinkedIn ou e-mail — puis vous compléterez votre fiche à votre rythme.',
+    es: 'Unos segundos con Google, LinkedIn o correo; luego completas tu ficha con calma.',
+  },
+  signupPageOpenAuth: {
+    fr: 'S’inscrire ou se connecter',
+    es: 'Registrarse o iniciar sesión',
+  },
+  signupPageHint: {
+    fr: 'Gratuit · Communauté francophone · Guadalajara',
+    es: 'Gratis · Comunidad francófona · Guadalajara',
+  },
+  signupPageBrowseFullSite: {
+    fr: 'Voir le site et l’annuaire d’abord',
+    es: 'Ver el sitio y el directorio primero',
+  },
+  signupPageDocumentTitle: {
+    fr: 'Inscription',
+    es: 'Registro',
+  },
+  signupPageMetaDescription: {
+    fr: 'Rejoignez l’annuaire des affaires : inscription rapide, sans parcourir tout le site.',
+    es: 'Únete al directorio de negocios: registro rápido, sin recorrer todo el sitio.',
+  },
+  signupPageShareLinkLabel: {
+    fr: 'Lien à partager',
+    es: 'Enlace para compartir',
+  },
+  signupPageCopyJoinLink: {
+    fr: 'Copier',
+    es: 'Copiar',
+  },
+  signupPageJoinLinkCopied: {
+    fr: 'Lien copié',
+    es: 'Enlace copiado',
   },
   guestInterstitialHeadline: {
     fr: "{{count}} autre(s) membre(s) dans l'annuaire",

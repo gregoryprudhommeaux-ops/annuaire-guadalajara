@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Copy, Mail, Phone, Plus, Share2 } from 'lucide-react';
 import type { Language } from '../../types';
 import { pickLang } from '../../lib/uiLocale';
+import { getSignupJoinUrl } from '../../lib/siteUrls';
 
 type TFn = (key: string) => string;
 
@@ -15,10 +16,7 @@ type Props = {
 
 /** Modale : partager le lien de l’annuaire (WhatsApp, e-mail, copie). */
 export default function InviteNetworkModal({ open, onClose, lang, t }: Props) {
-  const shareUrl = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    return `${window.location.origin}${window.location.pathname}`;
-  }, [open]);
+  const shareUrl = useMemo(() => getSignupJoinUrl(), [open]);
 
   const message = useMemo(
     () => t('inviteShareBody').replace(/\{url\}/g, shareUrl),

@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
+  readonly VITE_PUBLIC_SITE_URL?: string;
   readonly VITE_GEMINI_API_KEY?: string;
   readonly GEMINI_API_KEY?: string;
   /** Base URL du site qui expose POST /api/contact (ex. prod), pour tests en `npm run dev`. */
