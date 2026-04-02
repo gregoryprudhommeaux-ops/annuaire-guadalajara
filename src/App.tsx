@@ -837,10 +837,10 @@ const MatchCard = ({ m, p, onShare, expanded, onToggleHook }: {
 }) => {
   const { lang, t } = useLanguage();
   return (
-    <div className="bg-white rounded-2xl border border-indigo-100 p-5 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm transition-all hover:shadow-md">
       <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-full -mr-12 -mt-12 blur-2xl opacity-50 group-hover:opacity-100 transition-opacity" />
       
-      <div className="relative mb-4 flex items-start gap-3">
+      <div className="relative mb-4 flex shrink-0 items-start gap-3">
         <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-indigo-100">
           <ProfileAvatar
             photoURL={p.photoURL}
@@ -850,26 +850,29 @@ const MatchCard = ({ m, p, onShare, expanded, onToggleHook }: {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="font-bold leading-tight text-stone-900">{p.fullName}</h4>
-          {/* Hauteur fixe 2 lignes pour aligner bio + boutons entre les cartes */}
+          <h4 className="line-clamp-2 min-h-[2.5rem] break-words font-bold leading-tight text-stone-900">
+            {p.fullName}
+          </h4>
           <p className="mt-0.5 min-h-[2.0625rem] text-xs font-medium leading-snug text-stone-500 line-clamp-2 break-words">
             {p.companyName}
           </p>
         </div>
       </div>
 
-      <div className="mb-4 text-xs italic leading-relaxed text-stone-600 line-clamp-2 min-h-0 break-words">
-        <AiTranslatedFreeText
-          lang={lang}
-          t={t}
-          text={m.reason}
-          as="span"
-          omitAiDisclaimer
-          className="line-clamp-2 break-words"
-        />
+      <div className="mb-4 min-h-0 flex-1">
+        <div className="min-h-[2.75rem] text-xs italic leading-relaxed text-stone-600 break-words">
+          <AiTranslatedFreeText
+            lang={lang}
+            t={t}
+            text={m.reason}
+            as="span"
+            omitAiDisclaimer
+            className="line-clamp-2 break-words"
+          />
+        </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="mt-auto shrink-0 space-y-3">
         <button 
           onClick={onToggleHook}
           className="w-full py-2 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-all flex items-center justify-center gap-2"
@@ -5773,12 +5776,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 needsInviteGate={aiRecNeedsInviteGate}
                 onInviteClick={() => setShowInviteNetworkModal(true)}
               >
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-3">
                   {matchLoading || (matches.length === 0 && !aiRecResolved) ? (
                     [1, 2, 3].map((i) => (
                       <div
                         key={i}
-                        className="flex h-48 flex-col gap-4 rounded-2xl border border-stone-100 bg-white p-5 animate-pulse"
+                        className="flex h-48 min-h-[12rem] flex-col gap-4 rounded-2xl border border-stone-100 bg-white p-5 animate-pulse md:h-full md:min-h-[14rem]"
                       >
                         <div className="flex items-center gap-3">
                           <div className="h-12 w-12 rounded-xl bg-stone-100" />
