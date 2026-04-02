@@ -146,6 +146,9 @@ export function cityOptionLabel(city: string, lang: Language): string {
 /** Seuil d’affichage : bloc « lancement » vs stats complètes (homepage). */
 export const MEMBERS_THRESHOLD = 20;
 
+/** Objectif affiché dans le bandeau « premiers membres » (ex. page /join). */
+export const FIRST_50_MEMBER_TARGET = 50;
+
 /** Autres membres dans l’annuaire requis pour activer les recommandations IA (3 → 4 fiches au total avec vous). */
 export const AI_REC_MIN_OTHER_MEMBERS = 3;
 
@@ -376,6 +379,9 @@ export const TRANSLATIONS: Translations = {
   },
   save: { fr: "Enregistrer", es: "Guardar" },
   cancel: { fr: "Annuler", es: "Cancelar" },
+  commonRecommended: { fr: 'Recommandé', es: 'Recomendado' },
+  commonOptional: { fr: 'Facultatif', es: 'Opcional' },
+  commonRequired: { fr: 'Obligatoire', es: 'Obligatorio' },
   search: { fr: "Rechercher", es: "Buscar" },
   searchPlaceholder: {
     fr: "Nom, secteur, besoin, mot-clé…",
@@ -877,6 +883,96 @@ export const TRANSLATIONS: Translations = {
     fr: 'Lien copié',
     es: 'Enlace copiado',
   },
+  whyJoinEyebrow: { fr: 'Pourquoi rejoindre', es: 'Por qué unirse' },
+  whyJoinTitle: {
+    fr: 'Une communauté utile avant d’être volumique',
+    es: 'Una comunidad útil antes de ser masiva',
+  },
+  whyJoinDescription: {
+    fr: 'L’Annuaire d’Affaires de Guadalajara aide les professionnels francophones à Guadalajara à trouver rapidement les bons contacts, à mieux se recommander et à faire émerger des opportunités concrètes.',
+    es: 'El Directorio de negocios de Guadalajara ayuda a los profesionales francófonos en Guadalajara a encontrar rápidamente los contactos adecuados, recomendarse mejor y generar oportunidades concretas.',
+  },
+  whyJoinItem1Title: { fr: 'Trouver les bons contacts', es: 'Encontrar a las personas correctas' },
+  whyJoinItem1Description: {
+    fr: 'Identifiez rapidement un membre, une entreprise ou un besoin lié à votre activité.',
+    es: 'Identifica rápidamente un miembro, una empresa o una necesidad relacionada con tu actividad.',
+  },
+  whyJoinItem2Title: { fr: 'Être recommandé plus facilement', es: 'Ser recomendado con más facilidad' },
+  whyJoinItem2Description: {
+    fr: 'Un profil clair permet aux autres de comprendre en quelques secondes qui vous êtes et comment vous aider.',
+    es: 'Un perfil claro ayuda a los demás a entender en segundos quién eres y cómo pueden ayudarte.',
+  },
+  whyJoinItem3Title: { fr: 'Accéder à des demandes ciblées', es: 'Acceder a oportunidades específicas' },
+  whyJoinItem3Description: {
+    fr: 'Partenaires, clients, experts locaux, besoins du réseau : la plateforme structure les connexions utiles.',
+    es: 'Socios, clientes, expertos locales y necesidades de la red: la plataforma estructura conexiones valiosas.',
+  },
+  first50Eyebrow: { fr: 'Communauté en lancement', es: 'Comunidad en lanzamiento' },
+  first50Title: {
+    fr: 'Construisons les 50 premiers profils de référence',
+    es: 'Construyamos los primeros 50 perfiles de referencia',
+  },
+  first50Description: {
+    fr: 'Chaque nouveau membre renforce la valeur du réseau pour tous : recommandations, demandes ciblées, connexions et opportunités à Guadalajara.',
+    es: 'Cada nuevo miembro refuerza el valor de la red para todos: recomendaciones, solicitudes específicas, conexiones y oportunidades en Guadalajara.',
+  },
+  first50ProgressLabel: { fr: 'Progression', es: 'Progreso' },
+  first50Subline: {
+    fr: 'Rejoignez les premiers membres et aidez-nous à atteindre une masse critique utile.',
+    es: 'Únete a los primeros miembros y ayúdanos a alcanzar una masa crítica útil.',
+  },
+  first50InviteCta: {
+    fr: 'Inviter mon réseau',
+    es: 'Invitar a mi red',
+  },
+  first50ValueLine: {
+    fr: 'Chaque nouveau profil augmente la valeur du réseau',
+    es: 'Cada nuevo perfil aumenta el valor de la red',
+  },
+  sectorsProofEyebrow: { fr: 'Déjà présents dans le réseau', es: 'Ya presentes en la red' },
+  sectorsProofTitle: {
+    fr: 'Des profils issus de plusieurs secteurs clés',
+    es: 'Perfiles de varios sectores clave',
+  },
+  sectorsProofDescription: {
+    fr: 'Le réseau se structure déjà autour d’entreprises, d’experts et de décideurs actifs dans différents univers professionnels.',
+    es: 'La red ya se está estructurando alrededor de empresas, expertos y tomadores de decisión activos en distintos sectores.',
+  },
+  onboardingIntroTitle: {
+    fr: 'Crée un profil simple maintenant, complète-le ensuite.',
+    es: 'Crea un perfil simple ahora y complétalo después.',
+  },
+  onboardingIntroDescription: {
+    fr: 'L’objectif est d’abord de te rendre visible dans la communauté. Tu peux enrichir ton profil à tout moment pour améliorer la qualité des mises en relation.',
+    es: 'Primero buscamos hacerte visible dentro de la comunidad. Luego podrás enriquecer tu perfil para mejorar la calidad de las conexiones.',
+  },
+  onboardingIntroStep1: {
+    fr: 'Renseigne les informations essentielles.',
+    es: 'Completa la información esencial.',
+  },
+  onboardingIntroStep2: {
+    fr: 'Ajoute ce que tu cherches et ce que tu peux apporter.',
+    es: 'Agrega lo que buscas y en qué puedes ayudar.',
+  },
+  onboardingIntroStep3: {
+    fr: 'Complète le reste plus tard selon ton temps.',
+    es: 'Completa el resto más adelante según tu tiempo.',
+  },
+  profileCompletionEyebrow: { fr: 'Visibilité du profil', es: 'Visibilidad del perfil' },
+  profileCompletionTitle: {
+    fr: 'Profil complété à {{percent}}%',
+    es: 'Perfil completado al {{percent}}%',
+  },
+  profileCompletionDescription: {
+    fr: 'Complète en priorité les champs les plus utiles pour être trouvé et recommandé dans l’annuaire.',
+    es: 'Completa primero los campos más útiles para que te encuentren y te recomienden dentro del directorio.',
+  },
+  profileCompletionProgressShort: { fr: 'complété', es: 'completado' },
+  profileCompletionNextBestActions: {
+    fr: 'Les prochains champs à compléter',
+    es: 'Siguientes campos por completar',
+  },
+  profileCompletionCompleteNow: { fr: 'Compléter', es: 'Completar' },
   guestInterstitialHeadline: {
     fr: "{{count}} autre(s) membre(s) dans l'annuaire",
     es: "{{count}} miembro(s) más en el directorio",
@@ -912,6 +1008,18 @@ export const TRANSLATIONS: Translations = {
     fr: "Aucun besoin précisé pour le moment.",
     es: "Sin necesidades especificadas por ahora.",
   },
+  memberCardEmptyNeeds: {
+    fr: 'Profil en cours d’enrichissement — les besoins seront précisés prochainement.',
+    es: 'Perfil en proceso de enriquecimiento: las necesidades se detallarán próximamente.',
+  },
+  memberCardEmptyHelp: {
+    fr: 'Cette section sera enrichie prochainement.',
+    es: 'Esta sección se completará próximamente.',
+  },
+  memberCardEmptyGeneric: {
+    fr: 'Profil en cours d’enrichissement.',
+    es: 'Perfil en proceso de enriquecimiento.',
+  },
   /** Affichage des mots-clés (même champ Firestore `targetSectors`) */
   targetSectors: {
     fr: "Mots-clés (industrie, domaine, zone…)",
@@ -933,24 +1041,24 @@ export const TRANSLATIONS: Translations = {
     es: "Puedo ayudar en…",
   },
   profileHelpNewcomersHint: {
-    fr: "Pour les personnes qui arrivent dans la ville.",
-    es: "Para quienes llegan a la ciudad.",
+    fr: 'Explique en quoi tu peux être utile à d’autres membres du réseau.',
+    es: 'Explica en qué puedes ser útil para otros miembros de la comunidad.',
   },
   profileHelpNewcomersPlaceholder: {
-    fr: "Ex. mise en relation avec des fournisseurs locaux, conseils d’implantation, premières intros…",
-    es: "Ej. contactos con proveedores locales, consejos de implantación, primeras intros…",
+    fr: 'Ex : installation à Guadalajara, réseau F&B, mise en relation locale...',
+    es: 'Ej: instalación en Guadalajara, red F&B, conexiones locales...',
   },
   profileNetworkGoalLabel: {
-    fr: "Ce que je cherche via ce réseau",
-    es: "Lo que busco con esta red",
+    fr: 'Ce que je cherche via ce réseau',
+    es: 'Lo que busco a través de esta red',
   },
   profileNetworkGoalHint: {
-    fr: "Phrase courte : clients, partenaires, idées, opportunités…",
-    es: "Frase breve: clientes, socios, ideas, oportunidades…",
+    fr: 'Cette phrase aide les autres à comprendre rapidement comment t’aider.',
+    es: 'Esta frase ayuda a los demás a entender rápidamente cómo pueden ayudarte.',
   },
   profileNetworkGoalPlaceholder: {
-    fr: "Ex. identifier 3 partenaires industriels à Monterrey d’ici 6 mois",
-    es: "Ej. identificar 3 socios industriales en Monterrey en 6 meses",
+    fr: 'Ex : Développer ma clientèle B2B à Guadalajara, trouver un partenaire local...',
+    es: 'Ej: desarrollar mi cartera B2B en Guadalajara, encontrar un socio local...',
   },
   keywordsTopRadar: {
     fr: "Mots-clés les plus cités",
@@ -1171,15 +1279,15 @@ export const TRANSLATIONS: Translations = {
   },
   contactPrefsCtaLabel: {
     fr: 'Le contacter de préférence par…',
-    es: 'Contactar de preferencia por…',
+    es: 'Contactarme preferentemente por…',
   },
   contactPrefsCtaHint: {
-    fr: 'Canal à privilégier pour un premier contact.',
-    es: 'Canal a priorizar para un primer contacto.',
+    fr: 'Précise le canal le plus simple pour un premier échange.',
+    es: 'Indica el canal más simple para un primer contacto.',
   },
   contactPrefsCtaPlaceholder: {
-    fr: 'Ex. WhatsApp en journée, email pour les demandes formelles',
-    es: 'Ej. WhatsApp por el día, correo para solicitudes formales',
+    fr: 'Ex : WhatsApp, Email, LinkedIn',
+    es: 'Ej: WhatsApp, Email, LinkedIn',
   },
   contactPrefsWorkingLangLabel: {
     fr: 'Langues de travail (max. 3)',

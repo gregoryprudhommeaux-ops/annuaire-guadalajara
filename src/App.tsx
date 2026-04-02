@@ -10,8 +10,6 @@ import React, {
   useMemo,
   useCallback,
   useRef,
-  createContext,
-  useContext,
 } from 'react';
 import { 
   BrowserRouter, 
@@ -80,12 +78,12 @@ import AdminMemberEventHistory from './components/admin/AdminMemberEventHistory'
 import AdminEvents from './components/dashboard/AdminEvents';
 import PublicEventPage from './components/events/PublicEventPage';
 import {
-  TRANSLATIONS,
   ACTIVITY_CATEGORIES,
   CITIES,
   cityOptionLabel,
   WORK_FUNCTION_OPTIONS,
   MEMBERS_THRESHOLD,
+  FIRST_50_MEMBER_TARGET,
   AI_REC_MIN_OTHER_MEMBERS,
   isEmployeeCountRange,
   companySizeFromEmployeeRange,
@@ -94,7 +92,7 @@ import {
   activityCategoryLabel,
   workFunctionLabel,
 } from './constants';
-import { EN_STRINGS } from './i18n/en';
+import { LanguageProvider, useLanguage } from './i18n/LanguageProvider';
 import { pickLang, uiLocale, sortLocale } from './lib/uiLocale';
 import {
   profileMatchesLocationFilter,
@@ -170,17 +168,24 @@ import {
   collectProfileCoachGapKeys,
   formatLocalProfileCoachLine,
   fetchAiProfileCoachLine,
-  getProfileCoachCompletionFraction,
   normalizeAiCoachToSingleTip,
 } from './lib/profileCoach';
+import {
+  getProfileCompletionPercent,
+  PROFILE_COMPLETION_FOCUS_IDS,
+  type ProfileCompletionInput,
+  type ProfileCompletionKey,
+} from './lib/profileCompletion';
 // Opportunités retirées du produit.
 import { getGeminiApiKey } from './lib/geminiEnv';
 import IceBreakerInterests from './components/profile/IceBreakerInterests';
+import ProfileCompletionCard from './components/profile/ProfileCompletionCard';
+import { FieldBadge } from './components/ui/FieldBadge';
 import HeroSection from './components/home/HeroSection';
 import WelcomeContextCard from './components/home/WelcomeContextCard';
 import SearchBlock from './components/home/SearchBlock';
-import RecommendedSection from './components/home/RecommendedSection';
-import MemberRequestsSection from './components/home/MemberRequestsSection';
+import RecommendedForYouSection from './components/home/RecommendedForYouSection';
+import { NetworkRequestsSection } from './components/home/NetworkRequestsSection';
 import MembersCountBlock from './components/home/MembersCountBlock';
 import InviteNetworkModal from './components/home/InviteNetworkModal';
 import LegalInfoModal from './components/LegalInfoModal';
@@ -188,7 +193,7 @@ import ContactFooterModal from './components/ContactFooterModal';
 import SpaRouteAnalytics from './components/SpaRouteAnalytics';
 import { trackMemberInteraction } from './utils/trackEvent';
 import { LEGAL_PRIVACY_PARAGRAPHS, LEGAL_TERMS_PARAGRAPHS } from './legal/footerLegalContent';
-import NewMembersStrip from './components/home/NewMembersStrip';
+import { NewMembersSection } from './components/home/NewMembersSection';
 import AiTranslatedFreeText from './components/AiTranslatedFreeText';
 import ProfileAvatar from './components/ProfileAvatar';
 import {
@@ -196,9 +201,14 @@ import {
   ProfileCardWhatsappContactFooter,
 } from './components/profile/ProfileCardUi';
 import { Header as AppHeader, LanguageDropdownMobile } from './components/Header';
-import { DirectoryTabBar } from './components/DirectoryUi';
 import HomeFunFactStrip from './components/home/HomeFunFactStrip';
 import SignupInviteCard from './components/home/SignupInviteCard';
+import WhyJoinSection from './components/home/WhyJoinSection';
+import First50MembersBanner from './components/home/First50MembersBanner';
+import SectorsProofSection from './components/home/SectorsProofSection';
+import HeroSearchSection from './components/home/HeroSearchSection';
+import DirectoryTabsSection from './components/home/DirectoryTabsSection';
+import OnboardingIntroBanner from './components/home/OnboardingIntroBanner';
 import { homeLanding } from './copy/homeLanding';
 import AffinityScore from './components/AffinityScore';
 import { MemberPublicProfile } from './components/profile/MemberPublicProfile';
@@ -210,6 +220,7 @@ import {
   profileSectionTitleClass,
 } from './components/profile/profileSectionStyles';
 import { profileMatchesSearchQuery } from './profileSearch';
+import { getSignupJoinUrl } from './lib/siteUrls';
 import {
   GUEST_DIRECTORY_PREVIEW_LIMIT,
   isGuestDirectoryRestricted,
@@ -477,43 +488,6 @@ function urgentModerationErrorMessage(
     return t('urgentPostErrorNetwork');
   }
   return t('urgentPostSubmitErrorGeneric');
-}
-
-/** Langue UI partagée : un seul état pour l’annuaire, les pages profil/besoin et les cartes. */
-type LanguageContextValue = {
-  lang: Language;
-  setLang: React.Dispatch<React.SetStateAction<Language>>;
-  t: (key: string) => string;
-};
-
-const LanguageContext = createContext<LanguageContextValue | null>(null);
-
-function useLanguage(): LanguageContextValue {
-  const ctx = useContext(LanguageContext);
-  if (!ctx) {
-    throw new Error('useLanguage must be used within LanguageProvider');
-  }
-  return ctx;
-}
-
-function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLang] = useState<Language>('fr');
-
-  useEffect(() => {
-    document.documentElement.lang = lang;
-  }, [lang]);
-
-  const t = useCallback(
-    (key: string) => {
-      const row = TRANSLATIONS[key];
-      if (!row) return key;
-      if (lang === 'en') return EN_STRINGS[key] ?? row.fr;
-      return row[lang];
-    },
-    [lang]
-  );
-  const value = useMemo(() => ({ lang, setLang, t }), [lang, t]);
-  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
 function trimProfileWebsite(website: string | undefined | null): { href: string; label: string } | null {
@@ -1931,6 +1905,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [profileCoachSource, setProfileCoachSource] = useState<'local' | 'ai' | null>(null);
   const [profileCoachLoading, setProfileCoachLoading] = useState(false);
   const authInitPromiseRef = useRef<Promise<void> | null>(null);
+  const profileFormLayoutRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!profileSaveSuccess) return;
@@ -2335,8 +2310,60 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   const profileCompletionPct = useMemo(() => {
     if (!profile) return 0;
-    return Math.round(getProfileCoachCompletionFraction(profile) * 100);
+    return getProfileCompletionPercent(profile);
   }, [profile]);
+
+  const scrollToProfileCompletionField = useCallback(
+    (fieldKey: string) => {
+      setIsProfileExpanded(true);
+      setIsEditing(true);
+      const key = fieldKey as ProfileCompletionKey;
+      const firstSlotId = companyActivitiesDraft[0]?.id;
+      if (firstSlotId && (key === 'activityDescription' || key === 'companyName')) {
+        setCompanyActivityEditCollapsed((prev) => ({ ...prev, [firstSlotId]: false }));
+      }
+      const domId = PROFILE_COMPLETION_FOCUS_IDS[key];
+      const run = () => {
+        const el = domId ? document.getElementById(domId) : null;
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (
+          el instanceof HTMLInputElement ||
+          el instanceof HTMLTextAreaElement ||
+          el instanceof HTMLSelectElement
+        ) {
+          el.focus({ preventScroll: true });
+        }
+      };
+      window.requestAnimationFrame(() => {
+        window.setTimeout(run, 180);
+      });
+    },
+    [companyActivitiesDraft]
+  );
+
+  /** Profil fusionné + brouillons en édition — score complétude aligné sur le formulaire ouvert. */
+  const profileCompletionCardSource = useMemo((): ProfileCompletionInput => {
+    if (!profile) return null;
+    const base: Partial<UserProfile> = { ...profile, ...(editingProfile ?? {}) };
+    if (!isEditing) return base;
+    return {
+      ...base,
+      workingLanguageCodes: workingLanguagesDraft,
+      passionIds: passionIdsDraft,
+      highlightedNeeds: highlightedNeedsDraft,
+      companyActivities:
+        companyActivitiesDraft.length > 0 ? companyActivitiesDraft : profile.companyActivities,
+    };
+  }, [
+    profile,
+    editingProfile,
+    isEditing,
+    workingLanguagesDraft,
+    passionIdsDraft,
+    highlightedNeedsDraft,
+    companyActivitiesDraft,
+  ]);
 
   useEffect(() => {
     if (!profile) {
@@ -3528,6 +3555,21 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     return s.size;
   }, [allProfiles, profile]);
 
+  /** Secteurs les plus représentés (libellés UI) pour le bloc preuve sur l’accueil invité. */
+  const homeSectorsProofLabels = useMemo(() => {
+    const counts = new Map<string, number>();
+    allProfiles.forEach((p) => {
+      if (profile?.role !== 'admin' && p.isValidated === false) return;
+      profileDistinctActivityCategories(p).forEach((c) => {
+        const cat = c?.trim();
+        if (!cat) return;
+        counts.set(cat, (counts.get(cat) || 0) + 1);
+      });
+    });
+    const rows = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    return rows.slice(0, 18).map(([cat]) => activityCategoryLabel(cat, lang));
+  }, [allProfiles, profile?.role, lang]);
+
   const showDirectoryClearFilters = useMemo(() => {
     return (
       searchTerm.trim() !== '' ||
@@ -4391,7 +4433,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     )}
                     <div className="mt-6">
                       {profile || isEditing ? (
-                        <form onSubmit={handleSaveProfile} className="space-y-8">
+                        <div
+                          ref={profileFormLayoutRef}
+                          className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start"
+                        >
+                          <div className="min-w-0 space-y-6">
+                            {user && profileCompletionPct < 100 ? (
+                              <OnboardingIntroBanner t={t} className="w-full" />
+                            ) : null}
+                            <form onSubmit={handleSaveProfile} className="space-y-8">
                           <p className="rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2 text-xs leading-relaxed text-stone-600">
                             {t('profileFormRequiredLegend')}
                           </p>
@@ -4415,6 +4465,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 </span>
                               </label>
                               <input
+                                id="profile-completion-fullName"
                                 name="fullName"
                                 defaultValue={editingProfile?.fullName || profile?.fullName}
                                 className="h-10 w-full max-w-xl rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
@@ -4430,6 +4481,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   </span>
                                 </label>
                                 <input
+                                  id="profile-completion-email"
                                   type="email"
                                   name="email"
                                   defaultValue={editingProfile?.email || profile?.email || user.email || ''}
@@ -4529,7 +4581,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               </label>
                             </div>
 
-                            <div className="mb-4 space-y-1">
+                            <div className="mb-4 space-y-1" id="profile-completion-workLanguages">
                               <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                 {t('contactPrefsWorkingLangLabel')}
                               </span>
@@ -4714,7 +4766,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </div>
                           </section>
 
-                          <section className="space-y-4 rounded-xl border border-stone-200 bg-white p-4">
+                          <section
+                            id="profile-completion-passions"
+                            className="space-y-4 rounded-xl border border-stone-200 bg-white p-4"
+                          >
                             <h2 className="mb-2 text-sm font-semibold text-stone-900">{t('profileFormSectionPassions')}</h2>
                             <IceBreakerInterests
                               lang={lang}
@@ -4796,6 +4851,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                               </span>
                                             </label>
                                             <input
+                                              id={idx === 0 ? 'profile-completion-companyName' : undefined}
                                               value={slot.companyName}
                                               onChange={(e) =>
                                                 updateCompanyActivitySlot(slot.id, {
@@ -5118,6 +5174,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                             </span>
                                           </label>
                                           <textarea
+                                            id={idx === 0 ? 'profile-completion-activityDescription' : undefined}
                                             value={slot.activityDescription ?? ''}
                                             onChange={(e) =>
                                               updateCompanyActivitySlot(slot.id, {
@@ -5163,12 +5220,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             <p className="mb-3 text-[10px] text-stone-500 leading-relaxed">{t('profileFormSectionCore')}</p>
 
                             <div>
-                              <label
-                                htmlFor="networkGoal"
-                                className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                              >
-                                {t('profileNetworkGoalLabel')}
-                              </label>
+                              <div className="mb-2 flex flex-wrap items-center gap-2">
+                                <label
+                                  htmlFor="networkGoal"
+                                  className="text-sm font-semibold text-stone-900"
+                                >
+                                  {t('profileNetworkGoalLabel')}
+                                </label>
+                                <FieldBadge tone="recommended">{t('commonRecommended')}</FieldBadge>
+                              </div>
                               <input
                                 id="networkGoal"
                                 name="networkGoal"
@@ -5176,12 +5236,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 maxLength={200}
                                 defaultValue={(editingProfile?.networkGoal ?? profile?.networkGoal) || ''}
                                 placeholder={t('profileNetworkGoalPlaceholder')}
-                                className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                                className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none ring-0 placeholder:text-stone-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/25"
                               />
-                              <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('profileNetworkGoalHint')}</p>
+                              <p className="mt-1 text-xs leading-5 text-stone-500">{t('profileNetworkGoalHint')}</p>
                             </div>
 
-                            <div>
+                            <div id="profile-completion-highlightedNeeds">
                               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                 {t('highlightedNeedsTitle')}{' '}
                                 <span className="text-[10px] font-normal normal-case text-stone-400">
@@ -5424,7 +5484,19 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           {profileSaveError && (
                             <p className="mt-3 text-xs text-red-600">{profileSaveError}</p>
                           )}
-                        </form>
+                            </form>
+                          </div>
+                          {profile?.uid ? (
+                            <div className="lg:sticky lg:top-24 lg:self-start">
+                              <ProfileCompletionCard
+                                profile={profileCompletionCardSource}
+                                t={t}
+                                lang={lang}
+                                onEditField={scrollToProfileCompletionField}
+                              />
+                            </div>
+                          ) : null}
+                        </div>
                       ) : (
                         <div className="py-8 text-center">
                           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-stone-50 text-stone-300">
@@ -5459,51 +5531,109 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               <title>{`${t('signupPageDocumentTitle')} · ${t('title')}`}</title>
               <meta name="description" content={t('signupPageMetaDescription')} />
             </Helmet>
-            <div className="flex min-h-[min(70vh,640px)] w-full items-center justify-center py-10 sm:py-14">
+            <div className="flex w-full flex-col items-center gap-8 py-10 sm:gap-10 sm:py-14">
+              <First50MembersBanner
+                currentCount={stats.total}
+                targetCount={FIRST_50_MEMBER_TARGET}
+                inviteUrl={getSignupJoinUrl()}
+                className="w-full max-w-3xl"
+              />
+              <OnboardingIntroBanner t={t} className="w-full max-w-3xl" />
               <SignupInviteCard
                 lang={lang}
                 t={t}
                 onOpenAuth={openAuthModal}
                 authBusy={authProviderBusy !== null || authEmailBusy}
               />
+              <WhyJoinSection className="w-full max-w-3xl" />
             </div>
           </>
         ) : (
         <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
-          {/* Ligne 1 (desktop) : Bienvenue | Hero — même hauteur de ligne */}
+          {/* Invités : hero + recherche, puis blocs d’accueil (pile unique) */}
           {!user && !isAdminDashboard && !isSignupLandingRoute && (
-            <>
-              <div className="order-1 h-full min-h-0 min-w-0 lg:order-none lg:col-span-4">
-                <WelcomeContextCard
-                  title={t('welcome')}
-                  body={t('welcomeIntro')}
-                  className="h-full"
+            <div className="flex w-full flex-col gap-6 lg:col-span-12">
+              <HeroSearchSection
+                welcome={
+                  <WelcomeContextCard
+                    title={t('welcome')}
+                    body={t('welcomeIntro')}
+                    className="h-full"
+                    collapsibleOnMobile
+                    mobileShowIntroLabel={t('welcomeIntroShow')}
+                    mobileHideIntroLabel={t('welcomeIntroHide')}
+                  />
+                }
+                hero={
+                  <HeroSection
+                    copy={h}
+                    authBusy={authProviderBusy !== null}
+                    onCreateProfile={openAuthModal}
+                    onExploreMembers={() => {
+                      setDirectoryDiscoveryStripsHidden(true);
+                      setViewMode('members');
+                      requestAnimationFrame(() =>
+                        directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                      );
+                    }}
+                    className="h-full w-full"
+                  />
+                }
+                search={
+                  <SearchBlock
+                    lang={lang}
+                    t={t}
+                    searchTerm={searchTerm}
+                    onSearchTermChange={setSearchTerm}
+                    filterCategory={filterCategory}
+                    onFilterCategoryChange={setFilterCategory}
+                    filterProfileType={filterProfileType}
+                    onFilterProfileTypeChange={handleFilterProfileTypeChange}
+                    filterLocation={filterLocation}
+                    onFilterLocationChange={setFilterLocation}
+                    onSearchSubmit={scrollDirectoryIntoView}
+                    onClearFilters={clearDirectoryFilters}
+                    onRandomProfile={handleRandomProfile}
+                    randomDisabled={guestVisibleProfilesForRandom.length === 0}
+                    showClearFilters={showDirectoryClearFilters}
+                  />
+                }
+              />
+              <section className="mx-auto w-full max-w-6xl space-y-4 px-4 sm:px-6">
+                <WhyJoinSection className="w-full" />
+                <First50MembersBanner
+                  currentCount={stats.total}
+                  targetCount={FIRST_50_MEMBER_TARGET}
+                  inviteUrl={getSignupJoinUrl()}
+                  className="w-full"
+                />
+                <SectorsProofSection t={t} sectors={homeSectorsProofLabels} className="w-full" />
+              </section>
+              <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+                <HomeFunFactStrip
+                  lang={lang}
+                  canLoadMemberProfiles={!guestDirectoryRestricted}
                   collapsibleOnMobile
-                  mobileShowIntroLabel={t('welcomeIntroShow')}
-                  mobileHideIntroLabel={t('welcomeIntroHide')}
+                  mobileShowLabel={t('funFactIntroShow')}
+                  mobileHideLabel={t('funFactIntroHide')}
                 />
               </div>
-              <div className="order-2 h-full min-h-0 min-w-0 lg:order-none lg:col-span-8">
-                <HeroSection
-                  copy={h}
-                  authBusy={authProviderBusy !== null}
+              <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+                <MembersCountBlock
+                  t={t}
+                  memberCount={stats.total}
+                  sectorCount={distinctSectorCount}
+                  threshold={MEMBERS_THRESHOLD}
+                  registeredWithProfile={!!user && !!profile}
+                  onOpenInvite={() => setShowInviteNetworkModal(true)}
                   onCreateProfile={openAuthModal}
-                  onExploreMembers={() => {
-                    setDirectoryDiscoveryStripsHidden(true);
-                    setViewMode('members');
-                    requestAnimationFrame(() =>
-                      directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    );
-                  }}
-                  className="h-full w-full"
                 />
               </div>
-            </>
+            </div>
           )}
 
-          {/* Mobile : fun fact entre le hero (ou bandeau connecté) et recherche / onglets */}
-          {(!user || (user && showDiscoveryStrips)) &&
-            !isAdminDashboard && (
+          {/* Mobile : fun fact (connectés) — invités : strip déjà dans la pile ci-dessus */}
+          {user && showDiscoveryStrips && !isAdminDashboard && (
             <div className="order-3 min-w-0 w-full sm:hidden">
               <HomeFunFactStrip
                 lang={lang}
@@ -5515,7 +5645,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
           )}
 
-          {/* Colonne gauche — recherche (+ opportunités si connecté), stats */}
+          {/* Colonne gauche — recherche (membres connectés uniquement), stats */}
+          {user && !isAdminDashboard && (
           <div
             className={cn(
               'order-1 min-w-0 w-full space-y-4 sm:space-y-6 lg:order-1 lg:col-start-1 lg:col-span-4 lg:self-start',
@@ -5562,6 +5693,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               onCreateProfile={openAuthModal}
             />
           </div>
+          )}
 
           {/* Colonne droite — invités : nouveaux membres + opportunités ; connecté : recommandations, onglets, listes */}
           <div
@@ -5569,13 +5701,17 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             id="directory-main"
             className={cn(
               'order-2 min-w-0 w-full scroll-mt-24 space-y-6 lg:order-2',
-              isAdminDashboard ? 'lg:col-span-12 lg:col-start-1' : 'lg:col-span-8 lg:col-start-5',
+              isAdminDashboard
+                ? 'lg:col-span-12 lg:col-start-1'
+                : !user
+                  ? 'lg:col-span-12 lg:col-start-1'
+                  : 'lg:col-span-8 lg:col-start-5',
               user && showDiscoveryStrips && !isAdminDashboard && 'lg:space-y-5'
             )}
           >
             {/* Connecté : nouveaux membres en tête de la colonne centrale */}
             {user && showDiscoveryStrips && !isAdminDashboard && (
-              <NewMembersStrip
+              <NewMembersSection
                 copy={h}
                 lang={lang}
                 profiles={stats.newThisWeekProfiles}
@@ -5593,7 +5729,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             {/* Bandeaux découverte : visiteurs uniquement (connectés : ligne du haut + colonne gauche) */}
             {!user && showDiscoveryStrips && (
               <>
-                <NewMembersStrip
+                <NewMembersSection
                   copy={h}
                   lang={lang}
                   profiles={stats.newThisWeekProfiles}
@@ -5612,7 +5748,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             )}
 
             {!isMembersDirectoryRoute && !isAdminDashboard && (
-              <MemberRequestsSection
+              <NetworkRequestsSection
                 t={t}
                 lang={lang}
                 requests={memberRequests}
@@ -5632,7 +5768,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
             {/* Recommandations IA — état vide invitation si moins de 3 autres membres dans l’annuaire */}
             {user && profile && !isAdminDashboard && (
-              <RecommendedSection
+              <RecommendedForYouSection
                 t={t}
                 needsInviteGate={aiRecNeedsInviteGate}
                 onInviteClick={() => setShowInviteNetworkModal(true)}
@@ -5698,7 +5834,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     </div>
                   )}
                 </div>
-              </RecommendedSection>
+              </RecommendedForYouSection>
             )}
 
             {isMembersDirectoryRoute && !isAdminDashboard && (
@@ -5713,35 +5849,29 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </header>
             )}
 
-            {/* View Mode Tabs — seule barre d’onglets, collée au listing ; sticky sous le header (z-50) */}
-            <div className="sticky top-24 z-40 min-w-0 bg-slate-50 py-2 sm:top-16">
-              <DirectoryTabBar
-                tabs={directoryViewTabs.map((tab) => ({
-                  id: tab.id,
-                  label: tab.label,
-                  icon: <tab.icon size={16} aria-hidden />,
-                }))}
-                activeTab={viewMode}
-                onTabChange={(id) => {
-                  if (id === 'dashboard') {
-                    setSelectedProfile(null);
-                    setShowValidationPanel(false);
-                    window.location.assign('/dashboard');
-                    return;
-                  }
-                  if (isMembersDirectoryRoute && id !== 'members') {
-                    navigate('/');
-                  }
-                  setDirectoryDiscoveryStripsHidden(true);
-                  setViewMode(
-                    id as 'companies' | 'members' | 'activities' | 'radar' | 'dashboard'
-                  );
-                }}
-              />
-            </div>
-
-            {/* Main Content Area based on viewMode */}
-            <div className="space-y-6">
+            <DirectoryTabsSection
+              tabs={directoryViewTabs.map((tab) => ({
+                id: tab.id,
+                label: tab.label,
+                icon: <tab.icon size={16} aria-hidden />,
+              }))}
+              activeTab={viewMode}
+              onTabChange={(id) => {
+                if (id === 'dashboard') {
+                  setSelectedProfile(null);
+                  setShowValidationPanel(false);
+                  window.location.assign('/dashboard');
+                  return;
+                }
+                if (isMembersDirectoryRoute && id !== 'members') {
+                  navigate('/');
+                }
+                setDirectoryDiscoveryStripsHidden(true);
+                setViewMode(
+                  id as 'companies' | 'members' | 'activities' | 'radar' | 'dashboard'
+                );
+              }}
+            >
               {viewMode === 'companies' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
                   {companiesDirectoryList.map((p) => (
@@ -6084,7 +6214,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 <p className="text-stone-400 font-medium">{t('noSearchResults')}</p>
               </div>
             )}
-          </div>
+            </DirectoryTabsSection>
         </div>
       </div>
         )}

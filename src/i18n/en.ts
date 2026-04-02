@@ -118,6 +118,9 @@ export const EN_STRINGS: Record<string, string> = {
     "Paste your LinkedIn profile photo image address (use “Import LinkedIn photo” for step-by-step). Uploading a file from your device is not available.",
   save: "Save",
   cancel: "Cancel",
+  commonRecommended: "Recommended",
+  commonOptional: "Optional",
+  commonRequired: "Required",
   search: "Search",
   searchPlaceholder: "Name, sector, need, keyword…",
   searchBlockTitle: "Find a key contact in 2 clicks",
@@ -357,6 +360,45 @@ export const EN_STRINGS: Record<string, string> = {
   signupPageShareLinkLabel: "Link to share",
   signupPageCopyJoinLink: "Copy",
   signupPageJoinLinkCopied: "Link copied",
+  whyJoinEyebrow: "Why join",
+  whyJoinTitle: "A useful community before it becomes large-scale",
+  whyJoinDescription:
+    "The Guadalajara Business Directory helps French-speaking professionals in Guadalajara quickly find the right contacts, get recommended more easily, and unlock concrete opportunities.",
+  whyJoinItem1Title: "Find the right contacts",
+  whyJoinItem1Description:
+    "Quickly identify a member, company, or need related to your activity.",
+  whyJoinItem2Title: "Get recommended more easily",
+  whyJoinItem2Description:
+    "A clear profile helps others understand who you are and how they can help in just a few seconds.",
+  whyJoinItem3Title: "Access targeted opportunities",
+  whyJoinItem3Description:
+    "Partners, clients, local experts, and network needs: the platform structures useful connections.",
+  first50Eyebrow: "Launch community",
+  first50Title: "Let’s build the first 50 reference profiles",
+  first50Description:
+    "Every new member increases the value of the network for everyone: recommendations, targeted requests, connections, and opportunities in Guadalajara.",
+  first50ProgressLabel: "Progress",
+  first50Subline:
+    "Join the first members and help us reach a useful critical mass.",
+  first50InviteCta: "Invite my network",
+  first50ValueLine: "Each new profile increases network value",
+  sectorsProofEyebrow: "Already represented",
+  sectorsProofTitle: "Profiles across key sectors",
+  sectorsProofDescription:
+    "The network is already taking shape around companies, experts, and decision-makers active across several industries.",
+  onboardingIntroTitle: "Create a simple profile now, complete it later.",
+  onboardingIntroDescription:
+    "The first goal is to make you visible in the community. You can enrich your profile at any time to improve the quality of introductions.",
+  onboardingIntroStep1: "Fill in the essential information.",
+  onboardingIntroStep2: "Add what you are looking for and how you can help.",
+  onboardingIntroStep3: "Complete the rest later when convenient.",
+  profileCompletionEyebrow: "Profile visibility",
+  profileCompletionTitle: "Profile is {{percent}}% complete",
+  profileCompletionDescription:
+    "Complete the most useful fields first to be found and recommended more easily in the directory.",
+  profileCompletionProgressShort: "complete",
+  profileCompletionNextBestActions: "Next best fields to complete",
+  profileCompletionCompleteNow: "Complete now",
   guestInterstitialHeadline: "{{count}} more member(s) in the directory",
   guestInterstitialBody:
     "Create your free profile to see every member and contact details.",
@@ -374,6 +416,10 @@ export const EN_STRINGS: Record<string, string> = {
   needsSought: "Needs sought",
   noCompanyDescription: "No description provided.",
   noNeedsSpecified: "No specific needs for now.",
+  memberCardEmptyNeeds:
+    "Profile being enriched — needs will be specified soon.",
+  memberCardEmptyHelp: "This section will be completed soon.",
+  memberCardEmptyGeneric: "Profile being enriched.",
   targetSectors: "Keywords (industry, field, area…)",
   targetSectorsOptional: "(optional)",
   needKeywordsHint: "Comma-separated: sector, customer type, geography…",
@@ -382,13 +428,15 @@ export const EN_STRINGS: Record<string, string> = {
   profilePublicCurrentNeeds: "Current needs",
   profilePublicAboutTitle: "About",
   profileHelpNewcomersLabel: "I can help with…",
-  profileHelpNewcomersHint: "For people arriving in the city.",
+  profileHelpNewcomersHint:
+    "Explain how you can be useful to other members of the network.",
   profileHelpNewcomersPlaceholder:
-    "e.g. intros to local suppliers, practical setup tips, first business meetings…",
-  profileNetworkGoalLabel: "What I’m looking for from this network",
-  profileNetworkGoalHint: "One short line: clients, partners, ideas, opportunities…",
+    "Ex: settling in Guadalajara, F&B network, local introductions...",
+  profileNetworkGoalLabel: "What I’m looking for through this network",
+  profileNetworkGoalHint:
+    "This sentence helps others quickly understand how they can help you.",
   profileNetworkGoalPlaceholder:
-    "e.g. find 3 industrial partners in Monterrey within 6 months",
+    "Ex: Grow my B2B client base in Guadalajara, find a local partner...",
   keywordsTopRadar: "Most cited keywords",
   keywordsUniqueStat: "Unique keywords",
   accountType: "Account type",
@@ -483,9 +531,9 @@ export const EN_STRINGS: Record<string, string> = {
   contact: "Contact",
   contactLinks: "Contact & links",
   contactPrefsTitle: "Contact & collaboration preferences",
-  contactPrefsCtaLabel: "Preferred first contact channel…",
-  contactPrefsCtaHint: "Channel to prefer for a first contact.",
-  contactPrefsCtaPlaceholder: "e.g. WhatsApp during the day, email for formal requests",
+  contactPrefsCtaLabel: "Preferred first contact channel",
+  contactPrefsCtaHint: "Indicate the easiest channel for a first conversation.",
+  contactPrefsCtaPlaceholder: "Ex: WhatsApp, Email, LinkedIn",
   contactPrefsWorkingLangLabel: "Working languages (max. 3)",
   contactPrefsWorkingLangHint: "Select your priority business languages in the region.",
   contactPrefsWorkingLangTip: "Tip: keep only your 2–3 most-used business languages.",
@@ -547,3 +595,103 @@ export const EN_STRINGS: Record<string, string> = {
   onboardingLater: "Later",
   share: "Share",
 };
+
+/**
+ * Nested English copy deck (reference). Runtime UI uses flat keys in `EN_STRINGS` above.
+ */
+export const EN = {
+  common: {
+    recommended: "Recommended",
+    optional: "Optional",
+    required: "Required",
+  },
+
+  home: {
+    whyJoin: {
+      eyebrow: "Why join",
+      title: "A useful community before it becomes large-scale",
+      description:
+        "The Guadalajara Business Directory helps French-speaking professionals in Guadalajara quickly find the right contacts, get recommended more easily, and unlock concrete opportunities.",
+      item1Title: "Find the right contacts",
+      item1Description:
+        "Quickly identify a member, company, or need related to your activity.",
+      item2Title: "Get recommended more easily",
+      item2Description:
+        "A clear profile helps others understand who you are and how they can help in just a few seconds.",
+      item3Title: "Access targeted opportunities",
+      item3Description:
+        "Partners, clients, local experts, and network needs: the platform structures useful connections.",
+    },
+
+    first50: {
+      eyebrow: "Launch community",
+      title: "Let’s build the first 50 reference profiles",
+      description:
+        "Every new member increases the value of the network for everyone: recommendations, targeted requests, connections, and opportunities in Guadalajara.",
+      subline:
+        "Join the first members and help us reach a useful critical mass.",
+      progressLabel: "Progress",
+      inviteCta: "Invite my network",
+      valueLine: "Each new profile increases network value",
+    },
+
+    sectors: {
+      eyebrow: "Already represented",
+      title: "Profiles across key sectors",
+      description:
+        "The network is already taking shape around companies, experts, and decision-makers active across several industries.",
+    },
+  },
+
+  memberCard: {
+    empty: {
+      needs:
+        "Profile being enriched — needs will be specified soon.",
+      help: "This section will be completed soon.",
+      generic: "Profile being enriched.",
+    },
+  },
+
+  onboarding: {
+    intro: {
+      title: "Create a simple profile now, complete it later.",
+      description:
+        "The first goal is to make you visible in the community. You can enrich your profile at any time to improve the quality of introductions.",
+      step1: "Fill in the essential information.",
+      step2: "Add what you are looking for and how you can help.",
+      step3: "Complete the rest later when convenient.",
+    },
+  },
+
+  profileCompletion: {
+    eyebrow: "Profile visibility",
+    title: "Profile is {percent}% complete",
+    description:
+      "Complete the most useful fields first to be found and recommended more easily in the directory.",
+    progressShort: "complete",
+    nextBestActions: "Next best fields to complete",
+    completeNow: "Complete now",
+  },
+
+  profile: {
+    fields: {
+      lookingFor: {
+        label: "What I’m looking for through this network",
+        placeholder:
+          "Ex: Grow my B2B client base in Guadalajara, find a local partner...",
+        help: "This sentence helps others quickly understand how they can help you.",
+      },
+      canHelpWith: {
+        label: "I can help with…",
+        placeholder:
+          "Ex: settling in Guadalajara, F&B network, local introductions...",
+        help: "Explain how you can be useful to other members of the network.",
+      },
+      preferredContact: {
+        label: "Preferred first contact channel",
+        placeholder: "Ex: WhatsApp, Email, LinkedIn",
+        help: "Indicate the easiest channel for a first conversation.",
+      },
+    },
+  },
+} as const;

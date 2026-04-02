@@ -2,6 +2,24 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../firebase';
 
+/** Événements produit (accueil, cartes) — distincts des logs Firestore `events_log` ci-dessous. */
+export type AnalyticsEventName =
+  | 'home_invite_click'
+  | 'home_search_submit'
+  | 'home_why_join_seen'
+  | 'member_card_view_profile';
+
+export function trackEvent(
+  eventName: AnalyticsEventName,
+  payload?: Record<string, unknown>
+): void {
+  if (import.meta.env.DEV) {
+    console.info('[analytics]', eventName, payload ?? {});
+  }
+
+  // À brancher plus tard vers Firebase Analytics, Mixpanel ou autre
+}
+
 /** Types alignés sur `firestore.rules` (eventType + champs autorisés). */
 export type EventType =
   | 'click_linkedin'
