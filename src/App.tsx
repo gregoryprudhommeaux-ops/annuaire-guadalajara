@@ -1904,6 +1904,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [profileCoachSource, setProfileCoachSource] = useState<'local' | 'ai' | null>(null);
   const [profileCoachLoading, setProfileCoachLoading] = useState(false);
   const authInitPromiseRef = useRef<Promise<void> | null>(null);
+  /** Évite double clic / requêtes OAuth concurrentes (souvent `auth/cancelled-popup-request`). */
+  const socialOAuthLockRef = useRef(false);
   const profileFormLayoutRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -2742,72 +2744,84 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   }, [loading, viewMode, profile?.role, user?.email]);
 
   const handleSocialLogin = async (which: SocialAuthProvider) => {
-    const provider = buildAuthProvider(which);
-    setAuthProviderBusy(which);
-    setAuthError(null);
-    try {
-      // Avoid first-click flakiness: wait for persistence + redirect result handling.
-      try {
-        await Promise.race([
-          authInitPromiseRef.current ?? Promise.resolve(),
-          new Promise<void>((resolve) => setTimeout(resolve, 2500)),
-        ]);
-      } catch {
-        /* ignore */
-      }
+    if (socialOAuthLockRef.current) return;
+    socialOAuthLockRef.current = true;
 
-      // In Cursor/Electron, popup auth can stall on passkey prompts.
-      // Prefer redirect there; otherwise keep popup first and fallback to redirect.
-      const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-      const shouldPreferRedirect = /Electron|Cursor/i.test(ua);
-      try {
-        sessionStorage.setItem('oauth_redirect_pending', which);
-      } catch {
-        /* ignore */
-      }
-
-      if (shouldPreferRedirect) {
-        await signInWithRedirect(auth, provider);
-        return;
-      }
-
-      const popupWithTimeout = Promise.race([
-        signInWithPopup(auth, provider),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject({ code: 'auth/popup-timeout' }), 12000)
-        ),
-      ]);
-      await popupWithTimeout;
+    const clearOAuthRedirectPending = () => {
       try {
         sessionStorage.removeItem('oauth_redirect_pending');
       } catch {
         /* ignore */
       }
+    };
+
+    const provider = buildAuthProvider(which);
+    setAuthProviderBusy(which);
+    setAuthError(null);
+
+    try {
+      // Attendre persistence + getRedirectResult : évite courses au premier clic.
+      try {
+        await (authInitPromiseRef.current ?? Promise.resolve());
+      } catch {
+        /* ignore */
+      }
+
+      // Cursor/Electron : la popup peut bloquer ; redirection directe.
+      const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+      const shouldPreferRedirect = /Electron|Cursor/i.test(ua);
+
+      if (shouldPreferRedirect) {
+        try {
+          sessionStorage.setItem('oauth_redirect_pending', which);
+        } catch {
+          /* ignore */
+        }
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+
+      // Ne pas marquer oauth_redirect_pending avant la popup : sinon faux positif si l’utilisateur ferme la fenêtre.
+      const popupTimeoutMs = 90_000;
+      await Promise.race([
+        signInWithPopup(auth, provider),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject({ code: 'auth/popup-timeout' }), popupTimeoutMs)
+        ),
+      ]);
+      clearOAuthRedirectPending();
     } catch (error) {
       console.error('Login failed', error);
       const firebaseCode = (error as { code?: string })?.code ?? '';
+      // Ne pas enchaîner une redirection si l’utilisateur a fermé la popup ou si une 2e popup a annulé la 1re (double clic).
       const shouldFallbackToRedirect = [
         'auth/popup-blocked',
-        'auth/popup-closed-by-user',
-        'auth/cancelled-popup-request',
         'auth/operation-not-supported-in-this-environment',
         'auth/popup-timeout',
       ].includes(firebaseCode);
 
       if (shouldFallbackToRedirect) {
         try {
+          sessionStorage.setItem('oauth_redirect_pending', which);
+        } catch {
+          /* ignore */
+        }
+        try {
           await signInWithRedirect(auth, provider);
           return;
         } catch (redirectError) {
           console.error('Redirect login failed', redirectError);
+          clearOAuthRedirectPending();
           const redirectCode = (redirectError as { code?: string })?.code ?? '';
           setAuthError(`${getAuthErrorMessage(redirectCode)}${redirectCode ? ` (code: ${redirectCode})` : ''}`);
           return;
         }
       }
 
+      clearOAuthRedirectPending();
       setAuthError(`${getAuthErrorMessage(firebaseCode)}${firebaseCode ? ` (code: ${firebaseCode})` : ''}`);
     } finally {
+      socialOAuthLockRef.current = false;
       setAuthProviderBusy(null);
     }
   };
@@ -5574,7 +5588,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   />
                 }
               />
-              <section className="mx-auto w-full max-w-6xl space-y-4 px-4 sm:px-6">
+              <section className="w-full min-w-0 space-y-5 sm:space-y-6">
                 <WhyJoinSection className="w-full" />
                 <First50MembersBanner
                   currentCount={stats.total}

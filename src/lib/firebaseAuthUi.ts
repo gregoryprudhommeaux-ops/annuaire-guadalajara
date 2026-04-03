@@ -24,6 +24,7 @@ const CODE_TO_KEY: Record<string, string> = {
   'auth/unauthorized-domain': 'authErrUnauthorizedDomain',
   'auth/operation-not-allowed': 'authErrOperationNotAllowed',
   'auth/popup-closed-by-user': 'authErrPopupClosed',
+  'auth/cancelled-popup-request': 'authErrOAuthConcurrent',
 };
 
 export function firebaseAuthCodeToTranslationKey(code: string): string {

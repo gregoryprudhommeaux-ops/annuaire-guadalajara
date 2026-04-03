@@ -21,7 +21,7 @@ export function HeroSearchSection({
   className,
 }: HeroSearchSectionProps) {
   return (
-    <div className={cn('mx-auto w-full max-w-6xl space-y-6 px-4 sm:px-6', className)}>
+    <div className={cn('w-full min-w-0 space-y-6', className)}>
       <div className="grid min-h-0 grid-cols-1 gap-6 lg:grid-cols-12 lg:items-stretch lg:gap-8">
         <div className="h-full min-h-0 min-w-0 lg:col-span-4">{welcome}</div>
         <div className="h-full min-h-0 min-w-0 lg:col-span-8">{hero}</div>

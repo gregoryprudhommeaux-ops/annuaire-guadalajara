@@ -222,7 +222,7 @@ export default function MemberRequestsSection({
         </div>
 
         {requests.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-stone-200 bg-stone-50/80 px-4 py-6 text-center text-sm text-stone-600">
+          <p className="rounded-xl border border-dashed border-stone-200 bg-stone-50/80 px-4 py-8 text-center text-sm leading-relaxed text-stone-600 sm:px-6">
             {t('memberRequestsEmpty')}
           </p>
         ) : (
@@ -242,7 +242,7 @@ export default function MemberRequestsSection({
                 >
                   <button
                     type="button"
-                    className="w-full p-4 text-left"
+                    className="w-full px-4 py-5 text-left sm:px-5 sm:py-5"
                     onClick={() => {
                       if (isLocked) {
                         onOpenAuth();
@@ -254,7 +254,7 @@ export default function MemberRequestsSection({
                     aria-controls={isLocked ? undefined : `member-request-${r.id}`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1 space-y-2">
+                      <div className="min-w-0 flex-1 space-y-2.5">
                         <div className="text-[15px] font-semibold leading-snug text-stone-900">
                           <AiTranslatedFreeText
                             t={t}
@@ -291,7 +291,7 @@ export default function MemberRequestsSection({
                   {!isLocked && expanded && (
                     <div
                       id={`member-request-${r.id}`}
-                      className="border-t border-stone-100 px-4 pb-4"
+                      className="border-t border-stone-100 px-4 pb-4 sm:px-5"
                     >
                       <div className="pt-3 space-y-3">
                         <div className="flex items-center gap-3">

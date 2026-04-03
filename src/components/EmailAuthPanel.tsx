@@ -68,6 +68,7 @@ export default function EmailAuthPanel({
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (emailBusy) return;
     clearError();
     setInfoMessage(null);
     const em = email.trim();
@@ -88,6 +89,7 @@ export default function EmailAuthPanel({
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (emailBusy) return;
     clearError();
     setInfoMessage(null);
     const em = email.trim();
@@ -119,6 +121,7 @@ export default function EmailAuthPanel({
 
   const handleForgot = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (emailBusy) return;
     clearError();
     setInfoMessage(null);
     const em = email.trim();

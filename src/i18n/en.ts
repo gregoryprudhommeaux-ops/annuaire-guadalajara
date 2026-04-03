@@ -40,6 +40,8 @@ export const EN_STRINGS: Record<string, string> = {
   authErrOperationNotAllowed:
     "This sign-in method is not enabled in Firebase Auth (Sign-in method).",
   authErrPopupClosed: "The sign-in window was closed before finishing. Please try again.",
+  authErrOAuthConcurrent:
+    "A sign-in was already in progress. Click the button once and wait for the window to finish.",
   authVerifyEmailBanner:
     "Verify your email (link in the message) to secure your account.",
   authResendVerification: "Resend verification email",

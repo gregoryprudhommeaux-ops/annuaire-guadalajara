@@ -253,6 +253,10 @@ export const TRANSLATIONS: Translations = {
     fr: "La fenêtre de connexion a été fermée avant la fin. Réessayez.",
     es: "La ventana de inicio de sesión se cerró antes de terminar. Inténtalo de nuevo.",
   },
+  authErrOAuthConcurrent: {
+    fr: "Une connexion était déjà en cours. Cliquez une seule fois sur le bouton et attendez la fin de la fenêtre.",
+    es: "Ya había un inicio de sesión en curso. Haz clic una sola vez en el botón y espera a que termine la ventana.",
+  },
   authVerifyEmailBanner: {
     fr: "Vérifiez votre adresse e-mail (lien reçu par message) pour sécuriser votre compte.",
     es: "Verifica tu correo (enlace en el mensaje) para asegurar tu cuenta.",
