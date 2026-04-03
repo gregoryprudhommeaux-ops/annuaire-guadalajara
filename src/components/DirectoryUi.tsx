@@ -74,7 +74,7 @@ export const DirectoryTabBar: React.FC<DirectoryTabBarProps> = ({
 }) => (
   <div
     className={cn(
-      'flex min-w-0 flex-wrap items-center gap-1 rounded-xl bg-slate-100 p-1 sm:flex-nowrap',
+      'flex w-full min-w-0 flex-wrap items-center gap-1 rounded-xl bg-slate-100 p-1 sm:flex-nowrap',
       className
     )}
   >

@@ -44,6 +44,49 @@ export const FR = {
       description:
         'Le réseau se structure déjà autour d’entreprises, d’experts et de décideurs actifs dans différents univers professionnels.',
     },
+
+    marketing: {
+      introP1:
+        'Bienvenue dans l’annuaire de la communauté d’affaires francophone de Guadalajara.',
+      introP2:
+        'Découvrez les entreprises et membres déjà inscrits, filtrez par secteur, profil ou localisation, puis explorez les premiers profils suggérés.',
+      heroTitle: 'Annuaire d’affaires francophones à Guadalajara',
+      heroLead:
+        'Voyez en un coup d’œil qui fait quoi sur la zone, trouvez les bons contacts et rejoignez la communauté.',
+      ctaCreateProfile: 'Créer mon profil',
+      ctaExploreMembers: 'Explorer les membres',
+      benefit1: 'Créez votre profil.',
+      benefit2: 'Soyez trouvable par la communauté.',
+      benefit3: 'Développez votre réseau sur place.',
+      searchTitle: 'Trouver un contact clé en 2 clics',
+      searchLead:
+        'Recherchez un membre, une entreprise ou un besoin pour développer votre réseau à Guadalajara.',
+      searchPlaceholder: 'Rechercher un membre, une entreprise, un besoin…',
+      searchButton: 'Chercher maintenant',
+      searchTip:
+        'Astuce : commencez par un besoin concret (ex. « importateur vin », « expert fiscalité »).',
+      columnNewMembersTitle: 'Nouveaux membres cette semaine',
+      columnNewMembersLead: 'Découvrez les derniers profils visibles dans l’annuaire.',
+      columnNewMembersPlaceholder: 'Bloc nouveaux membres existant',
+      columnRequestsTitle: 'Demandes du réseau',
+      columnRequestsLead:
+        'Publiez ce que vous cherchez : partenaire, zone, produit, expert ou recommandation.',
+      columnRequestsCta: 'Poster une demande',
+      columnRequestsPlaceholder: 'Bloc demandes du réseau existant',
+      columnDirectoryTitle: 'Explorer l’annuaire',
+      columnDirectoryLead:
+        'Parcourez les entreprises, membres, secteurs et signaux clés du réseau.',
+      columnDirectoryPlaceholder: 'Tabs Entreprises / Membres / Secteurs / Radar existants',
+      sidebarProfileTitle: 'Créez votre profil maintenant',
+      sidebarProfileLead:
+        'Apparaissez dans l’annuaire, soyez trouvé plus facilement et accédez aux coordonnées complètes des membres.',
+      sidebarProfileCta: 'Rejoindre la communauté',
+      sidebarInviteTitle: 'Inviter mon réseau',
+      sidebarInviteLead: 'Chaque nouveau profil améliore la valeur du réseau pour tous.',
+      sidebarInviteCta: 'Inviter maintenant',
+      sectorFallbacksChips:
+        'Commerce & Distribution|Conseil & Services aux entreprises|Culture & Loisirs|Énergie & Environnement|Technologies & Informatique',
+    },
   },
 
   memberCard: {

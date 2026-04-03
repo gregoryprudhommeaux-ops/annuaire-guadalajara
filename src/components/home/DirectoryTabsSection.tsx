@@ -23,7 +23,7 @@ export function DirectoryTabsSection({
     <>
       <div
         className={cn(
-          'sticky top-24 z-40 min-w-0 bg-slate-50 py-2 sm:top-16',
+          'sticky top-24 z-40 w-full min-w-0 bg-slate-50 py-2 sm:top-16',
           stickyWrapClassName
         )}
       >
@@ -34,7 +34,7 @@ export function DirectoryTabsSection({
           className={className}
         />
       </div>
-      <div className="space-y-6">{children}</div>
+      <div className="w-full min-w-0 space-y-6">{children}</div>
     </>
   );
 }

@@ -82,7 +82,6 @@ import {
   CITIES,
   cityOptionLabel,
   WORK_FUNCTION_OPTIONS,
-  MEMBERS_THRESHOLD,
   FIRST_50_MEMBER_TARGET,
   AI_REC_MIN_OTHER_MEMBERS,
   isEmployeeCountRange,
@@ -186,7 +185,6 @@ import WelcomeContextCard from './components/home/WelcomeContextCard';
 import SearchBlock from './components/home/SearchBlock';
 import RecommendedForYouSection from './components/home/RecommendedForYouSection';
 import { NetworkRequestsSection } from './components/home/NetworkRequestsSection';
-import MembersCountBlock from './components/home/MembersCountBlock';
 import InviteNetworkModal from './components/home/InviteNetworkModal';
 import LegalInfoModal from './components/LegalInfoModal';
 import ContactFooterModal from './components/ContactFooterModal';
@@ -201,11 +199,9 @@ import {
   ProfileCardWhatsappContactFooter,
 } from './components/profile/ProfileCardUi';
 import { Header as AppHeader, LanguageDropdownMobile } from './components/Header';
-import HomeFunFactStrip from './components/home/HomeFunFactStrip';
 import SignupInviteCard from './components/home/SignupInviteCard';
 import WhyJoinSection from './components/home/WhyJoinSection';
 import First50MembersBanner from './components/home/First50MembersBanner';
-import SectorsProofSection from './components/home/SectorsProofSection';
 import HeroSearchSection from './components/home/HeroSearchSection';
 import DirectoryTabsSection from './components/home/DirectoryTabsSection';
 import OnboardingIntroBanner from './components/home/OnboardingIntroBanner';
@@ -3549,30 +3545,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     });
   }, [allProfiles, searchTerm, filterCategory, filterLocation, profile]);
 
-  const distinctSectorCount = useMemo(() => {
-    const s = new Set<string>();
-    allProfiles.forEach((p) => {
-      if (profile?.role !== 'admin' && p.isValidated === false) return;
-      profileDistinctActivityCategories(p).forEach((c) => s.add(c));
-    });
-    return s.size;
-  }, [allProfiles, profile]);
-
-  /** Secteurs les plus représentés (libellés UI) pour le bloc preuve sur l’accueil invité. */
-  const homeSectorsProofLabels = useMemo(() => {
-    const counts = new Map<string, number>();
-    allProfiles.forEach((p) => {
-      if (profile?.role !== 'admin' && p.isValidated === false) return;
-      profileDistinctActivityCategories(p).forEach((c) => {
-        const cat = c?.trim();
-        if (!cat) return;
-        counts.set(cat, (counts.get(cat) || 0) + 1);
-      });
-    });
-    const rows = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-    return rows.slice(0, 18).map(([cat]) => activityCategoryLabel(cat, lang));
-  }, [allProfiles, profile?.role, lang]);
-
   const showDirectoryClearFilters = useMemo(() => {
     return (
       searchTerm.trim() !== '' ||
@@ -5610,41 +5582,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   inviteUrl={getSignupJoinUrl()}
                   className="w-full"
                 />
-                <SectorsProofSection t={t} sectors={homeSectorsProofLabels} className="w-full" />
               </section>
-              <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
-                <HomeFunFactStrip
-                  lang={lang}
-                  canLoadMemberProfiles={!guestDirectoryRestricted}
-                  collapsibleOnMobile
-                  mobileShowLabel={t('funFactIntroShow')}
-                  mobileHideLabel={t('funFactIntroHide')}
-                />
-              </div>
-              <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
-                <MembersCountBlock
-                  t={t}
-                  memberCount={stats.total}
-                  sectorCount={distinctSectorCount}
-                  threshold={MEMBERS_THRESHOLD}
-                  registeredWithProfile={!!user && !!profile}
-                  onOpenInvite={() => setShowInviteNetworkModal(true)}
-                  onCreateProfile={openAuthModal}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Mobile : fun fact (connectés) — invités : strip déjà dans la pile ci-dessus */}
-          {user && showDiscoveryStrips && !isAdminDashboard && (
-            <div className="order-3 min-w-0 w-full sm:hidden">
-              <HomeFunFactStrip
-                lang={lang}
-                canLoadMemberProfiles={!guestDirectoryRestricted}
-                collapsibleOnMobile
-                mobileShowLabel={t('funFactIntroShow')}
-                mobileHideLabel={t('funFactIntroHide')}
-              />
             </div>
           )}
 
@@ -5674,27 +5612,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               showClearFilters={showDirectoryClearFilters}
             />
 
-            <div
-              className={cn(
-                (!user || showDiscoveryStrips) && 'hidden sm:block',
-                isAdminDashboard && 'hidden'
-              )}
-            >
-              <HomeFunFactStrip lang={lang} canLoadMemberProfiles={!guestDirectoryRestricted} />
-            </div>
-
             {/* Opportunités retirées du produit */}
-
-            {/* [MEMBERS-COUNT] Bloc lancement / compteur dynamique */}
-            <MembersCountBlock
-              t={t}
-              memberCount={stats.total}
-              sectorCount={distinctSectorCount}
-              threshold={MEMBERS_THRESHOLD}
-              registeredWithProfile={!!user && !!profile}
-              onOpenInvite={() => setShowInviteNetworkModal(true)}
-              onCreateProfile={openAuthModal}
-            />
           </div>
           )}
 

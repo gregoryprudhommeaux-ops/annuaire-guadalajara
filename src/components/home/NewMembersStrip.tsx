@@ -5,6 +5,7 @@ import type { HomeLandingCopy } from '../../copy/homeLanding';
 import { activityCategoryLabel, CITIES, cityOptionLabel } from '../../constants';
 import type { Language } from '../../types';
 import { cn } from '../../cn';
+import { directoryFeedCardClass } from '../../lib/pageLayout';
 import { pickLang } from '../../lib/uiLocale';
 import { companyActivityNamesJoined, profileDistinctActivityCategories } from '../../lib/companyActivities';
 import ProfileAvatar from '../ProfileAvatar';
@@ -73,8 +74,9 @@ export default function NewMembersStrip({
   return (
     <section
       className={cn(
-        'flex min-h-0 min-w-0 flex-col rounded-2xl border border-stone-200 bg-white text-left shadow-sm',
-        compact ? 'px-4 py-3 sm:px-5 sm:py-4' : 'px-4 py-4 sm:px-6 sm:py-5',
+        directoryFeedCardClass,
+        'flex min-h-0 flex-col text-left',
+        compact && 'py-3 sm:py-4',
         className
       )}
       aria-labelledby="home-new-members-title"
@@ -115,15 +117,15 @@ export default function NewMembersStrip({
         </p>
       ) : (
         <>
-          {/* Max 2 colonnes ; secteur sans ville (mobile + desktop) */}
+          {/* 2 colonnes à partir de sm ; seul item (ou dernier d’une ligne impaire) en col-span-2 pour pleine largeur */}
           <ul
             className={cn(
-              'grid min-h-0 grid-cols-1 content-stretch gap-3 sm:grid-cols-2',
+              'grid min-h-0 w-full grid-cols-1 content-stretch gap-3 sm:grid-cols-2',
               compact ? 'mt-3 sm:gap-3' : 'mt-4 sm:gap-4',
               !mobileOpen && 'hidden sm:grid'
             )}
           >
-          {display.map((p) => {
+          {display.map((p, index) => {
             const cats = profileDistinctActivityCategories(p);
             const sectorLine = cats.length
               ? cats.map((c) => activityCategoryLabel(c, lang)).join(' · ')
@@ -197,8 +199,19 @@ export default function NewMembersStrip({
               'flex h-full w-full items-center gap-3 rounded-xl border border-stone-100 bg-stone-50/80',
               compact ? 'min-h-[5.25rem] p-2.5 sm:min-h-[5.5rem] sm:p-3' : 'min-h-[5.75rem] p-3 sm:min-h-[6rem] sm:p-3.5'
             );
+            const spanFullWidthSm =
+              display.length === 1 ||
+              (display.length > 1 &&
+                display.length % 2 === 1 &&
+                index === display.length - 1);
             return (
-              <li key={p.uid} className="flex min-h-0 min-w-0">
+              <li
+                key={p.uid}
+                className={cn(
+                  'flex min-h-0 min-w-0 w-full',
+                  spanFullWidthSm && 'sm:col-span-2'
+                )}
+              >
                 {onOpenProfile ? (
                   <button
                     type="button"

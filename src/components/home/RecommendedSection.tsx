@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../../cn';
-import { cardPad } from '../../lib/pageLayout';
+import { directoryFeedCardClass } from '../../lib/pageLayout';
 
 type TFn = (key: string) => string;
 
@@ -24,13 +24,7 @@ export default function RecommendedSection({
   children,
 }: Props) {
   return (
-    <section
-      className={cn(
-        'recommended-section min-w-0 rounded-2xl border border-stone-200 bg-white shadow-sm',
-        cardPad,
-        'space-y-4'
-      )}
-    >
+    <section className={cn('recommended-section', directoryFeedCardClass, 'space-y-4')}>
       <h2 className="text-lg font-bold leading-snug tracking-tight text-stone-900 break-words">
         {t('recommendedForYou')}
       </h2>

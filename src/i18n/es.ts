@@ -14,7 +14,7 @@ export const ES = {
       eyebrow: 'Por qué unirse',
       title: 'Una comunidad útil antes de ser masiva',
       description:
-        'El Directorio de negocios de Guadalajara ayuda a los profesionales francófonos en Guadalajara a encontrar rápidamente los contactos adecuados, recomendarse mejor y generar oportunidades concretas.',
+        'El directorio ayuda a los profesionales francófonos en Guadalajara a encontrar rápidamente los contactos adecuados, recomendarse mejor y generar oportunidades concretas.',
       item1Title: 'Encontrar a las personas correctas',
       item1Description:
         'Identifica rápidamente un miembro, una empresa o una necesidad relacionada con tu actividad.',
@@ -43,6 +43,49 @@ export const ES = {
       title: 'Perfiles de varios sectores clave',
       description:
         'La red ya se está estructurando alrededor de empresas, expertos y tomadores de decisión activos en distintos sectores.',
+    },
+
+    marketing: {
+      introP1:
+        'Bienvenido al directorio de la comunidad de negocios francófona de Guadalajara.',
+      introP2:
+        'Descubre empresas y miembros ya registrados, filtra por sector, perfil o ubicación y explora los primeros perfiles sugeridos.',
+      heroTitle: 'Directorio de negocios francófonos en Guadalajara',
+      heroLead:
+        'Ve de un vistazo quién hace qué en la zona, encuentra los contactos adecuados y únete a la comunidad.',
+      ctaCreateProfile: 'Crear mi perfil',
+      ctaExploreMembers: 'Explorar miembros',
+      benefit1: 'Crea tu perfil.',
+      benefit2: 'Hazte visible para la comunidad.',
+      benefit3: 'Desarrolla tu red localmente.',
+      searchTitle: 'Encuentra un contacto clave en dos clics',
+      searchLead:
+        'Busca un miembro, una empresa o una necesidad para desarrollar tu red en Guadalajara.',
+      searchPlaceholder: 'Buscar miembro, empresa, necesidad…',
+      searchButton: 'Buscar ahora',
+      searchTip:
+        'Consejo: empieza por una necesidad concreta (p. ej. «importador de vinos», «experto en fiscalidad»).',
+      columnNewMembersTitle: 'Nuevos miembros esta semana',
+      columnNewMembersLead: 'Descubre los últimos perfiles visibles en el directorio.',
+      columnNewMembersPlaceholder: 'Bloque de nuevos miembros (integración)',
+      columnRequestsTitle: 'Solicitudes de la red',
+      columnRequestsLead:
+        'Publica lo que buscas: socio, zona, producto, experto o recomendación.',
+      columnRequestsCta: 'Publicar una solicitud',
+      columnRequestsPlaceholder: 'Bloque de solicitudes de la red (integración)',
+      columnDirectoryTitle: 'Explorar el directorio',
+      columnDirectoryLead:
+        'Recorre empresas, miembros, sectores e indicadores clave de la red.',
+      columnDirectoryPlaceholder: 'Pestañas Empresas / Miembros / Sectores / Radar (integración)',
+      sidebarProfileTitle: 'Crea tu perfil ahora',
+      sidebarProfileLead:
+        'Aparece en el directorio, sé más fácil de encontrar y accede a los datos completos de los miembros.',
+      sidebarProfileCta: 'Unirse a la comunidad',
+      sidebarInviteTitle: 'Invitar a mi red',
+      sidebarInviteLead: 'Cada nuevo perfil mejora el valor de la red para todos.',
+      sidebarInviteCta: 'Invitar ahora',
+      sectorFallbacksChips:
+        'Comercio y distribución|Consultoría y servicios a empresas|Cultura y ocio|Energía y medio ambiente|Tecnologías e informática',
     },
   },
 

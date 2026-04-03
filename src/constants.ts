@@ -890,7 +890,7 @@ export const TRANSLATIONS: Translations = {
   },
   whyJoinDescription: {
     fr: 'L’Annuaire d’Affaires de Guadalajara aide les professionnels francophones à Guadalajara à trouver rapidement les bons contacts, à mieux se recommander et à faire émerger des opportunités concrètes.',
-    es: 'El Directorio de negocios de Guadalajara ayuda a los profesionales francófonos en Guadalajara a encontrar rápidamente los contactos adecuados, recomendarse mejor y generar oportunidades concretas.',
+    es: 'El directorio ayuda a los profesionales francófonos en Guadalajara a encontrar rápidamente los contactos adecuados, recomendarse mejor y generar oportunidades concretas.',
   },
   whyJoinItem1Title: { fr: 'Trouver les bons contacts', es: 'Encontrar a las personas correctas' },
   whyJoinItem1Description: {

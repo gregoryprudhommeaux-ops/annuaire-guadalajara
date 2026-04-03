@@ -363,7 +363,7 @@ export const EN_STRINGS: Record<string, string> = {
   whyJoinEyebrow: "Why join",
   whyJoinTitle: "A useful community before it becomes large-scale",
   whyJoinDescription:
-    "The Guadalajara Business Directory helps French-speaking professionals in Guadalajara quickly find the right contacts, get recommended more easily, and unlock concrete opportunities.",
+    "The directory helps French-speaking professionals in Guadalajara quickly find the right contacts, get recommended more easily, and unlock concrete opportunities.",
   whyJoinItem1Title: "Find the right contacts",
   whyJoinItem1Description:
     "Quickly identify a member, company, or need related to your activity.",
@@ -611,7 +611,7 @@ export const EN = {
       eyebrow: "Why join",
       title: "A useful community before it becomes large-scale",
       description:
-        "The Guadalajara Business Directory helps French-speaking professionals in Guadalajara quickly find the right contacts, get recommended more easily, and unlock concrete opportunities.",
+        "The directory helps French-speaking professionals in Guadalajara quickly find the right contacts, get recommended more easily, and unlock concrete opportunities.",
       item1Title: "Find the right contacts",
       item1Description:
         "Quickly identify a member, company, or need related to your activity.",
@@ -640,6 +640,50 @@ export const EN = {
       title: "Profiles across key sectors",
       description:
         "The network is already taking shape around companies, experts, and decision-makers active across several industries.",
+    },
+
+    marketing: {
+      introP1:
+        "Welcome to the directory of the French-speaking business community in Guadalajara.",
+      introP2:
+        "Discover businesses and members already listed, filter by sector, profile, or location, then explore suggested profiles.",
+      heroTitle: "French-speaking business directory in Guadalajara",
+      heroLead:
+        "See at a glance who does what in the area, find the right contacts, and join the community.",
+      ctaCreateProfile: "Create my profile",
+      ctaExploreMembers: "Browse members",
+      benefit1: "Create your profile.",
+      benefit2: "Be discoverable by the community.",
+      benefit3: "Grow your network locally.",
+      searchTitle: "Find a key contact in two clicks",
+      searchLead:
+        "Search for a member, company, or need to grow your network in Guadalajara.",
+      searchPlaceholder: "Search a member, company, need…",
+      searchButton: "Search now",
+      searchTip:
+        "Tip: start with a concrete need (e.g. “wine importer”, “tax advisor”).",
+      columnNewMembersTitle: "New members this week",
+      columnNewMembersLead: "See the latest profiles visible in the directory.",
+      columnNewMembersPlaceholder: "New members block (wire with product)",
+      columnRequestsTitle: "Network requests",
+      columnRequestsLead:
+        "Post what you’re looking for: partner, area, product, expert, or referral.",
+      columnRequestsCta: "Post a request",
+      columnRequestsPlaceholder: "Network requests block (wire with product)",
+      columnDirectoryTitle: "Explore the directory",
+      columnDirectoryLead:
+        "Browse companies, members, sectors, and key signals from the network.",
+      columnDirectoryPlaceholder:
+        "Companies / Members / Sectors / Radar tabs (wire with product)",
+      sidebarProfileTitle: "Create your profile now",
+      sidebarProfileLead:
+        "Show up in the directory, get found more easily, and access members’ full contact details.",
+      sidebarProfileCta: "Join the community",
+      sidebarInviteTitle: "Invite my network",
+      sidebarInviteLead: "Every new profile increases value for everyone.",
+      sidebarInviteCta: "Invite now",
+      sectorFallbacksChips:
+        "Commerce & distribution|Consulting & business services|Culture & leisure|Energy & environment|Technology & IT",
     },
   },
 

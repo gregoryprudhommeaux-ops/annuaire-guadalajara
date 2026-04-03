@@ -5,7 +5,7 @@ import { FirebaseError } from 'firebase/app';
 import type { User } from 'firebase/auth';
 import type { Language, MemberNetworkRequest, UserProfile } from '../../types';
 import { cn } from '../../cn';
-import { cardPad } from '../../lib/pageLayout';
+import { directoryFeedCardClass } from '../../lib/pageLayout';
 import { ACTIVITY_CATEGORIES, activityCategoryLabel } from '../../constants';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
 import ProfileAvatar from '../ProfileAvatar';
@@ -192,13 +192,7 @@ export default function MemberRequestsSection({
 
   return (
     <>
-      <section
-        className={cn(
-          'min-w-0 rounded-2xl border border-stone-200 bg-white shadow-sm',
-          cardPad,
-          'space-y-4'
-        )}
-      >
+      <section className={cn(directoryFeedCardClass, 'space-y-4')}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 space-y-1">
             <h2 className="flex items-center gap-2 text-lg font-bold leading-snug tracking-tight text-stone-900">
