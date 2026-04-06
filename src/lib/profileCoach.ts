@@ -7,10 +7,15 @@ import {
   PUBLICATION_BIO_MIN_LEN,
   profileMeetsPublicationRequirements,
 } from './profilePublicationRules';
-import { effectiveMemberBio, firstSlotActivityDescription } from './companyActivities';
+import {
+  effectiveMemberBio,
+  effectiveTypicalClientSizesForProfile,
+  firstSlotActivityDescription,
+} from './companyActivities';
 import { GoogleGenAI } from '@google/genai';
 
 export function profileCoachFingerprint(p: UserProfile): string {
+  const tcs = effectiveTypicalClientSizesForProfile(p);
   return [
     p.website ?? '',
     p.whatsapp ?? '',
@@ -28,7 +33,7 @@ export function profileCoachFingerprint(p: UserProfile): string {
     p.photoURL ?? '',
     p.contactPreferenceCta ?? '',
     (p.workingLanguageCodes ?? []).join(','),
-    p.typicalClientSize ?? '',
+    tcs.join(','),
   ].join('|');
 }
 
@@ -53,7 +58,9 @@ export function collectProfileCoachGapKeys(p: UserProfile): string[] {
     if (!(p.photoURL?.trim())) keys.push('photoURL');
     if (!(p.contactPreferenceCta?.trim())) keys.push('contactPrefsCtaLabel');
     if (!(p.workingLanguageCodes?.length)) keys.push('contactPrefsWorkingLangLabel');
-    if (!p.typicalClientSize) keys.push('contactPrefsClientSizeLabel');
+    if (effectiveTypicalClientSizesForProfile(p).length === 0) {
+      keys.push('contactPrefsClientSizeLabel');
+    }
   }
   return keys;
 }
@@ -79,12 +86,13 @@ export function getProfileCoachCompletionFraction(p: UserProfile): number {
   if (primaryPassed < primaryChecks.length) {
     return primaryPassed / primaryChecks.length;
   }
+  const tcs = effectiveTypicalClientSizesForProfile(p);
   const secondaryChecks = [
     !!(p.linkedin?.trim()),
     !!(p.photoURL?.trim()),
     !!(p.contactPreferenceCta?.trim()),
     (p.workingLanguageCodes?.length ?? 0) > 0,
-    !!p.typicalClientSize,
+    tcs.length > 0,
   ];
   const secondaryPassed = secondaryChecks.filter(Boolean).length;
   return (primaryPassed + secondaryPassed) / (primaryChecks.length + secondaryChecks.length);
@@ -129,6 +137,7 @@ function pickLang<L extends string>(lang: Language, fr: L, es: L, en: L): L {
 function summarizeProfileForPrompt(p: UserProfile): string {
   const web = p.website?.trim() ?? '';
   const webOk = web && /^https?:\/\/.+/i.test(web);
+  const tcs = effectiveTypicalClientSizesForProfile(p);
   return [
     `name:${p.fullName}`,
     `company:${p.companyName}`,
@@ -147,7 +156,7 @@ function summarizeProfileForPrompt(p: UserProfile): string {
     `photo:${p.photoURL?.trim() ? 'yes' : 'no'}`,
     `contact_cta:${p.contactPreferenceCta?.trim() ? 'yes' : 'no'}`,
     `work_langs:${(p.workingLanguageCodes ?? []).length}`,
-    `typical_client_size:${p.typicalClientSize ?? '—'}`,
+    `typical_client_sizes:${tcs.length ? tcs.join(',') : '—'}`,
     `open_to:${[p.openToMentoring && 'mentor', p.openToTalks && 'talks', p.openToEvents && 'events'].filter(Boolean).join(',') || 'none'}`,
     `readiness:${getProfileAiRecommendationReadiness(p).toFixed(2)}`,
     `publishable:${profileMeetsPublicationRequirements(p)}`,

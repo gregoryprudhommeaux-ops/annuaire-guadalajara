@@ -150,11 +150,9 @@ import {
 } from './lib/passionConfig';
 import {
   WORKING_LANGUAGE_OPTIONS,
-  TYPICAL_CLIENT_SIZE_VALUES,
   sanitizeWorkingLanguageCodes,
-  typicalClientSizeLabel,
+  sanitizeTypicalClientSizes,
   workingLanguageLabel,
-  type TypicalClientSize,
 } from './lib/contactPreferences';
 import {
   profileMeetsPublicationRequirements,
@@ -178,6 +176,7 @@ import {
 // Opportunités retirées du produit.
 import { getGeminiApiKey } from './lib/geminiEnv';
 import IceBreakerInterests from './components/profile/IceBreakerInterests';
+import { TypicalClientSizesDropdown } from './components/profile/TypicalClientSizesDropdown';
 import ProfileCompletionCard from './components/profile/ProfileCompletionCard';
 import { FieldBadge } from './components/ui/FieldBadge';
 import HeroSection from './components/home/HeroSection';
@@ -2828,6 +2827,11 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   const handleLogout = () => signOut(auth);
 
+  const promptProfilePhotoUrl = useCallback(() => {
+    const next = window.prompt(t('profileFormPhotoUrlPrompt'), profilePhotoUrlDraft);
+    if (next !== null) setProfilePhotoUrlDraft(next.trim());
+  }, [t, profilePhotoUrlDraft]);
+
   const openAuthModal = useCallback(() => {
     setAuthError(null);
     setAuthModalResetKey((k) => k + 1);
@@ -3215,24 +3219,22 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       return;
     }
 
-    const tcsRaw = firstSlot.typicalClientSize ?? '';
-    let typicalClientSize: TypicalClientSize | ReturnType<typeof deleteField>;
-    if (tcsRaw === '') {
-      typicalClientSize = deleteField();
-    } else if ((TYPICAL_CLIENT_SIZE_VALUES as readonly string[]).includes(tcsRaw)) {
-      typicalClientSize = tcsRaw as TypicalClientSize;
-    } else {
+    const tcsSanitized = sanitizeTypicalClientSizes(firstSlot.typicalClientSizes);
+    if (tcsSanitized.length !== (firstSlot.typicalClientSizes ?? []).length) {
       setProfileSaveError(
         pickLang(
-          'La taille de clients habituels sélectionnée est invalide.',
-          'El tamaño habitual de clientes seleccionado no es válido.',
-          'The selected typical client size is invalid.',
+          'Les tailles de clients habituels sélectionnées sont invalides (max. 3).',
+          'Los tamaños habituales de clientes no son válidos (máx. 3).',
+          'The selected typical client sizes are invalid (max. 3).',
           lang
         )
       );
       setProfileSaveBusy(false);
       return;
     }
+    const typicalClientSizesField: typeof tcsSanitized | ReturnType<typeof deleteField> =
+      tcsSanitized.length > 0 ? tcsSanitized : deleteField();
+    const typicalClientSizeLegacy = deleteField();
 
     const baseProfile = isSelf ? profile : editingProfile;
     const computedCompanySize: UserProfile['companySize'] = employeeCountVal
@@ -3343,7 +3345,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       contactPreferenceCta: nextContactCta ?? deleteField(),
       contactPreferenceCtaTranslations: nextContactCtaTranslations,
       workingLanguageCodes: sanitizeWorkingLanguageCodes(workingLanguagesDraft),
-      typicalClientSize,
+      typicalClientSizes: typicalClientSizesField,
+      typicalClientSize: typicalClientSizeLegacy,
       openToMentoring: formData.get('openToMentoring') === 'on',
       openToTalks: formData.get('openToTalks') === 'on',
       openToEvents: formData.get('openToEvents') === 'on',
@@ -4481,7 +4484,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {t('linkedin')}
                                 </label>
-                                <div className="flex gap-2">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                                   <input
                                     name="linkedin"
                                     id="linkedin-input"
@@ -4489,18 +4492,27 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     autoComplete="url"
                                     defaultValue={editingProfile?.linkedin || profile?.linkedin}
                                     placeholder="https://linkedin.com/in/..."
-                                    className="h-10 min-w-0 flex-1 rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                    className="h-10 min-w-0 w-full flex-1 rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900 sm:min-w-[12rem]"
                                   />
-                                  <button
-                                    type="button"
-                                    onClick={() => setIsLinkedInModalOpen(true)}
-                                    className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-lg border border-stone-300 px-3 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-50"
-                                  >
-                                    <span className="inline-flex items-center gap-1.5">
-                                      <Linkedin size={14} aria-hidden />
-                                      {t('fetchPhoto')}
-                                    </span>
-                                  </button>
+                                  <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setIsLinkedInModalOpen(true)}
+                                      className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-lg border border-stone-300 px-3 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-50"
+                                    >
+                                      <span className="inline-flex items-center gap-1.5">
+                                        <Linkedin size={14} aria-hidden />
+                                        {t('fetchPhoto')}
+                                      </span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={promptProfilePhotoUrl}
+                                      className="inline-flex min-h-10 max-w-[14rem] items-center rounded-lg px-2 py-1.5 text-left text-xs font-medium leading-snug text-blue-700 underline decoration-blue-600/80 underline-offset-2 hover:bg-blue-50 hover:text-blue-900"
+                                    >
+                                      {t('profileFormEditPhotoUrlManually')}
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -4737,19 +4749,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   ) : (
                                     <span className="block text-[11px] text-stone-400">{t('profileFormAboutPhotoEmpty')}</span>
                                   )}
-                                  <button
-                                    type="button"
-                                    className="text-left text-[11px] text-blue-600 underline decoration-blue-600/80 underline-offset-2 hover:text-blue-800"
-                                    onClick={() => {
-                                      const next = window.prompt(
-                                        t('profileFormPhotoUrlPrompt'),
-                                        profilePhotoUrlDraft
-                                      );
-                                      if (next !== null) setProfilePhotoUrlDraft(next.trim());
-                                    }}
-                                  >
-                                    {t('profileFormEditPhotoUrlManually')}
-                                  </button>
                                 </div>
                               </div>
                             </div>
@@ -5126,29 +5125,23 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                           </div>
                                           <div className="space-y-1">
                                             <label
-                                              htmlFor={`typicalClientSize-${slot.id}`}
+                                              htmlFor={`typicalClientSizes-${slot.id}`}
                                               className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
                                             >
                                               {t('contactPrefsClientSizeLabel')}
                                             </label>
-                                            <select
-                                              id={`typicalClientSize-${slot.id}`}
-                                              value={slot.typicalClientSize ?? ''}
-                                              onChange={(e) =>
+                                            <TypicalClientSizesDropdown
+                                              fieldId={`typicalClientSizes-${slot.id}`}
+                                              value={slot.typicalClientSizes ?? []}
+                                              onChange={(next) =>
                                                 updateCompanyActivitySlot(slot.id, {
-                                                  typicalClientSize:
-                                                    (e.target.value as TypicalClientSize) || undefined,
+                                                  typicalClientSizes: next,
                                                 })
                                               }
-                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            >
-                                              <option value="">{t('contactPrefsClientSizeEmpty')}</option>
-                                              {(TYPICAL_CLIENT_SIZE_VALUES as readonly TypicalClientSize[]).map((v) => (
-                                                <option key={v} value={v}>
-                                                  {typicalClientSizeLabel(v, lang)}
-                                                </option>
-                                              ))}
-                                            </select>
+                                              lang={lang}
+                                              emptyLabel={t('contactPrefsClientSizeEmpty')}
+                                              maxHint={t('contactPrefsClientSizeMaxHint')}
+                                            />
                                             <p className="mt-1 text-[10px] text-stone-400">
                                               {t('contactPrefsClientSizeHint')}
                                             </p>

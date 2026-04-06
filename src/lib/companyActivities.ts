@@ -1,4 +1,10 @@
 import { employeeCountToSelectDefault, isEmployeeCountRange } from '../constants';
+import {
+  sanitizeTypicalClientSizes,
+  typicalClientSizesFromProfile,
+  TYPICAL_CLIENT_SIZE_VALUES,
+  type TypicalClientSize,
+} from './contactPreferences';
 import type {
   CommunityCompanyKind,
   CommunityMemberStatus,
@@ -66,7 +72,15 @@ function slotFromFirestoreEntry(raw: unknown, fallbackId: string): CompanyActivi
     arrivalYear: asNumber(o.arrivalYear),
     communityCompanyKind: (o.communityCompanyKind as CommunityCompanyKind) || undefined,
     communityMemberStatus: (o.communityMemberStatus as CommunityMemberStatus) || undefined,
-    typicalClientSize: (o.typicalClientSize as CompanyActivitySlot['typicalClientSize']) || undefined,
+    typicalClientSizes: (() => {
+      const fromArr = sanitizeTypicalClientSizes(o.typicalClientSizes);
+      if (fromArr.length) return fromArr;
+      const leg = o.typicalClientSize;
+      if (typeof leg === 'string' && (TYPICAL_CLIENT_SIZE_VALUES as readonly string[]).includes(leg)) {
+        return [leg as TypicalClientSize];
+      }
+      return [];
+    })(),
     activityDescription: String(o.activityDescription ?? '').trim() || undefined,
   };
 }
@@ -95,7 +109,7 @@ export function legacyProfileToCompanySlot(p: UserProfile): CompanyActivitySlot 
     arrivalYear: p.arrivalYear,
     communityCompanyKind: p.communityCompanyKind,
     communityMemberStatus: p.communityMemberStatus,
-    typicalClientSize: p.typicalClientSize,
+    typicalClientSizes: typicalClientSizesFromProfile(p),
   };
 }
 
@@ -107,7 +121,15 @@ export function normalizeProfileCompanyActivities(p: UserProfile | null | undefi
   if (!p) return [emptyCompanyActivitySlot()];
   const raw = p.companyActivities as unknown;
   if (Array.isArray(raw) && raw.length > 0) {
-    return raw.map((entry, i) => slotFromFirestoreEntry(entry, `${LEGACY_PRIMARY_ID}-${i}`));
+    const slots = raw.map((entry, i) => slotFromFirestoreEntry(entry, `${LEGACY_PRIMARY_ID}-${i}`));
+    const fromRoot = typicalClientSizesFromProfile(p);
+    if (
+      fromRoot.length > 0 &&
+      (!slots[0].typicalClientSizes || slots[0].typicalClientSizes.length === 0)
+    ) {
+      return [{ ...slots[0], typicalClientSizes: fromRoot }, ...slots.slice(1)];
+    }
+    return slots;
   }
   return [legacyProfileToCompanySlot(p)];
 }
@@ -181,6 +203,7 @@ export function slotsToFirestoreList(slots: CompanyActivitySlot[]): CompanyActiv
   return slots.map((s) => {
     const ec = employeeCountFromSlotField(s.employeeCount);
     const activityDescription = String(s.activityDescription ?? '').trim();
+    const tcs = sanitizeTypicalClientSizes(s.typicalClientSizes);
     return {
       id: s.id,
       companyName: s.companyName.trim(),
@@ -196,7 +219,7 @@ export function slotsToFirestoreList(slots: CompanyActivitySlot[]): CompanyActiv
       arrivalYear: s.arrivalYear,
       communityCompanyKind: s.communityCompanyKind,
       communityMemberStatus: s.communityMemberStatus,
-      typicalClientSize: s.typicalClientSize,
+      ...(tcs.length ? { typicalClientSizes: tcs } : {}),
       ...(activityDescription ? { activityDescription } : {}),
     };
   });
@@ -236,4 +259,12 @@ export function allActivityDescriptionTexts(p: UserProfile | null | undefined): 
 /** Texte affiché pour une ligne société sur la fiche (pas de repli sur l’ancien `bio` : évite le doublon avec la bio membre). */
 export function displayActivityDescriptionForSlot(slot: CompanyActivitySlot): string {
   return String(slot.activityDescription ?? '').trim();
+}
+
+/** Affichage public : champs racine du profil, sinon 1ʳᵉ ligne `companyActivities`. */
+export function effectiveTypicalClientSizesForProfile(p: UserProfile): TypicalClientSize[] {
+  const fromRoot = typicalClientSizesFromProfile(p);
+  if (fromRoot.length > 0) return fromRoot;
+  const slots = normalizeProfileCompanyActivities(p);
+  return sanitizeTypicalClientSizes(slots[0]?.typicalClientSizes);
 }

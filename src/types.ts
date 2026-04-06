@@ -58,7 +58,8 @@ export interface CompanyActivitySlot {
   arrivalYear?: number;
   communityCompanyKind?: CommunityCompanyKind;
   communityMemberStatus?: CommunityMemberStatus;
-  typicalClientSize?: 'independant' | 'pme' | 'corporate' | 'mixte';
+  /** Jusqu’à 3 tailles de clients habituels (distinct de `companySize` sur l’entreprise). */
+  typicalClientSizes?: ('independant' | 'pme' | 'corporate' | 'mixte')[];
   /** Présentation de l’activité pour cette ligne (recherche par société / fiche). */
   activityDescription?: string;
 }
@@ -175,7 +176,9 @@ export interface UserProfile {
   contactPreferenceCtaTranslations?: Partial<Record<Language, string>>;
   /** Jusqu’à 3 codes langue (FR, ES, EN, …) — voir `WORKING_LANGUAGE_OPTIONS` */
   workingLanguageCodes?: string[];
-  /** Taille de clients avec lesquels le membre travaille le plus souvent (distinct de `companySize`) */
+  /** Jusqu’à 3 tailles de clients habituels (distinct de `companySize`). */
+  typicalClientSizes?: ('independant' | 'pme' | 'corporate' | 'mixte')[];
+  /** @deprecated Ancien champ unique ; migré vers `typicalClientSizes`. */
   typicalClientSize?: 'independant' | 'pme' | 'corporate' | 'mixte';
   openToMentoring?: boolean;
   openToTalks?: boolean;

@@ -1,4 +1,4 @@
-import type { Language } from '../types';
+import type { Language, UserProfile } from '../types';
 import { pickLang } from './uiLocale';
 
 export const WORKING_LANGUAGE_OPTIONS = [
@@ -33,6 +33,35 @@ export function workingLanguageLabel(code: string, lang: Language): string {
   const o = WORKING_LANGUAGE_OPTIONS.find((x) => x.code === code);
   if (!o) return code;
   return o.label[lang] ?? o.label.fr;
+}
+
+export function sanitizeTypicalClientSizes(raw: unknown): TypicalClientSize[] {
+  if (!Array.isArray(raw)) return [];
+  const out: TypicalClientSize[] = [];
+  const seen = new Set<string>();
+  for (const x of raw) {
+    if (out.length >= 3) break;
+    if (typeof x !== 'string') continue;
+    if (!(TYPICAL_CLIENT_SIZE_VALUES as readonly string[]).includes(x)) continue;
+    if (seen.has(x)) continue;
+    seen.add(x);
+    out.push(x as TypicalClientSize);
+  }
+  return out;
+}
+
+/** Lit `typicalClientSizes` ou migre depuis l’ancien `typicalClientSize` unique. */
+export function typicalClientSizesFromProfile(
+  p: Pick<UserProfile, 'typicalClientSizes' | 'typicalClientSize'> | null | undefined
+): TypicalClientSize[] {
+  if (!p) return [];
+  const fromArr = sanitizeTypicalClientSizes(p.typicalClientSizes);
+  if (fromArr.length > 0) return fromArr;
+  const one = p.typicalClientSize;
+  if (one && (TYPICAL_CLIENT_SIZE_VALUES as readonly string[]).includes(one)) {
+    return [one];
+  }
+  return [];
 }
 
 export function typicalClientSizeLabel(v: TypicalClientSize, lang: Language): string {

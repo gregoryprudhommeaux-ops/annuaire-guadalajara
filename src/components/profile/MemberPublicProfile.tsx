@@ -16,6 +16,7 @@ import {
   normalizeProfileCompanyActivities,
   effectiveMemberBio,
   displayActivityDescriptionForSlot,
+  effectiveTypicalClientSizesForProfile,
 } from '../../lib/companyActivities';
 import { cn } from '../../cn';
 import AiTranslatedFreeText from '../AiTranslatedFreeText';
@@ -65,6 +66,7 @@ export function MemberPublicProfile({
   const passions = sanitizePassionIds(profile.passionIds);
   const langs = sanitizeWorkingLanguageCodes(profile.workingLanguageCodes);
   const keywords = normalizedTargetKeywords(profile);
+  const clientSizes = effectiveTypicalClientSizesForProfile(profile);
 
   const openToLabels: string[] = [];
   if (profile.openToMentoring) openToLabels.push(t('contactPrefsOpenMentoring'));
@@ -276,7 +278,7 @@ export function MemberPublicProfile({
         </section>
       )}
 
-      {(keywords.length > 0 || profile.typicalClientSize || openToLabels.length > 0) && (
+      {(keywords.length > 0 || clientSizes.length > 0 || openToLabels.length > 0) && (
         <section className="space-y-3">
           {keywords.length > 0 ? (
             <div>
@@ -291,12 +293,19 @@ export function MemberPublicProfile({
             </div>
           ) : null}
 
-          {profile.typicalClientSize ? (
+          {clientSizes.length > 0 ? (
             <div>
               <h2 className={cn('mb-2', profileSectionTitleClass)}>{t('contactPrefsClientSizeLabel')}</h2>
-              <p className="text-sm text-stone-800">
-                {typicalClientSizeLabel(profile.typicalClientSize, lang)}
-              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {clientSizes.map((v) => (
+                  <span
+                    key={v}
+                    className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-800"
+                  >
+                    {typicalClientSizeLabel(v, lang)}
+                  </span>
+                ))}
+              </div>
             </div>
           ) : null}
 

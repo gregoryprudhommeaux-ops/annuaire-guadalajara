@@ -754,8 +754,8 @@ export const TRANSLATIONS: Translations = {
   },
   profileFormSectionAbout: { fr: 'À propos de vous', es: 'Sobre ti' },
   profileFormAboutPhotoEmpty: {
-    fr: 'Utilisez le bouton « Récupérer la photo » après avoir renseigné votre lien LinkedIn.',
-    es: 'Usa el botón « Obtener la foto » después de indicar tu enlace de LinkedIn.',
+    fr: 'Renseignez le lien LinkedIn sur la ligne ci-dessus, puis « Récupérer la photo LinkedIn » ou « Modifier l’URL manuellement » à côté.',
+    es: 'Indica tu enlace de LinkedIn en la fila de arriba; luego « Importar foto de LinkedIn » o « Editar la URL manualmente » al lado.',
   },
   profileFormPhotoLinkedInOk: {
     fr: 'Photo récupérée depuis LinkedIn',
@@ -1310,12 +1310,16 @@ export const TRANSLATIONS: Translations = {
     es: 'Tamaño habitual de clientes',
   },
   contactPrefsClientSizeHint: {
-    fr: 'Tailles de clients avec lesquelles vous travaillez le plus souvent.',
-    es: 'Tamaños de cliente con los que trabajas con más frecuencia.',
+    fr: 'Cochez jusqu’à 3 tailles de clients avec lesquelles vous travaillez le plus souvent.',
+    es: 'Marca hasta 3 tamaños de cliente con los que trabajas con más frecuencia.',
   },
   contactPrefsClientSizeEmpty: {
-    fr: '— Choisir une option —',
-    es: '— Elegir una opción —',
+    fr: '— Choisir une ou plusieurs options —',
+    es: '— Elegir una o varias opciones —',
+  },
+  contactPrefsClientSizeMaxHint: {
+    fr: 'Maximum 3 tailles — décochez une option pour en ajouter une autre.',
+    es: 'Máximo 3 tamaños: desmarca una opción para añadir otra.',
   },
   contactPrefsOpenToLabel: {
     fr: 'Ouvert à…',
