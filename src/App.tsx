@@ -190,6 +190,7 @@ import ContactFooterModal from './components/ContactFooterModal';
 import SpaRouteAnalytics from './components/SpaRouteAnalytics';
 import { trackMemberInteraction } from './utils/trackEvent';
 import { LEGAL_PRIVACY_PARAGRAPHS, LEGAL_TERMS_PARAGRAPHS } from './legal/footerLegalContent';
+import { LegalPage } from './pages/LegalPage';
 import { NewMembersSection } from './components/home/NewMembersSection';
 import AiTranslatedFreeText from './components/AiTranslatedFreeText';
 import ProfileAvatar from './components/ProfileAvatar';
@@ -4424,10 +4425,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       {profile || isEditing ? (
                         <div
                           ref={profileFormLayoutRef}
-                          className={cn(
-                            'grid gap-6 lg:items-start',
-                            profile?.uid ? 'lg:grid-cols-[minmax(0,1fr)_320px]' : 'lg:grid-cols-1'
-                          )}
+                          className="grid gap-6 lg:grid-cols-1 lg:items-start"
                         >
                           <div className="min-w-0 space-y-6">
                             {user && profileCompletionPct < 100 ? (
@@ -4762,6 +4760,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   autoComplete="url"
                                   value={profilePhotoUrlDraft}
                                   onChange={(e) => setProfilePhotoUrlDraft(e.target.value)}
+                                  onPaste={(e) => {
+                                    const text = e.clipboardData?.getData('text') ?? '';
+                                    if (!text) return;
+                                    e.preventDefault();
+                                    setProfilePhotoUrlDraft(text.trim());
+                                  }}
                                   placeholder="https://..."
                                   className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
@@ -5485,7 +5489,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </form>
                           </div>
                           {profile?.uid ? (
-                            <div className="lg:sticky lg:top-24 lg:self-start">
+                            <div className="border-t border-stone-200 pt-6">
                               <ProfileCompletionCard
                                 profile={profileCompletionCardSource}
                                 t={t}
@@ -7298,6 +7302,23 @@ const App = () => {
             <Route path="/rejoindre" element={<MainApp />} />
             <Route path="/join" element={<MainApp />} />
             <Route path="/membres" element={<MainApp />} />
+            <Route path="/confidentialite" element={<LegalPageWrapper mode="privacy" />} />
+            <Route path="/privacy" element={<LegalPageWrapper mode="privacy" />} />
+            <Route
+              path="/legal/privacy"
+              element={
+                <LegalPageWrapper mode="privacy" />
+              }
+            />
+            <Route path="/conditions" element={<LegalPageWrapper mode="terms" />} />
+            <Route path="/terms" element={<LegalPageWrapper mode="terms" />} />
+            <Route path="/terms-of-service" element={<LegalPageWrapper mode="terms" />} />
+            <Route
+              path="/legal/terms"
+              element={
+                <LegalPageWrapper mode="terms" />
+              }
+            />
             <Route path="/dashboard" element={<MainApp initialViewMode="dashboard" />} />
             <Route path="/evenements" element={<MainApp initialViewMode="dashboard" />} />
             <Route path="/e/:slug" element={<MainApp />} />
@@ -7311,3 +7332,8 @@ const App = () => {
 };
 
 export default App;
+
+function LegalPageWrapper({ mode }: { mode: 'privacy' | 'terms' }) {
+  const { lang, t } = useLanguage();
+  return <LegalPage lang={lang} t={t} mode={mode} />;
+}
