@@ -204,7 +204,7 @@ export function slotsToFirestoreList(slots: CompanyActivitySlot[]): CompanyActiv
     const ec = employeeCountFromSlotField(s.employeeCount);
     const activityDescription = String(s.activityDescription ?? '').trim();
     const tcs = sanitizeTypicalClientSizes(s.typicalClientSizes);
-    return {
+    const out: Record<string, unknown> = {
       id: s.id,
       companyName: s.companyName.trim(),
       activityCategory: s.activityCategory?.trim() || '',
@@ -214,14 +214,15 @@ export function slotsToFirestoreList(slots: CompanyActivitySlot[]): CompanyActiv
       neighborhood: s.neighborhood?.trim() || '',
       country: s.country?.trim() || '',
       positionCategory: s.positionCategory?.trim() || '',
-      creationYear: s.creationYear,
-      employeeCount: ec,
-      arrivalYear: s.arrivalYear,
-      communityCompanyKind: s.communityCompanyKind,
-      communityMemberStatus: s.communityMemberStatus,
-      ...(tcs.length ? { typicalClientSizes: tcs } : {}),
-      ...(activityDescription ? { activityDescription } : {}),
     };
+    if (typeof s.creationYear === 'number' && Number.isFinite(s.creationYear)) out.creationYear = s.creationYear;
+    if (ec !== undefined) out.employeeCount = ec;
+    if (typeof s.arrivalYear === 'number' && Number.isFinite(s.arrivalYear)) out.arrivalYear = s.arrivalYear;
+    if (s.communityCompanyKind !== undefined) out.communityCompanyKind = s.communityCompanyKind;
+    if (s.communityMemberStatus !== undefined) out.communityMemberStatus = s.communityMemberStatus;
+    if (tcs.length) out.typicalClientSizes = tcs;
+    if (activityDescription) out.activityDescription = activityDescription;
+    return out as CompanyActivitySlot;
   });
 }
 
