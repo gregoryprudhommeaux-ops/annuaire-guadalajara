@@ -4747,6 +4747,25 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   </span>
                                 </button>
                               </div>
+
+                              <div className="mt-2 space-y-1">
+                                <label
+                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                  htmlFor="profilePhotoUrl"
+                                >
+                                  {t('profileFormPhotoUrlPrompt')}
+                                </label>
+                                <input
+                                  id="profilePhotoUrl"
+                                  type="url"
+                                  inputMode="url"
+                                  autoComplete="url"
+                                  value={profilePhotoUrlDraft}
+                                  onChange={(e) => setProfilePhotoUrlDraft(e.target.value)}
+                                  placeholder="https://..."
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                />
+                              </div>
                             </div>
                           </section>
 

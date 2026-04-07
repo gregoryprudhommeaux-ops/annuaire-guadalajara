@@ -754,8 +754,8 @@ export const TRANSLATIONS: Translations = {
   },
   profileFormSectionAbout: { fr: 'À propos de vous', es: 'Sobre ti' },
   profileFormAboutPhotoEmpty: {
-    fr: 'Renseignez le lien LinkedIn sur la ligne ci-dessus, puis « Récupérer la photo LinkedIn » ou « Modifier l’URL manuellement » à côté.',
-    es: 'Indica tu enlace de LinkedIn en la fila de arriba; luego « Importar foto de LinkedIn » o « Editar la URL manualmente » al lado.',
+    fr: 'Renseignez le lien LinkedIn sur la ligne ci-dessus, puis « Récupérer la photo LinkedIn » (ou collez l’URL de la photo ci-dessous).',
+    es: 'Indica tu enlace de LinkedIn en la fila de arriba; luego « Importar foto de LinkedIn » (o pega la URL de la foto abajo).',
   },
   profileFormPhotoLinkedInOk: {
     fr: 'Photo récupérée depuis LinkedIn',
