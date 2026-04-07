@@ -168,6 +168,11 @@ export const TRANSLATIONS: Translations = {
     fr: "Choisissez un compte :",
     es: "Elige una cuenta:",
   },
+  /** Mention sous les boutons OAuth — transparence données (exigences Google Sign-In). */
+  authGoogleOAuthMention: {
+    fr: 'Connexion sécurisée via Google pour créer et gérer votre profil.',
+    es: 'Inicio de sesión seguro con Google para crear y gestionar tu perfil.',
+  },
   authOrEmail: {
     fr: "Ou avec une adresse e-mail",
     es: "O con correo electrónico",
@@ -494,8 +499,22 @@ export const TRANSLATIONS: Translations = {
   adminPanel: { fr: "Panneau Admin", es: "Panel de Admin" },
   exportData: { fr: "Exporter la base de données", es: "Exportar base de datos" },
   signature: { fr: "Produit et managé par NextStep Services", es: "Producido y gestionado por NextStep Services" },
+  /** Ligne de copyright sous le © (nom du service / communauté). */
+  footerBrandCopyright: {
+    fr: "Annuaire d'Affaires de Guadalajara — Communauté francophone",
+    es: 'Directorio de negocios de Guadalajara — Comunidad francófona',
+  },
   footerPrivacy: { fr: "Confidentialité", es: "Privacidad" },
   footerTerms: { fr: "Conditions", es: "Términos" },
+  /** Libellés longs pour liens footer vers pages légales (URL /privacy, /terms). */
+  footerPrivacyPageLink: {
+    fr: "Politique de confidentialité",
+    es: 'Política de privacidad',
+  },
+  footerTermsPageLink: {
+    fr: "Conditions d'utilisation",
+    es: 'Términos de uso',
+  },
   footerContact: { fr: "Contact", es: "Contacto" },
   legalPrivacyTitle: {
     fr: "Politique de confidentialité et protection des données personnelles",

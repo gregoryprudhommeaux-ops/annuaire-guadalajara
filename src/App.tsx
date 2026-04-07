@@ -191,6 +191,8 @@ import SpaRouteAnalytics from './components/SpaRouteAnalytics';
 import { trackMemberInteraction } from './utils/trackEvent';
 import { LEGAL_PRIVACY_PARAGRAPHS, LEGAL_TERMS_PARAGRAPHS } from './legal/footerLegalContent';
 import { LegalPage } from './pages/LegalPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 import { NewMembersSection } from './components/home/NewMembersSection';
 import AiTranslatedFreeText from './components/AiTranslatedFreeText';
 import ProfileAvatar from './components/ProfileAvatar';
@@ -1844,6 +1846,13 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const signupAuthOpenedRef = useRef(false);
 
   const isPublicEventRoute = location.pathname.startsWith('/e/');
+  /** Politique / CGU courtes : même coquille que le reste du site (`AppHeader` + pied de page). */
+  const shortLegalPage = useMemo((): null | 'privacy' | 'terms' => {
+    const p = location.pathname;
+    if (p === '/privacy' || p === '/confidentialite') return 'privacy';
+    if (p === '/terms' || p === '/conditions' || p === '/terms-of-service') return 'terms';
+    return null;
+  }, [location.pathname]);
   const publicEventSlug = useMemo(() => {
     if (!location.pathname.startsWith('/e/')) return '';
     return decodeURIComponent(location.pathname.replace(/^\/e\//, '')).trim();
@@ -3911,7 +3920,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
   const headerAdminLayout = Boolean(user && viewerIsAdmin);
 
   return (
-    <div className="min-h-screen min-w-0 bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
+    <div className="flex min-h-screen min-w-0 flex-col bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
       <AppHeader
         title={t('title')}
         subtitle={t('subtitle')}
@@ -4090,6 +4099,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         }
       />
 
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <AnimatePresence>
         {showAuthModal && !user && (
           <div className="fixed inset-0 z-[170] flex items-center justify-center p-4">
@@ -4134,6 +4144,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   onSignIn={handleSocialLogin}
                 />
               </div>
+              <p className="mt-3 text-center text-xs leading-relaxed text-stone-500">
+                {t('authGoogleOAuthMention')}{' '}
+                <Link
+                  to="/privacy"
+                  className="font-medium text-stone-600 underline decoration-stone-400 underline-offset-2 hover:text-stone-900"
+                >
+                  {t('footerPrivacy')}
+                </Link>
+              </p>
               <EmailAuthPanel
                 resetToken={authModalResetKey}
                 lang={lang}
@@ -4152,6 +4171,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         )}
       </AnimatePresence>
 
+      {shortLegalPage ? (
+        shortLegalPage === 'privacy' ? <PrivacyPage /> : <TermsPage />
+      ) : (
+        <>
       {user && !isAdminDashboard && (
         <div className="bg-stone-50 border-b border-stone-200">
           {showEmailVerifyBanner ? (
@@ -7144,35 +7167,35 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
       {/* Opportunités retirées du produit */}
 
-      <footer className="mt-12 border-t border-stone-200 bg-white py-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <p className="text-center text-xs text-stone-400 sm:text-left">
-              © {new Date().getFullYear()} {t('signature')}
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-end">
-              <button
-                type="button"
-                onClick={() => setFooterLegalModal('privacy')}
-                className="text-xs text-stone-400 underline-offset-2 transition-colors hover:text-stone-900 hover:underline"
-              >
-                {t('footerPrivacy')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setFooterLegalModal('terms')}
-                className="text-xs text-stone-400 underline-offset-2 transition-colors hover:text-stone-900 hover:underline"
-              >
-                {t('footerTerms')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setFooterContactOpen(true)}
-                className="text-xs text-stone-400 underline-offset-2 transition-colors hover:text-stone-900 hover:underline"
-              >
-                {t('footerContact')}
-              </button>
-            </div>
+        </>
+      )}
+      </div>
+
+      <footer className="mt-auto border-t border-stone-200 bg-white">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-4 text-xs text-stone-400 sm:flex-row">
+          <span className="text-center sm:text-left">
+            © {new Date().getFullYear()} {t('footerBrandCopyright')}
+          </span>
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-end">
+            <Link
+              to="/privacy"
+              className="underline decoration-stone-400 underline-offset-2 transition-colors hover:text-stone-700"
+            >
+              {t('footerPrivacyPageLink')}
+            </Link>
+            <Link
+              to="/terms"
+              className="underline decoration-stone-400 underline-offset-2 transition-colors hover:text-stone-700"
+            >
+              {t('footerTermsPageLink')}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setFooterContactOpen(true)}
+              className="underline decoration-stone-400 underline-offset-2 transition-colors hover:text-stone-700"
+            >
+              {t('footerContact')}
+            </button>
           </div>
         </div>
       </footer>
@@ -7302,17 +7325,17 @@ const App = () => {
             <Route path="/rejoindre" element={<MainApp />} />
             <Route path="/join" element={<MainApp />} />
             <Route path="/membres" element={<MainApp />} />
-            <Route path="/confidentialite" element={<LegalPageWrapper mode="privacy" />} />
-            <Route path="/privacy" element={<LegalPageWrapper mode="privacy" />} />
+            <Route path="/confidentialite" element={<MainApp />} />
+            <Route path="/privacy" element={<MainApp />} />
             <Route
               path="/legal/privacy"
               element={
                 <LegalPageWrapper mode="privacy" />
               }
             />
-            <Route path="/conditions" element={<LegalPageWrapper mode="terms" />} />
-            <Route path="/terms" element={<LegalPageWrapper mode="terms" />} />
-            <Route path="/terms-of-service" element={<LegalPageWrapper mode="terms" />} />
+            <Route path="/conditions" element={<MainApp />} />
+            <Route path="/terms" element={<MainApp />} />
+            <Route path="/terms-of-service" element={<MainApp />} />
             <Route
               path="/legal/terms"
               element={
