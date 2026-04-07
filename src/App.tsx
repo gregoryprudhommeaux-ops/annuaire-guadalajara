@@ -2827,10 +2827,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   const handleLogout = () => signOut(auth);
 
-  const promptProfilePhotoUrl = useCallback(() => {
-    const next = window.prompt(t('profileFormPhotoUrlPrompt'), profilePhotoUrlDraft);
-    if (next !== null) setProfilePhotoUrlDraft(next.trim());
-  }, [t, profilePhotoUrlDraft]);
+  // NOTE: l’édition manuelle de l’URL photo a été retirée de l’UI.
 
   const openAuthModal = useCallback(() => {
     setAuthError(null);
@@ -4494,25 +4491,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     placeholder="https://linkedin.com/in/..."
                                     className="h-10 min-w-0 w-full flex-1 rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900 sm:min-w-[12rem]"
                                   />
-                                  <div className="flex shrink-0 flex-wrap items-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => setIsLinkedInModalOpen(true)}
-                                      className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-lg border border-stone-300 px-3 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-50"
-                                    >
-                                      <span className="inline-flex items-center gap-1.5">
-                                        <Linkedin size={14} aria-hidden />
-                                        {t('fetchPhoto')}
-                                      </span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={promptProfilePhotoUrl}
-                                      className="inline-flex min-h-10 max-w-[14rem] items-center rounded-lg px-2 py-1.5 text-left text-xs font-medium leading-snug text-blue-700 underline decoration-blue-600/80 underline-offset-2 hover:bg-blue-50 hover:text-blue-900"
-                                    >
-                                      {t('profileFormEditPhotoUrlManually')}
-                                    </button>
-                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -4717,39 +4695,54 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                 {t('profileFormProfilePhotoLabel')}
                               </label>
-                              <div className="flex min-h-10 items-center gap-3">
-                                {profilePhotoUrlDraft ? (
-                                  <img
-                                    src={profilePhotoUrlDraft}
-                                    alt={t('profileFormProfilePhotoLabel')}
-                                    className="h-10 w-10 shrink-0 rounded-full border border-stone-200 object-cover"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = 'none';
-                                    }}
-                                  />
-                                ) : (
-                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-stone-300 bg-stone-100 text-[10px] text-stone-400">
-                                    {t('profileFormPhotoPlaceholder')}
-                                  </div>
-                                )}
-                                <div className="flex min-w-0 flex-col justify-center gap-0.5 leading-tight">
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex min-h-10 items-center gap-3">
                                   {profilePhotoUrlDraft ? (
-                                    <span
-                                      className={cn(
-                                        'text-xs font-medium',
-                                        /licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft)
-                                          ? 'text-emerald-600'
-                                          : 'text-stone-700'
-                                      )}
-                                    >
-                                      {/licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft)
-                                        ? `✓ ${t('profileFormPhotoLinkedInOk')}`
-                                        : `✓ ${t('profileFormPhotoDefined')}`}
-                                    </span>
+                                    <img
+                                      src={profilePhotoUrlDraft}
+                                      alt={t('profileFormProfilePhotoLabel')}
+                                      className="h-10 w-10 shrink-0 rounded-full border border-stone-200 object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
                                   ) : (
-                                    <span className="block text-[11px] text-stone-400">{t('profileFormAboutPhotoEmpty')}</span>
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-stone-300 bg-stone-100 text-[10px] text-stone-400">
+                                      {t('profileFormPhotoPlaceholder')}
+                                    </div>
                                   )}
+                                  <div className="flex min-w-0 flex-col justify-center gap-0.5 leading-tight">
+                                    {profilePhotoUrlDraft ? (
+                                      <span
+                                        className={cn(
+                                          'text-xs font-medium',
+                                          /licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft)
+                                            ? 'text-emerald-600'
+                                            : 'text-stone-700'
+                                        )}
+                                      >
+                                        {/licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft)
+                                          ? `✓ ${t('profileFormPhotoLinkedInOk')}`
+                                          : `✓ ${t('profileFormPhotoDefined')}`}
+                                      </span>
+                                    ) : (
+                                      <span className="block text-[11px] text-stone-400">
+                                        {t('profileFormAboutPhotoEmpty')}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setIsLinkedInModalOpen(true)}
+                                  className="inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-stone-300 px-3 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-50"
+                                >
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <Linkedin size={14} aria-hidden />
+                                    {t('fetchPhoto')}
+                                  </span>
+                                </button>
                               </div>
                             </div>
                           </section>
@@ -5236,7 +5229,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     <p className="text-[10px] font-black uppercase tracking-wider text-stone-400">
                                       {group.label[lang]}
                                     </p>
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                       {group.options.map((opt) => {
                                         const selected = highlightedNeedsDraft.includes(opt.value);
                                         const disabled = !selected && highlightedNeedsDraft.length >= 3;
@@ -5247,7 +5240,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                             onClick={() => toggleHighlightedNeedDraft(opt.value)}
                                             disabled={disabled}
                                             className={cn(
-                                              'max-w-[260px] rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-all',
+                                              'w-full rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-all',
                                               selected
                                                 ? 'border-amber-600 bg-amber-700 text-white shadow-sm'
                                                 : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300',
@@ -5294,15 +5287,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 >
                                   {t('contactPrefsCtaLabel')}
                                 </label>
-                                <input
+                                <textarea
                                   id="contactPreferenceCta"
                                   name="contactPreferenceCta"
-                                  type="text"
+                                  rows={3}
+                                  maxLength={200}
                                   defaultValue={
                                     (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta) || ''
                                   }
                                   placeholder={t('contactPrefsCtaPlaceholder')}
-                                  className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                                  className="w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
                                 />
                                 <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsCtaHint')}</p>
                               </div>
