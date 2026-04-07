@@ -4424,7 +4424,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       {profile || isEditing ? (
                         <div
                           ref={profileFormLayoutRef}
-                          className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start"
+                          className={cn(
+                            'grid gap-6 lg:items-start',
+                            profile?.uid ? 'lg:grid-cols-[minmax(0,1fr)_320px]' : 'lg:grid-cols-1'
+                          )}
                         >
                           <div className="min-w-0 space-y-6">
                             {user && profileCompletionPct < 100 ? (
@@ -4457,7 +4460,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 id="profile-completion-fullName"
                                 name="fullName"
                                 defaultValue={editingProfile?.fullName || profile?.fullName}
-                                className="h-10 w-full max-w-xl rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                               />
                             </div>
 
@@ -4877,7 +4880,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                                 activityCategory: e.target.value || undefined,
                                               })
                                             }
-                                            className="h-10 w-full max-w-xl rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                           >
                                             <option value="">
                                               {pickLang('— Secteur —', '— Sector —', '— Sector —', lang)}
