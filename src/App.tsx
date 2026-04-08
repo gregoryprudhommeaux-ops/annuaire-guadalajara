@@ -1812,6 +1812,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   /** Admin: a-t-on une vraie fiche `users/{uid}` ? (sinon, profil bootstrap en mémoire) */
   const [adminUserDocExists, setAdminUserDocExists] = useState(false);
+  /** Admin: l’admin a explicitement choisi de créer sa propre fiche. */
+  const [adminSelfProfileOptIn, setAdminSelfProfileOptIn] = useState(false);
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
   const profileUidSet = useMemo(() => new Set(allProfiles.map((p) => p.uid)), [allProfiles]);
   const showEmailVerifyBanner = useMemo(
@@ -1943,9 +1945,16 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const editingSomeoneElse = Boolean(
     user && editingProfile && editingProfile.uid !== user.uid
   );
-  /** Admin sans fiche : on masque le bloc « Mon profil » sauf si l’admin édite volontairement sa propre fiche. */
-  const showAdminSelfProfilePanel = !(
-    isAdminEmail(user?.email) && !adminUserDocExists && !(isEditing && !editingSomeoneElse)
+  /**
+   * Admin sans fiche : on masque le panneau par défaut.
+   * Exceptions :
+   * - l’admin édite une fiche membre (`editingSomeoneElse`)
+   * - l’admin a déjà une vraie fiche (`adminUserDocExists`)
+   * - l’admin a explicitement cliqué “Créer mon profil” (`adminSelfProfileOptIn`)
+   * - non-admin : toujours afficher
+   */
+  const showAdminSelfProfilePanel = Boolean(
+    !isAdminEmail(user?.email) || editingSomeoneElse || adminUserDocExists || adminSelfProfileOptIn
   );
 
   useEffect(() => {
@@ -2549,6 +2558,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
           if (isAdminEmail(u.email)) {
             setProfile(bootstrapAdminProfileFromAuth(u));
             setShowOnboarding(false);
+            setAdminSelfProfileOptIn(false);
           } else {
             setProfile(null);
             setShowOnboarding(true);
@@ -2557,6 +2567,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       } else {
         setProfile(null);
         setAdminUserDocExists(false);
+        setAdminSelfProfileOptIn(false);
       }
       setLoading(false);
     });
@@ -4116,6 +4127,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     onClick={() => {
                       setSelectedProfile(null);
                       setEditingProfile(null);
+                      setAdminSelfProfileOptIn(true);
                       setIsEditing(true);
                       setIsProfileExpanded(true);
                       window.requestAnimationFrame(() => {
