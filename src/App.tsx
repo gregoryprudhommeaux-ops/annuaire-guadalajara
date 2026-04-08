@@ -628,6 +628,8 @@ const ProfileCard = ({
   viewerIsAdmin?: boolean;
 }) => {
   const { lang, t } = useLanguage();
+  // Désactivation volontaire : l’admin ne modifie pas les profils via l’UI (évite incohérences).
+  const allowAdminMutations = false;
 
   return (
     <motion.div 
@@ -763,7 +765,7 @@ const ProfileCard = ({
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
-          {viewerIsAdmin && (
+          {viewerIsAdmin && allowAdminMutations && (
             <div className="flex items-center gap-1">
               <button 
                 onClick={(e) => { e.stopPropagation(); onEdit?.(p); }}
@@ -2540,7 +2542,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
           // If update fails, it might be because the doc doesn't exist yet
         });
 
-        if (isAdminEmail(u.email)) setAdminUserDocExists(docSnap.exists());
         if (docSnap.exists()) {
           let loadedProfile = docSnap.data() as UserProfile;
           try {
@@ -2549,13 +2550,30 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
           } catch (e) {
             console.warn('[legacy_bio_migration]', e);
           }
-          setProfile(
-            isAdminEmail(u.email)
-              ? ({ ...loadedProfile, role: 'admin' } as UserProfile)
-              : loadedProfile
-          );
+
+          // Admin: ne jamais “prendre” une fiche qui ne correspond pas au compte Auth.
+          if (isAdminEmail(u.email)) {
+            const loadedUidOk = String(loadedProfile?.uid ?? '').trim() === u.uid;
+            const loadedEmailOk =
+              String(loadedProfile?.email ?? '')
+                .trim()
+                .toLowerCase() === String(u.email ?? '').trim().toLowerCase();
+            const ok = loadedUidOk && loadedEmailOk;
+            setAdminUserDocExists(ok);
+            if (ok) {
+              setProfile({ ...loadedProfile, role: 'admin' } as UserProfile);
+            } else {
+              // Doc incohérent : on repasse en admin “sans fiche”.
+              setProfile(bootstrapAdminProfileFromAuth(u));
+              setShowOnboarding(false);
+              setAdminSelfProfileOptIn(false);
+            }
+          } else {
+            setProfile(loadedProfile);
+          }
         } else {
           if (isAdminEmail(u.email)) {
+            setAdminUserDocExists(false);
             setProfile(bootstrapAdminProfileFromAuth(u));
             setShowOnboarding(false);
             setAdminSelfProfileOptIn(false);
@@ -2991,6 +3009,19 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const formData = new FormData(e.currentTarget);
     const targetUid = editingProfile?.uid || user.uid;
     const isSelf = targetUid === user.uid;
+    // Sécurité produit : désactiver l’édition des profils des autres membres via l’app.
+    if (!isSelf) {
+      setProfileSaveError(
+        pickLang(
+          "L’édition des profils des membres par l’administrateur est désactivée.",
+          'La edición de perfiles de miembros por el administrador está desactivada.',
+          'Admin editing of member profiles is disabled.',
+          lang
+        )
+      );
+      setProfileSaveBusy(false);
+      return;
+    }
     const getTrimmed = (key: string) => String(formData.get(key) || '').trim();
     const optionalString = (key: string) => {
       const v = getTrimmed(key);
@@ -4154,6 +4185,27 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   <Download className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
                   <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
                     {t('exportData')}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedProfile(null);
+                    setShowValidationPanel(false);
+                    setDirectoryDiscoveryStripsHidden(true);
+                    window.location.assign('/dashboard');
+                  }}
+                  className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-slate-100 px-1 py-1.5 text-slate-800 transition-colors hover:bg-slate-200 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
+                  title={pickLang(
+                    'Ouvrir le tableau de bord',
+                    'Abrir el panel',
+                    'Open dashboard',
+                    lang
+                  )}
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
+                  <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                    {t('dashboardTab')}
                   </span>
                 </button>
                 <Link
@@ -6571,21 +6623,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       })()}
                       <span className={profileNeutralPillClass}>{selectedProfile.city}</span>
                     </div>
-                    {viewerIsAdmin ? (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startEditing(selectedProfile);
-                          }}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-stone-900 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-stone-800"
-                        >
-                          <Edit2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                          {pickLang('Modifier ce profil', 'Editar esta ficha', 'Edit this profile', lang)}
-                        </button>
-                      </div>
-                    ) : null}
                     {viewerIsAdmin ? (
                       <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
                         <span className="font-semibold text-slate-900">{t('adminLastSeenLabel')}</span>
