@@ -1810,6 +1810,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const h = homeLanding(lang);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  /** Admin: a-t-on une vraie fiche `users/{uid}` ? (sinon, profil bootstrap en mémoire) */
+  const [adminUserDocExists, setAdminUserDocExists] = useState(false);
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
   const profileUidSet = useMemo(() => new Set(allProfiles.map((p) => p.uid)), [allProfiles]);
   const showEmailVerifyBanner = useMemo(
@@ -1940,6 +1942,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   /** Édition d’une fiche membre distincte du compte connecté (ne doit pas s’afficher comme « Mon profil »). */
   const editingSomeoneElse = Boolean(
     user && editingProfile && editingProfile.uid !== user.uid
+  );
+  /** Admin sans fiche : on masque le bloc « Mon profil » sauf si l’admin édite volontairement sa propre fiche. */
+  const showAdminSelfProfilePanel = !(
+    isAdminEmail(user?.email) && !adminUserDocExists && !(isEditing && !editingSomeoneElse)
   );
 
   useEffect(() => {
@@ -2525,6 +2531,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
           // If update fails, it might be because the doc doesn't exist yet
         });
 
+        if (isAdminEmail(u.email)) setAdminUserDocExists(docSnap.exists());
         if (docSnap.exists()) {
           let loadedProfile = docSnap.data() as UserProfile;
           try {
@@ -2549,6 +2556,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
         }
       } else {
         setProfile(null);
+        setAdminUserDocExists(false);
       }
       setLoading(false);
     });
@@ -4102,6 +4110,35 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     {t('adminTabEvents')}
                   </span>
                 </Link>
+                {isAdminEmail(user?.email) && !adminUserDocExists ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProfile(null);
+                      setEditingProfile(null);
+                      setIsEditing(true);
+                      setIsProfileExpanded(true);
+                      window.requestAnimationFrame(() => {
+                        profileFormLayoutRef.current?.scrollIntoView({
+                          behavior: 'smooth',
+                          block: 'start',
+                        });
+                      });
+                    }}
+                    className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-violet-50 px-1 py-1.5 text-violet-900 transition-colors hover:bg-violet-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
+                    title={pickLang(
+                      "Créer votre fiche annuaire (optionnel)",
+                      'Crear tu ficha del directorio (opcional)',
+                      'Create your directory profile (optional)',
+                      lang
+                    )}
+                  >
+                    <Edit2 className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
+                    <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
+                      {pickLang('Créer mon profil', 'Crear mi perfil', 'Create my profile', lang)}
+                    </span>
+                  </button>
+                ) : null}
             </div>
           ) : undefined
         }
@@ -4271,6 +4308,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
           )}
           <div className={pageSectionPad}>
+            {showAdminSelfProfilePanel ? (
             <section className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden relative">
               {profile &&
                 !profileReminderDismissed &&
@@ -5655,6 +5693,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               )}
             </AnimatePresence>
             </section>
+            ) : null}
           </div>
         </div>
       )}
