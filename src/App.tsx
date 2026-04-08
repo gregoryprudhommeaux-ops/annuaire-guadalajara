@@ -611,6 +611,7 @@ const ProfileCard = ({
   variant = 'default',
   guestDirectoryTeaser = false,
   onGuestJoin,
+  viewerIsAdmin = false,
 }: {
   p: UserProfile;
   isOwn?: boolean;
@@ -623,6 +624,8 @@ const ProfileCard = ({
   /** Aperçu visiteur : bio courte + zone basse masquée par CTA */
   guestDirectoryTeaser?: boolean;
   onGuestJoin?: () => void;
+  /** Édition / suppression fiches (admin annuaire). */
+  viewerIsAdmin?: boolean;
 }) => {
   const { lang, t } = useLanguage();
 
@@ -760,7 +763,7 @@ const ProfileCard = ({
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
-          {profile?.role === 'admin' && (
+          {viewerIsAdmin && (
             <div className="flex items-center gap-1">
               <button 
                 onClick={(e) => { e.stopPropagation(); onEdit?.(p); }}
@@ -1932,6 +1935,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const socialOAuthLockRef = useRef(false);
   const profileFormLayoutRef = useRef<HTMLDivElement | null>(null);
 
+  /** Admin annuaire : rôle sur la fiche OU e-mail admin (ex. sans doc Firestore). */
+  const viewerIsAdmin = profile?.role === 'admin' || isAdminEmail(user?.email);
+
   useEffect(() => {
     if (!profileSaveSuccess) return;
     const timer = globalThis.setTimeout(() => setProfileSaveSuccess(null), 8000);
@@ -1954,7 +1960,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const preload = () => {
       // Prefetch chunks likely needed next, without blocking first paint.
       void loadNetworkRadarSection();
-      if (profile?.role === 'admin') {
+      if (viewerIsAdmin) {
         void loadDashboardPage();
         void import('xlsx');
       }
@@ -1971,7 +1977,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     return () => {
       if (timeoutId !== null) window.clearTimeout(timeoutId);
     };
-  }, [profile?.role]);
+  }, [viewerIsAdmin]);
 
   const isMembersDirectoryRoute = location.pathname === '/membres';
   const isEventsAdminRoute = location.pathname === '/evenements';
@@ -2167,7 +2173,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   }, [isEditing, editingProfile?.uid, profile?.uid, user]);
 
   useEffect(() => {
-    if (!selectedProfile || profile?.role !== 'admin') {
+    if (!selectedProfile || !viewerIsAdmin) {
       setAdminModalPrivate(null);
       setAdminModalPrivateLoading(false);
       return;
@@ -2191,10 +2197,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     return () => {
       cancelled = true;
     };
-  }, [selectedProfile?.uid, profile?.role]);
+  }, [selectedProfile?.uid, viewerIsAdmin]);
 
   useEffect(() => {
-    if (!showValidationPanel || profile?.role !== 'admin' || pendingProfiles.length === 0) {
+    if (!showValidationPanel || !viewerIsAdmin || pendingProfiles.length === 0) {
       setPendingPrivateByUid({});
       return;
     }
@@ -2212,7 +2218,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     return () => {
       cancelled = true;
     };
-  }, [showValidationPanel, profile?.role, pendingUidsKey, pendingProfiles]);
+  }, [showValidationPanel, viewerIsAdmin, pendingUidsKey, pendingProfiles]);
 
   useEffect(() => {
     setProfileReminderDismissed(false);
@@ -3424,12 +3430,19 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
         }));
       }
       setProfileSaveSuccess(
-        pickLang(
-          'Profil enregistré. Vous pouvez compléter le reste plus tard pour améliorer votre visibilité.',
-          'Perfil guardado. Puedes completar el resto más tarde para mejorar tu visibilidad.',
-          'Profile saved. You can complete the rest later to improve your visibility.',
-          lang
-        )
+        isSelf
+          ? pickLang(
+              'Profil enregistré. Vous pouvez compléter le reste plus tard pour améliorer votre visibilité.',
+              'Perfil guardado. Puedes completar el resto más tarde para mejorar tu visibilidad.',
+              'Profile saved. You can complete the rest later to improve your visibility.',
+              lang
+            )
+          : pickLang(
+              'Fiche du membre mise à jour.',
+              'Ficha del miembro actualizada.',
+              "Member's profile was updated.",
+              lang
+            )
       );
       setIsEditing(false);
       setEditingProfile(null);
@@ -3602,7 +3615,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   }, [searchTerm, filterCategory, filterLocation, filterProfileType]);
 
   const showDiscoveryStrips = !showDirectoryClearFilters && !directoryDiscoveryStripsHidden;
-  const viewerIsAdmin = profile?.role === 'admin' || isAdminEmail(user?.email);
   const isAdminDashboard = viewMode === 'dashboard' && viewerIsAdmin;
 
   const directoryViewTabs = useMemo(
@@ -3928,8 +3940,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
   };
 
   const startEditing = (p: UserProfile) => {
+    setSelectedProfile(null);
     setEditingProfile(p);
     setIsEditing(true);
+    setIsProfileExpanded(true);
+    window.requestAnimationFrame(() => {
+      profileFormLayoutRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
 
   if (loading) {
@@ -4220,7 +4237,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </div>
             </div>
           ) : null}
-          {profile?.role === 'admin' && viewMode !== 'dashboard' && (
+          {viewerIsAdmin && viewMode !== 'dashboard' && (
             <div className={cn(pageSectionPad, 'pb-0 sm:hidden')}>
               <button
                 type="button"
@@ -4497,6 +4514,19 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               <OnboardingIntroBanner t={t} className="w-full" />
                             ) : null}
                             <form onSubmit={handleSaveProfile} className="space-y-8">
+                          {editingProfile && editingProfile.uid !== user.uid ? (
+                            <p
+                              className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium leading-relaxed text-indigo-950"
+                              role="status"
+                            >
+                              {pickLang(
+                                `Vous modifiez la fiche de ${editingProfile.fullName || editingProfile.email || editingProfile.uid}. Les changements s’appliquent à son compte annuaire.`,
+                                `Estás editando la ficha de ${editingProfile.fullName || editingProfile.email || editingProfile.uid}. Los cambios se aplican a su ficha del directorio.`,
+                                `You are editing ${editingProfile.fullName || editingProfile.email || editingProfile.uid}'s profile. Changes apply to their directory entry.`,
+                                lang
+                              )}
+                            </p>
+                          ) : null}
                           <p className="rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2 text-xs leading-relaxed text-stone-600">
                             {t('profileFormRequiredLegend')}
                           </p>
@@ -5897,6 +5927,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         onDelete={setProfileToDelete}
                         user={user}
                         profile={profile}
+                        viewerIsAdmin={viewerIsAdmin}
                         guestDirectoryTeaser={guestDirectoryRestricted}
                         onGuestJoin={onGuestDirectoryJoin}
                       />
@@ -5999,6 +6030,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           onDelete={setProfileToDelete}
                           user={user}
                           profile={profile}
+                          viewerIsAdmin={viewerIsAdmin}
                           guestDirectoryTeaser={guestDirectoryRestricted}
                           onGuestJoin={onGuestDirectoryJoin}
                         />
@@ -6065,6 +6097,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               onDelete={setProfileToDelete}
                               user={user}
                               profile={profile}
+                              viewerIsAdmin={viewerIsAdmin}
                               guestDirectoryTeaser={guestDirectoryRestricted}
                               onGuestJoin={onGuestDirectoryJoin}
                             />
@@ -6396,14 +6429,29 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       })()}
                       <span className={profileNeutralPillClass}>{selectedProfile.city}</span>
                     </div>
-                    {profile?.role === 'admin' ? (
+                    {viewerIsAdmin ? (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditing(selectedProfile);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-stone-900 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-stone-800"
+                        >
+                          <Edit2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          {pickLang('Modifier ce profil', 'Editar esta ficha', 'Edit this profile', lang)}
+                        </button>
+                      </div>
+                    ) : null}
+                    {viewerIsAdmin ? (
                       <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
                         <span className="font-semibold text-slate-900">{t('adminLastSeenLabel')}</span>
                         {': '}
                         {formatProfileLastSeen(selectedProfile.lastSeen, lang) ?? t('adminLastSeenUnknown')}
                       </p>
                     ) : null}
-                    {profile?.role === 'admin' &&
+                    {viewerIsAdmin &&
                       (selectedProfile.needsAdminReview === true || selectedProfile.isValidated === false) && (
                       <div className="mt-4 flex flex-wrap gap-2">
                         <button
@@ -6443,7 +6491,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         </button>
                       </div>
                     )}
-                    {profile?.role === 'admin' &&
+                    {viewerIsAdmin &&
                       (selectedProfile.needsAdminReview === true || selectedProfile.isValidated === false) &&
                       selectedProfile.optimizationSuggestion && (
                       <div className={cn(profileCardClass, 'mt-4 space-y-3 border-l-4 border-l-slate-300')}>
@@ -6480,7 +6528,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </div>
 
                 <div className="mb-6 space-y-4 md:mb-8">
-                {profile?.role === 'admin' ? (
+                {viewerIsAdmin ? (
                   <AdminMemberEventHistory
                     lang={lang}
                     t={t}
@@ -6766,7 +6814,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </div>
                 </div>
 
-                {profile?.role === 'admin' && (
+                {viewerIsAdmin && (
                   <div
                     className={cn(profileCardClass, 'mt-6 border-l-4 border-l-amber-400')}
                     onClick={(e) => e.stopPropagation()}
@@ -7036,6 +7084,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           </div>
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowValidationPanel(false);
+                              startEditing(p);
+                            }}
+                            className="flex-1 sm:flex-none px-4 py-2 bg-stone-900 text-white rounded-lg text-xs font-bold hover:bg-stone-800 transition-all"
+                          >
+                            {pickLang('Modifier', 'Editar', 'Edit', lang)}
+                          </button>
                           <button 
                             onClick={() => {
                               setShowValidationPanel(false);
