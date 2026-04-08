@@ -19,3 +19,12 @@ export function sortLocale(lang: Language): string {
   if (lang === 'es') return 'es';
   return 'en';
 }
+
+/** Horodatage profil (`lastSeen` ms) pour affichage admin uniquement. */
+export function formatProfileLastSeen(ts: number | undefined, lang: Language): string | null {
+  if (ts === undefined || ts === null || !Number.isFinite(ts) || ts <= 0) return null;
+  return new Intl.DateTimeFormat(uiLocale(lang), {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(ts));
+}

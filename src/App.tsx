@@ -92,7 +92,7 @@ import {
   workFunctionLabel,
 } from './constants';
 import { LanguageProvider, useLanguage } from './i18n/LanguageProvider';
-import { pickLang, uiLocale, sortLocale } from './lib/uiLocale';
+import { pickLang, uiLocale, sortLocale, formatProfileLastSeen } from './lib/uiLocale';
 import {
   profileMatchesLocationFilter,
   type LocationFilterKey,
@@ -408,6 +408,21 @@ const ADMIN_EMAIL = "chinois2001@gmail.com";
 const isAdminEmail = (email?: string | null) =>
   (email || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
+/** Profil minimal (sans document `users/{uid}`) : accès admin complet sans créer de fiche annuaire. */
+function bootstrapAdminProfileFromAuth(u: User): UserProfile {
+  const email = (u.email || '').trim().toLowerCase();
+  return {
+    uid: u.uid,
+    fullName: (u.displayName || '').trim() || 'Admin',
+    companyName: '—',
+    email: email || '',
+    photoURL: u.photoURL || undefined,
+    role: 'admin',
+    isValidated: true,
+    createdAt: Timestamp.now(),
+  };
+}
+
 enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -609,7 +624,6 @@ const ProfileCard = ({
   guestDirectoryTeaser?: boolean;
   onGuestJoin?: () => void;
 }) => {
-  const isActive = Date.now() - (p.lastSeen ?? 0) < 2592000000; // 30 days
   const { lang, t } = useLanguage();
 
   return (
@@ -660,12 +674,6 @@ const ProfileCard = ({
             ) : (
               <>
                 <ProfileAvatar photoURL={p.photoURL} fullName={p.fullName} className="h-full w-full" iconSize={24} />
-                {isActive && (
-                  <div
-                    className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500"
-                    title="Actif ce mois"
-                  />
-                )}
               </>
             )}
           </div>
@@ -1230,6 +1238,13 @@ const ProfilePage = () => {
           <div className="px-4 pb-8 pt-20 sm:px-6 sm:pb-10 md:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="md:col-span-2 space-y-8">
+                {currentProfile?.role === 'admin' ? (
+                  <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    <span className="font-semibold text-slate-900">{t('adminLastSeenLabel')}</span>
+                    {': '}
+                    {formatProfileLastSeen(profile.lastSeen, lang) ?? t('adminLastSeenUnknown')}
+                  </p>
+                ) : null}
                 <MemberPublicProfile
                   profile={profile}
                   lang={lang}
@@ -2309,6 +2324,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     if (!profile) {
       return { show: false, mandatory: false, ai: false };
     }
+    if (isAdminEmail(user?.email)) {
+      return { show: false, mandatory: false, ai: false };
+    }
     const pubOk = profileMeetsPublicationRequirements(profile);
     const readiness = getProfileAiRecommendationReadiness(profile);
     return {
@@ -2316,7 +2334,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       mandatory: !pubOk,
       ai: pubOk && readiness < AI_OPTIMIZATION_READINESS_TARGET,
     };
-  }, [profile]);
+  }, [profile, user?.email]);
 
   const profileCompletionPct = useMemo(() => {
     if (!profile) return 0;
@@ -2499,8 +2517,13 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
               : loadedProfile
           );
         } else {
-          setProfile(null);
-          setShowOnboarding(true);
+          if (isAdminEmail(u.email)) {
+            setProfile(bootstrapAdminProfileFromAuth(u));
+            setShowOnboarding(false);
+          } else {
+            setProfile(null);
+            setShowOnboarding(true);
+          }
         }
       } else {
         setProfile(null);
@@ -4274,49 +4297,66 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-lg font-semibold tracking-tight">{t('myProfile')}</h2>
                       <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
-                        {pickLang(
-                          `Profil: ${profileCompletionPct}%`,
-                          `Perfil: ${profileCompletionPct}%`,
-                          `Profile: ${profileCompletionPct}%`,
-                          lang
-                        )}
+                        {isAdminEmail(user?.email)
+                          ? pickLang('Admin', 'Admin', 'Admin', lang)
+                          : pickLang(
+                              `Profil: ${profileCompletionPct}%`,
+                              `Perfil: ${profileCompletionPct}%`,
+                              `Profile: ${profileCompletionPct}%`,
+                              lang
+                            )}
                       </span>
                     </div>
                     {profile ? (
                       <div className="flex items-start gap-2">
-                        {profileCoachSource === 'ai' ? (
-                          <Sparkles
-                            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-600"
-                            aria-hidden
-                          />
-                        ) : null}
-                        {profileCoachLoading && profileCoachSource !== 'ai' ? (
-                          <RefreshCw
-                            className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-stone-400"
-                            aria-hidden
-                          />
-                        ) : null}
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <p className="text-[11px] font-medium leading-relaxed text-blue-700 sm:text-xs">
-                            {pickLang(
-                              profileCompletionPct >= 100
-                                ? 'Bravo, votre profil est complet !'
-                                : `Objectif 100%: complétez votre profil pour gagner en visibilité.`,
-                              profileCompletionPct >= 100
-                                ? 'Excelente, tu perfil está completo.'
-                                : 'Meta 100%: completa tu perfil para ganar visibilidad.',
-                              profileCompletionPct >= 100
-                                ? 'Great, your profile is complete.'
-                                : 'Target 100%: complete your profile to boost visibility.',
-                              lang
-                            )}
-                          </p>
-                          {profileCoachLine.trim() ? (
-                            <p className="text-xs leading-relaxed text-stone-500 sm:text-sm break-words">
-                              {profileCoachLine}
+                        {isAdminEmail(user?.email) ? (
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <p className="text-[11px] font-medium leading-relaxed text-blue-700 sm:text-xs">
+                              {pickLang(
+                                'Compte administrateur : accès complet sans fiche annuaire publiée.',
+                                'Cuenta de administración: acceso completo sin ficha en el directorio.',
+                                'Admin account: full access without a published directory profile.',
+                                lang
+                              )}
                             </p>
-                          ) : null}
-                        </div>
+                          </div>
+                        ) : (
+                          <>
+                            {profileCoachSource === 'ai' ? (
+                              <Sparkles
+                                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-600"
+                                aria-hidden
+                              />
+                            ) : null}
+                            {profileCoachLoading && profileCoachSource !== 'ai' ? (
+                              <RefreshCw
+                                className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-stone-400"
+                                aria-hidden
+                              />
+                            ) : null}
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <p className="text-[11px] font-medium leading-relaxed text-blue-700 sm:text-xs">
+                                {pickLang(
+                                  profileCompletionPct >= 100
+                                    ? 'Bravo, votre profil est complet !'
+                                    : `Objectif 100%: complétez votre profil pour gagner en visibilité.`,
+                                  profileCompletionPct >= 100
+                                    ? 'Excelente, tu perfil está completo.'
+                                    : 'Meta 100%: completa tu perfil para ganar visibilidad.',
+                                  profileCompletionPct >= 100
+                                    ? 'Great, your profile is complete.'
+                                    : 'Target 100%: complete your profile to boost visibility.',
+                                  lang
+                                )}
+                              </p>
+                              {profileCoachLine.trim() ? (
+                                <p className="text-xs leading-relaxed text-stone-500 sm:text-sm break-words">
+                                  {profileCoachLine}
+                                </p>
+                              ) : null}
+                            </div>
+                          </>
+                        )}
                       </div>
                     ) : null}
                   </div>
@@ -4451,7 +4491,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           className="grid gap-6 lg:grid-cols-1 lg:items-start"
                         >
                           <div className="min-w-0 space-y-6">
-                            {user && profileCompletionPct < 100 ? (
+                            {user &&
+                            profileCompletionPct < 100 &&
+                            !isAdminEmail(user.email) ? (
                               <OnboardingIntroBanner t={t} className="w-full" />
                             ) : null}
                             <form onSubmit={handleSaveProfile} className="space-y-8">
@@ -6354,6 +6396,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       })()}
                       <span className={profileNeutralPillClass}>{selectedProfile.city}</span>
                     </div>
+                    {profile?.role === 'admin' ? (
+                      <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
+                        <span className="font-semibold text-slate-900">{t('adminLastSeenLabel')}</span>
+                        {': '}
+                        {formatProfileLastSeen(selectedProfile.lastSeen, lang) ?? t('adminLastSeenUnknown')}
+                      </p>
+                    ) : null}
                     {profile?.role === 'admin' &&
                       (selectedProfile.needsAdminReview === true || selectedProfile.isValidated === false) && (
                       <div className="mt-4 flex flex-wrap gap-2">

@@ -840,6 +840,15 @@ export const TRANSLATIONS: Translations = {
   },
   newProfiles: { fr: "Nouveaux Profils", es: "Nuevos Perfiles" },
   validate: { fr: "Valider", es: "Validar" },
+  /** Visible uniquement par les administrateurs (annuaire). */
+  adminLastSeenLabel: {
+    fr: 'Dernière connexion',
+    es: 'Última conexión',
+  },
+  adminLastSeenUnknown: {
+    fr: 'Non enregistrée',
+    es: 'No registrada',
+  },
   reject: { fr: "Rejeter", es: "Rechazar" },
   noPendingProfiles: { fr: "Aucun profil en attente de validation", es: "No hay perfiles pendientes de validación" },
   adminOAuthLeadsTitle: {

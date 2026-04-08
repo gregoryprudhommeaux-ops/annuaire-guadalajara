@@ -340,6 +340,8 @@ export const EN_STRINGS: Record<string, string> = {
     "One AI suggestion per session (no extra requests until your profile changes).",
   newProfiles: "New profiles",
   validate: "Approve",
+  adminLastSeenLabel: "Last sign-in",
+  adminLastSeenUnknown: "Not recorded",
   reject: "Reject",
   noPendingProfiles: "No profiles pending validation",
   adminOAuthLeadsTitle: "OAuth sign-ins (no directory profile)",
