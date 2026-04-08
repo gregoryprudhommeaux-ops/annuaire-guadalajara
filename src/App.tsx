@@ -2576,8 +2576,59 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const unsubscribeProfiles = onSnapshot(
       profilesQuery,
       (snapshot) => {
-        const profiles = snapshot.docs.map((d) => d.data() as UserProfile);
-        setAllProfiles(profiles);
+        const raw = snapshot.docs.map((d) => {
+          const data = d.data() as Partial<UserProfile>;
+          const uidFromData = typeof data.uid === 'string' ? data.uid.trim() : '';
+          // Robustesse : certaines anciennes fiches peuvent avoir un `uid` manquant / incohérent.
+          // On force l’uid sur l’id du document pour stabiliser le rendu (et l’édition admin).
+          const uid = uidFromData || d.id;
+          return { ...(data as UserProfile), uid } as UserProfile;
+        });
+
+        // Déduplication défensive : si la base contient des doublons (ex. 2 docs pour le même uid/email),
+        // on ne rend qu’une carte (on garde la plus “récente” selon lastSeen / createdAt).
+        const byUid = new Map<string, UserProfile>();
+        for (const p of raw) {
+          const key = (p.uid || '').trim();
+          if (!key) continue;
+          const prev = byUid.get(key);
+          if (!prev) {
+            byUid.set(key, p);
+            continue;
+          }
+          const pLast = typeof p.lastSeen === 'number' ? p.lastSeen : 0;
+          const prevLast = typeof prev.lastSeen === 'number' ? prev.lastSeen : 0;
+          const pCreated = typeof p.createdAt?.toMillis === 'function' ? p.createdAt.toMillis() : 0;
+          const prevCreated =
+            typeof prev.createdAt?.toMillis === 'function' ? prev.createdAt.toMillis() : 0;
+          if (pLast > prevLast || (pLast === prevLast && pCreated >= prevCreated)) {
+            byUid.set(key, p);
+          }
+        }
+
+        const byEmail = new Map<string, UserProfile>();
+        for (const p of byUid.values()) {
+          const emailKey = String(p.email ?? '').trim().toLowerCase();
+          if (!emailKey) {
+            byEmail.set(p.uid, p);
+            continue;
+          }
+          const prev = byEmail.get(emailKey);
+          if (!prev) {
+            byEmail.set(emailKey, p);
+            continue;
+          }
+          const pLast = typeof p.lastSeen === 'number' ? p.lastSeen : 0;
+          const prevLast = typeof prev.lastSeen === 'number' ? prev.lastSeen : 0;
+          const pCreated = typeof p.createdAt?.toMillis === 'function' ? p.createdAt.toMillis() : 0;
+          const prevCreated =
+            typeof prev.createdAt?.toMillis === 'function' ? prev.createdAt.toMillis() : 0;
+          if (pLast > prevLast || (pLast === prevLast && pCreated >= prevCreated)) {
+            byEmail.set(emailKey, p);
+          }
+        }
+
+        setAllProfiles(Array.from(byEmail.values()));
       },
       (error) => handleFirestoreError(error, OperationType.LIST, 'users')
     );
