@@ -1937,6 +1937,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   /** Admin annuaire : rôle sur la fiche OU e-mail admin (ex. sans doc Firestore). */
   const viewerIsAdmin = profile?.role === 'admin' || isAdminEmail(user?.email);
+  /** Édition d’une fiche membre distincte du compte connecté (ne doit pas s’afficher comme « Mon profil »). */
+  const editingSomeoneElse = Boolean(
+    user && editingProfile && editingProfile.uid !== user.uid
+  );
 
   useEffect(() => {
     if (!profileSaveSuccess) return;
@@ -2379,19 +2383,29 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   /** Profil fusionné + brouillons en édition — score complétude aligné sur le formulaire ouvert. */
   const profileCompletionCardSource = useMemo((): ProfileCompletionInput => {
     if (!profile) return null;
-    const base: Partial<UserProfile> = { ...profile, ...(editingProfile ?? {}) };
-    if (!isEditing) return base;
+    if (!isEditing) {
+      return { ...profile, ...(editingProfile ?? {}) };
+    }
+    // Édition d’un autre membre : ne pas fusionner avec `profile` (sinon l’identité admin est écrasée).
+    const identityBase: Partial<UserProfile> = editingSomeoneElse
+      ? { ...(editingProfile as UserProfile) }
+      : { ...profile, ...(editingProfile ?? {}) };
     return {
-      ...base,
+      ...identityBase,
       workingLanguageCodes: workingLanguagesDraft,
       passionIds: passionIdsDraft,
       highlightedNeeds: highlightedNeedsDraft,
       companyActivities:
-        companyActivitiesDraft.length > 0 ? companyActivitiesDraft : profile.companyActivities,
+        companyActivitiesDraft.length > 0
+          ? companyActivitiesDraft
+          : editingSomeoneElse && editingProfile
+            ? editingProfile.companyActivities
+            : profile.companyActivities,
     };
   }, [
     profile,
     editingProfile,
+    editingSomeoneElse,
     isEditing,
     workingLanguagesDraft,
     passionIdsDraft,
@@ -2411,8 +2425,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const cacheKey = `profile_coach_ai_v2_${profile.uid}_${lang}`;
 
     if (isEditing) {
-      const gaps = collectProfileCoachGapKeys(profile);
-      setProfileCoachLine(gaps.length ? formatLocalProfileCoachLine(profile, t) : '');
+      const coachSource =
+        editingProfile && user && editingProfile.uid !== user.uid ? editingProfile : profile;
+      const gaps = collectProfileCoachGapKeys(coachSource);
+      setProfileCoachLine(gaps.length ? formatLocalProfileCoachLine(coachSource, t) : '');
       setProfileCoachSource('local');
       setProfileCoachLoading(false);
       return;
@@ -2473,7 +2489,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     return () => {
       cancelled = true;
     };
-  }, [profile, isEditing, lang, t]);
+  }, [profile, isEditing, lang, t, user?.uid, editingProfile?.uid]);
 
   useEffect(() => {
     const testConnection = async () => {
@@ -4312,21 +4328,43 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   ) : null}
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold tracking-tight">{t('myProfile')}</h2>
-                      <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
-                        {isAdminEmail(user?.email)
-                          ? pickLang('Admin', 'Admin', 'Admin', lang)
-                          : pickLang(
-                              `Profil: ${profileCompletionPct}%`,
-                              `Perfil: ${profileCompletionPct}%`,
-                              `Profile: ${profileCompletionPct}%`,
+                      <h2 className="text-lg font-semibold tracking-tight">
+                        {editingSomeoneElse && editingProfile
+                          ? pickLang(
+                              `Fiche membre : ${editingProfile.fullName || editingProfile.email || editingProfile.uid}`,
+                              `Ficha del miembro: ${editingProfile.fullName || editingProfile.email || editingProfile.uid}`,
+                              `Member profile: ${editingProfile.fullName || editingProfile.email || editingProfile.uid}`,
                               lang
-                            )}
+                            )
+                          : t('myProfile')}
+                      </h2>
+                      <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
+                        {editingSomeoneElse
+                          ? pickLang('Édition admin', 'Edición admin', 'Admin edit', lang)
+                          : isAdminEmail(user?.email)
+                            ? pickLang('Admin', 'Admin', 'Admin', lang)
+                            : pickLang(
+                                `Profil: ${profileCompletionPct}%`,
+                                `Perfil: ${profileCompletionPct}%`,
+                                `Profile: ${profileCompletionPct}%`,
+                                lang
+                              )}
                       </span>
                     </div>
                     {profile ? (
                       <div className="flex items-start gap-2">
-                        {isAdminEmail(user?.email) ? (
+                        {isAdminEmail(user?.email) && editingSomeoneElse && editingProfile ? (
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <p className="text-[11px] font-medium leading-relaxed text-violet-900 sm:text-xs">
+                              {pickLang(
+                                'Vous corrigez la fiche d’un autre membre — elle ne remplace pas votre compte administrateur.',
+                                'Estás corrigiendo la ficha de otro miembro: no sustituye tu cuenta de administrador.',
+                                'You are editing another member’s directory profile — it is not your admin account.',
+                                lang
+                              )}
+                            </p>
+                          </div>
+                        ) : isAdminEmail(user?.email) ? (
                           <div className="min-w-0 flex-1 space-y-1">
                             <p className="text-[11px] font-medium leading-relaxed text-blue-700 sm:text-xs">
                               {pickLang(
@@ -5554,23 +5592,25 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </button>
                           </div>
 
-                          {profile?.uid ? (
+                          {(editingProfile?.uid ?? profile?.uid) ? (
                             <div className="mt-8 border-t border-red-100 pt-4">
                               <p className="mb-2 text-xs text-stone-400">{t('profileFormDangerZoneLabel')}</p>
                               <button
                                 type="button"
                                 className="text-xs text-red-500 underline decoration-red-500/80 underline-offset-2 hover:text-red-700"
                                 onClick={() => {
+                                  const delUid = editingProfile?.uid ?? profile?.uid;
+                                  if (!delUid) return;
                                   if (
                                     !window.confirm(
-                                      profile.uid === user?.uid
+                                      delUid === user?.uid
                                         ? t('profileFormDeleteOwnConfirm')
                                         : t('confirmDelete')
                                     )
                                   ) {
                                     return;
                                   }
-                                  void handleDeleteProfile(profile.uid);
+                                  void handleDeleteProfile(delUid);
                                 }}
                               >
                                 {t('deleteProfile')}
@@ -5583,7 +5623,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           )}
                             </form>
                           </div>
-                          {profile?.uid ? (
+                          {(editingProfile?.uid ?? profile?.uid) ? (
                             <div className="border-t border-stone-200 pt-6">
                               <ProfileCompletionCard
                                 profile={profileCompletionCardSource}
