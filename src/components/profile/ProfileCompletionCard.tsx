@@ -60,12 +60,12 @@ export function ProfileCompletionCard({
         </div>
 
         <div className="shrink-0 text-right">
-          <div className="flex items-start justify-end gap-3">
+          <div className="flex items-center justify-end gap-3">
             <div>
               <div className="text-2xl font-semibold tracking-tight text-slate-900">{percent}%</div>
               <div className="text-xs text-slate-500">{t('profileCompletionProgressShort')}</div>
             </div>
-            {rightActions ? <div className="pt-0.5">{rightActions}</div> : null}
+            {rightActions ? <div className="self-center">{rightActions}</div> : null}
           </div>
         </div>
       </div>
