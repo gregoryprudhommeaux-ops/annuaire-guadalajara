@@ -258,14 +258,21 @@ export function HomePage({
       <section className="space-y-6">
         {heroSearch ?? defaultConversion}
 
-        <WhyJoinSection />
-
-        <First50MembersBanner
-          currentCount={visibleMemberCount}
-          targetCount={targetCount}
-          inviteUrl={inviteUrl}
-          onInviteClick={onInviteClick}
-        />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
+          <div className="min-w-0 lg:col-span-8">
+            <WhyJoinSection className="h-full" />
+          </div>
+          <div className="min-w-0 lg:col-span-4">
+            <First50MembersBanner
+              currentCount={visibleMemberCount}
+              targetCount={targetCount}
+              inviteUrl={inviteUrl}
+              onInviteClick={onInviteClick}
+              className="h-full"
+              narrow
+            />
+          </div>
+        </div>
       </section>
 
       {/* ZONE B — produit / 2 colonnes */}

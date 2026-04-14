@@ -6735,14 +6735,21 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   />
                 }
               />
-              <section className="w-full min-w-0 space-y-5 sm:space-y-6">
-                <WhyJoinSection className="w-full" />
-                <First50MembersBanner
-                  currentCount={stats.total}
-                  targetCount={FIRST_50_MEMBER_TARGET}
-                  inviteUrl={getSignupJoinUrl()}
-                  className="w-full"
-                />
+              <section className="w-full min-w-0">
+                <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
+                  <div className="min-w-0 lg:col-span-8">
+                    <WhyJoinSection className="h-full w-full" />
+                  </div>
+                  <div className="min-w-0 lg:col-span-4">
+                    <First50MembersBanner
+                      currentCount={stats.total}
+                      targetCount={FIRST_50_MEMBER_TARGET}
+                      inviteUrl={getSignupJoinUrl()}
+                      className="h-full w-full"
+                      narrow
+                    />
+                  </div>
+                </div>
               </section>
             </div>
           )}
