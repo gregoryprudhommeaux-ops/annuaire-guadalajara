@@ -11,11 +11,26 @@ export const pagePadX = 'px-4 sm:px-6 lg:px-8';
 /** Barre de titre (sticky) : largeur max + padding X */
 export const pageHeaderInner = `mx-auto w-full min-w-0 max-w-7xl py-3 ${pagePadX}`;
 
-/** Zone principale sous le header (sans max-width : à combiner avec max-w-7xl ou max-w-none) */
+/**
+ * Zone principale sous le header : padding horizontal + vertical **une seule fois**.
+ * Les enfants directs ne doivent pas répéter `pagePadX` / `py-*` sauf cas exceptionnel (full-bleed).
+ */
 export const pageMainPad = `mx-auto w-full min-w-0 ${pagePadX} py-5 sm:py-6`;
 
+/** Contenu centré sous `<main>` (le padding vient déjà de `pageMainPad`). */
+export const pageInnerMax = 'mx-auto w-full min-w-0 max-w-7xl';
+
+/** Variante pleine largeur (radar, certains dashboards). */
+export const pageInnerFluid = 'mx-auto w-full min-w-0 max-w-none';
+
+/** Espacement vertical standard entre blocs majeurs d’une même page (24px). */
+export const pageStack = 'flex flex-col gap-6';
+
+/** Espacement resserré entre sous-blocs (16px). */
+export const pageStackTight = 'flex flex-col gap-4';
+
 /** Bandeau profil connecté / blocs full-bleed dans max-w-7xl */
-export const pageSectionPad = `mx-auto w-full max-w-7xl py-6 ${pagePadX}`;
+export const pageSectionPad = `mx-auto w-full max-w-7xl py-5 sm:py-6 ${pagePadX}`;
 
 /**
  * Cartes (recherche, opportunités, etc.) — moins de p-6 brutal sur très petit écran.

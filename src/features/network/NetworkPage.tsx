@@ -10,7 +10,10 @@ import { MemberCard } from './components/MemberCard';
 import './network.css';
 
 export type DirectoryMember = {
-  slug: string;
+  /** UID Firestore — requis pour liens `/profil/:uid` et clés stables. */
+  profileUid: string;
+  /** Optionnel (SEO, anciennes URLs) ; ne pas utiliser seul pour `/profil/`. */
+  slug?: string;
   fullName: string;
   companyName?: string;
   sector?: string;
@@ -120,7 +123,7 @@ export function NetworkPage({
   const handleSuggestContact = () => {
     if (!filteredMembers.length) return;
     const randomMember = filteredMembers[Math.floor(Math.random() * filteredMembers.length)];
-    navigate(`/network/member/${encodeURIComponent(randomMember.slug)}`);
+    navigate(`/profil/${encodeURIComponent(randomMember.profileUid)}`);
   };
 
   const scrollToResults = () => {
@@ -170,8 +173,8 @@ export function NetworkPage({
         <div ref={memberGridRef} className="member-grid">
           {filteredMembers.map((member) => (
             <MemberCard
-              key={member.slug}
-              slug={member.slug}
+              key={member.profileUid}
+              profileUid={member.profileUid}
               fullName={member.fullName}
               companyName={member.companyName}
               sector={member.sector}

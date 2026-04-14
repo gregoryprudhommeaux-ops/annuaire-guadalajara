@@ -44,7 +44,7 @@
 .fn-network-page .network-main {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 1.5rem; /* 24px — même rythme que space-y-6 ailleurs */
   min-width: 0;
 }
 
@@ -388,7 +388,7 @@
 .fn-network-page .member-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 1.5rem; /* aligné sur le rythme vertical des blocs */
 }
 
 .fn-network-page .member-card {
@@ -408,6 +408,15 @@
     0 1px 2px rgba(16, 24, 40, 0.06);
 }
 
+.fn-network-page .member-card--interactive {
+  cursor: pointer;
+}
+
+.fn-network-page .member-card--interactive:focus-visible {
+  outline: 2px solid rgb(29 78 216);
+  outline-offset: 2px;
+}
+
 .fn-network-page .member-card__header {
   margin-bottom: 14px;
 }
@@ -418,24 +427,21 @@
   align-items: flex-start;
 }
 
-.fn-network-page .member-card__avatarImage,
-.fn-network-page .member-card__avatarFallback {
+.fn-network-page .member-card__avatar {
   width: 48px;
   height: 48px;
-  border-radius: 14px;
-  object-fit: cover;
   flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgb(226 232 240);
 }
 
-.fn-network-page .member-card__avatarFallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgb(248 250 252);
-  color: rgb(100 116 139);
-  font-weight: 600;
-  font-size: 0.8125rem;
-  border: 1px solid rgb(226 232 240);
+.fn-network-page .member-card__avatarInner {
+  border-radius: 13px;
+}
+
+.fn-network-page .member-card__avatarImg {
+  object-fit: cover;
 }
 
 .fn-network-page .member-card__identityText {
@@ -543,6 +549,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .fn-network-page .member-card__link:hover {

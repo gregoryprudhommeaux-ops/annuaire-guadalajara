@@ -38,7 +38,7 @@ export default function WelcomeContextCard({
   return (
     <section
       className={cn(
-        'relative flex h-fit w-full shrink-0 flex-col overflow-hidden rounded-2xl bg-stone-900 p-4 text-white shadow-sm sm:p-6',
+        'relative flex min-h-0 w-full shrink-0 flex-col overflow-hidden rounded-2xl bg-stone-900 p-4 text-white shadow-sm sm:p-5',
         className
       )}
       aria-labelledby="welcome-context-title"
@@ -85,7 +85,7 @@ export default function WelcomeContextCard({
         <p
           id={bodyId}
           className={cn(
-            'mt-3 hyphens-auto text-xs leading-relaxed text-stone-300/95 break-words sm:mt-3 sm:text-sm',
+            'mt-2.5 hyphens-auto text-balance text-xs leading-snug text-stone-300/95 break-words sm:mt-3 sm:text-sm sm:leading-snug',
             !collapsible && 'sm:block',
             showToggle && !mobileOpen && 'hidden'
           )}

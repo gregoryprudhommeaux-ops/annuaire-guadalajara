@@ -1,8 +1,11 @@
+import type { KeyboardEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageProvider';
+import ProfileAvatar from '@/components/ProfileAvatar';
+import { cn } from '@/lib/cn';
 import { pickLang } from '@/lib/uiLocale';
 import {
   clampText,
-  getInitials,
   getVisibleNeeds,
   normalizeCompanyName,
   normalizeSectorName,
@@ -10,23 +13,27 @@ import {
 import '../network.css';
 
 type MemberCardProps = {
-  slug: string;
+  /** Identifiant Firestore — obligatoire : la route `/profil/:id` attend l’UID, pas un slug de nom. */
+  profileUid: string;
   fullName: string;
   companyName?: string;
   sector?: string;
   bio?: string;
   photoUrl?: string;
   needs?: string[];
+  /** Ouvre la fiche en modal (ex. `setSelectedProfile` dans l’app). */
+  onOpen?: () => void;
 };
 
 export function MemberCard({
-  slug,
+  profileUid,
   fullName,
   companyName,
   sector,
   bio,
   photoUrl,
   needs = [],
+  onOpen,
 }: MemberCardProps) {
   const { lang } = useLanguage();
   const safeBio = clampText(bio, 240);
@@ -53,22 +60,40 @@ export function MemberCard({
     safeBio ||
     pickLang('Présentation à compléter.', 'Completa tu presentación.', 'Add a short bio.', lang);
 
+  const profilPath = `/profil/${encodeURIComponent(profileUid)}`;
+  const cardLabel = pickLang(`Profil de ${fullName}`, `Perfil de ${fullName}`, `Profile: ${fullName}`, lang);
+
+  const activate = () => {
+    onOpen?.();
+  };
+
+  const onKeyDownCard = (e: KeyboardEvent<HTMLElement>) => {
+    if (!onOpen) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      activate();
+    }
+  };
+
   return (
-    <article className="member-card">
+    <article
+      className={cn('member-card', onOpen && 'member-card--interactive')}
+      onClick={onOpen ? () => activate() : undefined}
+      onKeyDown={onKeyDownCard}
+      tabIndex={onOpen ? 0 : undefined}
+      role={onOpen ? 'button' : undefined}
+      aria-label={onOpen ? cardLabel : undefined}
+    >
       <div className="member-card__header">
         <div className="member-card__identity">
-          {photoUrl ? (
-            <img
-              src={photoUrl}
-              alt={fullName}
-              className="member-card__avatarImage"
-              loading="lazy"
+          <div className="member-card__avatar">
+            <ProfileAvatar
+              photoURL={photoUrl}
+              fullName={fullName}
+              className="member-card__avatarInner"
+              imgClassName="member-card__avatarImg"
             />
-          ) : (
-            <div className="member-card__avatarFallback" aria-hidden="true">
-              {getInitials(fullName)}
-            </div>
-          )}
+          </div>
 
           <div className="member-card__identityText">
             <h3 className="member-card__name">{fullName}</h3>
@@ -95,9 +120,14 @@ export function MemberCard({
       </div>
 
       <div className="member-card__footer">
-        <a href={`/network/member/${encodeURIComponent(slug)}`} className="member-card__link">
+        <Link
+          to={profilPath}
+          className="member-card__link"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
           {pickLang('Voir le profil', 'Ver perfil', 'View profile', lang)}
-        </a>
+        </Link>
       </div>
     </article>
   );

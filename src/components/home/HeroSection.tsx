@@ -11,6 +11,8 @@ type Props = {
   onExploreMembers: () => void;
   authBusy: boolean;
   className?: string;
+  /** Si false : pas de rangée de boutons (ex. connecté : pas de doublon avec le bandeau sous le hero). */
+  showCtas?: boolean;
 };
 
 /** Hero — promesse principale + CTA + 3 étapes (accueil visiteurs). */
@@ -21,49 +23,52 @@ export default function HeroSection({
   onExploreMembers,
   authBusy,
   className,
+  showCtas = true,
 }: Props) {
   return (
     <section
       className={cn(
-        'flex h-full min-h-0 flex-col rounded-2xl border border-stone-200/80 bg-stone-50/80 py-5 sm:py-6 lg:py-7',
+        'flex h-full min-h-0 flex-col rounded-2xl border border-stone-200/80 bg-stone-50/80 py-4 sm:py-5 lg:py-6',
         pagePadX,
         className
       )}
       aria-labelledby="home-hero-title"
     >
-      <div className="flex min-h-0 w-full flex-1 flex-col justify-between gap-5">
+      <div className="flex min-h-0 w-full flex-1 flex-col gap-4 sm:gap-5">
         <div className="min-w-0">
-          {topActions ? <div className="mb-4 flex w-full justify-end">{topActions}</div> : null}
+          {topActions ? <div className="mb-3 flex w-full justify-end sm:mb-4">{topActions}</div> : null}
           <h1
             id="home-hero-title"
             className="text-xl font-bold tracking-tight text-stone-900 break-words sm:text-2xl sm:leading-snug"
           >
             {copy.heroTitle}
           </h1>
-          <p className="mt-2 text-sm leading-snug text-stone-600 break-words hyphens-auto sm:text-[15px] sm:leading-relaxed">
+          <p className="mt-2 text-sm leading-snug text-stone-600 break-words hyphens-auto sm:text-[15px] sm:leading-snug">
             {copy.heroSubtitle}
           </p>
 
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:mt-5">
-            <button
-              type="button"
-              onClick={onCreateProfile}
-              disabled={authBusy}
-              className="min-h-[44px] w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-            >
-              {authBusy ? copy.ctaPrimaryBusy : copy.ctaPrimary}
-            </button>
-            <button
-              type="button"
-              onClick={onExploreMembers}
-              className="min-h-[44px] w-full rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-center text-sm font-semibold text-stone-700 transition-colors hover:bg-stone-50 sm:w-auto"
-            >
-              {copy.ctaSecondary}
-            </button>
-          </div>
+          {showCtas ? (
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:mt-4">
+              <button
+                type="button"
+                onClick={onCreateProfile}
+                disabled={authBusy}
+                className="min-h-[44px] w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              >
+                {authBusy ? copy.ctaPrimaryBusy : copy.ctaPrimary}
+              </button>
+              <button
+                type="button"
+                onClick={onExploreMembers}
+                className="min-h-[44px] w-full rounded-lg border border-stone-300 bg-white px-5 py-2.5 text-center text-sm font-semibold text-stone-700 transition-colors hover:bg-stone-50 sm:w-auto"
+              >
+                {copy.ctaSecondary}
+              </button>
+            </div>
+          ) : null}
         </div>
 
-        <ol className="flex flex-col gap-2 border-t border-stone-200/80 pt-4 sm:flex-row sm:gap-4 sm:pt-4 lg:pt-5">
+        <ol className="flex flex-col gap-2 border-t border-stone-200/80 pt-3 sm:flex-row sm:gap-4 sm:pt-3.5">
           {copy.steps.map((label, i) => (
             <li
               key={i}

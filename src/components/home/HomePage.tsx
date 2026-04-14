@@ -7,6 +7,7 @@ import { SectorsPresentCard } from '@/components/home/SectorsPresentCard';
 import { FIRST_50_MEMBER_TARGET } from '@/constants';
 import { getSignupJoinUrl } from '@/lib/siteUrls';
 import { cn } from '@/lib/cn';
+import { pageStack } from '@/lib/pageLayout';
 import { useTranslation } from '@/i18n/useTranslation';
 
 /** Source optionnelle pour déduire les pastilles secteurs (ex. profils annuaire). */
@@ -247,15 +248,15 @@ export function HomePage({
   );
 
   return (
-    <main className={cn('mx-auto w-full max-w-7xl px-4 py-6 sm:px-6', className)}>
+    <div className={cn('flex w-full min-w-0 flex-col gap-8', className)}>
       <AdminOnly isAdmin={isAdmin}>
         {adminQuickActions ? (
-          <div className="mb-6 flex flex-wrap gap-3">{adminQuickActions}</div>
+          <div className="flex flex-wrap gap-3">{adminQuickActions}</div>
         ) : null}
       </AdminOnly>
 
       {/* ZONE A — conversion / 1 colonne */}
-      <section className="space-y-6">
+      <section className={pageStack}>
         {heroSearch ?? defaultConversion}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
@@ -276,13 +277,13 @@ export function HomePage({
       </section>
 
       {/* ZONE B — produit / 2 colonnes */}
-      <section className="mt-8 grid gap-6 lg:grid-cols-12">
-        <div className="space-y-6 lg:col-span-8">{mainColumn ?? defaultMainColumn}</div>
-        <aside className="space-y-6 lg:col-span-4">{sidebarColumn ?? defaultSidebar}</aside>
+      <section className="grid gap-6 lg:grid-cols-12">
+        <div className={cn(pageStack, 'lg:col-span-8')}>{mainColumn ?? defaultMainColumn}</div>
+        <aside className={cn(pageStack, 'lg:col-span-4')}>{sidebarColumn ?? defaultSidebar}</aside>
       </section>
 
-      {children ? <div className="mt-8 space-y-6">{children}</div> : null}
-    </main>
+      {children ? <div className={pageStack}>{children}</div> : null}
+    </div>
   );
 }
 

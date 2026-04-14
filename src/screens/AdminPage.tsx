@@ -3,6 +3,8 @@ import { collection, getDocs, orderBy, query, where, limit } from 'firebase/fire
 import type { Language, MemberNetworkRequest, NeedComment, UserProfile } from '@/types';
 import AdminDashboard from '@/components/dashboard/AdminDashboard';
 import { db } from '@/firebase';
+import { cn } from '@/lib/cn';
+import { pageInnerMax, pageStack } from '@/lib/pageLayout';
 import { MEMBER_REQUESTS_COLLECTION, mapMemberRequestDoc } from '@/lib/memberRequests';
 
 type TFn = (key: string) => string;
@@ -176,7 +178,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
   }, [unansweredNeeds, unansweredCount]);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 space-y-6">
+    <div className={cn(pageInnerMax, pageStack)}>
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-stone-900">Admin</h1>
         <p className="text-sm text-stone-600">

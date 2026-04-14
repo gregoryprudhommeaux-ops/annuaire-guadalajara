@@ -218,7 +218,6 @@ import DirectoryTabsSection from './components/home/DirectoryTabsSection';
 import OnboardingIntroBanner from './components/home/OnboardingIntroBanner';
 import { MemberCard } from './features/network/components/MemberCard';
 import { NetworkSidebar } from './features/network/components/NetworkSidebar';
-import { slugFromProfile } from './domain/member/member.mappers';
 import {
   memberCardBioBodyClassName,
   memberCardBioTitleAttr,
@@ -287,7 +286,14 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from './cn';
-import { cardPad, pageMainPad, pageSectionPad } from './lib/pageLayout';
+import {
+  cardPad,
+  pageInnerFluid,
+  pageInnerMax,
+  pageMainPad,
+  pageSectionPad,
+  pageStack,
+} from './lib/pageLayout';
 import {
   firebaseAuthCodeToTranslationKey,
   firebaseAuthErrorUserMessage,
@@ -6501,7 +6507,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               <title>{`${t('signupPageDocumentTitle')} · ${t('title')}`}</title>
               <meta name="description" content={t('signupPageMetaDescription')} />
             </Helmet>
-            <div className="flex w-full flex-col items-center gap-8 py-10 sm:gap-10 sm:py-14">
+            <div className="flex w-full flex-col items-center gap-6 sm:gap-8">
               <First50MembersBanner
                 currentCount={stats.total}
                 targetCount={FIRST_50_MEMBER_TARGET}
@@ -6531,7 +6537,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   <WelcomeContextCard
                     title={t('welcome')}
                     body={t('welcomeIntro')}
-                    className="h-full"
                     collapsibleOnMobile
                     mobileShowIntroLabel={t('welcomeIntroShow')}
                     mobileHideIntroLabel={t('welcomeIntroHide')}
@@ -6572,12 +6577,18 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       openAuthModal();
                     }}
                     onExploreMembers={() => navigate('/network')}
-                    className="h-full w-full"
+                    showCtas={!user}
+                    className="w-full"
                   />
                 }
                 // Homepage-safe: no directory search here, only orientation CTAs.
                 search={
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div
+                    className={cn(
+                      'grid grid-cols-1 gap-3',
+                      user ? 'sm:grid-cols-2' : 'sm:grid-cols-3'
+                    )}
+                  >
                     {user ? (
                       <Link
                         to="/profile/edit"
@@ -6593,14 +6604,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         {t('home.marketing.ctaCreateProfile')}
                       </Link>
                     )}
+                    {!user ? (
+                      <Link
+                        to="/network"
+                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        {t('home.marketing.ctaExploreMembers')}
+                      </Link>
+                    ) : null}
                     <Link
-                      to="/network"
-                      className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                    >
-                      {t('home.marketing.ctaExploreMembers')}
-                    </Link>
-                    <Link
-                      to={user ? '/requests' : '/requests'}
+                      to="/requests"
                       className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                     >
                       Voir les demandes
@@ -6653,14 +6666,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             }
           />
         ) : isRequestsRoute && !isAdminDashboard ? (
-          <div className={cn(pageMainPad, 'max-w-7xl')}>
+          <div className={cn(pageInnerMax, pageStack)}>
             <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
               {t('memberRequestsTitle')}
             </h1>
-            <p className="mt-1 text-sm text-stone-600">
+            <p className="text-sm text-stone-600">
               {t('memberRequestsSubtitle')}
             </p>
-            <div className="mt-6">
+            <div>
               <NetworkRequestsSection
                 t={t}
                 lang={lang}
@@ -6680,8 +6693,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
           </div>
         ) : isRadarRoute && !isAdminDashboard ? (
-          <div className="w-full px-4 py-6 sm:px-6">
-            <div className="mx-auto w-full max-w-none">
+          <div className={pageInnerFluid}>
+            <div className="mx-auto w-full min-w-0 max-w-none">
               <SectionErrorBoundary
                 fallback={
                   <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
@@ -6760,7 +6773,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   <WelcomeContextCard
                     title={t('welcome')}
                     body={t('welcomeIntro')}
-                    className="h-full"
                     collapsibleOnMobile
                     mobileShowIntroLabel={t('welcomeIntroShow')}
                     mobileHideIntroLabel={t('welcomeIntroHide')}
@@ -6778,7 +6790,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         directoryMainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                       );
                     }}
-                    className="h-full w-full"
+                    className="w-full"
                   />
                 }
                 search={
@@ -6904,7 +6916,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             ref={directoryMainRef}
             id="directory-main"
             className={cn(
-              'order-2 min-w-0 w-full scroll-mt-24 space-y-6 lg:order-2',
+              'order-2 min-w-0 w-full scroll-mt-24 lg:order-2',
+              /* Sur /network : espacement uniquement via .network-main { gap } (évite space-y + gap cumulés). */
+              !(
+                user &&
+                isNetworkRoute &&
+                !isEditProfileRoute &&
+                !isAdminDashboard
+              ) && 'space-y-6',
               user &&
                 isNetworkRoute &&
                 !isEditProfileRoute &&
@@ -7134,7 +7153,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               )}
 
               {viewMode === 'members' && (
-                <div className="space-y-6">
+                <div
+                  className={cn(
+                    isNetworkRoute ? 'flex min-w-0 flex-col gap-6' : 'space-y-6'
+                  )}
+                >
                   {isMembersDirectoryRoute && (
                     <div
                       className={cn(
@@ -7250,13 +7273,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         <React.Fragment key={p.uid}>
                           {isNetworkRoute && !guestDirectoryRestricted ? (
                             <MemberCard
-                              slug={slugFromProfile(p)}
+                              profileUid={p.uid}
                               fullName={p.fullName}
                               companyName={p.companyName}
                               sector={sectorLine}
                               bio={effectiveMemberBio(p)}
                               photoUrl={p.photoURL}
                               needs={needLabels}
+                              onOpen={() => setSelectedProfile(p)}
                             />
                           ) : (
                             <ProfileCard

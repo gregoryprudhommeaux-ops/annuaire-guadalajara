@@ -1,6 +1,6 @@
 /**
  * Header annuaire — DA : ombre légère, bordure basse.
- * Mobile : langue = menu déroulant coin haut droite ; CTA invité = bandeau bleu pleine largeur (sticky avec le logo).
+ * Mobile : langue = menu déroulant coin haut droite ; dès sm le switch segmenté remplace ce menu (pas de doublon).
  * Desktop (sm+) : switch FR | ES | EN segmenté + trailing inline.
  */
 
@@ -181,7 +181,10 @@ export const Header: React.FC<HeaderProps> = ({
                   </p>
                 </div>
               </a>
-              <div className={cn('absolute right-0 top-0', topRight && 'sm:hidden')}>
+              {/* Mobile only : dès sm le switch segmenté suffit (évite doublon FR+chevron). Si topRight : langue gérée là (ex. admin). */}
+              <div
+                className={cn('absolute right-0 top-0', topRight ? 'hidden' : 'sm:hidden')}
+              >
                 <LanguageDropdownMobile lang={lang} onLangChange={onLangChange} />
               </div>
             </div>

@@ -45,6 +45,7 @@ export default function ProfileAvatar({
           onError={() => setFailed(true)}
           loading="lazy"
           decoding="async"
+          referrerPolicy="no-referrer"
         />
       ) : initials && fullName.trim() ? (
         <span

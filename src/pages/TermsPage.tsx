@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { cn } from '@/lib/cn';
+import { pagePadX } from '@/lib/pageLayout';
 
 /**
  * Conditions d'utilisation courtes (franconetwork.app).
@@ -16,11 +18,17 @@ export default function TermsPage() {
           content="Conditions d'utilisation de l'Annuaire d'Affaires de Guadalajara (franconetwork.app)."
         />
       </Helmet>
-      <div className="mx-auto max-w-3xl px-6 py-12 text-stone-700">
+      <div
+        className={cn(
+          'mx-auto w-full min-w-0 max-w-3xl text-stone-700',
+          pagePadX,
+          'py-8 sm:py-10'
+        )}
+      >
         <h1 className="mb-2 text-2xl font-bold text-stone-900">Conditions d&apos;utilisation</h1>
-        <p className="mb-8 text-sm text-stone-500">Dernière mise à jour : avril 2026</p>
+        <p className="mb-6 text-sm text-stone-500">Dernière mise à jour : avril 2026</p>
 
-        <section className="space-y-6 text-sm leading-relaxed">
+        <section className="flex flex-col gap-6 text-sm leading-relaxed">
           <div>
             <h2 className="mb-1 font-semibold text-stone-800">1. Objet</h2>
             <p>
