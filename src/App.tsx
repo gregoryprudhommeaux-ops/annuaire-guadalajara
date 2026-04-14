@@ -2536,11 +2536,20 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
         });
         const docRef = doc(db, 'users', u.uid);
         const docSnap = await getDoc(docRef);
-        
-        // Update lastSeen
-        await updateDoc(docRef, { lastSeen: Date.now() }).catch(() => {
-          // If update fails, it might be because the doc doesn't exist yet
-        });
+
+        // lastSeen : seulement si la fiche existe, et pas à chaque re-déclenchement auth
+        // (évite plusieurs écritures `users/*` qui pourraient déclencher la même notification admin).
+        if (docSnap.exists()) {
+          const data = docSnap.data() as Record<string, unknown>;
+          const raw = data.lastSeen;
+          const prevLast = typeof raw === 'number' ? raw : 0;
+          const now = Date.now();
+          if (now - prevLast >= 120_000) {
+            await updateDoc(docRef, { lastSeen: now }).catch(() => {
+              /* doc supprimé entre-temps */
+            });
+          }
+        }
 
         if (docSnap.exists()) {
           let loadedProfile = docSnap.data() as UserProfile;
