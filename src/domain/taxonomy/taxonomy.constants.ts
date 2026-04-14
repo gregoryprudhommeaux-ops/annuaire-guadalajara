@@ -9,6 +9,9 @@ import {
 } from '../../lib/passionConfig';
 import type { Hobby, Need, NeedCategory, NeedId } from './taxonomy.types';
 
+/** Canonical FR labels for radar / dashboards (keys from `taxonomy.canonical`). */
+export { HOBBIES, NEED_CATEGORIES, SECTORS } from './taxonomy.catalog.fr';
+
 export const NEED_ID_SET = NEED_OPTION_VALUE_SET;
 
 export function isNeedId(x: unknown): x is NeedId {

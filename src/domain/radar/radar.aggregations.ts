@@ -7,7 +7,7 @@ import {
   mapLegacyActivityCategoryToSectorKey,
   mapLegacyPassionIdToHobbyKey,
 } from '../member/member.mappers';
-import { HOBBIES, NEED_CATEGORIES, SECTORS } from '../taxonomy/taxonomy.catalog.fr';
+import { HOBBIES, NEED_CATEGORIES, SECTORS } from '../taxonomy/taxonomy.constants';
 import type { HobbyKey, NeedCategoryKey, SectorKey } from '../taxonomy/taxonomy.types';
 import type { CountMetric, RadarMetrics } from './radar.types';
 
