@@ -440,6 +440,74 @@ function SocialSignInButtons({ lang, t, busy, oauthDisabled = false, onSignIn }:
   );
 }
 
+function HeaderSocialLoginButtons({
+  lang,
+  t,
+  busy,
+  emailBusy,
+  onEmail,
+  onSignIn,
+}: {
+  lang: Language;
+  t: (key: string) => string;
+  busy: SocialAuthProvider | null;
+  emailBusy: boolean;
+  onEmail: () => void;
+  onSignIn: (p: SocialAuthProvider) => void;
+}) {
+  const connecting = pickLang('Connexion...', 'Conectando...', 'Signing in...', lang);
+  const disabled = busy !== null || emailBusy;
+  const btn =
+    'inline-flex h-9 items-center justify-center gap-2 rounded-lg px-3 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60';
+  return (
+    <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+      <button
+        type="button"
+        onClick={() => onSignIn('google')}
+        disabled={disabled}
+        className={`${btn} border border-slate-200 bg-white text-slate-900 hover:bg-slate-50`}
+        title={t('continueGoogle')}
+        aria-label={t('continueGoogle')}
+      >
+        <BrandGoogle className="h-4 w-4 shrink-0" />
+        <span className="hidden sm:inline">{busy === 'google' ? connecting : 'Google'}</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onSignIn('microsoft')}
+        disabled={disabled}
+        className={`${btn} bg-[#2F2F2F] text-white hover:bg-[#1f1f1f]`}
+        title={t('continueMicrosoft')}
+        aria-label={t('continueMicrosoft')}
+      >
+        <BrandMicrosoft className="h-4 w-4 shrink-0" />
+        <span className="hidden sm:inline">{busy === 'microsoft' ? connecting : 'Microsoft'}</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onSignIn('apple')}
+        disabled={disabled}
+        className={`${btn} bg-black text-white hover:bg-stone-900`}
+        title={t('continueApple')}
+        aria-label={t('continueApple')}
+      >
+        <BrandApple className="h-4 w-4 shrink-0" />
+        <span className="hidden sm:inline">{busy === 'apple' ? connecting : 'Apple'}</span>
+      </button>
+      <button
+        type="button"
+        onClick={onEmail}
+        disabled={disabled}
+        className={`${btn} bg-blue-700 text-white hover:bg-blue-800`}
+        title={t('continueEmail')}
+        aria-label={t('continueEmail')}
+      >
+        {emailBusy ? connecting : t('continueEmail')}
+      </button>
+    </div>
+  );
+}
+
 const ADMIN_EMAIL = "chinois2001@gmail.com";
 const isAdminEmail = (email?: string | null) =>
   (email || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
@@ -4680,39 +4748,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </div>
             )
           ) : (
-            <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <Link
-                to="/inscription"
-                className={cn(
-                  'w-full border-0 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-white transition-colors',
-                  'rounded-none bg-transparent hover:bg-emerald-700/35 active:bg-emerald-800/40',
-                  'sm:rounded-lg sm:bg-emerald-700 sm:px-4 sm:py-2 sm:text-sm sm:leading-normal sm:shadow-sm sm:hover:bg-emerald-800 sm:active:scale-[0.98]'
-                )}
-              >
-                Créer mon profil
-              </Link>
-              <button
-                type="button"
-                data-testid="header-login"
-                onClick={openAuthModal}
-                disabled={authProviderBusy !== null || authEmailBusy}
-                className={cn(
-                  'w-full border-0 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-white transition-colors',
-                  'rounded-none bg-transparent hover:bg-blue-800/35 active:bg-blue-900/40',
-                  'disabled:cursor-not-allowed disabled:opacity-60',
-                  'sm:rounded-lg sm:bg-blue-700 sm:px-4 sm:py-2 sm:text-sm sm:leading-normal sm:shadow-sm sm:hover:bg-blue-800 sm:active:scale-[0.98]'
-                )}
-              >
-                {authProviderBusy !== null ? (
-                  pickLang('Connexion...', 'Conectando...', 'Signing in...', lang)
-                ) : (
-                  <>
-                    <span className="sm:hidden">{t('loginMobile')}</span>
-                    <span className="hidden sm:inline">{t('login')}</span>
-                  </>
-                )}
-              </button>
-            </div>
+            <HeaderSocialLoginButtons
+              lang={lang}
+              t={t}
+              busy={authProviderBusy}
+              emailBusy={authEmailBusy}
+              onEmail={openAuthModal}
+              onSignIn={(p) => void handleSocialLogin(p)}
+            />
           )
         }
       />
