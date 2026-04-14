@@ -2187,6 +2187,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const isNetworkRoute = location.pathname === '/network';
   const isRequestsRoute = location.pathname === '/requests';
   const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+  const isEditProfileRoute = location.pathname === '/profile/edit';
   const isMembersDirectoryRoute = location.pathname === '/membres' || isNetworkRoute;
   const isEventsAdminRoute = location.pathname === '/evenements';
 
@@ -6802,6 +6803,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </header>
             )}
 
+            {!isEditProfileRoute && (
             <DirectoryTabsSection
               tabs={
                 isNetworkRoute
@@ -7192,6 +7194,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </div>
             )}
             </DirectoryTabsSection>
+            )}
         </div>
       </div>
         )}
