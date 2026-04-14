@@ -2212,6 +2212,18 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     navigate('/dashboard', { replace: true });
   }, [loading, location.pathname, navigate, role]);
 
+  useEffect(() => {
+    // "Mon profil" should open the full editor directly.
+    if (loading) return;
+    if (!isEditProfileRoute) return;
+    if (!user) return;
+    setIsProfileExpanded(true);
+    setIsEditing(true);
+    window.requestAnimationFrame(() => {
+      profileFormLayoutRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [loading, isEditProfileRoute, user]);
+
   useLayoutEffect(() => {
     if (location.pathname === '/membres' || location.pathname === '/network') {
       setViewMode('members');
