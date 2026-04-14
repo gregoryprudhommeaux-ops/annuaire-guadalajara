@@ -35,6 +35,10 @@ export const FR = {
         'Rejoignez les premiers membres et aidez-nous à atteindre une masse critique utile.',
       progressLabel: 'Progression',
       inviteCta: 'Inviter mon réseau',
+      inviteChannelsHint: 'Invitez vos contacts pour atteindre les 50 profils :',
+      inviteWhatsappCta: 'WhatsApp',
+      inviteEmailCta: 'E-mail',
+      inviteLinkCta: 'Ouvrir la page d’inscription',
       valueLine: 'Chaque nouveau profil augmente la valeur du réseau',
     },
 

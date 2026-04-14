@@ -1,7 +1,10 @@
+import { useMemo } from 'react';
+import { Mail, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useTranslation } from '@/i18n/useTranslation';
 import { FIRST_50_MEMBER_TARGET } from '@/constants';
 import { trackEvent } from '@/lib/analytics';
+import { getSignupJoinUrl } from '@/lib/siteUrls';
 
 export type First50MembersBannerProps = {
   currentCount: number;
@@ -17,7 +20,7 @@ export type First50MembersBannerProps = {
 export function First50MembersBanner({
   currentCount,
   targetCount = FIRST_50_MEMBER_TARGET,
-  inviteUrl,
+  inviteUrl: inviteUrlProp,
   onInviteClick,
   className,
 }: First50MembersBannerProps) {
@@ -25,11 +28,27 @@ export function First50MembersBanner({
   const safeTarget = Math.max(1, targetCount);
   const safeCurrent = Math.max(0, Math.min(currentCount, safeTarget));
   const progress = Math.round((safeCurrent / safeTarget) * 100);
-  const showPrimaryCta = Boolean((inviteUrl && inviteUrl.trim()) || onInviteClick);
+  const shareUrl = (inviteUrlProp && inviteUrlProp.trim()) || getSignupJoinUrl();
+
+  const shareMessage = useMemo(
+    () => t('inviteShareBody').replace(/\{url\}/g, shareUrl),
+    [shareUrl, t]
+  );
+  const emailSubject = t('inviteEmailSubject');
 
   const handleInviteClick = () => {
     trackEvent('home_invite_click', { source: 'first50_banner' });
     onInviteClick?.();
+  };
+
+  const openWhatsApp = () => {
+    trackEvent('home_invite_click', { source: 'first50_whatsapp' });
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareMessage)}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const openEmail = () => {
+    trackEvent('home_invite_click', { source: 'first50_email' });
+    window.location.href = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(shareMessage)}`;
   };
 
   return (
@@ -79,24 +98,33 @@ export function First50MembersBanner({
             />
           </div>
 
-          {showPrimaryCta ? (
-            inviteUrl?.trim() ? (
-              <a
-                href={inviteUrl.trim()}
-                onClick={handleInviteClick}
-                className="inline-flex w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-teal-800"
-              >
-                {t('home.first50.inviteCta')}
-              </a>
-            ) : (
-              <button
-                type="button"
-                onClick={handleInviteClick}
-                className="inline-flex w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-teal-800"
-              >
-                {t('home.first50.inviteCta')}
-              </button>
-            )
+          <p className="text-xs font-medium text-slate-600">{t('home.first50.inviteChannelsHint')}</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={openWhatsApp}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-900 transition-colors hover:bg-emerald-100"
+            >
+              <MessageCircle className="h-4 w-4 shrink-0" aria-hidden />
+              {t('home.first50.inviteWhatsappCta')}
+            </button>
+            <button
+              type="button"
+              onClick={openEmail}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50"
+            >
+              <Mail className="h-4 w-4 shrink-0" aria-hidden />
+              {t('home.first50.inviteEmailCta')}
+            </button>
+          </div>
+          {shareUrl ? (
+            <a
+              href={shareUrl}
+              onClick={handleInviteClick}
+              className="block text-center text-xs font-medium text-teal-800 underline-offset-2 hover:text-teal-950 hover:underline"
+            >
+              {t('home.first50.inviteLinkCta')}
+            </a>
           ) : null}
 
           <p className="flex min-h-[4.5rem] items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm leading-snug text-slate-600 text-balance">

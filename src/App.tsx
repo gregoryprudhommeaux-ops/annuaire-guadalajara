@@ -6099,6 +6099,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               showClearFilters={showDirectoryClearFilters}
             />
 
+            {stats.total < FIRST_50_MEMBER_TARGET ? (
+              <First50MembersBanner
+                currentCount={stats.total}
+                targetCount={FIRST_50_MEMBER_TARGET}
+                inviteUrl={getSignupJoinUrl()}
+                className="w-full"
+              />
+            ) : null}
+
             {/* Opportunités retirées du produit */}
           </div>
           )}

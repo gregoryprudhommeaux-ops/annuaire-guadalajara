@@ -643,6 +643,10 @@ export const EN = {
         "Join the first members and help us reach a useful critical mass.",
       progressLabel: "Progress",
       inviteCta: "Invite my network",
+      inviteChannelsHint: "Invite your contacts to reach 50 profiles:",
+      inviteWhatsappCta: "WhatsApp",
+      inviteEmailCta: "Email",
+      inviteLinkCta: "Open the sign-up page",
       valueLine: "Each new profile increases network value",
     },
 
