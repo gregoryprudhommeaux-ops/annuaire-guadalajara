@@ -32,6 +32,9 @@ export interface AdminStats {
     photo?: string;
     latitude?: number;
     longitude?: number;
+    neighborhood?: string;
+    district?: string;
+    city?: string;
     links?: string[];
     createdAt: Timestamp;
     contactClicks: number;
@@ -414,6 +417,7 @@ export function useAdminStats(period: PeriodKey): AdminStats {
             const up = rowToUserProfile(p);
             const sectors = profileDistinctActivityCategories(up);
             const firstSector = sectors[0] || '';
+            const firstActivity = (up.companyActivities as any)?.[0] ?? {};
             const desc =
               String(up.memberBio ?? '').trim() ||
               String((up.companyActivities as any)?.[0]?.activityDescription ?? '').trim() ||
@@ -435,6 +439,9 @@ export function useAdminStats(period: PeriodKey): AdminStats {
               photo: String(up.photoURL ?? '').trim() || undefined,
               latitude: typeof (up as any).latitude === 'number' ? ((up as any).latitude as number) : undefined,
               longitude: typeof (up as any).longitude === 'number' ? ((up as any).longitude as number) : undefined,
+              neighborhood: String(firstActivity?.neighborhood ?? '').trim() || undefined,
+              district: String(firstActivity?.district ?? '').trim() || undefined,
+              city: String(firstActivity?.city ?? '').trim() || (String((up as any).city ?? '').trim() || undefined),
               links,
               createdAt: (up.createdAt as Timestamp) ?? (p.createdAt as Timestamp),
               contactClicks: contactClicksByUid[up.uid] || 0,

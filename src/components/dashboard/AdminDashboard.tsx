@@ -43,11 +43,16 @@ type AdminDashboardProps = {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex min-h-[44px] w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm sm:min-h-[40px] sm:px-4 sm:py-2">
-      <p className="min-w-0 flex-1 truncate text-[9px] font-semibold uppercase leading-tight tracking-wide text-stone-500 sm:text-[11px]" title={label}>
+    <div className="flex w-full min-w-0 items-baseline justify-between gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
+      <p
+        className="min-w-0 flex-1 truncate text-[10px] font-semibold leading-tight tracking-wide text-stone-500 sm:text-[11px]"
+        title={label}
+      >
         {label}
       </p>
-      <p className="shrink-0 text-base font-bold tabular-nums leading-none text-stone-900 sm:text-lg">{value}</p>
+      <p className="shrink-0 text-base font-bold tabular-nums leading-none text-stone-900 sm:text-lg">
+        {value}
+      </p>
     </div>
   );
 }
@@ -370,7 +375,7 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
 
       {!stats.loading && !stats.error && insightTab === 'overview' ? (
         <>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid auto-rows-min grid-cols-1 items-start gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard label={t('members') || 'Membres'} value={stats.totalProfiles} />
             <StatCard label="Nouveaux inscrits" value={stats.newProfilesInPeriod} />
             <MiniErrorBoundary label="ProfileCompletionGauge">
@@ -417,6 +422,9 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
                         secteur: m.secteur,
                         latitude: m.latitude,
                         longitude: m.longitude,
+                        neighborhood: (m as any).neighborhood,
+                        district: (m as any).district,
+                        city: (m as any).city,
                       }))}
                     />
                   </MiniErrorBoundary>
