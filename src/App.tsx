@@ -3312,7 +3312,14 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     }
   };
 
-  const handleLogout = () => signOut(auth);
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      window.location.assign('/');
+    } catch (error) {
+      console.error('Erreur logout:', error);
+    }
+  };
 
   // NOTE: l’édition manuelle de l’URL photo a été retirée de l’UI.
 
