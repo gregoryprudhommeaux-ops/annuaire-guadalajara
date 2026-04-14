@@ -91,3 +91,6 @@ export function aggregateRadarMetrics(
     updatedAt: new Date(nowMs).toISOString(),
   };
 }
+
+/** Canonical metrics from already-mapped {@link import('../member/member.types').Member} rows (re-export for ergonomic imports). */
+export { buildRadarMetrics } from './radar.build';

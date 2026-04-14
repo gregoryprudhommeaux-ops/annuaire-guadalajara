@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react';
 import { cn } from '../../cn';
 import type { Language } from '../../types';
+import { profileCompletionDefaultLabels, type ProfileCompletionInput } from '../../lib/profileCompletion';
 import {
-  getPriorityMissingFields,
-  getProfileCompletionPercent,
-  profileCompletionDefaultLabels,
-  type ProfileCompletionInput,
-} from '../../lib/profileCompletion';
+  getPriorityMissingFieldsFromDomain,
+  getProfileCompletionPercentFromDomain,
+} from '../../lib/profileCompletionFromDomain';
 
 type TFn = (key: string) => string;
 
@@ -28,10 +27,10 @@ export function ProfileCompletionCard({
   rightActions,
 }: ProfileCompletionCardProps) {
   const labels = useMemo(() => profileCompletionDefaultLabels(lang), [lang]);
-  const percent = getProfileCompletionPercent(profile);
+  const percent = getProfileCompletionPercentFromDomain(profile);
   const missing = useMemo(
-    () => getPriorityMissingFields(profile, labels),
-    [profile, labels]
+    () => getPriorityMissingFieldsFromDomain(profile, lang),
+    [profile, lang]
   );
 
   const title = useMemo(() => {

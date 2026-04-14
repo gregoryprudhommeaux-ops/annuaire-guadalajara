@@ -368,6 +368,10 @@ function identityFromProfile(p: UserProfile): MemberIdentity {
   };
 }
 
+/**
+ * Firestore-shaped {@link UserProfile} → canonical {@link Member}.
+ * For flat “draft API” payloads, use {@link mapLegacyProfileToMember} in `profile-completion.ts`.
+ */
 export function mapUserProfileToMember(p: UserProfile): Member {
   const slots = Array.isArray(p.companyActivities) ? p.companyActivities : [];
   const companies = slots.map((s) => mapCompanyFromSlot(s, p)).filter((c): c is Company => Boolean(c));

@@ -177,11 +177,11 @@ import {
   normalizeAiCoachToSingleTip,
 } from './lib/profileCoach';
 import {
-  getProfileCompletionPercent,
   PROFILE_COMPLETION_FOCUS_IDS,
   type ProfileCompletionInput,
   type ProfileCompletionKey,
 } from './lib/profileCompletion';
+import { getProfileCompletionPercentFromDomain } from './lib/profileCompletionFromDomain';
 // Opportunités retirées du produit.
 import { getGeminiApiKey } from './lib/geminiEnv';
 import IceBreakerInterests from './components/profile/IceBreakerInterests';
@@ -2665,11 +2665,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     };
   }, [allProfiles]);
 
-  const profileCompletionPct = useMemo(() => {
-    if (!profile) return 0;
-    return getProfileCompletionPercent(profile);
-  }, [profile]);
-
   const scrollToProfileCompletionField = useCallback(
     (fieldKey: string) => {
       setIsProfileExpanded(true);
@@ -2731,6 +2726,11 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     highlightedNeedsDraft,
     companyActivitiesDraft,
   ]);
+
+  const profileCompletionPct = useMemo(() => {
+    if (!profileCompletionCardSource) return 0;
+    return getProfileCompletionPercentFromDomain(profileCompletionCardSource);
+  }, [profileCompletionCardSource]);
 
   useEffect(() => {
     if (!profile) {

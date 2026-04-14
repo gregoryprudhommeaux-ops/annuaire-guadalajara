@@ -63,8 +63,7 @@ export {
 } from './need/need.mappers';
 
 export type { CountMetric, RadarMetrics } from './radar/radar.types';
-export { aggregateRadarMetrics } from './radar/radar.aggregations';
-export { buildRadarMetrics } from './radar/radar.build';
+export { aggregateRadarMetrics, buildRadarMetrics } from './radar/radar.aggregations';
 
 export type { MatchCandidate, MatchReasonCode, MatchScore } from './matching/matching.types';
 
