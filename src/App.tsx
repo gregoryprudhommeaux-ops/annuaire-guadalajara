@@ -6389,12 +6389,31 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   <HeroSection
                     copy={{
                       ...h,
-                      ctaPrimary: user && profile?.uid ? t('dashboardTab') : h.ctaPrimary,
-                      ctaPrimaryBusy: user && profile?.uid ? t('dashboardTab') : h.ctaPrimaryBusy,
+                      ctaPrimary: user ? t('dashboardTab') : h.ctaPrimary,
+                      ctaPrimaryBusy: user ? t('dashboardTab') : h.ctaPrimaryBusy,
+                      steps: user
+                        ? [
+                            lang === 'en'
+                              ? 'Open your dashboard.'
+                              : lang === 'es'
+                                ? 'Abre tu panel.'
+                                : 'Ouvrez votre tableau de bord.',
+                            lang === 'en'
+                              ? 'Explore members and requests.'
+                              : lang === 'es'
+                                ? 'Explora miembros y necesidades.'
+                                : 'Explorez les membres et les demandes.',
+                            lang === 'en'
+                              ? 'Contact the right people.'
+                              : lang === 'es'
+                                ? 'Contacta a las personas adecuadas.'
+                                : 'Contactez les bonnes personnes.',
+                          ]
+                        : h.steps,
                     }}
                     authBusy={authProviderBusy !== null}
                     onCreateProfile={() => {
-                      if (user && profile?.uid) {
+                      if (user) {
                         navigate('/dashboard');
                         return;
                       }
@@ -6407,7 +6426,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 // Homepage-safe: no directory search here, only orientation CTAs.
                 search={
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    {user && profile?.uid ? (
+                    {user ? (
                       <Link
                         to="/profile/edit"
                         className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
@@ -6429,7 +6448,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       {t('home.marketing.ctaExploreMembers')}
                     </Link>
                     <Link
-                      to="/requests"
+                      to={user ? '/requests' : '/requests'}
                       className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                     >
                       Voir les demandes
