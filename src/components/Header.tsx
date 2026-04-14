@@ -103,6 +103,8 @@ export function LanguageDropdownMobile({
 export type HeaderProps = {
   title: string;
   subtitle: string;
+  /** Badge rouge (ex. profils à valider). */
+  notificationCount?: number;
   /** Libellé accessibilité du lien d’accueil */
   homeAriaLabel: string;
   onHomeClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
@@ -129,6 +131,7 @@ export type HeaderProps = {
 export const Header: React.FC<HeaderProps> = ({
   title,
   subtitle,
+  notificationCount = 0,
   homeAriaLabel,
   onHomeClick,
   lang,
@@ -140,6 +143,8 @@ export const Header: React.FC<HeaderProps> = ({
   fullWidthRow,
 }) => {
   const adminHeroLayout = Boolean(fullWidthRow);
+  const showBadge = Number.isFinite(notificationCount) && notificationCount > 0;
+  const badgeText = notificationCount > 99 ? '99+' : String(notificationCount);
 
   return (
     <header
@@ -160,7 +165,14 @@ export const Header: React.FC<HeaderProps> = ({
                   className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg pr-2 outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
                   aria-label={homeAriaLabel}
                 >
-                  <SiteLogoMark className="h-9 w-9" />
+                  <div className="relative shrink-0">
+                    <SiteLogoMark className="h-9 w-9" />
+                    {showBadge ? (
+                      <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-600 px-1 text-[10px] font-bold leading-4 text-white">
+                        {badgeText}
+                      </span>
+                    ) : null}
+                  </div>
                   <div className="h-7 w-px shrink-0 bg-slate-200" aria-hidden />
                   <div className="min-w-0 flex-1 leading-tight text-left">
                     <p className="text-sm font-semibold leading-snug tracking-tight text-slate-900 break-words">
@@ -190,7 +202,14 @@ export const Header: React.FC<HeaderProps> = ({
                   )}
                   aria-label={homeAriaLabel}
                 >
-                  <SiteLogoMark className="h-9 w-9 sm:h-10 sm:w-10 sm:rounded-xl" />
+                  <div className="relative shrink-0">
+                    <SiteLogoMark className="h-9 w-9 sm:h-10 sm:w-10 sm:rounded-xl" />
+                    {showBadge ? (
+                      <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-600 px-1 text-[10px] font-bold leading-4 text-white">
+                        {badgeText}
+                      </span>
+                    ) : null}
+                  </div>
                   <div className="h-7 w-px shrink-0 bg-slate-200 sm:h-8" aria-hidden />
                   <div className="min-w-0 flex-1 leading-tight text-left">
                     <p className="text-sm font-semibold leading-snug tracking-tight text-slate-900 break-words sm:text-base md:text-lg">
@@ -222,7 +241,14 @@ export const Header: React.FC<HeaderProps> = ({
                 className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg pr-[4.25rem] outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:pr-1"
                 aria-label={homeAriaLabel}
               >
-                <SiteLogoMark className="h-9 w-9 sm:h-10 sm:w-10 sm:rounded-xl" />
+                <div className="relative shrink-0">
+                  <SiteLogoMark className="h-9 w-9 sm:h-10 sm:w-10 sm:rounded-xl" />
+                  {showBadge ? (
+                    <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-600 px-1 text-[10px] font-bold leading-4 text-white">
+                      {badgeText}
+                    </span>
+                  ) : null}
+                </div>
                 <div className="h-7 w-px shrink-0 bg-slate-200 sm:h-8" aria-hidden />
                 <div className="min-w-0 flex-1 leading-tight text-left">
                   <p className="text-sm font-semibold leading-snug tracking-tight text-slate-900 break-words sm:text-base md:text-lg">

@@ -2162,6 +2162,13 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     [pendingProfiles]
   );
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const base = t('title');
+    const n = viewerIsAdmin ? pendingProfiles.length : 0;
+    document.title = n > 0 ? `(${n > 99 ? '99+' : n}) ${base}` : base;
+  }, [pendingProfiles.length, viewerIsAdmin, t]);
+
   const oauthLeadsWithoutProfileCount = useMemo(
     () => authLeads.filter((l) => !profileUidSet.has(l.uid)).length,
     [authLeads, profileUidSet]
@@ -4194,6 +4201,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       <AppHeader
         title={t('title')}
         subtitle={t('subtitle')}
+        notificationCount={viewerIsAdmin ? pendingProfiles.length : 0}
         homeAriaLabel={pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
         onHomeClick={(e) => {
           e.preventDefault();

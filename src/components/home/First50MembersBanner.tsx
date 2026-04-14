@@ -132,20 +132,7 @@ export function First50MembersBanner({
               {t('home.first50.inviteEmailCta')}
             </button>
           </div>
-          {shareUrl ? (
-            <a
-              href={shareUrl}
-              onClick={handleInviteClick}
-              className="mt-2 block text-center text-[11px] font-medium text-teal-800 underline-offset-2 hover:text-teal-950 hover:underline"
-            >
-              {t('home.first50.inviteLinkCta')}
-            </a>
-          ) : null}
         </div>
-
-        <p className="rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 text-center text-[11px] leading-snug text-slate-600 text-pretty">
-          {t('home.first50.valueLine')}
-        </p>
       </div>
     </section>
   );
