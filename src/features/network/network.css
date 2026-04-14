@@ -5,6 +5,14 @@
 
 .fn-network-page {
   min-width: 0;
+  /* Même stack que `index.css` (@theme --font-sans + body font-sans) */
+  font-family: var(--font-sans, "Inter", ui-sans-serif, system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.fn-network-page :where(input, select, button, textarea) {
+  font: inherit;
 }
 
 /* Deux colonnes : sidebar fixe 320px + contenu (connecté /network) */
@@ -45,10 +53,10 @@
 .fn-network-page .network-directory-header,
 .fn-network-page .network-sort-panel,
 .fn-network-page .member-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: #fff;
+  border: 1px solid rgb(226 232 240); /* slate-200 — comme SearchBlock */
   border-radius: 18px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
 }
 
 .fn-network-page .network-panel {
@@ -61,24 +69,33 @@
 
 .fn-network-page .network-panel__eyebrow {
   margin: 0 0 8px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #6b7280;
+  font-size: 0.75rem; /* text-xs */
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(100 116 139); /* slate-500 */
 }
 
 .fn-network-page .network-panel__title {
   margin: 0 0 8px;
-  font-size: 30px;
-  line-height: 1.1;
-  color: #111827;
+  font-size: 1rem; /* text-base — aligné SearchBlock */
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: rgb(30 41 59); /* slate-800 */
+}
+
+@media (min-width: 640px) {
+  .fn-network-page .network-panel__title {
+    font-size: 1.125rem; /* sm:text-lg */
+  }
 }
 
 .fn-network-page .network-panel__text {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.6;
-  color: #4b5563;
+  font-size: 0.875rem; /* text-sm */
+  line-height: 1.375;
+  color: rgb(71 85 105); /* slate-600 */
 }
 
 .fn-network-page .network-search-panel__searchRow {
@@ -91,20 +108,21 @@
 .fn-network-page .network-input,
 .fn-network-page .network-select {
   width: 100%;
-  min-height: 46px;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  padding: 0 14px;
-  background: #ffffff;
-  color: #111827;
-  font-size: 14px;
+  min-height: 2.75rem;
+  border: 1px solid rgb(226 232 240);
+  border-radius: 0.75rem;
+  padding: 0 0.875rem;
+  background: #fff;
+  color: rgb(15 23 42); /* slate-900 */
+  font-size: 0.875rem; /* text-sm */
+  line-height: 1.25;
 }
 
 .fn-network-page .network-input:focus,
 .fn-network-page .network-select:focus {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
-  border-color: #2563eb;
+  outline: 2px solid rgb(29 78 216); /* blue-700 */
+  outline-offset: 0;
+  border-color: rgb(29 78 216);
 }
 
 .fn-network-page .network-search-panel__filters {
@@ -120,31 +138,32 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 46px;
-  padding: 0 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 600; /* comme boutons SearchBlock / annuaire */
+  line-height: 1.25;
   text-decoration: none;
   cursor: pointer;
-  transition: 0.18s ease;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
   border: none;
 }
 
 .fn-network-page .network-primary-btn {
-  background: #2563eb;
-  color: #ffffff;
+  background: rgb(29 78 216); /* blue-700 */
+  color: #fff;
 }
 
 .fn-network-page .network-primary-btn:hover {
-  background: #1d4ed8;
+  background: rgb(30 64 175); /* blue-800 */
 }
 
 .fn-network-page .network-secondary-btn {
   width: 100%;
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
+  background: rgb(239 246 255);
+  color: rgb(29 78 216);
+  border: 1px solid rgb(191 219 254);
 }
 
 .fn-network-page .network-secondary-btn:hover:not(:disabled) {
@@ -158,9 +177,9 @@
 
 .fn-network-page .network-search-panel__tip {
   margin: 0 0 14px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
-  color: #6b7280;
+  color: rgb(100 116 139);
 }
 
 .fn-network-page .network-clear-filters {
@@ -169,16 +188,16 @@
   padding: 0;
   border: none;
   background: none;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: #2563eb;
+  color: rgb(37 99 235);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
 }
 
 .fn-network-page .network-clear-filters:hover {
-  color: #1d4ed8;
+  color: rgb(30 64 175);
 }
 
 .fn-network-page .launch-card {
@@ -198,28 +217,37 @@
   cursor: pointer;
   text-align: left;
   padding: 0;
-  color: #111827;
+  color: rgb(15 23 42);
 }
 
 .fn-network-page .launch-card__eyebrow {
   margin: 0 0 6px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #0f766e;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(13 148 136); /* teal-600 */
 }
 
 .fn-network-page .launch-card__title {
   margin: 0;
-  font-size: 20px;
-  line-height: 1.2;
-  color: #111827;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: rgb(30 41 59);
+}
+
+@media (min-width: 640px) {
+  .fn-network-page .launch-card__title {
+    font-size: 1.125rem;
+  }
 }
 
 .fn-network-page .launch-card__chevron {
-  font-size: 24px;
+  font-size: 1.25rem;
   line-height: 1;
-  color: #0f766e;
+  color: rgb(13 148 136);
   flex-shrink: 0;
 }
 
@@ -231,16 +259,16 @@
 
 .fn-network-page .launch-card__text {
   margin: 0 0 14px;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.55;
-  color: #4b5563;
+  color: rgb(71 85 105);
 }
 
 .fn-network-page .launch-card__actionsLabel {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: #4b5563;
+  color: rgb(71 85 105);
 }
 
 .fn-network-page .launch-card__progressRow {
@@ -248,14 +276,14 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
-  font-size: 14px;
-  color: #374151;
+  font-size: 0.875rem;
+  color: rgb(51 65 85);
 }
 
 .fn-network-page .launch-card__progressRow strong {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #111827;
+  color: rgb(15 23 42);
 }
 
 .fn-network-page .launch-card__progressBar {
@@ -295,13 +323,13 @@
 }
 
 .fn-network-page .launch-card__button--email {
-  background: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: #fff;
+  color: rgb(51 65 85);
+  border: 1px solid rgb(226 232 240);
 }
 
 .fn-network-page .launch-card__button--email:hover {
-  background: #f9fafb;
+  background: rgb(248 250 252);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -317,18 +345,34 @@
 
 .fn-network-page .network-directory-header h1 {
   margin: 0 0 6px;
-  font-size: 22px;
+  font-size: 1.25rem; /* text-xl — comme en-tête /membres */
   font-weight: 700;
+  line-height: 1.2;
   letter-spacing: -0.02em;
-  color: #111827;
+  color: rgb(28 25 23); /* stone-900, proche titres annuaire */
 }
 
-.fn-network-page .network-directory-header p,
+@media (min-width: 640px) {
+  .fn-network-page .network-directory-header h1 {
+    font-size: 1.5rem; /* sm:text-2xl */
+  }
+}
+
+.fn-network-page .network-directory-header p {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.375;
+  font-weight: 400;
+  color: rgb(87 83 78); /* stone-600 */
+}
+
 .fn-network-page .network-sort-panel label {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #6b7280;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgb(120 113 108); /* stone-500 */
 }
 
 .fn-network-page .network-sort-panel {
@@ -358,7 +402,7 @@
 }
 
 .fn-network-page .member-card:hover {
-  border-color: #d1d5db;
+  border-color: rgb(203 213 225);
   box-shadow:
     0 10px 28px -18px rgba(15, 23, 42, 0.12),
     0 1px 2px rgba(16, 24, 40, 0.06);
@@ -387,11 +431,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f3f4f6;
-  color: #6b7280;
-  font-weight: 700;
-  font-size: 14px;
-  border: 1px solid #e5e7eb;
+  background: rgb(248 250 252);
+  color: rgb(100 116 139);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  border: 1px solid rgb(226 232 240);
 }
 
 .fn-network-page .member-card__identityText {
@@ -400,23 +444,32 @@
 
 .fn-network-page .member-card__name {
   margin: 0;
-  font-size: 26px;
-  line-height: 1.1;
-  color: #111827;
+  font-size: 1.125rem; /* text-lg — cohérent ProfileCard annuaire */
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: rgb(28 25 23);
   word-break: break-word;
 }
 
+@media (min-width: 640px) {
+  .fn-network-page .member-card__name {
+    font-size: 1.25rem; /* sm ~ text-xl */
+  }
+}
+
 .fn-network-page .member-card__company {
-  margin: 4px 0 2px;
-  font-size: 15px;
+  margin: 0.25rem 0 0.125rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  line-height: 1.35;
+  color: rgb(68 64 60); /* stone-700 */
 }
 
 .fn-network-page .member-card__sector {
   margin: 0;
-  font-size: 14px;
-  color: #6b7280;
+  font-size: 0.75rem;
+  color: rgb(120 113 108);
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -424,11 +477,17 @@
   overflow: hidden;
 }
 
+@media (min-width: 640px) {
+  .fn-network-page .member-card__sector {
+    font-size: 0.875rem;
+  }
+}
+
 .fn-network-page .member-card__bio {
   margin: 0 0 16px;
-  font-size: 14px;
-  line-height: 1.65;
-  color: #374151;
+  font-size: 0.875rem;
+  line-height: 1.625;
+  color: rgb(87 83 78);
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
@@ -443,10 +502,11 @@
 
 .fn-network-page .member-card__label {
   margin: 0 0 10px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #9ca3af;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(168 162 158); /* stone-400 */
 }
 
 .fn-network-page .member-card__chips {
@@ -458,29 +518,30 @@
 .fn-network-page .member-card__chip {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
+  min-height: 1.75rem;
+  padding: 0 0.625rem;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #8a5a00;
-  background: #fff8e6;
-  border: 1px solid #f4d58d;
+  line-height: 1.25;
+  color: rgb(120 53 15); /* amber-900 */
+  background: rgb(255 251 235); /* amber-50 */
+  border: 1px solid rgb(253 230 138); /* amber-200 */
 }
 
 .fn-network-page .member-card__footer {
   margin-top: 18px;
   padding-top: 14px;
-  border-top: 1px solid #eef2f7;
+  border-top: 1px solid rgb(241 245 249);
 }
 
 .fn-network-page .member-card__link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #1d4ed8;
-  font-size: 14px;
-  font-weight: 700;
+  color: rgb(29 78 216);
+  font-size: 0.875rem;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -490,8 +551,9 @@
 
 .fn-network-page .member-card__link::after {
   content: '›';
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1;
+  font-weight: 500;
 }
 
 /* Cartes annuaire classiques (ProfileCard invité / teaser) */
@@ -525,14 +587,6 @@
 @media (max-width: 768px) {
   .fn-network-page .member-grid {
     grid-template-columns: 1fr;
-  }
-
-  .fn-network-page .network-panel__title {
-    font-size: 24px;
-  }
-
-  .fn-network-page .member-card__name {
-    font-size: 22px;
   }
 
   .fn-network-page .launch-card__actions {
