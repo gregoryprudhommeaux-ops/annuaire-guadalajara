@@ -5274,11 +5274,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               )}
                             </p>
                           ) : null}
-                          <p className="rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2 text-xs leading-relaxed text-stone-600">
+                          <p className="rounded-md border border-stone-200/70 bg-stone-50/60 px-2 py-1 text-[11px] leading-snug text-stone-500">
                             {t('profileFormRequiredLegend')}
                           </p>
                           {user && !editingSomeoneElse ? (
-                            <p className="rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-2 text-xs leading-relaxed text-blue-950">
+                            <p className="rounded-md border border-blue-100/70 bg-blue-50/50 px-2 py-1 text-[11px] leading-snug text-blue-900/90">
                               {t('profileFormDraftLocalHint')}
                             </p>
                           ) : null}
