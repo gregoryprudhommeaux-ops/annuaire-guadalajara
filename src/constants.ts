@@ -683,6 +683,10 @@ export const TRANSLATIONS: Translations = {
     fr: 'Les champs suivis d’une astérisque (*) sont obligatoires pour la validation de votre fiche par l’équipe.',
     es: 'Los campos con asterisco (*) son obligatorios para que el equipo valide tu ficha.',
   },
+  profileFormDraftLocalHint: {
+    fr: 'Votre saisie est mémorisée temporairement sur cet appareil (session du navigateur, jusqu’à 7 jours). Si la page se recharge avant l’enregistrement, le formulaire peut être rechargé sans tout recommencer.',
+    es: 'Lo que escribes se guarda temporalmente en este dispositivo (sesión del navegador, hasta 7 días). Si la página se recarga antes de guardar, el formulario puede recuperarse sin empezar de cero.',
+  },
   /** Sous-titres de groupe dans le formulaire profil (création société vs effectifs). */
   profileFormSubsectionEntreprise: { fr: 'Entreprise', es: 'Empresa' },
   profileFormSubsectionRH: {

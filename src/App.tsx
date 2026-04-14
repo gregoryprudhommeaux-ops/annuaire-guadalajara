@@ -134,6 +134,14 @@ import {
   type AuthLeadDoc,
 } from './lib/authLeads';
 import {
+  clearProfileFormDraft,
+  initLastProfileSaveBaselineIfUnset,
+  loadProfileFormDraft,
+  markProfileSavedOk,
+  saveProfileFormDraft,
+  shouldRestoreProfileDraft,
+} from './lib/profileFormDraftStorage';
+import {
   MEMBER_REQUESTS_COLLECTION,
   mapMemberRequestDoc,
 } from './lib/memberRequests';
@@ -1940,6 +1948,14 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   /** Évite double clic / requêtes OAuth concurrentes (souvent `auth/cancelled-popup-request`). */
   const socialOAuthLockRef = useRef(false);
   const profileFormLayoutRef = useRef<HTMLDivElement | null>(null);
+  const directoryProfileFormRef = useRef<HTMLFormElement | null>(null);
+  /** Évite de remonter le formulaire en boucle après restauration du brouillon. */
+  const profileDraftRestoreNonceRef = useRef<string>('');
+  const [profileFormDraftOverrides, setProfileFormDraftOverrides] = useState<{
+    texts: Record<string, string>;
+    checks: Record<string, boolean>;
+  } | null>(null);
+  const [profileFormRemountKey, setProfileFormRemountKey] = useState(0);
 
   /** Admin annuaire : rôle sur la fiche OU e-mail admin (ex. sans doc Firestore). */
   const viewerIsAdmin = profile?.role === 'admin' || isAdminEmail(user?.email);
@@ -2300,15 +2316,95 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     setCompanyActivitiesDraft(hydrateCompanyActivitiesDraftFromProfile(profile));
   }, [isEditing, editingProfile, profile]);
 
+  useLayoutEffect(() => {
+    if (user?.uid && profile?.createdAt) {
+      initLastProfileSaveBaselineIfUnset(user.uid, profile.createdAt.toMillis());
+    }
+    if (!isEditing || !user || editingSomeoneElse) {
+      setProfileFormDraftOverrides(null);
+      profileDraftRestoreNonceRef.current = '';
+      return;
+    }
+    const uid = user.uid;
+    const draft = loadProfileFormDraft(uid);
+    const hasProfile = Boolean(profile);
+    if (!draft || !shouldRestoreProfileDraft(draft, uid, hasProfile)) {
+      setProfileFormDraftOverrides(null);
+      profileDraftRestoreNonceRef.current = '';
+      return;
+    }
+    const nonce = `${uid}:${draft.savedAt}`;
+    if (profileDraftRestoreNonceRef.current === nonce) return;
+    profileDraftRestoreNonceRef.current = nonce;
+    setProfileFormDraftOverrides({ texts: draft.texts, checks: draft.checks });
+    setPassionIdsDraft(sanitizePassionIds(draft.passionIds));
+    setHighlightedNeedsDraft(sanitizeHighlightedNeeds(draft.highlightedNeeds));
+    setWorkingLanguagesDraft(sanitizeWorkingLanguageCodes(draft.workingLanguageCodes));
+    setCompanyActivitiesDraft(
+      draft.companyActivities.length > 0 ? draft.companyActivities : [emptyCompanyActivitySlot()]
+    );
+    setCompanyActivityEditCollapsed(draft.companyActivityEditCollapsed || {});
+    setProfilePhotoUrlDraft(draft.profilePhotoUrlDraft || '');
+    setProfileFormRemountKey((k) => k + 1);
+  }, [isEditing, user?.uid, editingSomeoneElse, profile?.uid]);
+
+  useEffect(() => {
+    if (!isEditing || !user || editingSomeoneElse) return;
+    const uid = user.uid;
+    const tick = window.setTimeout(() => {
+      const form = directoryProfileFormRef.current;
+      if (!form) return;
+      const texts: Record<string, string> = {};
+      const checks: Record<string, boolean> = {};
+      const els = form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+        'input[name], select[name], textarea[name]'
+      );
+      els.forEach((el) => {
+        const name = el.name;
+        if (!name) return;
+        if (el instanceof HTMLInputElement && el.type === 'checkbox') {
+          checks[name] = el.checked;
+        } else if (el instanceof HTMLInputElement && el.type === 'radio') {
+          if (el.checked) texts[name] = el.value;
+        } else {
+          texts[name] = el.value;
+        }
+      });
+      saveProfileFormDraft(uid, {
+        texts,
+        checks,
+        passionIds: passionIdsDraft,
+        highlightedNeeds: highlightedNeedsDraft,
+        workingLanguageCodes: workingLanguagesDraft,
+        companyActivities: companyActivitiesDraft,
+        companyActivityEditCollapsed,
+        profilePhotoUrlDraft,
+      });
+    }, 800);
+    return () => window.clearTimeout(tick);
+  }, [
+    isEditing,
+    user?.uid,
+    editingSomeoneElse,
+    profileFormRemountKey,
+    passionIdsDraft,
+    highlightedNeedsDraft,
+    workingLanguagesDraft,
+    companyActivitiesDraft,
+    companyActivityEditCollapsed,
+    profilePhotoUrlDraft,
+  ]);
+
   useEffect(() => {
     if (!isEditing) {
       setProfilePhotoUrlDraft('');
       return;
     }
+    if (profileFormDraftOverrides) return;
     const src = editingProfile ?? profile;
     if (!src) return;
     setProfilePhotoUrlDraft(String(src.photoURL ?? '').trim());
-  }, [isEditing, editingProfile?.uid, profile?.uid]);
+  }, [isEditing, editingProfile?.uid, profile?.uid, profileFormDraftOverrides]);
 
   const toggleWorkingLanguageDraft = (code: string) => {
     setWorkingLanguagesDraft((prev) => {
@@ -3554,6 +3650,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
           acceptsDelegationVisits: delegationFlag,
           ...(formAdminPrivateReady ? { openToEventSponsoring } : {}),
         }));
+        clearProfileFormDraft(user.uid);
+        markProfileSavedOk(user.uid);
+        setProfileFormDraftOverrides(null);
+        profileDraftRestoreNonceRef.current = '';
       }
       setProfileSaveSuccess(
         isSelf
@@ -3643,6 +3743,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     try {
       await deleteDoc(doc(db, USER_ADMIN_PRIVATE_COLLECTION, uid)).catch(() => {});
       await deleteDoc(doc(db, 'users', uid));
+      clearProfileFormDraft(uid);
       if (uid === user?.uid) {
         setProfile(null);
       }
@@ -4074,6 +4175,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       profileFormLayoutRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   };
+
+  const formDraftT = profileFormDraftOverrides?.texts;
+  const formDraftC = profileFormDraftOverrides?.checks;
 
   if (loading) {
     return (
@@ -4713,7 +4817,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             !isAdminEmail(user.email) ? (
                               <OnboardingIntroBanner t={t} className="w-full" />
                             ) : null}
-                            <form onSubmit={handleSaveProfile} className="space-y-8">
+                            <form
+                              ref={directoryProfileFormRef}
+                              key={profileFormRemountKey}
+                              onSubmit={handleSaveProfile}
+                              className="space-y-8"
+                            >
                           {editingProfile && editingProfile.uid !== user.uid ? (
                             <p
                               className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium leading-relaxed text-indigo-950"
@@ -4730,6 +4839,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           <p className="rounded-lg border border-stone-200 bg-stone-50/90 px-3 py-2 text-xs leading-relaxed text-stone-600">
                             {t('profileFormRequiredLegend')}
                           </p>
+                          {user && !editingSomeoneElse ? (
+                            <p className="rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-2 text-xs leading-relaxed text-blue-950">
+                              {t('profileFormDraftLocalHint')}
+                            </p>
+                          ) : null}
 
                           <section className="space-y-4 rounded-xl border border-stone-200 bg-stone-50/40 p-4">
                             <h2 className="mb-1 text-sm font-semibold text-stone-900">{t('profileFormSectionPerson')}</h2>
@@ -4752,7 +4866,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               <input
                                 id="profile-completion-fullName"
                                 name="fullName"
-                                defaultValue={editingProfile?.fullName || profile?.fullName}
+                                defaultValue={
+                                  formDraftT?.fullName ??
+                                  editingProfile?.fullName ??
+                                  profile?.fullName ??
+                                  ''
+                                }
                                 className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                               />
                             </div>
@@ -4769,7 +4888,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   id="profile-completion-email"
                                   type="email"
                                   name="email"
-                                  defaultValue={editingProfile?.email || profile?.email || user.email || ''}
+                                  defaultValue={
+                                    formDraftT?.email ??
+                                    editingProfile?.email ??
+                                    profile?.email ??
+                                    user.email ??
+                                    ''
+                                  }
                                   className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
                               </div>
@@ -4783,7 +4908,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     id="linkedin-input"
                                     type="url"
                                     autoComplete="url"
-                                    defaultValue={editingProfile?.linkedin || profile?.linkedin}
+                                    defaultValue={
+                                      formDraftT?.linkedin ??
+                                      editingProfile?.linkedin ??
+                                      profile?.linkedin ??
+                                      ''
+                                    }
                                     placeholder="https://linkedin.com/in/..."
                                     className="h-10 min-w-0 w-full flex-1 rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900 sm:min-w-[12rem]"
                                   />
@@ -4802,7 +4932,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 <select
                                   id="whatsappDial"
                                   name="whatsappDial"
-                                  defaultValue={profileWhatsappDialDefault}
+                                  defaultValue={formDraftT?.whatsappDial ?? profileWhatsappDialDefault}
                                   className="h-10 w-full rounded-lg border border-stone-200 bg-white px-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 >
                                   {phoneDialRowsOrderedForUi().map((row) => (
@@ -4826,7 +4956,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   id="whatsappLocal"
                                   type="tel"
                                   name="whatsappLocal"
-                                  defaultValue={profileWhatsappLocalDefault}
+                                  defaultValue={formDraftT?.whatsappLocal ?? profileWhatsappLocalDefault}
                                   placeholder={pickLang('ex. 33 1234 5678', 'ej. 33 1234 5678', 'e.g. 33 1234 5678', lang)}
                                   autoComplete="tel-national"
                                   className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
@@ -4840,7 +4970,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 <input
                                   type="checkbox"
                                   name="isEmailPublic"
-                                  defaultChecked={editingProfile?.isEmailPublic ?? profile?.isEmailPublic}
+                                  defaultChecked={
+                                    formDraftC?.isEmailPublic ??
+                                    editingProfile?.isEmailPublic ??
+                                    profile?.isEmailPublic ??
+                                    false
+                                  }
                                   className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
                                 />
                                 <span>{t('isEmailPublic')}</span>
@@ -4849,7 +4984,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 <input
                                   type="checkbox"
                                   name="isWhatsappPublic"
-                                  defaultChecked={editingProfile?.isWhatsappPublic ?? profile?.isWhatsappPublic}
+                                  defaultChecked={
+                                    formDraftC?.isWhatsappPublic ??
+                                    editingProfile?.isWhatsappPublic ??
+                                    profile?.isWhatsappPublic ??
+                                    false
+                                  }
                                   className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
                                 />
                                 <span>{t('isWhatsappPublic')}</span>
@@ -4923,7 +5063,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   </label>
                                   <select
                                     name="genderStat"
-                                    defaultValue={formAdminPrivate.genderStat ?? ''}
+                                    defaultValue={formDraftT?.genderStat ?? formAdminPrivate.genderStat ?? ''}
                                     className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                   >
                                     <option value="">{t('genderStatSelectPlaceholder')}</option>
@@ -4940,7 +5080,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   </label>
                                   <select
                                     name="nationality"
-                                    defaultValue={formAdminPrivate.nationality ?? ''}
+                                    defaultValue={formDraftT?.nationality ?? formAdminPrivate.nationality ?? ''}
                                     className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                   >
                                     <option value="">{t('nationalitySelectPlaceholder')}</option>
@@ -4971,10 +5111,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 rows={4}
                                 maxLength={4000}
                                 defaultValue={
+                                  formDraftT?.memberBio ??
                                   (editingProfile?.memberBio ??
                                     profile?.memberBio ??
                                     editingProfile?.bio ??
-                                    profile?.bio) ||
+                                    profile?.bio) ??
                                   ''
                                 }
                                 placeholder={pickLang(
@@ -5530,7 +5671,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 name="networkGoal"
                                 type="text"
                                 maxLength={200}
-                                defaultValue={(editingProfile?.networkGoal ?? profile?.networkGoal) || ''}
+                                defaultValue={
+                                  formDraftT?.networkGoal ??
+                                  (editingProfile?.networkGoal ?? profile?.networkGoal) ??
+                                  ''
+                                }
                                 placeholder={t('profileNetworkGoalPlaceholder')}
                                 className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none ring-0 placeholder:text-stone-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/25"
                               />
@@ -5593,7 +5738,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   rows={3}
                                   maxLength={800}
                                   defaultValue={
-                                    (editingProfile?.helpNewcomers ?? profile?.helpNewcomers) || ''
+                                    formDraftT?.helpNewcomers ??
+                                    (editingProfile?.helpNewcomers ?? profile?.helpNewcomers) ??
+                                    ''
                                   }
                                   placeholder={t('profileHelpNewcomersPlaceholder')}
                                   className="w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
@@ -5614,7 +5761,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   rows={3}
                                   maxLength={200}
                                   defaultValue={
-                                    (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta) || ''
+                                    formDraftT?.contactPreferenceCta ??
+                                    (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta) ??
+                                    ''
                                   }
                                   placeholder={t('contactPrefsCtaPlaceholder')}
                                   className="w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
@@ -5636,7 +5785,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               <input
                                 id="targetSectors-needs"
                                 name="targetSectors"
-                                defaultValue={(editingProfile?.targetSectors || profile?.targetSectors || []).join(', ')}
+                                defaultValue={
+                                  formDraftT?.targetSectors ??
+                                  (editingProfile?.targetSectors || profile?.targetSectors || []).join(', ')
+                                }
                                 placeholder={t('needKeywordsPlaceholder')}
                                 className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
                               />
@@ -5658,7 +5810,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     type="checkbox"
                                     name="openToMentoring"
                                     defaultChecked={
-                                      (editingProfile?.openToMentoring ?? profile?.openToMentoring) === true
+                                      formDraftC?.openToMentoring ??
+                                      (editingProfile?.openToMentoring ?? profile?.openToMentoring) ===
+                                        true
                                     }
                                     className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
                                   />
@@ -5669,6 +5823,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     type="checkbox"
                                     name="openToTalks"
                                     defaultChecked={
+                                      formDraftC?.openToTalks ??
                                       (editingProfile?.openToTalks ?? profile?.openToTalks) === true
                                     }
                                     className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
@@ -5680,6 +5835,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     type="checkbox"
                                     name="openToEvents"
                                     defaultChecked={
+                                      formDraftC?.openToEvents ??
                                       (editingProfile?.openToEvents ?? profile?.openToEvents) === true
                                     }
                                     className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
@@ -5691,7 +5847,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     <input
                                       type="checkbox"
                                       name="openToEventSponsoring"
-                                      defaultChecked={formAdminPrivate.openToEventSponsoring === true}
+                                      defaultChecked={
+                                        formDraftC?.openToEventSponsoring ??
+                                        formAdminPrivate.openToEventSponsoring === true
+                                      }
                                       className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
                                     />
                                     <span className="min-w-0">
@@ -5719,7 +5878,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   <input
                                     type="checkbox"
                                     name="acceptsDelegationVisits"
-                                    defaultChecked={formAdminPrivate.acceptsDelegationVisits === true}
+                                    defaultChecked={
+                                      formDraftC?.acceptsDelegationVisits ??
+                                      formAdminPrivate.acceptsDelegationVisits === true
+                                    }
                                     className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
                                   />
                                   <span className="min-w-0">

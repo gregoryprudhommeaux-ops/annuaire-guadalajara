@@ -287,6 +287,8 @@ export const EN_STRINGS: Record<string, string> = {
     "Your profile must be validated by an administrator to access all directory information.",
   profileFormRequiredLegend:
     "Fields marked with an asterisk (*) are required for the team to validate your directory profile.",
+  profileFormDraftLocalHint:
+    "Your input is saved temporarily on this device (browser session, up to 7 days). If the page reloads before you click Save, the form can be restored so you don’t have to start over.",
   profileFormSubsectionEntreprise: "Company",
   profileFormSubsectionRH: "Human resources",
   profileFormSectionIdentity: "Identity",
