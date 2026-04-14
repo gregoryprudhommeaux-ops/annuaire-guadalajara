@@ -6387,9 +6387,19 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 }
                 hero={
                   <HeroSection
-                    copy={h}
+                    copy={{
+                      ...h,
+                      ctaPrimary: user && profile?.uid ? t('dashboardTab') : h.ctaPrimary,
+                      ctaPrimaryBusy: user && profile?.uid ? t('dashboardTab') : h.ctaPrimaryBusy,
+                    }}
                     authBusy={authProviderBusy !== null}
-                    onCreateProfile={openAuthModal}
+                    onCreateProfile={() => {
+                      if (user && profile?.uid) {
+                        navigate('/dashboard');
+                        return;
+                      }
+                      openAuthModal();
+                    }}
                     onExploreMembers={() => navigate('/network')}
                     className="h-full w-full"
                   />
@@ -6397,12 +6407,21 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 // Homepage-safe: no directory search here, only orientation CTAs.
                 search={
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <Link
-                      to="/inscription"
-                      className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
-                    >
-                      {t('home.marketing.ctaCreateProfile')}
-                    </Link>
+                    {user && profile?.uid ? (
+                      <Link
+                        to="/profile/edit"
+                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
+                      >
+                        Modifier mon profil
+                      </Link>
+                    ) : (
+                      <Link
+                        to="/inscription"
+                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
+                      >
+                        {t('home.marketing.ctaCreateProfile')}
+                      </Link>
+                    )}
                     <Link
                       to="/network"
                       className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
