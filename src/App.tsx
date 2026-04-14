@@ -287,14 +287,17 @@ import {
 import EmailAuthPanel from './components/EmailAuthPanel';
 import { HomePage as MarketingHomePage } from '@/components/home/HomePage';
 import { getPrimaryNav } from '@/routes/primaryNav';
+import { canAccessRoute, getAppRole } from '@/auth/roleModel';
 
 const loadNetworkRadarSection = () => import('./components/home/NetworkRadarSection');
 const loadDashboardPage = () => import('./components/dashboard/DashboardPage');
+const loadAdminPage = () => import('@/screens/AdminPage');
 const loadAdminEvents = () => import('./components/dashboard/AdminEvents');
 const loadPublicEventPage = () => import('./components/events/PublicEventPage');
 const loadAdminMemberEventHistory = () => import('./components/admin/AdminMemberEventHistory');
 const NetworkRadarSection = React.lazy(loadNetworkRadarSection);
 const DashboardPage = React.lazy(loadDashboardPage);
+const AdminPageLazy = React.lazy(loadAdminPage);
 const AdminEventsLazy = React.lazy(loadAdminEvents);
 const PublicEventPageLazy = React.lazy(loadPublicEventPage);
 const AdminMemberEventHistoryLazy = React.lazy(loadAdminMemberEventHistory);
@@ -2114,8 +2117,23 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const isDashboardRoute = location.pathname === '/dashboard';
   const isNetworkRoute = location.pathname === '/network';
   const isRequestsRoute = location.pathname === '/requests';
+  const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
   const isMembersDirectoryRoute = location.pathname === '/membres' || isNetworkRoute;
   const isEventsAdminRoute = location.pathname === '/evenements';
+
+  const role = getAppRole({ user, profile, viewerIsAdmin });
+
+  useEffect(() => {
+    // Route guards are driven by the central role model.
+    if (canAccessRoute(role, location.pathname)) return;
+    if (role === 'guest') {
+      openAuthModal();
+      navigate('/', { replace: true });
+      return;
+    }
+    // Logged-in non-admin trying to access admin space.
+    navigate('/dashboard', { replace: true });
+  }, [location.pathname, navigate, openAuthModal, role]);
 
   useLayoutEffect(() => {
     if (location.pathname === '/membres' || location.pathname === '/network') {
@@ -4022,7 +4040,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   }, [searchTerm, filterCategory, filterLocation, filterProfileType]);
 
   const showDiscoveryStrips = !showDirectoryClearFilters && !directoryDiscoveryStripsHidden;
-  const isAdminDashboard = viewMode === 'dashboard' && viewerIsAdmin;
+  // Admin is a separate product space (`/admin`), not a member dashboard mode.
+  const isAdminDashboard = false;
 
   const directoryViewTabs = useMemo(
     () =>
@@ -4424,7 +4443,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
     );
   }
 
-  const headerAdminLayout = Boolean(user && viewerIsAdmin);
+  const headerAdminLayout = Boolean(user && viewerIsAdmin && isAdminRoute);
 
   return (
     <div className="flex min-h-screen min-w-0 flex-col bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
@@ -4608,7 +4627,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
           ) : (
             <nav className="flex w-full min-w-0 flex-wrap items-center gap-2">
-              {getPrimaryNav(Boolean(user)).map((item) => {
+              {getPrimaryNav(role).map((item) => {
                 const href = item.href;
                 const active =
                   location.pathname === href || (href !== '/' && location.pathname.startsWith(href));
@@ -4655,27 +4674,39 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </div>
             )
           ) : (
-            <button
-              type="button"
-              data-testid="header-login"
-              onClick={openAuthModal}
-              disabled={authProviderBusy !== null || authEmailBusy}
-              className={cn(
-                'w-full border-0 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-white transition-colors',
-                'rounded-none bg-transparent hover:bg-blue-800/35 active:bg-blue-900/40',
-                'disabled:cursor-not-allowed disabled:opacity-60',
-                'sm:rounded-lg sm:bg-blue-700 sm:px-4 sm:py-2 sm:text-sm sm:leading-normal sm:shadow-sm sm:hover:bg-blue-800 sm:active:scale-[0.98]'
-              )}
-            >
-              {authProviderBusy !== null ? (
-                pickLang('Connexion...', 'Conectando...', 'Signing in...', lang)
-              ) : (
-                <>
-                  <span className="sm:hidden">{t('loginMobile')}</span>
-                  <span className="hidden sm:inline">{t('login')}</span>
-                </>
-              )}
-            </button>
+            <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <Link
+                to="/inscription"
+                className={cn(
+                  'w-full border-0 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-white transition-colors',
+                  'rounded-none bg-transparent hover:bg-emerald-700/35 active:bg-emerald-800/40',
+                  'sm:rounded-lg sm:bg-emerald-700 sm:px-4 sm:py-2 sm:text-sm sm:leading-normal sm:shadow-sm sm:hover:bg-emerald-800 sm:active:scale-[0.98]'
+                )}
+              >
+                Créer mon profil
+              </Link>
+              <button
+                type="button"
+                data-testid="header-login"
+                onClick={openAuthModal}
+                disabled={authProviderBusy !== null || authEmailBusy}
+                className={cn(
+                  'w-full border-0 px-3 py-2 text-center text-[11px] font-semibold leading-tight text-white transition-colors',
+                  'rounded-none bg-transparent hover:bg-blue-800/35 active:bg-blue-900/40',
+                  'disabled:cursor-not-allowed disabled:opacity-60',
+                  'sm:rounded-lg sm:bg-blue-700 sm:px-4 sm:py-2 sm:text-sm sm:leading-normal sm:shadow-sm sm:hover:bg-blue-800 sm:active:scale-[0.98]'
+                )}
+              >
+                {authProviderBusy !== null ? (
+                  pickLang('Connexion...', 'Conectando...', 'Signing in...', lang)
+                ) : (
+                  <>
+                    <span className="sm:hidden">{t('loginMobile')}</span>
+                    <span className="hidden sm:inline">{t('login')}</span>
+                  </>
+                )}
+              </button>
+            </div>
           )
         }
       />
@@ -6245,9 +6276,23 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       )}
 
       <main
-        className={cn(pageMainPad, isAdminDashboard ? 'max-w-none' : 'max-w-7xl')}
+        className={cn(pageMainPad, isAdminRoute ? 'max-w-none' : 'max-w-7xl')}
       >
-        {isSignupMinimal ? (
+        {isAdminRoute ? (
+          viewerIsAdmin ? (
+            <React.Suspense
+              fallback={
+                <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                  {lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…'}
+                </div>
+              }
+            >
+              <AdminPageLazy lang={lang} t={t} />
+            </React.Suspense>
+          ) : (
+            <Navigate to={user ? '/dashboard' : '/'} replace />
+          )
+        ) : isSignupMinimal ? (
           <>
             <Helmet>
               <title>{`${t('signupPageDocumentTitle')} · ${t('title')}`}</title>
@@ -8199,6 +8244,7 @@ const App = () => {
             <Route path="/membres" element={<MainApp />} />
             <Route path="/network" element={<MainApp />} />
             <Route path="/requests" element={<MainApp />} />
+            <Route path="/admin" element={<MainApp />} />
             <Route path="/requests/:id" element={<RequestsRedirect />} />
             <Route path="/network/member/:slug" element={<MemberRedirect />} />
             <Route path="/onboarding" element={<MainApp />} />

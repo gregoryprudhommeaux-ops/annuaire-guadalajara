@@ -1,10 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
 import type { Language } from '@/types';
 import type { UserProfile } from '@/types';
-import AdminDashboard from '@/components/dashboard/AdminDashboard';
-import { db } from '@/firebase';
 import {
   loadDashboardFirestoreData,
   userProfileToMemberExtended,
@@ -82,7 +79,6 @@ export default function DashboardPage({
   const [profiles, setProfiles] = useState<UserProfile[] | null>(null);
   const [needs, setNeeds] = useState<MemberNeed[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [profile, setProfile] = useState<{ role?: 'user' | 'admin' } | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -121,30 +117,6 @@ export default function DashboardPage({
     };
   }, [registeredWithProfile]);
 
-  useEffect(() => {
-    let cancelled = false;
-    if (!user?.uid) {
-      setProfile(null);
-      return;
-    }
-    getDoc(doc(db, 'users', user.uid))
-      .then((snap) => {
-        if (cancelled) return;
-        if (snap.exists()) {
-          const data = snap.data() as { role?: 'user' | 'admin' };
-          setProfile(data);
-        } else {
-          setProfile(null);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setProfile(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.uid]);
-
   const membersExtended = useMemo<MemberExtended[]>(
     () => (profiles ?? []).map(userProfileToMemberExtended),
     [profiles]
@@ -157,8 +129,7 @@ export default function DashboardPage({
 
   const loading =
     lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
-  const isAdmin = profile?.role === 'admin' || user?.email === 'chinois2001@gmail.com';
-  const mobileAdminOnly = isMobile && isAdmin;
+  const mobileMemberOnly = isMobile;
 
   if (registeredWithProfile && profiles === null && !loadError) {
     return (
@@ -178,9 +149,7 @@ export default function DashboardPage({
         </p>
       )}
 
-      {isAdmin ? <AdminDashboard lang={lang} t={t} initialTab={initialAdminTab} /> : null}
-
-      {!mobileAdminOnly && (
+      {!mobileMemberOnly && (
         <SectionErrorBoundary
           fallback={
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -223,7 +192,7 @@ export default function DashboardPage({
         </SectionErrorBoundary>
       )}
 
-      {!mobileAdminOnly && registeredWithProfile && profiles !== null && (
+      {!mobileMemberOnly && registeredWithProfile && profiles !== null && (
         <SectionErrorBoundary
           fallback={
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -247,7 +216,7 @@ export default function DashboardPage({
         </SectionErrorBoundary>
       )}
 
-      {!mobileAdminOnly && registeredWithProfile && profiles !== null && (
+      {!mobileMemberOnly && registeredWithProfile && profiles !== null && (
         <SectionErrorBoundary
           fallback={
             <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
