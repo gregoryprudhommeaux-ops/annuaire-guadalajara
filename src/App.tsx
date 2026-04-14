@@ -6530,9 +6530,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           />
         ) : isRequestsRoute && !isAdminDashboard ? (
           <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-            <h1 className="text-2xl font-semibold tracking-tight text-stone-900">Demandes du réseau</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
+              {t('memberRequestsTitle')}
+            </h1>
             <p className="mt-1 text-sm text-stone-600">
-              Découvrez les besoins actifs et publiez une demande pour obtenir des mises en relation utiles.
+              {t('memberRequestsSubtitle')}
             </p>
             <div className="mt-6">
               <NetworkRequestsSection
