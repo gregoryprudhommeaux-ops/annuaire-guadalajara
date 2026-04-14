@@ -24,6 +24,10 @@ const LEGACY_HIGHLIGHTED_NEED_ID_TO_CATEGORY: Record<string, NeedCategoryKey> = 
   NEED_OTHER: 'other',
 };
 
+export function mapLegacyHighlightedNeedIdToCategoryKey(needId: string): NeedCategoryKey {
+  return LEGACY_HIGHLIGHTED_NEED_ID_TO_CATEGORY[needId] ?? 'other';
+}
+
 export function mapLegacyHighlightedNeedIdToNeed(
   memberId: string,
   needId: string,

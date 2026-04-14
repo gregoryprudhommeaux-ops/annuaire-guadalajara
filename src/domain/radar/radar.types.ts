@@ -1,10 +1,16 @@
-export type RadarMetrics = {
-  totalMembers: number;
-  newMembersLast7d: number;
-  structuredNeedsTotal: number;
-  distinctSectors: number;
-  topNeeds: { id: string; count: number }[];
-  topPassions: { id: string; count: number }[];
-  sectors: { id: string; count: number }[];
+import type { HobbyKey, NeedCategoryKey, SectorKey } from '../taxonomy/taxonomy.types';
+
+export type CountMetric<T extends string> = {
+  key: T;
+  label: string;
+  count: number;
 };
 
+export type RadarMetrics = {
+  totalMembers: number;
+  totalRequests: number;
+  topSectors: CountMetric<SectorKey>[];
+  topNeedCategories: CountMetric<NeedCategoryKey>[];
+  topHobbies: CountMetric<HobbyKey>[];
+  updatedAt: string;
+};

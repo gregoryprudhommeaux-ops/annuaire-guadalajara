@@ -55,6 +55,10 @@ const LEGACY_PASSION_ID_TO_HOBBY: Record<string, HobbyKey> = {
   ecommerce: 'ecommerce',
 };
 
+export function mapLegacyPassionIdToHobbyKey(id: string): HobbyKey | undefined {
+  return LEGACY_PASSION_ID_TO_HOBBY[id];
+}
+
 function slugFromProfile(p: UserProfile): string {
   const raw = p.fullName?.trim().toLowerCase() || '';
   const slug = raw
@@ -97,7 +101,7 @@ function mapPassionIdsToHobbies(p: UserProfile): HobbyKey[] {
   const out: HobbyKey[] = [];
   const seen = new Set<string>();
   for (const id of ids) {
-    const key = LEGACY_PASSION_ID_TO_HOBBY[id];
+    const key = mapLegacyPassionIdToHobbyKey(id);
     if (!key || seen.has(key)) continue;
     seen.add(key);
     out.push(key);
@@ -155,7 +159,7 @@ function mapCityKey(city?: string): CityKey {
   return 'other';
 }
 
-function mapSectorKeyFromActivityCategory(raw?: string): SectorKey {
+export function mapLegacyActivityCategoryToSectorKey(raw?: string): SectorKey {
   const t = normalizeCityToken(String(raw ?? ''));
   if (!t) return 'other';
 
@@ -292,7 +296,7 @@ function mapCompanyFromSlot(slot: CompanyActivitySlot, p: UserProfile): Company 
   const city = mapCityKey(slot.city ?? p.city);
   const country = String(slot.country ?? p.country ?? 'Mexico').trim() || 'Mexico';
 
-  const sector = mapSectorKeyFromActivityCategory(slot.activityCategory ?? p.activityCategory);
+  const sector = mapLegacyActivityCategoryToSectorKey(slot.activityCategory ?? p.activityCategory);
   const roleInCompany = mapProfileRoleKeyFromPositionCategory(slot.positionCategory ?? p.positionCategory);
   const companyType = mapCompanyTypeKey(slot.communityCompanyKind ?? p.communityCompanyKind);
   const professionalStatus = mapProfessionalStatusKey(slot.communityMemberStatus ?? p.communityMemberStatus);
@@ -329,7 +333,7 @@ function fallbackCompanyFromProfile(p: UserProfile): Company {
     id: slot0?.id ?? `fallback-${p.uid}`,
     name,
     website: p.website?.trim() || undefined,
-    sector: mapSectorKeyFromActivityCategory(slot0?.activityCategory ?? p.activityCategory),
+    sector: mapLegacyActivityCategoryToSectorKey(slot0?.activityCategory ?? p.activityCategory),
     location: {
       city,
       district: slot0?.neighborhood?.trim() || p.neighborhood?.trim() || undefined,
