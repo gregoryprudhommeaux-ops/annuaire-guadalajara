@@ -27,19 +27,21 @@ export const ES = {
     },
 
     first50: {
-      eyebrow: 'Comunidad en lanzamiento',
-      title: 'Construyamos los primeros 50 perfiles de referencia',
+      eyebrow: 'Lanzamiento',
+      title: '50 perfiles de referencia — sumamos entre todos',
       description:
         'Cada nuevo miembro refuerza el valor de la red para todos: recomendaciones, solicitudes específicas, conexiones y oportunidades en Guadalajara.',
       subline:
         'Únete a los primeros miembros y ayúdanos a alcanzar una masa crítica útil.',
+      tagline:
+        'Cuantas más fichas útiles, más sirve el directorio a todos. Basta un envío por WhatsApp o correo.',
       progressLabel: 'Progreso',
       inviteCta: 'Invitar a mi red',
-      inviteChannelsHint: 'Invita a tus contactos para llegar a 50 perfiles:',
+      inviteChannelsHint: 'Enviar el enlace de registro:',
       inviteWhatsappCta: 'WhatsApp',
       inviteEmailCta: 'Correo',
       inviteLinkCta: 'Abrir la página de registro',
-      valueLine: 'Cada nuevo perfil aumenta el valor de la red',
+      valueLine: 'Cada perfil cuenta para toda la red.',
     },
 
     sectors: {

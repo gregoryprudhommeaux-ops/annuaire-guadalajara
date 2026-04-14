@@ -12,6 +12,10 @@ export type First50MembersBannerProps = {
   inviteUrl?: string;
   onInviteClick?: () => void;
   className?: string;
+  /**
+   * Colonne latérale (~1/3 page) : empilement vertical, textes courts, pas de sous-cartes superposées.
+   */
+  narrow?: boolean;
 };
 
 /**
@@ -23,6 +27,7 @@ export function First50MembersBanner({
   inviteUrl: inviteUrlProp,
   onInviteClick,
   className,
+  narrow = false,
 }: First50MembersBannerProps) {
   const { t } = useTranslation();
   const safeTarget = Math.max(1, targetCount);
@@ -51,41 +56,44 @@ export function First50MembersBanner({
     window.location.href = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(shareMessage)}`;
   };
 
+  const tagline = t('home.first50.tagline');
+
   return (
     <section
       aria-labelledby="first50-title"
       className={cn(
-        'rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 to-white p-5 shadow-sm sm:p-6',
+        'w-full min-w-0 rounded-xl border border-teal-200/90 bg-gradient-to-b from-teal-50/90 to-white p-4 shadow-sm',
+        narrow ? 'sm:p-4' : 'sm:p-5',
         className
       )}
     >
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
-        <div className="min-w-0 max-w-2xl flex-1 lg:py-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+      <div className="min-w-0 space-y-3">
+        <header className="min-w-0 space-y-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-700">
             {t('home.first50.eyebrow')}
           </p>
           <h2
             id="first50-title"
-            className="mt-2 text-xl font-semibold tracking-tight text-slate-900"
+            className={cn(
+              'font-semibold leading-snug tracking-tight text-slate-900 text-balance',
+              narrow ? 'text-[15px] sm:text-base' : 'text-base sm:text-lg'
+            )}
           >
             {t('home.first50.title')}
           </h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-700">{t('home.first50.description')}</p>
-          <p className="mt-3 text-sm font-medium leading-snug text-slate-900">
-            {t('home.first50.subline')}
-          </p>
-        </div>
+          <p className="text-xs leading-snug text-slate-600 text-pretty sm:text-[13px]">{tagline}</p>
+        </header>
 
-        <div className="flex w-full max-w-sm shrink-0 flex-col gap-4 rounded-2xl border border-teal-200 bg-white p-5 shadow-sm sm:p-5">
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="text-sm text-slate-600">{t('home.first50.progressLabel')}</span>
-            <span className="text-xl font-semibold tabular-nums text-slate-900">
+        <div className="rounded-lg border border-teal-100 bg-white/80 p-3 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium text-slate-600">{t('home.first50.progressLabel')}</span>
+            <span className="text-lg font-semibold tabular-nums text-slate-900">
               {safeCurrent}/{safeTarget}
             </span>
           </div>
 
           <div
-            className="h-2.5 overflow-hidden rounded-full bg-teal-100"
+            className="mt-2 h-2 overflow-hidden rounded-full bg-teal-100"
             role="progressbar"
             aria-valuenow={safeCurrent}
             aria-valuemin={0}
@@ -98,22 +106,29 @@ export function First50MembersBanner({
             />
           </div>
 
-          <p className="text-xs font-medium text-slate-600">{t('home.first50.inviteChannelsHint')}</p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <p className="mt-3 text-[11px] font-medium leading-snug text-slate-600">
+            {t('home.first50.inviteChannelsHint')}
+          </p>
+          <div
+            className={cn(
+              'mt-2 grid gap-2',
+              narrow ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'
+            )}
+          >
             <button
               type="button"
               onClick={openWhatsApp}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-900 transition-colors hover:bg-emerald-100"
+              className="inline-flex min-h-[2.5rem] w-full min-w-0 items-center justify-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-50 px-2 py-2 text-xs font-semibold text-emerald-900 transition-colors hover:bg-emerald-100 sm:text-sm"
             >
-              <MessageCircle className="h-4 w-4 shrink-0" aria-hidden />
+              <MessageCircle className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
               {t('home.first50.inviteWhatsappCta')}
             </button>
             <button
               type="button"
               onClick={openEmail}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50"
+              className="inline-flex min-h-[2.5rem] w-full min-w-0 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2 py-2 text-xs font-semibold text-slate-800 transition-colors hover:bg-slate-50 sm:text-sm"
             >
-              <Mail className="h-4 w-4 shrink-0" aria-hidden />
+              <Mail className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
               {t('home.first50.inviteEmailCta')}
             </button>
           </div>
@@ -121,16 +136,16 @@ export function First50MembersBanner({
             <a
               href={shareUrl}
               onClick={handleInviteClick}
-              className="block text-center text-xs font-medium text-teal-800 underline-offset-2 hover:text-teal-950 hover:underline"
+              className="mt-2 block text-center text-[11px] font-medium text-teal-800 underline-offset-2 hover:text-teal-950 hover:underline"
             >
               {t('home.first50.inviteLinkCta')}
             </a>
           ) : null}
-
-          <p className="flex min-h-[4.5rem] items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-center text-sm leading-snug text-slate-600 text-balance">
-            {t('home.first50.valueLine')}
-          </p>
         </div>
+
+        <p className="rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 text-center text-[11px] leading-snug text-slate-600 text-pretty">
+          {t('home.first50.valueLine')}
+        </p>
       </div>
     </section>
   );

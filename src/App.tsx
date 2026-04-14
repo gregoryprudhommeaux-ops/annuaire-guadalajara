@@ -6104,7 +6104,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 currentCount={stats.total}
                 targetCount={FIRST_50_MEMBER_TARGET}
                 inviteUrl={getSignupJoinUrl()}
-                className="w-full"
+                className="w-full min-w-0"
+                narrow
               />
             ) : null}
 

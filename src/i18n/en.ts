@@ -635,19 +635,21 @@ export const EN = {
     },
 
     first50: {
-      eyebrow: "Launch community",
-      title: "Let’s build the first 50 reference profiles",
+      eyebrow: "Launch",
+      title: "50 reference profiles — let’s grow this together",
       description:
         "Every new member increases the value of the network for everyone: recommendations, targeted requests, connections, and opportunities in Guadalajara.",
       subline:
         "Join the first members and help us reach a useful critical mass.",
+      tagline:
+        "More useful profiles means a better directory for everyone. One WhatsApp or email is enough.",
       progressLabel: "Progress",
       inviteCta: "Invite my network",
-      inviteChannelsHint: "Invite your contacts to reach 50 profiles:",
+      inviteChannelsHint: "Send the sign-up link:",
       inviteWhatsappCta: "WhatsApp",
       inviteEmailCta: "Email",
       inviteLinkCta: "Open the sign-up page",
-      valueLine: "Each new profile increases network value",
+      valueLine: "Every profile counts for the whole network.",
     },
 
     sectors: {
