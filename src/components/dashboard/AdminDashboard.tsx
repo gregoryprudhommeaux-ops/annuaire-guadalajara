@@ -29,8 +29,6 @@ import { getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/pass
 import PassionsCrossHeatmap, { type CrossPick } from '@/components/dashboard/PassionsCrossHeatmap';
 import TopActiveMembersTable from '@/components/dashboard/TopActiveMembersTable';
 
-const RadarChartsLazy = React.lazy(() => import('@/components/admin/RadarCharts'));
-
 type TFn = (key: string) => string;
 
 type AdminDashboardProps = {
@@ -338,19 +336,6 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
             <StatCard label="En attente" value={stats.pendingReviewProfiles} />
             <StatCard label="Vues profils" value={stats.totalProfileViewEvents} />
           </div>
-
-          {/* ── Graphiques profil communauté ── */}
-          <MiniErrorBoundary label="RadarCharts">
-            <React.Suspense
-              fallback={
-                <div className="mt-6 rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
-                  Chargement des graphiques…
-                </div>
-              }
-            >
-              <RadarChartsLazy profiles={stats.profilesForDashboard as any} />
-            </React.Suspense>
-          </MiniErrorBoundary>
 
           {/* Row 1 — Courbe inscriptions (large) + Donut secteurs */}
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">

@@ -60,6 +60,8 @@ class SectionErrorBoundary extends React.Component<
   }
 }
 
+const RadarChartsLazy = React.lazy(() => import('@/components/admin/RadarCharts'));
+
 /**
  * Page tableau de bord (Vite/React). Équivalent client d’un fichier Next
  * `src/app/dashboard/page.tsx` : pas de Server Component — données chargées ici.
@@ -188,6 +190,16 @@ export default function DashboardPage({
             </p>
           }
         >
+          <React.Suspense
+            fallback={
+              <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                Chargement des graphiques…
+              </div>
+            }
+          >
+            <RadarChartsLazy profiles={profiles ?? []} />
+          </React.Suspense>
+
           <VueEnsemble
             lang={lang}
             t={t}
