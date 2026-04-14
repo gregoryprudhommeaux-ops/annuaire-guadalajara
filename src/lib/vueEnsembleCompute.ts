@@ -28,23 +28,30 @@ export function computeStatusDistribution(members: MemberExtended[]): BarDatum[]
   return counts.map((c) => ({ label: c.key, value: c.count }));
 }
 
-const SENIORITY_BUCKET_KEYS = ['0-1', '1-3', '3-5', '5+'] as const;
-
 export function computeSeniorityBuckets(members: MemberExtended[]): BarDatum[] {
-  const buckets: Record<(typeof SENIORITY_BUCKET_KEYS)[number], number> = {
-    '0-1': 0,
-    '1-3': 0,
-    '3-5': 0,
-    '5+': 0,
+  // Tranches larges (5 ans) pour une lecture claire:
+  // 0–5, 5–10, 10–15, 15–20, 20–25, 25–30, 30+
+  const keys = ['0-5', '5-10', '10-15', '15-20', '20-25', '25-30', '30+'] as const;
+  const buckets: Record<(typeof keys)[number], number> = {
+    '0-5': 0,
+    '5-10': 0,
+    '10-15': 0,
+    '15-20': 0,
+    '20-25': 0,
+    '25-30': 0,
+    '30+': 0,
   };
   members.forEach((m) => {
     const y = m.yearsInGDL ?? 0;
-    if (y < 1) buckets['0-1']++;
-    else if (y < 3) buckets['1-3']++;
-    else if (y < 5) buckets['3-5']++;
-    else buckets['5+']++;
+    if (y < 5) buckets['0-5']++;
+    else if (y < 10) buckets['5-10']++;
+    else if (y < 15) buckets['10-15']++;
+    else if (y < 20) buckets['15-20']++;
+    else if (y < 25) buckets['20-25']++;
+    else if (y < 30) buckets['25-30']++;
+    else buckets['30+']++;
   });
-  return SENIORITY_BUCKET_KEYS.map((k) => ({ label: k, value: buckets[k] }));
+  return keys.map((k) => ({ label: k, value: buckets[k] }));
 }
 
 export function medianSeniority(members: MemberExtended[]): number {
@@ -100,14 +107,20 @@ export function formatMemberStatus(status: MemberStatus, lang: Language): string
 
 export function formatSeniorityBucket(bucketKey: string, lang: Language): string {
   switch (bucketKey) {
-    case '0-1':
-      return pickLang('0–1 an', '0–1 año', '0–1 year', lang);
-    case '1-3':
-      return pickLang('1–3 ans', '1–3 años', '1–3 years', lang);
-    case '3-5':
-      return pickLang('3–5 ans', '3–5 años', '3–5 years', lang);
-    case '5+':
-      return pickLang('5+ ans', '5+ años', '5+ years', lang);
+    case '0-5':
+      return pickLang('0–5 ans', '0–5 años', '0–5 years', lang);
+    case '5-10':
+      return pickLang('5–10 ans', '5–10 años', '5–10 years', lang);
+    case '10-15':
+      return pickLang('10–15 ans', '10–15 años', '10–15 years', lang);
+    case '15-20':
+      return pickLang('15–20 ans', '15–20 años', '15–20 years', lang);
+    case '20-25':
+      return pickLang('20–25 ans', '20–25 años', '20–25 years', lang);
+    case '25-30':
+      return pickLang('25–30 ans', '25–30 años', '25–30 years', lang);
+    case '30+':
+      return pickLang('30+ ans', '30+ años', '30+ years', lang);
     default:
       return bucketKey;
   }

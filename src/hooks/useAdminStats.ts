@@ -35,6 +35,8 @@ export interface AdminStats {
     neighborhood?: string;
     district?: string;
     city?: string;
+    passionIds?: string[];
+    status?: string;
     links?: string[];
     createdAt: Timestamp;
     contactClicks: number;
@@ -442,6 +444,12 @@ export function useAdminStats(period: PeriodKey): AdminStats {
               neighborhood: String(firstActivity?.neighborhood ?? '').trim() || undefined,
               district: String(firstActivity?.district ?? '').trim() || undefined,
               city: String(firstActivity?.city ?? '').trim() || (String((up as any).city ?? '').trim() || undefined),
+              passionIds: Array.isArray((up as any).passionIds) ? ((up as any).passionIds as string[]) : undefined,
+              status:
+                (String((up as any).communityMemberStatus ?? '').trim() ||
+                  String((p as any).communityMemberStatus ?? '').trim() ||
+                  String((p as any).status ?? '').trim()) ||
+                undefined,
               links,
               createdAt: (up.createdAt as Timestamp) ?? (p.createdAt as Timestamp),
               contactClicks: contactClicksByUid[up.uid] || 0,

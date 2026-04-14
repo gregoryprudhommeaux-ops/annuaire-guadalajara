@@ -24,14 +24,13 @@ import SectorDonutChart from '@/components/dashboard/SectorDonutChart';
 import TimePeriodFilter from '@/components/dashboard/TimePeriodFilter';
 import { TimePeriodProvider, useTimePeriod } from '@/contexts/TimePeriodContext';
 import ProfileCompletionGauge from '@/components/dashboard/ProfileCompletionGauge';
-import MembersMap from '@/components/dashboard/MembersMap';
 import ConversionFunnel from '@/components/dashboard/ConversionFunnel';
 import ActivityHeatmap from '@/components/dashboard/ActivityHeatmap';
 import EngagementLeaderboard from '@/components/dashboard/EngagementLeaderboard';
 import InscriptionAreaChart from '@/components/dashboard/InscriptionAreaChart';
-import { collection, doc, getDocs, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { db } from '@/firebase';
-import { geocodeAddress } from '@/utils/geocoding';
+import PassionsTreemap from '@/components/dashboard/PassionsTreemap';
+import { getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/passionConfig';
+import PassionsCrossHeatmap, { type CrossPick } from '@/components/dashboard/PassionsCrossHeatmap';
 
 type TFn = (key: string) => string;
 
@@ -219,9 +218,8 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
   >(null);
   const stats = useAdminStats(period as PeriodKey);
   const loadingLabel = lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
-  const [geoBusy, setGeoBusy] = useState(false);
-  const [geoMsg, setGeoMsg] = useState<string>('');
-  const canGeocode = Boolean(String((import.meta as any)?.env?.VITE_GOOGLE_MAPS_API_KEY ?? '').trim());
+  const [pickedPassion, setPickedPassion] = useState<string>('');
+  const [pickedCross, setPickedCross] = useState<CrossPick | null>(null);
   const bySectorData = useMemo(
     () => Object.entries(stats.profilesBySector).map(([name, value]) => ({ name, value })),
     [stats.profilesBySector]
@@ -265,68 +263,36 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
     setInsightTab(initialTab);
   }, [initialTab]);
 
-  async function geocodeMissingProfilesBatch() {
-    if (geoBusy) return;
-    setGeoMsg('');
-    setGeoBusy(true);
-    try {
-      const snap = await getDocs(collection(db, 'users'));
-      const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
+  const pickedPassionMembers = useMemo(() => {
+    if (!pickedPassion) return { label: '', rows: [] as typeof stats.profilesForDashboard };
+    const locale = lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr';
+    const label = `${getPassionEmoji(pickedPassion)} ${getPassionLabel(pickedPassion, locale)}`;
+    const rows = (stats.profilesForDashboard ?? []).filter((m) =>
+      sanitizePassionIds((m as any).passionIds).includes(pickedPassion)
+    );
+    return { label, rows };
+  }, [pickedPassion, stats.profilesForDashboard, lang]);
 
-      const candidates = rows.filter((p) => {
-        const lat = (p as any).latitude;
-        const lng = (p as any).longitude;
-        if (typeof lat === 'number' && typeof lng === 'number') return false;
-        const first = (p as any)?.companyActivities?.[0];
-        const neighborhood = String(first?.neighborhood ?? '').trim();
-        const district = String(first?.district ?? '').trim();
-        const city = String(first?.city ?? '').trim();
-        return Boolean(neighborhood || district || city);
-      });
-
-      // Limite volontaire: évite quota/latence et permet de relancer plusieurs fois.
-      const BATCH = 12;
-      const slice = candidates.slice(0, BATCH);
-      let ok = 0;
-      let fail = 0;
-
-      for (const p of slice) {
-        const first = (p as any)?.companyActivities?.[0] ?? {};
-        const neighborhood = String(first?.neighborhood ?? '').trim();
-        const district = String(first?.district ?? '').trim();
-        const city = String(first?.city ?? '').trim() || 'Guadalajara';
-        const state = String(first?.state ?? '').trim();
-        const country = String(first?.country ?? '').trim();
-
-        const approx = [neighborhood || district, city || state || country].filter(Boolean).join(', ');
-        if (!approx) {
-          fail++;
-          continue;
-        }
-        const coords = await geocodeAddress(approx, city);
-        if (!coords) {
-          fail++;
-          continue;
-        }
-        try {
-          await updateDoc(doc(db, 'users', String((p as any).id)), {
-            latitude: coords.lat,
-            longitude: coords.lng,
-            geocodedAt: serverTimestamp(),
-          });
-          ok++;
-        } catch {
-          fail++;
-        }
-      }
-
-      setGeoMsg(`Géocodage: ${ok} ok, ${fail} échecs (sur ${slice.length}). Recharge le dashboard pour voir la carte.`);
-    } catch (e) {
-      setGeoMsg(`Géocodage: erreur (${e instanceof Error ? e.message : String(e)})`);
-    } finally {
-      setGeoBusy(false);
-    }
-  }
+  const pickedCrossMembers = useMemo(() => {
+    if (!pickedCross) return { title: '', rows: [] as typeof stats.profilesForDashboard };
+    const locale = lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr';
+    const passionLabel = `${getPassionEmoji(pickedCross.passionId)} ${getPassionLabel(pickedCross.passionId, locale)}`;
+    const dimLabel =
+      pickedCross.dimension === 'sector' ? 'Secteur' : pickedCross.dimension === 'status' ? 'Statut' : 'Ville';
+    const title = `${passionLabel} × ${dimLabel}: ${pickedCross.dimValue}`;
+    const rows = (stats.profilesForDashboard ?? []).filter((m) => {
+      const hasPassion = sanitizePassionIds((m as any).passionIds).includes(pickedCross.passionId);
+      if (!hasPassion) return false;
+      const dimValue =
+        pickedCross.dimension === 'sector'
+          ? String(m.secteur ?? '').trim() || '—'
+          : pickedCross.dimension === 'status'
+            ? String((m as any).status ?? '').trim() || '—'
+            : String((m as any).city ?? '').trim() || '—';
+      return dimValue === pickedCross.dimValue;
+    });
+    return { title, rows };
+  }, [pickedCross, stats.profilesForDashboard, lang]);
 
   return (
     <section className="space-y-6">
@@ -388,94 +354,146 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
             <StatCard label="Clics contact" value={stats.totalClicks} />
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-5">
-            <div className="xl:col-span-3">
-              <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+              <h3 className="text-sm font-semibold text-stone-900">Répartition par secteur</h3>
+              <p className="mt-1 text-xs text-stone-500">Profils (toutes périodes)</p>
+              <div className="mt-3">
+                <SectorDonutChart data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))} />
+              </div>
+            </div>
+
+            <MiniErrorBoundary label="ConversionFunnel">
+              <ConversionFunnel
+                inscritsOAuth={stats.totalProfiles}
+                profilsComplets={stats.completedProfilesStrict}
+                membresActifs={stats.activeMembersWithContactClicks}
+              />
+            </MiniErrorBoundary>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <MiniErrorBoundary label="InscriptionAreaChart">
+              <InscriptionAreaChart members={stats.profilesCreatedAt} />
+            </MiniErrorBoundary>
+
+            <MiniErrorBoundary label="EngagementLeaderboard">
+              <EngagementLeaderboard members={stats.profilesForDashboard as any} />
+            </MiniErrorBoundary>
+          </div>
+
+          <MiniErrorBoundary label="PassionsTreemap">
+            <PassionsTreemap
+              members={stats.profilesForDashboard.map((m) => ({
+                id: m.id,
+                nom: m.nom,
+                passionIds: (m as any).passionIds,
+              }))}
+              lang={lang}
+              onPickPassion={(id) => setPickedPassion(id)}
+            />
+          </MiniErrorBoundary>
+
+          <MiniErrorBoundary label="PassionsCrossHeatmap">
+            <PassionsCrossHeatmap
+              members={stats.profilesForDashboard.map((m) => ({
+                id: m.id,
+                secteur: m.secteur,
+                city: (m as any).city,
+                status: (m as any).status,
+                passionIds: (m as any).passionIds,
+              }))}
+              lang={lang}
+              onPickCell={(pick) => {
+                setPickedPassion('');
+                setPickedCross(pick);
+              }}
+            />
+          </MiniErrorBoundary>
+
+          <MiniErrorBoundary label="ActivityHeatmap">
+            <ActivityHeatmap members={stats.profilesCreatedAt} />
+          </MiniErrorBoundary>
+
+          {pickedPassion ? (
+            <div className="fixed inset-0 z-[400] flex items-center justify-center bg-stone-900/50 p-4">
+              <div className="w-full max-w-2xl rounded-2xl border border-stone-200 bg-white p-4 shadow-2xl sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-stone-900">📍 Localisation des membres</h3>
-                    <p className="mt-1 text-xs text-stone-500">Guadalajara et alentours</p>
+                    <h3 className="text-base font-semibold text-stone-900">{pickedPassionMembers.label}</h3>
+                    <p className="mt-1 text-xs text-stone-500">{pickedPassionMembers.rows.length} membre(s)</p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => void geocodeMissingProfilesBatch()}
-                    disabled={!canGeocode || geoBusy}
-                    className="shrink-0 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-60 disabled:pointer-events-none"
-                    title={
-                      !canGeocode
-                        ? 'Clé Google Geocoding manquante (VITE_GOOGLE_MAPS_API_KEY)'
-                        : geoBusy
-                          ? 'Géocodage en cours…'
-                          : 'Géocoder les profils sans coordonnées (quartier/district)'
-                    }
+                    onClick={() => setPickedPassion('')}
+                    className="shrink-0 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
                   >
-                    {geoBusy ? 'Géocodage…' : 'Géocoder profils'}
+                    Fermer
                   </button>
                 </div>
-                <div className="mt-3">
-                  <MiniErrorBoundary label="MembersMap">
-                    <MembersMap
-                      members={stats.profilesForDashboard.map((m) => ({
-                        id: m.id,
-                        nom: m.nom,
-                        entreprise: m.entreprise,
-                        secteur: m.secteur,
-                        latitude: m.latitude,
-                        longitude: m.longitude,
-                        neighborhood: (m as any).neighborhood,
-                        district: (m as any).district,
-                        city: (m as any).city,
-                      }))}
-                    />
-                  </MiniErrorBoundary>
-                </div>
-                {geoMsg ? (
-                  <p className="mt-3 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-700">
-                    {geoMsg}
-                  </p>
-                ) : null}
-              </div>
-            </div>
-            <div className="xl:col-span-2">
-              <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-semibold text-stone-900">Répartition par secteur</h3>
-                <p className="mt-1 text-xs text-stone-500">Profils (toutes périodes)</p>
-                <div className="mt-3">
-                  <SectorDonutChart data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))} />
+
+                <div className="mt-4 max-h-[60vh] overflow-auto rounded-lg border border-stone-200">
+                  <ul className="divide-y divide-stone-100">
+                    {pickedPassionMembers.rows.map((m) => (
+                      <li key={m.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-stone-900">{m.nom}</p>
+                          {m.entreprise ? <p className="truncate text-xs text-stone-500">{m.entreprise}</p> : null}
+                        </div>
+                        <a
+                          href={`/membres/${encodeURIComponent(m.id)}`}
+                          className="shrink-0 rounded-md bg-blue-700 px-2.5 py-1 text-xs font-semibold text-white"
+                        >
+                          Voir
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </div>
-          </div>
+          ) : null}
 
-          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-5">
-            <div className="xl:col-span-3">
-              <MiniErrorBoundary label="InscriptionAreaChart">
-                <InscriptionAreaChart members={stats.profilesCreatedAt} />
-              </MiniErrorBoundary>
-            </div>
-            <div className="xl:col-span-2">
-              <MiniErrorBoundary label="ConversionFunnel">
-                <ConversionFunnel
-                  inscritsOAuth={stats.totalProfiles}
-                  profilsComplets={stats.completedProfilesStrict}
-                  membresActifs={stats.activeMembersWithContactClicks}
-                />
-              </MiniErrorBoundary>
-            </div>
-          </div>
+          {pickedCross ? (
+            <div className="fixed inset-0 z-[410] flex items-center justify-center bg-stone-900/50 p-4">
+              <div className="w-full max-w-2xl rounded-2xl border border-stone-200 bg-white p-4 shadow-2xl sm:p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-base font-semibold text-stone-900">{pickedCrossMembers.title}</h3>
+                    <p className="mt-1 text-xs text-stone-500">{pickedCrossMembers.rows.length} membre(s)</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPickedCross(null)}
+                    className="shrink-0 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                  >
+                    Fermer
+                  </button>
+                </div>
 
-          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-5">
-            <div className="xl:col-span-3">
-              <MiniErrorBoundary label="ActivityHeatmap">
-                <ActivityHeatmap members={stats.profilesCreatedAt} />
-              </MiniErrorBoundary>
+                <div className="mt-4 max-h-[60vh] overflow-auto rounded-lg border border-stone-200">
+                  <ul className="divide-y divide-stone-100">
+                    {pickedCrossMembers.rows.map((m) => (
+                      <li key={m.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-stone-900">{m.nom}</p>
+                          <p className="truncate text-xs text-stone-500">
+                            {[m.entreprise, m.secteur, (m as any).status, (m as any).city].filter(Boolean).join(' · ')}
+                          </p>
+                        </div>
+                        <a
+                          href={`/membres/${encodeURIComponent(m.id)}`}
+                          className="shrink-0 rounded-md bg-blue-700 px-2.5 py-1 text-xs font-semibold text-white"
+                        >
+                          Voir
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
-            <div className="xl:col-span-2">
-              <MiniErrorBoundary label="EngagementLeaderboard">
-                <EngagementLeaderboard members={stats.profilesForDashboard as any} />
-              </MiniErrorBoundary>
-            </div>
-          </div>
+          ) : null}
 
       {activeChart && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-stone-900/60 p-4">

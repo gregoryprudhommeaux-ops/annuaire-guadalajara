@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResponsiveBar } from '@nivo/bar';
+import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import type { User } from 'firebase/auth';
 import type { Language } from '@/types';
 import { pickLang } from '@/lib/uiLocale';
@@ -66,8 +67,86 @@ const BAR_FILL_COLORS = [
   '#a21caf',
 ] as const;
 
-function barRowsForNivo(data: BarDatum[]): { label: string; value: number }[] {
-  return data.map((d) => ({ label: d.label, value: d.value }));
+function MiniPieCard({
+  title,
+  kpiLabel,
+  kpiValue,
+  data,
+}: {
+  title: string;
+  kpiLabel: string;
+  kpiValue: string;
+  data: { label: string; value: number }[];
+}) {
+  const rows = useMemo(
+    () =>
+      (data ?? [])
+        .map((d) => ({ name: String(d.label ?? '').trim() || '—', value: Number(d.value ?? 0) }))
+        .filter((d) => Number.isFinite(d.value) && d.value > 0),
+    [data]
+  );
+  const hasData = rows.length > 0;
+
+  return (
+    <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+      <div className="mb-2.5 flex flex-col gap-1.5 sm:mb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+        <div className="min-w-0 shrink-0 text-left sm:text-right">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500">{kpiLabel}</p>
+          <p className="text-lg font-semibold leading-tight text-slate-900 sm:text-sm">{kpiValue}</p>
+        </div>
+      </div>
+
+      {!hasData ? (
+        <p className="text-sm text-slate-500">—</p>
+      ) : (
+        <div className="h-52 w-full sm:h-44">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={rows}
+                dataKey="value"
+                nameKey="name"
+                cx="45%"
+                cy="50%"
+                innerRadius="55%"
+                outerRadius="78%"
+                paddingAngle={2}
+                stroke="#ffffff"
+                strokeWidth={2}
+              >
+                {rows.map((_, idx) => (
+                  <Cell key={idx} fill={BAR_FILL_COLORS[idx % BAR_FILL_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(v: any, n: any) => [String(v ?? ''), String(n ?? '')]}
+                contentStyle={{ fontSize: 12 }}
+              />
+              <Legend
+                layout="vertical"
+                verticalAlign="middle"
+                align="right"
+                wrapperStyle={{ fontSize: 12, maxHeight: 160, overflowY: 'auto' }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function barRowsForNivo(data: Array<BarDatum & { key?: string; displayLabel?: string }>): {
+  key: string;
+  label: string;
+  value: number;
+}[] {
+  return data.map((d) => ({
+    key: String(d.key ?? d.label),
+    label: String(d.displayLabel ?? d.label),
+    value: d.value,
+  }));
 }
 
 function characteristicWord(label: string): string {
@@ -122,14 +201,21 @@ function MiniBarCard({
   kpiLabel,
   kpiValue,
   data,
+  onBarClick,
 }: {
   title: string;
   kpiLabel: string;
   kpiValue: string;
   data: BarDatum[];
+  onBarClick?: (key: string) => void;
 }) {
   const rows = barRowsForNivo(data);
   const hasData = rows.length > 0 && rows.some((r) => r.value > 0);
+  const labelByKey = useMemo(() => {
+    const m = new Map<string, string>();
+    rows.forEach((r) => m.set(r.key, r.label));
+    return m;
+  }, [rows]);
 
   return (
     <section className="flex flex-col rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
@@ -148,7 +234,7 @@ function MiniBarCard({
             <ResponsiveBar
               data={rows}
               keys={['value']}
-              indexBy="label"
+              indexBy="key"
               margin={{ top: 8, right: 10, bottom: 30, left: 86 }}
               padding={0.35}
               layout="horizontal"
@@ -157,6 +243,7 @@ function MiniBarCard({
               colors={[...BAR_FILL_COLORS]}
               borderWidth={1}
               borderColor={{ from: 'color', modifiers: [['darker', 0.65]] }}
+              onClick={(d) => onBarClick?.(String((d as any).indexValue ?? (d as any).data?.key ?? ''))}
               axisTop={null}
               axisRight={null}
               axisBottom={{
@@ -169,7 +256,7 @@ function MiniBarCard({
               axisLeft={{
                 tickSize: 0,
                 tickPadding: 6,
-                format: (v) => compactLabel(String(v ?? ''), 12),
+                format: (v) => compactLabel(labelByKey.get(String(v ?? '')) ?? String(v ?? ''), 12),
               }}
               theme={{
                 ...barTheme,
@@ -190,7 +277,7 @@ function MiniBarCard({
               theme={barTheme}
               data={rows}
               keys={['value']}
-              indexBy="label"
+              indexBy="key"
               margin={{ top: 8, right: 8, bottom: 64, left: 30 }}
               padding={0.3}
               layout="vertical"
@@ -199,6 +286,7 @@ function MiniBarCard({
               colors={[...BAR_FILL_COLORS]}
               borderWidth={1}
               borderColor={{ from: 'color', modifiers: [['darker', 0.65]] }}
+              onClick={(d) => onBarClick?.(String((d as any).indexValue ?? (d as any).data?.key ?? ''))}
               axisTop={null}
               axisRight={null}
               axisBottom={{
@@ -206,7 +294,8 @@ function MiniBarCard({
                 tickPadding: 4,
                 tickRotation: 0,
                 renderTick: (tick: BarAxisTick) => {
-                  const raw = String(tick.value ?? '');
+                  const rawKey = String(tick.value ?? '');
+                  const raw = labelByKey.get(rawKey) ?? rawKey;
                   const compact = raw.length > 28 ? characteristicWord(raw) : raw;
                   const [line1, line2] = toTwoLinesLabel(compact, 10);
                   return (
@@ -279,13 +368,54 @@ function CommunityDashboard({
   }, [members, lang]);
   const seniorityData = useMemo(() => {
     return computeSeniorityBuckets(members).map((d) => ({
-      label: formatSeniorityBucket(d.label, lang),
+      label: d.label,
+      displayLabel: formatSeniorityBucket(d.label, lang),
       value: d.value,
-    }));
+      key: d.label,
+    })) as any;
   }, [members, lang]);
 
   const medianYears = useMemo(() => medianSeniority(members), [members]);
   const yearsUnit = pickLang('ans', 'años', 'years', lang);
+
+  const [seniorityOpen, setSeniorityOpen] = useState(false);
+  const [seniorityKey, setSeniorityKey] = useState<string>('');
+
+  const seniorityYearBreakdown = useMemo(() => {
+    if (!seniorityOpen || !seniorityKey) return [];
+    const key = seniorityKey.trim();
+    let start = 0;
+    let end = 0;
+    if (key.endsWith('+')) {
+      start = Number(key.slice(0, -1));
+      end = 51; // 0..50
+    } else {
+      const [a, b] = key.split('-').map((x) => Number(x));
+      start = Number.isFinite(a) ? a : 0;
+      end = Number.isFinite(b) ? b : start + 5;
+    }
+    start = Math.max(0, Math.min(50, start));
+    end = Math.max(start + 1, Math.min(51, end));
+
+    const byYear = new Map<number, number>();
+    members.forEach((m) => {
+      const y = Math.round(Number(m.yearsInGDL ?? 0));
+      if (!Number.isFinite(y)) return;
+      if (y < start) return;
+      if (y >= end) return;
+      byYear.set(y, (byYear.get(y) ?? 0) + 1);
+    });
+
+    const out: Array<{ label: string; value: number; key: string }> = [];
+    for (let y = start; y < end; y++) {
+      out.push({
+        key: String(y),
+        label: pickLang(`${y} ans`, `${y} años`, `${y} years`, lang),
+        value: byYear.get(y) ?? 0,
+      });
+    }
+    return out;
+  }, [members, lang, seniorityKey, seniorityOpen]);
 
   const topSector = [...sectorData].sort((a, b) => b.value - a.value)[0];
   const topSize = [...sizeData].sort((a, b) => b.value - a.value)[0];
@@ -311,7 +441,7 @@ function CommunityDashboard({
           kpiValue={topSector ? topSector.label : '—'}
           data={sectorData}
         />
-        <MiniBarCard
+        <MiniPieCard
           title={t('cardMembersBySize')}
           kpiLabel={t('kpiTopSize')}
           kpiValue={topSize ? topSize.label : '—'}
@@ -322,14 +452,87 @@ function CommunityDashboard({
           kpiLabel={t('kpiGDLMedianYears')}
           kpiValue={medianKpi}
           data={seniorityData}
+          onBarClick={(key) => {
+            if (!key) return;
+            setSeniorityKey(key);
+            setSeniorityOpen(true);
+          }}
         />
-        <MiniBarCard
+        <MiniPieCard
           title={t('cardMembersByStatus')}
           kpiLabel={t('kpiTopStatus')}
           kpiValue={topStatus ? topStatus.label : '—'}
           data={statusData}
         />
       </div>
+
+      {seniorityOpen ? (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-base font-semibold text-slate-900">
+                  {t('cardMembersBySeniority')} — {formatSeniorityBucket(seniorityKey, lang)}
+                </h3>
+                <p className="mt-1 text-xs text-slate-500">Détail par année</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSeniorityOpen(false)}
+                className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Fermer
+              </button>
+            </div>
+
+            <div className="mt-4 h-[320px]">
+              <ResponsiveBar
+                theme={barTheme}
+                data={barRowsForNivo(seniorityYearBreakdown as any)}
+                keys={['value']}
+                indexBy="key"
+                margin={{ top: 8, right: 12, bottom: 40, left: 40 }}
+                padding={0.25}
+                layout="vertical"
+                valueScale={{ type: 'linear', min: 0 }}
+                colorBy="indexValue"
+                colors={['#1d4ed8']}
+                axisTop={null}
+                axisRight={null}
+                axisBottom={{
+                  tickSize: 3,
+                  tickPadding: 6,
+                  renderTick: (tick: BarAxisTick) => {
+                    const key = String(tick.value ?? '');
+                    const label =
+                      (seniorityYearBreakdown as any).find((d: any) => String(d.key) === key)?.label ??
+                      key;
+                    return (
+                      <g transform={`translate(${tick.x},${tick.y})`} opacity={tick.opacity ?? 1}>
+                        <title>{label}</title>
+                        <line y2="3" stroke="#9ca3af" />
+                        <text
+                          textAnchor="middle"
+                          dominantBaseline="hanging"
+                          style={{ fill: '#6b7280', fontSize: 10, pointerEvents: 'none' }}
+                        >
+                          <tspan x="0" dy="6">
+                            {label.replace(/\s+(ans|años|years)$/i, '')}
+                          </tspan>
+                        </text>
+                      </g>
+                    );
+                  },
+                }}
+                axisLeft={{ tickSize: 3, tickPadding: 4 }}
+                gridYValues={[]}
+                enableLabel={false}
+                motionConfig="gentle"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {includeNeedsDashboard && (
         <NeedsDashboard needs={needs} members={members} lang={lang} t={t} className="mt-2" />
