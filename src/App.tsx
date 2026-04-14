@@ -54,6 +54,7 @@ import {
 } from 'firebase/firestore';
 import { FirebaseError } from 'firebase/app';
 import { auth, db } from './firebase';
+import { serverTimestamp } from 'firebase/firestore';
 import {
   UserProfile,
   Language,
@@ -141,6 +142,7 @@ import {
   saveProfileFormDraft,
   shouldRestoreProfileDraft,
 } from './lib/profileFormDraftStorage';
+import { geocodeAddress } from './utils/geocoding';
 import {
   MEMBER_REQUESTS_COLLECTION,
   mapMemberRequestDoc,
@@ -3647,6 +3649,31 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
         acceptsDelegationVisits: delegationFlag,
         openToEventSponsoring: formAdminPrivateReady ? openToEventSponsoring : undefined,
       });
+      // Geocoding (optionnel) : si aucune coordonnée n’est présente, on géocode une adresse approximative
+      // (ville/état/pays + quartier) pour la carte dashboard. Précision arrondie (~100 m).
+      try {
+        const first = companyActivitiesDraft[0];
+        const hasLat = typeof (sanitizedProfile as any).latitude === 'number';
+        const hasLng = typeof (sanitizedProfile as any).longitude === 'number';
+        if (!hasLat && !hasLng && first?.city && first?.state && first?.country) {
+          const addrBits = [first.neighborhood, first.city, first.state, first.country]
+            .map((x) => String(x ?? '').trim())
+            .filter(Boolean);
+          const addr = addrBits.join(', ');
+          if (addr) {
+            const coords = await geocodeAddress(addr, first.city);
+            if (coords) {
+              await updateDoc(doc(db, 'users', targetUid), {
+                latitude: coords.lat,
+                longitude: coords.lng,
+                geocodedAt: serverTimestamp(),
+              }).catch(() => {});
+            }
+          }
+        }
+      } catch {
+        // ignore geocoding failure
+      }
       if (isSelf) {
         const fresh = await getDoc(doc(db, 'users', targetUid));
         if (fresh.exists()) setProfile(fresh.data() as UserProfile);

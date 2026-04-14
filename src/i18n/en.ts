@@ -230,6 +230,7 @@ export const EN_STRINGS: Record<string, string> = {
   adminChartCompletionBuckets: "Completion score distribution",
   adminChartCompletionBucketsHint: "Based on fields used for recommendations.",
   adminChartRegistrationsByDay: "Sign-ups by day",
+  adminChartRegistrationsCumulative: "Cumulative sign-ups",
   adminLegendProfiles: "Profiles",
   adminLegendRegistrations: "Sign-ups",
   adminStatSpaViews: "SPA page views",

@@ -20,6 +20,15 @@ import type { Language } from '@/types';
 import AdminProfileInsights from '@/components/dashboard/AdminProfileInsights';
 import AdminSiteInsights from '@/components/dashboard/AdminSiteInsights';
 import AdminEvents from '@/components/dashboard/AdminEvents';
+import SectorDonutChart from '@/components/dashboard/SectorDonutChart';
+import TimePeriodFilter from '@/components/dashboard/TimePeriodFilter';
+import { TimePeriodProvider, useTimePeriod } from '@/contexts/TimePeriodContext';
+import ProfileCompletionGauge from '@/components/dashboard/ProfileCompletionGauge';
+import MembersMap from '@/components/dashboard/MembersMap';
+import ConversionFunnel from '@/components/dashboard/ConversionFunnel';
+import ActivityHeatmap from '@/components/dashboard/ActivityHeatmap';
+import EngagementLeaderboard from '@/components/dashboard/EngagementLeaderboard';
+import InscriptionAreaChart from '@/components/dashboard/InscriptionAreaChart';
 
 type TFn = (key: string) => string;
 
@@ -154,8 +163,16 @@ function ChartCard({
 type AdminInsightTab = 'overview' | 'profiles' | 'site' | 'events';
 
 export default function AdminDashboard({ lang, t, initialTab }: AdminDashboardProps) {
+  return (
+    <TimePeriodProvider defaultPeriod="30d">
+      <AdminDashboardInner lang={lang} t={t} initialTab={initialTab} />
+    </TimePeriodProvider>
+  );
+}
+
+function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
   const [insightTab, setInsightTab] = useState<AdminInsightTab>('overview');
-  const [period, setPeriod] = useState<PeriodKey>('week');
+  const { period, setPeriod } = useTimePeriod();
   const [activeChart, setActiveChart] = useState<
     | null
     | 'type'
@@ -165,7 +182,7 @@ export default function AdminDashboard({ lang, t, initialTab }: AdminDashboardPr
     | 'growth'
     | 'clicks'
   >(null);
-  const stats = useAdminStats(period);
+  const stats = useAdminStats(period as PeriodKey);
   const loadingLabel = lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
   const bySectorData = useMemo(
     () => Object.entries(stats.profilesBySector).map(([name, value]) => ({ name, value })),
@@ -212,6 +229,7 @@ export default function AdminDashboard({ lang, t, initialTab }: AdminDashboardPr
 
   return (
     <section className="space-y-6">
+      <TimePeriodFilter />
       <div className="flex flex-wrap gap-2 border-b border-stone-200 pb-3">
         {(
           [
@@ -244,205 +262,79 @@ export default function AdminDashboard({ lang, t, initialTab }: AdminDashboardPr
 
       {!stats.loading && !stats.error && insightTab === 'profiles' ? (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            {(['today', 'week', 'month', 'all'] as PeriodKey[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPeriod(p)}
-                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  period === p
-                    ? 'bg-blue-700 text-white'
-                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                }`}
-              >
-                {p === 'today' ? 'Aujourd’hui' : p === 'week' ? '7 jours' : p === 'month' ? '30 jours' : 'Tout'}
-              </button>
-            ))}
-          </div>
           <AdminProfileInsights stats={stats} lang={lang} t={t} />
         </>
       ) : null}
 
       {!stats.loading && !stats.error && insightTab === 'site' ? (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            {(['today', 'week', 'month', 'all'] as PeriodKey[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPeriod(p)}
-                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  period === p
-                    ? 'bg-blue-700 text-white'
-                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                }`}
-              >
-                {p === 'today' ? 'Aujourd’hui' : p === 'week' ? '7 jours' : p === 'month' ? '30 jours' : 'Tout'}
-              </button>
-            ))}
-          </div>
           <AdminSiteInsights stats={stats} lang={lang} t={t} />
         </>
       ) : null}
 
       {!stats.loading && !stats.error && insightTab === 'overview' ? (
         <>
-      <div className="flex flex-wrap items-center gap-2">
-        {(['today', 'week', 'month', 'all'] as PeriodKey[]).map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => setPeriod(p)}
-            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-              period === p
-                ? 'bg-blue-700 text-white'
-                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-            }`}
-          >
-            {p === 'today' ? 'Aujourd’hui' : p === 'week' ? '7 jours' : p === 'month' ? '30 jours' : 'Tout'}
-          </button>
-        ))}
-      </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard label={t('members') || 'Membres'} value={stats.totalProfiles} />
+            <StatCard label="Nouveaux inscrits" value={stats.newProfilesInPeriod} />
+            <ProfileCompletionGauge
+              totalMembers={stats.totalProfiles}
+              completedProfiles={stats.completedProfilesStrict}
+            />
+            <StatCard label="Clics contact" value={stats.totalClicks} />
+          </div>
 
-      <div className="grid w-full grid-cols-4 gap-2 sm:gap-3">
-        <StatCard label={t('members') || 'Membres'} value={stats.totalProfiles} />
-        <StatCard label="Nouveaux inscrits (periode)" value={stats.newProfilesInPeriod} />
-        <StatCard label="Profils incomplets" value={stats.incompleteProfiles} />
-        <StatCard label="Total clics contact" value={stats.totalClicks} />
-      </div>
+          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-5">
+            <div className="xl:col-span-3">
+              <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-stone-900">📍 Localisation des membres</h3>
+                <p className="mt-1 text-xs text-stone-500">Guadalajara et alentours</p>
+                <div className="mt-3">
+                  <MembersMap
+                    members={stats.profilesForDashboard.map((m) => ({
+                      id: m.id,
+                      nom: m.nom,
+                      entreprise: m.entreprise,
+                      secteur: m.secteur,
+                      latitude: m.latitude,
+                      longitude: m.longitude,
+                    }))}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="xl:col-span-2">
+              <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-stone-900">Répartition par secteur</h3>
+                <p className="mt-1 text-xs text-stone-500">Profils (toutes périodes)</p>
+                <div className="mt-3">
+                  <SectorDonutChart data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))} />
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-        <ChartCard
-          title="Repartition profils (type)"
-          expandLabel={expandChartLabel}
-          onExpand={() => setActiveChart('type')}
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 4, right: 8, bottom: 32, left: 8 }}>
-              <Pie
-                data={byTypeData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="42%"
-                innerRadius={0}
-                outerRadius="62%"
-                paddingAngle={2}
-                label={{ fontSize: 10, fill: '#475569' }}
-              >
-                {byTypeData.map((entry, index) => (
-                  <Cell key={`${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={{ fontSize: 11 }} />
-              <Legend {...legendProps} />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard
-          title="Profils par statut"
-          expandLabel={expandChartLabel}
-          onExpand={() => setActiveChart('status')}
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={byStatusData} margin={{ top: 8, right: 8, bottom: 64, left: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="name"
-                tick={xTickCardAngled}
-                interval={0}
-                angle={-20}
-                textAnchor="end"
-                height={56}
+          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-5">
+            <div className="xl:col-span-3">
+              <InscriptionAreaChart members={stats.profilesCreatedAt} />
+            </div>
+            <div className="xl:col-span-2">
+              <ConversionFunnel
+                inscritsOAuth={stats.totalProfiles}
+                profilsComplets={stats.completedProfilesStrict}
+                membresActifs={stats.activeMembersWithContactClicks}
               />
-              <YAxis allowDecimals={false} tick={chartTick} width={28} />
-              <Tooltip contentStyle={{ fontSize: 11 }} />
-              <Bar dataKey="value" fill="#1d4ed8" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
+            </div>
+          </div>
 
-        <ChartCard
-          title="Profils par ville"
-          expandLabel={expandChartLabel}
-          onExpand={() => setActiveChart('city')}
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={byCityData} margin={{ top: 8, right: 8, bottom: 64, left: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="name"
-                tick={xTickCardAngled}
-                interval={0}
-                angle={-20}
-                textAnchor="end"
-                height={56}
-              />
-              <YAxis allowDecimals={false} tick={chartTick} width={28} />
-              <Tooltip contentStyle={{ fontSize: 11 }} />
-              <Bar dataKey="value" fill="#0284c7" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard
-          title="Profils par secteur"
-          expandLabel={expandChartLabel}
-          onExpand={() => setActiveChart('sector')}
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={bySectorData} margin={{ top: 8, right: 8, bottom: 64, left: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="name"
-                tick={xTickCardAngled}
-                interval={0}
-                angle={-20}
-                textAnchor="end"
-                height={56}
-              />
-              <YAxis allowDecimals={false} tick={chartTick} width={28} />
-              <Tooltip contentStyle={{ fontSize: 11 }} />
-              <Bar dataKey="value" fill="#7c3aed" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard
-          title="Croissance profils (30 jours)"
-          expandLabel={expandChartLabel}
-          onExpand={() => setActiveChart('growth')}
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={stats.growthCurve} margin={{ top: 8, right: 8, bottom: 8, left: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tick={chartTick} height={28} />
-              <YAxis allowDecimals={false} tick={chartTick} width={28} />
-              <Tooltip contentStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="count" stroke="#16a34a" strokeWidth={2} dot={{ r: 2 }} name="Profils cumulés" />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard
-          title="Clics de contact par canal"
-          expandLabel={expandChartLabel}
-          onExpand={() => setActiveChart('clicks')}
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={stats.clicksByType} margin={{ top: 8, right: 8, bottom: 36, left: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={xTickCardFlat} height={28} />
-              <YAxis allowDecimals={false} tick={chartTick} width={28} />
-              <Tooltip contentStyle={{ fontSize: 11 }} />
-              <Legend {...legendProps} />
-              <Bar dataKey="value" name="Clics" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </div>
+          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-5">
+            <div className="xl:col-span-3">
+              <ActivityHeatmap members={stats.profilesCreatedAt} />
+            </div>
+            <div className="xl:col-span-2">
+              <EngagementLeaderboard members={stats.profilesForDashboard as any} />
+            </div>
+          </div>
 
       {activeChart && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-stone-900/60 p-4">
@@ -475,6 +367,7 @@ export default function AdminDashboard({ lang, t, initialTab }: AdminDashboardPr
                         nameKey="name"
                         cx="50%"
                         cy="44%"
+                        innerRadius="48%"
                         outerRadius="68%"
                         label={{ fontSize: 11, fill: '#475569' }}
                       >

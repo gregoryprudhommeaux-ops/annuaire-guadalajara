@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -12,6 +14,7 @@ import {
 } from 'recharts';
 import type { AdminStats } from '@/hooks/useAdminStats';
 import type { Language } from '@/types';
+import InscriptionAreaChart from '@/components/dashboard/InscriptionAreaChart';
 
 type TFn = (key: string) => string;
 
@@ -36,13 +39,9 @@ export default function AdminProfileInsights({
 }) {
   const chartTick = { fontSize: 10, fill: '#64748b' };
 
-  const regData = useMemo(
-    () =>
-      stats.registrationsByDay.map((d) => ({
-        date: d.date.slice(5),
-        count: d.count,
-      })),
-    [stats.registrationsByDay]
+  const membersForArea = useMemo(
+    () => stats.profilesCreatedAt.map((p) => ({ id: p.id, createdAt: p.createdAt })),
+    [stats.profilesCreatedAt]
   );
 
   const periodHint =
@@ -87,21 +86,7 @@ export default function AdminProfileInsights({
           </div>
         </div>
 
-        <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-stone-900">{t('adminChartRegistrationsByDay')}</h3>
-          <p className="mt-1 text-xs text-stone-500">{periodHint}</p>
-          <div className="mt-3 h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={regData} margin={{ top: 8, right: 8, bottom: 8, left: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tick={chartTick} />
-                <YAxis allowDecimals={false} tick={chartTick} width={28} />
-                <Tooltip contentStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="count" stroke="#059669" strokeWidth={2} dot={{ r: 2 }} name={t('adminLegendRegistrations')} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <InscriptionAreaChart members={membersForArea} />
       </div>
     </div>
   );

@@ -197,6 +197,10 @@ export interface UserProfile {
   communityMemberStatus?: CommunityMemberStatus;
   /** Plusieurs sociétés / activités ; la première est aussi recopiée dans les champs plats ci-dessus. */
   companyActivities?: CompanyActivitySlot[];
+  /** Coordonnées (optionnel) pour affichage carte dashboard. */
+  latitude?: number;
+  longitude?: number;
+  geocodedAt?: unknown;
 }
 
 export interface MatchSuggestion {

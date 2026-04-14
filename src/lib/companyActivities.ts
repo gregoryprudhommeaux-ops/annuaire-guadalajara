@@ -222,7 +222,7 @@ export function slotsToFirestoreList(slots: CompanyActivitySlot[]): CompanyActiv
     if (s.communityMemberStatus !== undefined) out.communityMemberStatus = s.communityMemberStatus;
     if (tcs.length) out.typicalClientSizes = tcs;
     if (activityDescription) out.activityDescription = activityDescription;
-    return out as CompanyActivitySlot;
+    return out as unknown as CompanyActivitySlot;
   });
 }
 

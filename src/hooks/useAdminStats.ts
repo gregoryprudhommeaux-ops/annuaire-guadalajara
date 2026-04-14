@@ -9,8 +9,9 @@ import {
 import { db } from '../firebase';
 import { getProfileAiRecommendationReadiness, type UserProfile } from '../types';
 import { profileDistinctActivityCategories } from '../lib/companyActivities';
+import type { TimePeriod } from '@/contexts/TimePeriodContext';
 
-export type PeriodKey = 'today' | 'week' | 'month' | 'all';
+export type PeriodKey = TimePeriod;
 
 export interface ProfileStat {
   id: string;
@@ -19,6 +20,25 @@ export interface ProfileStat {
 }
 
 export interface AdminStats {
+  /** Données brutes minimales pour certains graphiques (inscriptions, heatmap). */
+  profilesCreatedAt: { id: string; createdAt: Timestamp }[];
+  /** Profils minimaux pour carte / funnel / leaderboard. */
+  profilesForDashboard: Array<{
+    id: string;
+    nom: string;
+    entreprise?: string;
+    secteur?: string;
+    description?: string;
+    photo?: string;
+    latitude?: number;
+    longitude?: number;
+    links?: string[];
+    createdAt: Timestamp;
+    contactClicks: number;
+  }>;
+  /** Profils complets selon critères "dashboard" (nom + secteur + description + photo). */
+  completedProfilesStrict: number;
+  incompleteProfilesStrict: number;
   totalProfiles: number;
   newProfilesInPeriod: number;
   profilesByType: { entreprise: number; membre: number };
@@ -34,6 +54,8 @@ export interface AdminStats {
   clickWhatsapp: number;
   totalClicks: number;
   clicksByType: { name: string; value: number }[];
+  /** Membres avec au moins 1 clic de contact (période). */
+  activeMembersWithContactClicks: number;
   topViewedProfiles: ProfileStat[];
   topContactedProfiles: ProfileStat[];
   profilesNeverUpdated: number;
@@ -60,14 +82,19 @@ function getStartDate(period: PeriodKey): Date | null {
   if (period === 'today') {
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }
-  if (period === 'week') {
+  if (period === '7d') {
     const d = new Date(now);
     d.setDate(d.getDate() - 7);
     return d;
   }
-  if (period === 'month') {
+  if (period === '30d') {
     const d = new Date(now);
-    d.setMonth(d.getMonth() - 1);
+    d.setDate(d.getDate() - 30);
+    return d;
+  }
+  if (period === '90d') {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 90);
     return d;
   }
   return null;
@@ -89,6 +116,10 @@ function profileReadinessPct(p: Record<string, unknown> & { id: string }): numbe
 
 export function useAdminStats(period: PeriodKey): AdminStats {
   const [stats, setStats] = useState<AdminStats>({
+    profilesCreatedAt: [],
+    profilesForDashboard: [],
+    completedProfilesStrict: 0,
+    incompleteProfilesStrict: 0,
     totalProfiles: 0,
     newProfilesInPeriod: 0,
     profilesByType: { entreprise: 0, membre: 0 },
@@ -104,6 +135,7 @@ export function useAdminStats(period: PeriodKey): AdminStats {
     clickWhatsapp: 0,
     totalClicks: 0,
     clicksByType: [],
+    activeMembersWithContactClicks: 0,
     topViewedProfiles: [],
     topContactedProfiles: [],
     profilesNeverUpdated: 0,
@@ -138,6 +170,10 @@ export function useAdminStats(period: PeriodKey): AdminStats {
           ...(d.data() as Record<string, unknown>),
         })) as Array<Record<string, unknown> & { id: string }>;
 
+        const profilesCreatedAt = allProfiles
+          .map((p) => ({ id: p.id, createdAt: p.createdAt as Timestamp }))
+          .filter((p): p is { id: string; createdAt: Timestamp } => Boolean(p.createdAt));
+
         const startDate = getStartDate(period);
 
         const newInPeriod = allProfiles.filter((p) => {
@@ -155,8 +191,21 @@ export function useAdminStats(period: PeriodKey): AdminStats {
 
         let validatedProfiles = 0;
         let pendingReviewProfiles = 0;
+        let completedProfilesStrict = 0;
+        let incompleteProfilesStrict = 0;
 
         allProfiles.forEach((p: Record<string, unknown>) => {
+          const up = rowToUserProfile(p as Record<string, unknown> & { id: string });
+          const nameOk = Boolean(String(up.fullName ?? '').trim());
+          const sectors = profileDistinctActivityCategories(up);
+          const sectorOk = sectors.length > 0;
+          const desc = String((up.memberBio ?? '') || '').trim() || String((up.companyActivities as any)?.[0]?.activityDescription ?? '').trim();
+          const descOk = desc.length >= 30;
+          const photoOk = Boolean(String(up.photoURL ?? '').trim());
+          const complete = nameOk && sectorOk && descOk && photoOk;
+          if (complete) completedProfilesStrict++;
+          else incompleteProfilesStrict++;
+
           const t = (p.type as string) || 'membre';
           if (t === 'entreprise') byType.entreprise++;
           else byType.membre++;
@@ -172,7 +221,6 @@ export function useAdminStats(period: PeriodKey): AdminStats {
           const city = (p.city as string) || 'Autre';
           byCity[city] = (byCity[city] || 0) + 1;
 
-          const sectors = profileDistinctActivityCategories(p as unknown as UserProfile);
           if (sectors.length === 0) {
             const fallback = (p.sector as string) || 'Autre';
             bySector[fallback] = (bySector[fallback] || 0) + 1;
@@ -303,6 +351,7 @@ export function useAdminStats(period: PeriodKey): AdminStats {
         let whatsapp = 0;
         const viewCount: Record<string, { name: string; count: number }> = {};
         const contactCount: Record<string, { name: string; count: number }> = {};
+        const contactClicksByUid: Record<string, number> = {};
         const typeCount: Record<string, number> = {};
         const spaPaths: Record<string, number> = {};
         let totalProfileViewEvents = 0;
@@ -344,6 +393,7 @@ export function useAdminStats(period: PeriodKey): AdminStats {
           ) {
             if (!contactCount[pid]) contactCount[pid] = { name: pname || pid, count: 0 };
             contactCount[pid].count++;
+            contactClicksByUid[pid] = (contactClicksByUid[pid] || 0) + 1;
           }
         });
 
@@ -357,6 +407,41 @@ export function useAdminStats(period: PeriodKey): AdminStats {
           .sort((a, b) => b.clickCount - a.clickCount)
           .slice(0, 5);
 
+        const activeMembersWithContactClicks = Object.values(contactClicksByUid).filter((n) => n > 0).length;
+
+        const profilesForDashboard = allProfiles
+          .map((p) => {
+            const up = rowToUserProfile(p);
+            const sectors = profileDistinctActivityCategories(up);
+            const firstSector = sectors[0] || '';
+            const desc =
+              String(up.memberBio ?? '').trim() ||
+              String((up.companyActivities as any)?.[0]?.activityDescription ?? '').trim() ||
+              '';
+            const links = [
+              up.linkedin,
+              (up.companyActivities as any)?.[0]?.website,
+              up.whatsapp,
+              up.email,
+            ]
+              .map((x) => String(x ?? '').trim())
+              .filter(Boolean);
+            return {
+              id: up.uid,
+              nom: String(up.fullName ?? '').trim() || String(up.email ?? '').trim() || up.uid,
+              entreprise: String(up.companyName ?? '').trim() || undefined,
+              secteur: firstSector || undefined,
+              description: desc || undefined,
+              photo: String(up.photoURL ?? '').trim() || undefined,
+              latitude: typeof (up as any).latitude === 'number' ? ((up as any).latitude as number) : undefined,
+              longitude: typeof (up as any).longitude === 'number' ? ((up as any).longitude as number) : undefined,
+              links,
+              createdAt: (up.createdAt as Timestamp) ?? (p.createdAt as Timestamp),
+              contactClicks: contactClicksByUid[up.uid] || 0,
+            };
+          })
+          .filter((p) => Boolean(p.createdAt));
+
         const eventCountsByType = Object.entries(typeCount)
           .map(([name, value]) => ({ name, value }))
           .sort((a, b) => b.value - a.value);
@@ -368,6 +453,10 @@ export function useAdminStats(period: PeriodKey): AdminStats {
 
         if (!cancelled) {
           setStats({
+            profilesCreatedAt,
+            profilesForDashboard,
+            completedProfilesStrict,
+            incompleteProfilesStrict,
             totalProfiles: allProfiles.length,
             newProfilesInPeriod: newInPeriod,
             profilesByType: byType,
@@ -389,6 +478,7 @@ export function useAdminStats(period: PeriodKey): AdminStats {
             ],
             topViewedProfiles: topViewed,
             topContactedProfiles: topContacted,
+            activeMembersWithContactClicks,
             profilesNeverUpdated: neverUpdated,
             avgProfileCompletionPct,
             medianProfileCompletionPct,

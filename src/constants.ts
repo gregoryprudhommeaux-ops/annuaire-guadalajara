@@ -594,6 +594,7 @@ export const TRANSLATIONS: Translations = {
     es: "Según los campos usados para recomendaciones.",
   },
   adminChartRegistrationsByDay: { fr: "Inscriptions par jour", es: "Altas por día" },
+  adminChartRegistrationsCumulative: { fr: "Inscriptions cumulées", es: "Altas acumuladas" },
   adminLegendProfiles: { fr: "Profils", es: "Perfiles" },
   adminLegendRegistrations: { fr: "Inscriptions", es: "Altas" },
   adminStatSpaViews: { fr: "Vues de pages (SPA)", es: "Vistas de página (SPA)" },
