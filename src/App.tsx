@@ -75,9 +75,7 @@ import {
   type AdminEvent,
   type CompanyActivitySlot,
 } from './types';
-import AdminMemberEventHistory from './components/admin/AdminMemberEventHistory';
-import AdminEvents from './components/dashboard/AdminEvents';
-import PublicEventPage from './components/events/PublicEventPage';
+// Heavy pages/sections are lazy-loaded below for faster navigation.
 import {
   ACTIVITY_CATEGORIES,
   CITIES,
@@ -289,8 +287,14 @@ import EmailAuthPanel from './components/EmailAuthPanel';
 
 const loadNetworkRadarSection = () => import('./components/home/NetworkRadarSection');
 const loadDashboardPage = () => import('./components/dashboard/DashboardPage');
+const loadAdminEvents = () => import('./components/dashboard/AdminEvents');
+const loadPublicEventPage = () => import('./components/events/PublicEventPage');
+const loadAdminMemberEventHistory = () => import('./components/admin/AdminMemberEventHistory');
 const NetworkRadarSection = React.lazy(loadNetworkRadarSection);
 const DashboardPage = React.lazy(loadDashboardPage);
+const AdminEventsLazy = React.lazy(loadAdminEvents);
+const PublicEventPageLazy = React.lazy(loadPublicEventPage);
+const AdminMemberEventHistoryLazy = React.lazy(loadAdminMemberEventHistory);
 
 type SocialAuthProvider = 'google' | 'microsoft' | 'apple';
 
@@ -6830,7 +6834,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     </div>
 
                     <div className="space-y-6">
-                      <AdminEvents lang={lang} t={t} adminUid={user?.uid ?? null} />
+                      <React.Suspense
+                        fallback={
+                          <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500">
+                            {t('loading')}
+                          </div>
+                        }
+                      >
+                        <AdminEventsLazy lang={lang} t={t} adminUid={user?.uid ?? null} />
+                      </React.Suspense>
                     </div>
                   </div>
                 </SectionErrorBoundary>
@@ -6845,7 +6857,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   }
                 >
                   <div className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-6">
-                    <PublicEventPage lang={lang} t={t} />
+                    <React.Suspense
+                      fallback={
+                        <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500">
+                          {t('loading')}
+                        </div>
+                      }
+                    >
+                      <PublicEventPageLazy lang={lang} t={t} />
+                    </React.Suspense>
                   </div>
                 </SectionErrorBoundary>
               )}
@@ -7113,12 +7133,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                 <div className="mb-6 space-y-4 md:mb-8">
                 {viewerIsAdmin ? (
-                  <AdminMemberEventHistory
-                    lang={lang}
-                    t={t}
-                    uid={selectedProfile.uid}
-                    email={selectedProfile.email}
-                  />
+                  <React.Suspense
+                    fallback={
+                      <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500">
+                        {t('loading')}
+                      </div>
+                    }
+                  >
+                    <AdminMemberEventHistoryLazy
+                      lang={lang}
+                      t={t}
+                      uid={selectedProfile.uid}
+                      email={selectedProfile.email}
+                    />
+                  </React.Suspense>
                 ) : null}
                 {user && profile && profile.uid !== selectedProfile.uid && (
                   <AffinityScore

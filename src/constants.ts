@@ -1133,6 +1133,10 @@ export const TRANSLATIONS: Translations = {
     es: "Actualizado en tiempo real",
   },
   kpiMembers: { fr: "Membres", es: "Miembros" },
+  radarMembersThisWeek: {
+    fr: "{count} enregistrés cette semaine",
+    es: "{count} registrados esta semana",
+  },
   kpiNeeds: { fr: "Besoins", es: "Necesidades" },
   kpiSectors: { fr: "Secteurs", es: "Sectores" },
   chartSectorsTitle: { fr: "Secteurs représentés", es: "Sectores representados" },

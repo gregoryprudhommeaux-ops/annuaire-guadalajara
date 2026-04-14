@@ -22,6 +22,7 @@ import { sanitizePassionIds } from '../../lib/passionConfig';
 import { cn } from '../../cn';
 import { cardPad } from '../../lib/pageLayout';
 import { profileDistinctActivityCategories } from '../../lib/companyActivities';
+import { formatT } from '../../i18n/formatT';
 const DONUT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316', '#6B7280'];
 
 type TFn = (key: string) => string;
@@ -109,8 +110,15 @@ export default function NetworkRadarSection({
     });
   }, [allProfiles, viewerProfile?.role]);
 
-  const activeMembersCount = useMemo(() => {
-    return profilesForStats.filter((p) => Date.now() - (p.lastSeen ?? 0) < 2592000000).length;
+  const totalMembersCount = profilesForStats.length;
+
+  const newMembersLast7d = useMemo(() => {
+    const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    return profilesForStats.filter((p) => {
+      const d = (p as any)?.createdAt?.toDate?.() as Date | undefined;
+      const ms = d instanceof Date ? d.getTime() : NaN;
+      return Number.isFinite(ms) && ms >= since;
+    }).length;
   }, [profilesForStats]);
 
   const structuredNeedsTotal = useMemo(() => {
@@ -300,11 +308,16 @@ export default function NetworkRadarSection({
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 shadow-sm md:grid-cols-3">
         {(
           [
-            { icon: Users, value: activeMembersCount, labelKey: 'kpiMembers' },
+            {
+              icon: Users,
+              value: totalMembersCount,
+              labelKey: 'kpiMembers',
+              subLabel: formatT(t, 'radarMembersThisWeek', { count: newMembersLast7d }),
+            },
             { icon: Target, value: structuredNeedsTotal, labelKey: 'kpiNeeds' },
             { icon: Factory, value: sectorCount, labelKey: 'kpiSectors' },
           ] as const
-        ).map(({ icon: Icon, value, labelKey }) => (
+        ).map(({ icon: Icon, value, labelKey, subLabel }) => (
           <div
             key={labelKey}
             className="flex min-w-0 flex-col items-center justify-center bg-white px-2 py-4 text-center md:px-3 md:py-5"
@@ -314,6 +327,9 @@ export default function NetworkRadarSection({
             <p className="mt-1 max-w-full hyphens-auto text-[10px] font-normal uppercase leading-tight tracking-wide text-slate-500 break-words sm:text-xs">
               {t(labelKey)}
             </p>
+            {subLabel ? (
+              <p className="mt-1 text-[11px] font-medium leading-tight text-slate-400">{subLabel}</p>
+            ) : null}
           </div>
         ))}
       </div>

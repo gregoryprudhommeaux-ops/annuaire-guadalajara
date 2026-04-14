@@ -462,6 +462,7 @@ export const EN_STRINGS: Record<string, string> = {
     "Real-time data on the needs and activity of the French-speaking business community in Guadalajara.",
   radarLive: "Updated in real time",
   kpiMembers: "Members",
+  radarMembersThisWeek: "{{count}} registered this week",
   kpiNeeds: "Needs",
   kpiSectors: "Sectors",
   chartSectorsTitle: "Sectors represented",

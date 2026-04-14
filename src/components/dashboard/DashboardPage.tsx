@@ -3,9 +3,6 @@ import type { User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import type { Language } from '@/types';
 import type { UserProfile } from '@/types';
-import ExplorerProfils from '@/components/matching/ExplorerProfils';
-import VueEnsemble from '@/components/dashboard/VueEnsemble';
-import { NeedsDashboard } from '@/components/dashboard/NeedsDashboard';
 import AdminDashboard from '@/components/dashboard/AdminDashboard';
 import { db } from '@/firebase';
 import {
@@ -61,6 +58,11 @@ class SectionErrorBoundary extends React.Component<
 }
 
 const RadarChartsLazy = React.lazy(() => import('@/components/admin/RadarCharts'));
+const VueEnsembleLazy = React.lazy(() => import('@/components/dashboard/VueEnsemble'));
+const NeedsDashboardLazy = React.lazy(() =>
+  import('@/components/dashboard/NeedsDashboard').then((m) => ({ default: m.NeedsDashboard }))
+);
+const ExplorerProfilsLazy = React.lazy(() => import('@/components/matching/ExplorerProfils'));
 
 /**
  * Page tableau de bord (Vite/React). Équivalent client d’un fichier Next
@@ -200,16 +202,24 @@ export default function DashboardPage({
             <RadarChartsLazy profiles={profiles ?? []} />
           </React.Suspense>
 
-          <VueEnsemble
-            lang={lang}
-            t={t}
-            registeredWithProfile={registeredWithProfile}
-            onUnlockRadar={onUnlockRadar}
-            user={user}
-            membersExtended={registeredWithProfile ? (membersExtended ?? []) : undefined}
-            communityNeeds={registeredWithProfile ? (needs ?? mockNeeds) : undefined}
-            includeNeedsDashboard={false}
-          />
+          <React.Suspense
+            fallback={
+              <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                {loading}
+              </div>
+            }
+          >
+            <VueEnsembleLazy
+              lang={lang}
+              t={t}
+              registeredWithProfile={registeredWithProfile}
+              onUnlockRadar={onUnlockRadar}
+              user={user}
+              membersExtended={registeredWithProfile ? (membersExtended ?? []) : undefined}
+              communityNeeds={registeredWithProfile ? (needs ?? mockNeeds) : undefined}
+              includeNeedsDashboard={false}
+            />
+          </React.Suspense>
         </SectionErrorBoundary>
       )}
 
@@ -225,12 +235,15 @@ export default function DashboardPage({
             </p>
           }
         >
-          <NeedsDashboard
-            needs={needs ?? mockNeeds}
-            members={membersExtended}
-            lang={lang}
-            t={t}
-          />
+          <React.Suspense
+            fallback={
+              <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                {loading}
+              </div>
+            }
+          >
+            <NeedsDashboardLazy needs={needs ?? mockNeeds} members={membersExtended} lang={lang} t={t} />
+          </React.Suspense>
         </SectionErrorBoundary>
       )}
 
@@ -246,7 +259,15 @@ export default function DashboardPage({
             </p>
           }
         >
-          <ExplorerProfils members={explorerMembers} lang={lang} showPageHeader />
+          <React.Suspense
+            fallback={
+              <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                {loading}
+              </div>
+            }
+          >
+            <ExplorerProfilsLazy members={explorerMembers} lang={lang} showPageHeader />
+          </React.Suspense>
         </SectionErrorBoundary>
       )}
     </div>
