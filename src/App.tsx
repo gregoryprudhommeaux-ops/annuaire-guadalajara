@@ -15,6 +15,7 @@ import {
   BrowserRouter, 
   Routes, 
   Route, 
+  Navigate,
   useParams, 
   useNavigate,
   useLocation,
@@ -284,6 +285,8 @@ import {
   getAuthActionCodeSettings,
 } from './lib/firebaseAuthUi';
 import EmailAuthPanel from './components/EmailAuthPanel';
+import { HomePage as MarketingHomePage } from '@/components/home/HomePage';
+import { getPrimaryNav } from '@/routes/primaryNav';
 
 const loadNetworkRadarSection = () => import('./components/home/NetworkRadarSection');
 const loadDashboardPage = () => import('./components/dashboard/DashboardPage');
@@ -2107,16 +2110,23 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     };
   }, [viewerIsAdmin]);
 
-  const isMembersDirectoryRoute = location.pathname === '/membres';
+  const isHomeRoute = location.pathname === '/';
+  const isDashboardRoute = location.pathname === '/dashboard';
+  const isNetworkRoute = location.pathname === '/network';
+  const isRequestsRoute = location.pathname === '/requests';
+  const isMembersDirectoryRoute = location.pathname === '/membres' || isNetworkRoute;
   const isEventsAdminRoute = location.pathname === '/evenements';
 
   useLayoutEffect(() => {
-    if (location.pathname === '/membres') {
+    if (location.pathname === '/membres' || location.pathname === '/network') {
       setViewMode('members');
       setDirectoryDiscoveryStripsHidden(true);
       setMembersSortMode(parseMembersSortFromSearch(location.search));
     } else if (location.pathname === '/dashboard') {
       setViewMode('dashboard');
+      setDirectoryDiscoveryStripsHidden(true);
+    } else if (location.pathname === '/requests') {
+      setViewMode('members');
       setDirectoryDiscoveryStripsHidden(true);
     } else {
       setMembersSortMode('default');
@@ -4596,7 +4606,29 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   </button>
                 ) : null}
             </div>
-          ) : undefined
+          ) : (
+            <nav className="flex w-full min-w-0 flex-wrap items-center gap-2">
+              {getPrimaryNav(Boolean(user)).map((item) => {
+                const href = item.href;
+                const active =
+                  location.pathname === href || (href !== '/' && location.pathname.startsWith(href));
+                return (
+                  <Link
+                    key={href}
+                    to={href}
+                    className={cn(
+                      'rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:text-sm',
+                      active
+                        ? 'bg-stone-900 text-white'
+                        : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          )
         }
         trailing={
           user ? (
@@ -4724,7 +4756,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         shortLegalPage === 'privacy' ? <PrivacyPage /> : <TermsPage />
       ) : (
         <>
-      {user && !isAdminDashboard && (
+      {user && !isAdminDashboard && isDashboardRoute && (
         <div className="bg-stone-50 border-b border-stone-200">
           {showEmailVerifyBanner ? (
             <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-950">
@@ -6238,6 +6270,81 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               <WhyJoinSection className="w-full max-w-3xl" />
             </div>
           </>
+        ) : isHomeRoute && !isSignupLandingRoute && !isAdminDashboard ? (
+          <MarketingHomePage
+            isAdmin={viewerIsAdmin}
+            visibleMemberCount={stats.total}
+            membersForSectors={allProfiles.map((p) => ({ id: p.uid, sector: p.activityCategory ?? null }))}
+            exploreMembersHref="/network"
+            postRequestHref="/requests"
+            mainColumn={
+              <div className="space-y-6">
+                <NewMembersSection
+                  copy={h}
+                  lang={lang}
+                  profiles={stats.newThisWeekProfiles}
+                  totalNewThisWeek={stats.newThisWeekCount}
+                  guestTeaser={guestDirectoryRestricted}
+                  onOpenProfile={(p) => setSelectedProfile(p)}
+                  onSeeAll={() => navigate('/network')}
+                />
+                <NetworkRequestsSection
+                  t={t}
+                  lang={lang}
+                  requests={memberRequests.slice(0, 6)}
+                  user={user}
+                  profile={profile}
+                  viewerIsAdmin={viewerIsAdmin}
+                  onOpenAuth={openAuthModal}
+                  onOpenAuthorProfile={(uid) => {
+                    const found = allProfiles.find((p) => p.uid === uid);
+                    if (found) setSelectedProfile(found);
+                  }}
+                  onCreate={handleCreateMemberRequest}
+                  onDelete={handleDeleteMemberRequest}
+                />
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    to="/network"
+                    className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 hover:bg-stone-50"
+                  >
+                    Explorer le réseau
+                  </Link>
+                  <Link
+                    to="/requests"
+                    className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 hover:bg-stone-50"
+                  >
+                    Voir les demandes
+                  </Link>
+                </div>
+              </div>
+            }
+          />
+        ) : isRequestsRoute && !isAdminDashboard ? (
+          <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+            <h1 className="text-2xl font-semibold tracking-tight text-stone-900">Demandes du réseau</h1>
+            <p className="mt-1 text-sm text-stone-600">
+              Découvrez les besoins actifs et publiez une demande pour obtenir des mises en relation utiles.
+            </p>
+            <div className="mt-6">
+              <NetworkRequestsSection
+                t={t}
+                lang={lang}
+                requests={memberRequests}
+                user={user}
+                profile={profile}
+                viewerIsAdmin={viewerIsAdmin}
+                onOpenAuth={openAuthModal}
+                onOpenAuthorProfile={(uid) => {
+                  const found = allProfiles.find((p) => p.uid === uid);
+                  if (found) setSelectedProfile(found);
+                }}
+                onCreate={handleCreateMemberRequest}
+                onDelete={handleDeleteMemberRequest}
+                postModalOpenNonce={memberRequestModalNonce}
+              />
+            </div>
+          </div>
         ) : (
         <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
           {/* Invités : hero + recherche, puis blocs d’accueil (pile unique) */}
@@ -6412,8 +6519,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               />
             )}
 
-            {/* Recommandations IA — état vide invitation si moins de 3 autres membres dans l’annuaire */}
-            {user && profile && !isAdminDashboard && (
+            {/* Recommandations IA — uniquement dans /dashboard */}
+            {user && profile && !isAdminDashboard && isDashboardRoute && (
               <RecommendedForYouSection
                 t={t}
                 needsInviteGate={aiRecNeedsInviteGate}
@@ -8044,6 +8151,12 @@ const App = () => {
             <Route path="/rejoindre" element={<MainApp />} />
             <Route path="/join" element={<MainApp />} />
             <Route path="/membres" element={<MainApp />} />
+            <Route path="/network" element={<MainApp />} />
+            <Route path="/requests" element={<MainApp />} />
+            <Route path="/requests/:id" element={<RequestsRedirect />} />
+            <Route path="/network/member/:slug" element={<MemberRedirect />} />
+            <Route path="/onboarding" element={<MainApp />} />
+            <Route path="/profile/edit" element={<MainApp />} />
             <Route path="/confidentialite" element={<MainApp />} />
             <Route path="/privacy" element={<MainApp />} />
             <Route
@@ -8078,4 +8191,16 @@ export default App;
 function LegalPageWrapper({ mode }: { mode: 'privacy' | 'terms' }) {
   const { lang, t } = useLanguage();
   return <LegalPage lang={lang} t={t} mode={mode} />;
+}
+
+function MemberRedirect() {
+  const { slug } = useParams();
+  const to = slug ? `/profil/${encodeURIComponent(String(slug))}` : '/network';
+  return <Navigate to={to} replace />;
+}
+
+function RequestsRedirect() {
+  const { id } = useParams();
+  const to = id ? `/besoin/${encodeURIComponent(String(id))}` : '/requests';
+  return <Navigate to={to} replace />;
 }
