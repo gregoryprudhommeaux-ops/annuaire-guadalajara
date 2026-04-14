@@ -17,7 +17,7 @@ import type {
 import type { ContactPreference, Member, MemberContact, MemberIdentity } from './member.types';
 import { sanitizeHighlightedNeeds } from '../../needOptions';
 import { sanitizePassionIds } from '../../lib/passionConfig';
-import { getProfileCompletionPercent } from '../../lib/profileCompletion';
+import { calculateProfileCompletion } from './member.completion';
 
 const LANGUAGE_CODE_SET = new Set<LanguageCode>(['fr', 'es', 'en', 'pt', 'de', 'it', 'zh']);
 
@@ -370,7 +370,6 @@ export function mapLegacyProfileToMember(p: UserProfile): Member {
   const company = companies[0] ?? fallbackCompanyFromProfile(p);
   const searchableSectors = searchableSectorsFromCompanies(companies, company.sector);
 
-  const percent = getProfileCompletionPercent(p);
   const createdAtMs =
     typeof (p as { createdAt?: { toMillis?: () => number } }).createdAt?.toMillis === 'function'
       ? (p as { createdAt: { toMillis: () => number } }).createdAt.toMillis()
@@ -380,7 +379,7 @@ export function mapLegacyProfileToMember(p: UserProfile): Member {
   const needIds = sanitizeHighlightedNeeds(p.highlightedNeeds);
   const currentNeeds = needIds.map((id) => mapLegacyHighlightedNeedIdToNeed(p.uid, id));
 
-  return {
+  const member: Member = {
     id: p.uid,
     slug: identity.slug,
     identity,
@@ -402,9 +401,16 @@ export function mapLegacyProfileToMember(p: UserProfile): Member {
       },
       internalOnly: {},
     },
-    publicProfileCompleted: percent >= 85,
-    profileCompletionPercent: percent,
+    publicProfileCompleted: false,
+    profileCompletionPercent: 0,
     createdAt: millisToIso(createdAtMs),
     updatedAt: millisToIso(typeof p.lastSeen === 'number' ? p.lastSeen : undefined),
+  };
+
+  const completion = calculateProfileCompletion(member);
+  return {
+    ...member,
+    publicProfileCompleted: completion.isComplete,
+    profileCompletionPercent: completion.percent,
   };
 }

@@ -65,7 +65,7 @@ export const SAMPLE_MEMBERS: Member[] = [
       internalOnly: {},
     },
     publicProfileCompleted: true,
-    profileCompletionPercent: 87,
+    profileCompletionPercent: 100,
     createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
   },
