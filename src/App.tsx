@@ -4928,37 +4928,39 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           lang={lang}
                           onEditField={scrollToProfileCompletionField}
                           className="border-0 bg-transparent p-0 shadow-none"
+                          rightActions={
+                            <button
+                              type="button"
+                              disabled={profileSaveBusy}
+                              onClick={() => {
+                                setIsProfileExpanded(true);
+                                setIsEditing(true);
+                                window.requestAnimationFrame(() => {
+                                  profileFormLayoutRef.current?.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'start',
+                                  });
+                                  const form = directoryProfileFormRef.current;
+                                  if (!form) return;
+                                  if (typeof (form as any).requestSubmit === 'function') {
+                                    (form as any).requestSubmit();
+                                    return;
+                                  }
+                                  form.dispatchEvent(
+                                    new Event('submit', { bubbles: true, cancelable: true })
+                                  );
+                                });
+                              }}
+                              className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
+                            >
+                              {profileSaveBusy
+                                ? pickLang('Enregistrement...', 'Guardando...', 'Saving...', lang)
+                                : 'Enregistrer'}
+                            </button>
+                          }
                         />
                       </div>
-                      <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
-                        <button
-                          type="button"
-                          disabled={profileSaveBusy}
-                          onClick={() => {
-                            setIsProfileExpanded(true);
-                            setIsEditing(true);
-                            window.requestAnimationFrame(() => {
-                              profileFormLayoutRef.current?.scrollIntoView({
-                                behavior: 'smooth',
-                                block: 'start',
-                              });
-                              const form = directoryProfileFormRef.current;
-                              if (!form) return;
-                              if (typeof (form as any).requestSubmit === 'function') {
-                                (form as any).requestSubmit();
-                                return;
-                              }
-                              form.dispatchEvent(
-                                new Event('submit', { bubbles: true, cancelable: true })
-                              );
-                            });
-                          }}
-                          className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {profileSaveBusy
-                            ? pickLang('Enregistrement...', 'Guardando...', 'Saving...', lang)
-                            : 'Enregistrer'}
-                        </button>
+                      <div className="flex justify-end sm:justify-start">
                         <button
                           type="button"
                           onClick={() => {
@@ -4969,9 +4971,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               // ignore
                             }
                           }}
-                          className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+                          className="text-xs font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700 hover:decoration-slate-400 sm:text-sm"
                         >
-                          {pickLang('Masquer', 'Ocultar', 'Hide', lang)}
+                          {pickLang(
+                            'Masquer ce bandeau',
+                            'Ocultar este banner',
+                            'Hide this banner',
+                            lang
+                          )}
                         </button>
                       </div>
                     </div>

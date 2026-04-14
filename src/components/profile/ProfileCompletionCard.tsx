@@ -16,6 +16,7 @@ export type ProfileCompletionCardProps = {
   lang: Language;
   className?: string;
   onEditField?: (fieldKey: string) => void;
+  rightActions?: React.ReactNode;
 };
 
 export function ProfileCompletionCard({
@@ -24,6 +25,7 @@ export function ProfileCompletionCard({
   lang,
   className,
   onEditField,
+  rightActions,
 }: ProfileCompletionCardProps) {
   const labels = useMemo(() => profileCompletionDefaultLabels(lang), [lang]);
   const percent = getProfileCompletionPercent(profile);
@@ -59,8 +61,13 @@ export function ProfileCompletionCard({
         </div>
 
         <div className="shrink-0 text-right">
-          <div className="text-2xl font-semibold tracking-tight text-slate-900">{percent}%</div>
-          <div className="text-xs text-slate-500">{t('profileCompletionProgressShort')}</div>
+          <div className="flex items-start justify-end gap-3">
+            <div>
+              <div className="text-2xl font-semibold tracking-tight text-slate-900">{percent}%</div>
+              <div className="text-xs text-slate-500">{t('profileCompletionProgressShort')}</div>
+            </div>
+            {rightActions ? <div className="pt-0.5">{rightActions}</div> : null}
+          </div>
         </div>
       </div>
 
