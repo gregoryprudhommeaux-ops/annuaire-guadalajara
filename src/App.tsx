@@ -4532,7 +4532,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         }}
         lang={lang}
         onLangChange={setLang}
-        guestMobileFullWidthCta={!user}
+        // Keep login + language controls in the top-right header (like before),
+        // rather than pushing guest CTA into a full-width mobile bar.
+        guestMobileFullWidthCta={false}
         hideDesktopLanguageSwitch={headerAdminLayout}
         topRight={
           headerAdminLayout && user ? (
