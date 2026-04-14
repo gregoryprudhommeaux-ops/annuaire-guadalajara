@@ -6277,6 +6277,52 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             membersForSectors={allProfiles.map((p) => ({ id: p.uid, sector: p.activityCategory ?? null }))}
             exploreMembersHref="/network"
             postRequestHref="/requests"
+            heroSearch={
+              <HeroSearchSection
+                welcome={
+                  <WelcomeContextCard
+                    title={t('welcome')}
+                    body={t('welcomeIntro')}
+                    className="h-full"
+                    collapsibleOnMobile
+                    mobileShowIntroLabel={t('welcomeIntroShow')}
+                    mobileHideIntroLabel={t('welcomeIntroHide')}
+                  />
+                }
+                hero={
+                  <HeroSection
+                    copy={h}
+                    authBusy={authProviderBusy !== null}
+                    onCreateProfile={openAuthModal}
+                    onExploreMembers={() => navigate('/network')}
+                    className="h-full w-full"
+                  />
+                }
+                // Homepage-safe: no directory search here, only orientation CTAs.
+                search={
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <Link
+                      to="/inscription"
+                      className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
+                    >
+                      {t('home.marketing.ctaCreateProfile')}
+                    </Link>
+                    <Link
+                      to="/network"
+                      className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                    >
+                      {t('home.marketing.ctaExploreMembers')}
+                    </Link>
+                    <Link
+                      to="/requests"
+                      className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                    >
+                      Voir les demandes
+                    </Link>
+                  </div>
+                }
+              />
+            }
             mainColumn={
               <div className="space-y-6">
                 <NewMembersSection
