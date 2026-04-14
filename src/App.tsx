@@ -4866,7 +4866,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         shortLegalPage === 'privacy' ? <PrivacyPage /> : <TermsPage />
       ) : (
         <>
-      {user && !isAdminDashboard && isDashboardRoute && (
+      {user && !isAdminDashboard && (isDashboardRoute || isEditProfileRoute) && (
         <div className="bg-stone-50 border-b border-stone-200">
           {showEmailVerifyBanner ? (
             <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-950">
@@ -6728,7 +6728,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             )}
           >
             {/* Connecté : nouveaux membres en tête de la colonne centrale */}
-            {user && showDiscoveryStrips && !isAdminDashboard && (
+            {user && showDiscoveryStrips && !isAdminDashboard && !isEditProfileRoute && (
               <NewMembersSection
                 copy={h}
                 lang={lang}
@@ -6765,7 +6765,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </>
             )}
 
-            {!isMembersDirectoryRoute && !isAdminDashboard && (
+            {!isMembersDirectoryRoute && !isAdminDashboard && !isEditProfileRoute && (
               <NetworkRequestsSection
                 t={t}
                 lang={lang}
