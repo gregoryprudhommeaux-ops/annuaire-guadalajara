@@ -35,3 +35,6 @@ export type Need = {
   categoryId: NeedCategoryId;
 };
 
+/** Canonical key unions + shared option shape (STEP 2). */
+export * from './taxonomy.canonical';
+
