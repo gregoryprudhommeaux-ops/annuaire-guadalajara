@@ -2,9 +2,11 @@ import type { UserProfile, Language, CompanyActivitySlot, EmployeeCountRange } f
 import { normalizedTargetKeywords } from '../../types';
 import type { Company, Location } from '../company/company.types';
 import type {
+  CityKey,
   ClientSizeKey,
   CompanySizeRangeKey,
   CompanyTypeKey,
+  ProfessionalStatusKey,
   ProfileRoleKey,
   SectorKey,
 } from '../taxonomy/taxonomy.types';
