@@ -30,7 +30,10 @@ export const SAMPLE_MEMBERS: Member[] = [
     contactPreferenceCta: 'WhatsApp',
     communityGoal: 'Trouver des partenaires et clients à Guadalajara.',
     helpNewcomers: 'Mise en relation avec l’écosystème business local.',
-    visibility: { emailPublic: false, whatsappPublic: true },
+    visibility: {
+      contact: { emailPublic: false, phonePublic: true },
+      internalOnly: {},
+    },
     openness: { openToMentoring: true, openToTalks: false, openToEvents: true },
     createdAtMs: Date.now() - 10 * 24 * 60 * 60 * 1000,
     lastSeenMs: Date.now() - 60 * 60 * 1000,

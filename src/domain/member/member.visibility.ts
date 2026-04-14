@@ -8,8 +8,8 @@ export function projectMemberVisibility(
 ): Member {
   if (projection === 'admin') return member;
 
-  const hideEmail = projection === 'public' && !member.visibility.emailPublic;
-  const hideWhatsapp = projection === 'public' && !member.visibility.whatsappPublic;
+  const hideEmail = projection === 'public' && !member.visibility.contact.emailPublic;
+  const hideWhatsapp = projection === 'public' && !member.visibility.contact.phonePublic;
 
   return {
     ...member,

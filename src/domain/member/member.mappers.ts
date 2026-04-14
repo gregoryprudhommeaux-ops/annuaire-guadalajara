@@ -246,8 +246,11 @@ export function mapLegacyProfileToMember(p: UserProfile): Member {
     communityGoal: p.networkGoal?.trim() || undefined,
     helpNewcomers: p.helpNewcomers?.trim() || undefined,
     visibility: {
-      emailPublic: Boolean(p.isEmailPublic),
-      whatsappPublic: Boolean(p.isWhatsappPublic),
+      contact: {
+        emailPublic: Boolean(p.isEmailPublic),
+        phonePublic: Boolean(p.isWhatsappPublic),
+      },
+      internalOnly: {},
     },
     openness: {
       openToMentoring: Boolean(p.openToMentoring),

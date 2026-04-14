@@ -5,9 +5,19 @@ export type MemberId = string;
 
 export type ProfileRole = 'member' | 'admin';
 
-export type VisibilitySettings = {
+export type ContactVisibility = {
   emailPublic: boolean;
-  whatsappPublic: boolean;
+  phonePublic: boolean;
+};
+
+export type InternalOnlyFields = {
+  gender?: string;
+  delegationVisitsHost?: boolean;
+};
+
+export type VisibilitySettings = {
+  contact: ContactVisibility;
+  internalOnly: InternalOnlyFields;
 };
 
 export type CommunityOpenness = {
