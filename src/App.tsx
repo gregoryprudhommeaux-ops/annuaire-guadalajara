@@ -2104,7 +2104,13 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [profileSaveBusy, setProfileSaveBusy] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [profileSaveSuccess, setProfileSaveSuccess] = useState<string | null>(null);
-  const [profileReminderDismissed, setProfileReminderDismissed] = useState(false);
+  const [profileVisibilityBandHidden, setProfileVisibilityBandHidden] = useState(() => {
+    try {
+      return window.sessionStorage.getItem('fn_profile_visibility_band_hidden') === '1';
+    } catch {
+      return false;
+    }
+  });
   const [optimizationBusy, setOptimizationBusy] = useState(false);
   const [optimizationError, setOptimizationError] = useState<string | null>(null);
   const [profileCoachLine, setProfileCoachLine] = useState('');
@@ -2660,22 +2666,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       last10: last10 as UserProfile[]
     };
   }, [allProfiles]);
-
-  const profileUpdateBanner = useMemo(() => {
-    if (!profile) {
-      return { show: false, mandatory: false, ai: false };
-    }
-    if (isAdminEmail(user?.email)) {
-      return { show: false, mandatory: false, ai: false };
-    }
-    const pubOk = profileMeetsPublicationRequirements(profile);
-    const readiness = getProfileAiRecommendationReadiness(profile);
-    return {
-      show: !pubOk || readiness < AI_OPTIMIZATION_READINESS_TARGET,
-      mandatory: !pubOk,
-      ai: pubOk && readiness < AI_OPTIMIZATION_READINESS_TARGET,
-    };
-  }, [profile, user?.email]);
 
   const profileCompletionPct = useMemo(() => {
     if (!profile) return 0;
@@ -4906,29 +4896,93 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
           )}
           <div className={pageSectionPad}>
-            {showAdminSelfProfilePanel ? (
-            <section className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden relative">
-              {profile &&
-                !profileReminderDismissed &&
-                profileUpdateBanner.show && (
-                  <div className="border-b border-amber-200/80 bg-amber-50/95 px-4 py-3 sm:px-5">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                      <div className="min-w-0 space-y-2 text-sm leading-snug text-amber-950">
-                        {profileUpdateBanner.mandatory ? (
-                          <p className="font-medium">{t('profileBannerMandatory')}</p>
-                        ) : null}
-                        {profileUpdateBanner.ai ? <p>{t('profileBannerAi')}</p> : null}
+            {isEditProfileRoute && (editingProfile?.uid ?? profile?.uid) ? (
+              <div className="sticky top-24 z-40 mb-4 sm:top-16">
+                {profileVisibilityBandHidden ? (
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileVisibilityBandHidden(false);
+                        try {
+                          window.sessionStorage.removeItem('fn_profile_visibility_band_hidden');
+                        } catch {
+                          // ignore
+                        }
+                      }}
+                      className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition-colors hover:bg-white"
+                    >
+                      {pickLang(
+                        'Afficher la visibilité du profil',
+                        'Mostrar visibilidad del perfil',
+                        'Show profile visibility',
+                        lang
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur">
+                    <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
+                      <div className="min-w-0 flex-1">
+                        <ProfileCompletionCard
+                          profile={profileCompletionCardSource}
+                          t={t}
+                          lang={lang}
+                          onEditField={scrollToProfileCompletionField}
+                          className="border-0 bg-transparent p-0 shadow-none"
+                        />
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setProfileReminderDismissed(true)}
-                        className="shrink-0 self-start rounded-lg border border-amber-300/80 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100/80"
-                      >
-                        {t('profileBannerDismiss')}
-                      </button>
+                      <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                        <button
+                          type="button"
+                          disabled={profileSaveBusy}
+                          onClick={() => {
+                            setIsProfileExpanded(true);
+                            setIsEditing(true);
+                            window.requestAnimationFrame(() => {
+                              profileFormLayoutRef.current?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start',
+                              });
+                              const form = directoryProfileFormRef.current;
+                              if (!form) return;
+                              if (typeof (form as any).requestSubmit === 'function') {
+                                (form as any).requestSubmit();
+                                return;
+                              }
+                              form.dispatchEvent(
+                                new Event('submit', { bubbles: true, cancelable: true })
+                              );
+                            });
+                          }}
+                          className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {profileSaveBusy
+                            ? pickLang('Enregistrement...', 'Guardando...', 'Saving...', lang)
+                            : 'Enregistrer'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileVisibilityBandHidden(true);
+                            try {
+                              window.sessionStorage.setItem('fn_profile_visibility_band_hidden', '1');
+                            } catch {
+                              // ignore
+                            }
+                          }}
+                          className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+                        >
+                          {pickLang('Masquer', 'Ocultar', 'Hide', lang)}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
+              </div>
+            ) : null}
+            {showAdminSelfProfilePanel ? (
+            <section className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden relative">
               <div 
                 className="flex items-center justify-between gap-3 p-4 cursor-pointer hover:bg-stone-50 transition-colors"
                 onClick={() => {
@@ -6317,16 +6371,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           )}
                             </form>
                           </div>
-                          {(editingProfile?.uid ?? profile?.uid) ? (
-                            <div className="border-t border-stone-200 pt-6">
-                              <ProfileCompletionCard
-                                profile={profileCompletionCardSource}
-                                t={t}
-                                lang={lang}
-                                onEditField={scrollToProfileCompletionField}
-                              />
-                            </div>
-                          ) : null}
+                          {/* Profile completion card is sticky on /profile/edit */}
                         </div>
                       ) : (
                         <div className="py-8 text-center">
@@ -6529,7 +6574,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             }
           />
         ) : isRequestsRoute && !isAdminDashboard ? (
-          <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+          <div className={cn(pageMainPad, 'max-w-7xl')}>
             <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
               {t('memberRequestsTitle')}
             </h1>

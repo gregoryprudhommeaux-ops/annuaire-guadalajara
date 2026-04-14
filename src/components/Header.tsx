@@ -142,7 +142,6 @@ export const Header: React.FC<HeaderProps> = ({
   topRight,
   fullWidthRow,
 }) => {
-  const adminHeroLayout = Boolean(fullWidthRow);
   const showBadge = Number.isFinite(notificationCount) && notificationCount > 0;
   const badgeText = notificationCount > 99 ? '99+' : String(notificationCount);
 
@@ -155,86 +154,9 @@ export const Header: React.FC<HeaderProps> = ({
       )}
     >
       <div className={pageHeaderInner}>
-        {adminHeroLayout ? (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-3 sm:hidden">
-              <div className="relative min-w-0 flex-1">
-                <a
-                  href="/"
-                  onClick={onHomeClick}
-                  className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg pr-2 outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
-                  aria-label={homeAriaLabel}
-                >
-                  <div className="relative shrink-0">
-                    <SiteLogoMark className="h-9 w-9" />
-                    {showBadge ? (
-                      <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-600 px-1 text-[10px] font-bold leading-4 text-white">
-                        {badgeText}
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="h-7 w-px shrink-0 bg-slate-200" aria-hidden />
-                  <div className="min-w-0 flex-1 leading-tight text-left">
-                    <p className="text-sm font-semibold leading-snug tracking-tight text-slate-900 break-words">
-                      {title}
-                    </p>
-                    <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-slate-500">
-                      {subtitle}
-                    </p>
-                  </div>
-                </a>
-              </div>
-              {topRight ? <div className="flex shrink-0 items-center gap-2">{topRight}</div> : null}
-            </div>
-            <div className="hidden items-start justify-between gap-3 sm:flex">
-              <div
-                className={cn(
-                  'relative min-w-0 flex-1',
-                  !topRight && 'min-w-[12rem] sm:min-w-[14rem] md:min-w-[16rem]'
-                )}
-              >
-                <a
-                  href="/"
-                  onClick={onHomeClick}
-                  className={cn(
-                    'flex min-w-0 cursor-pointer items-center gap-3 rounded-lg outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2',
-                    !topRight ? 'pr-[4.25rem] sm:pr-1' : 'pr-1 sm:pr-1'
-                  )}
-                  aria-label={homeAriaLabel}
-                >
-                  <div className="relative shrink-0">
-                    <SiteLogoMark className="h-9 w-9 sm:h-10 sm:w-10 sm:rounded-xl" />
-                    {showBadge ? (
-                      <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full border-2 border-white bg-red-600 px-1 text-[10px] font-bold leading-4 text-white">
-                        {badgeText}
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="h-7 w-px shrink-0 bg-slate-200 sm:h-8" aria-hidden />
-                  <div className="min-w-0 flex-1 leading-tight text-left">
-                    <p className="text-sm font-semibold leading-snug tracking-tight text-slate-900 break-words sm:text-base md:text-lg">
-                      {title}
-                    </p>
-                    <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-slate-500 sm:line-clamp-none md:text-sm">
-                      {subtitle}
-                    </p>
-                  </div>
-                </a>
-                {!topRight ? (
-                  <div className="absolute right-0 top-0 sm:hidden">
-                    <LanguageDropdownMobile lang={lang} onLangChange={onLangChange} />
-                  </div>
-                ) : null}
-              </div>
-              {topRight ? (
-                <div className="flex shrink-0 items-center gap-2 self-start pt-0.5">{topRight}</div>
-              ) : null}
-            </div>
-            <div className="relative z-[70] w-full min-w-0 pointer-events-auto">{fullWidthRow}</div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-3">
-            <div className="relative w-full flex-1 min-w-[12rem] sm:min-w-[14rem] md:min-w-[16rem]">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="relative min-w-0 flex-1">
               <a
                 href="/"
                 onClick={onHomeClick}
@@ -259,14 +181,22 @@ export const Header: React.FC<HeaderProps> = ({
                   </p>
                 </div>
               </a>
-              <div className="absolute right-0 top-0 sm:hidden">
+              <div className={cn('absolute right-0 top-0', topRight && 'sm:hidden')}>
                 <LanguageDropdownMobile lang={lang} onLangChange={onLangChange} />
               </div>
             </div>
 
+            {topRight ? <div className="flex shrink-0 items-center gap-2">{topRight}</div> : null}
+          </div>
+
+          {fullWidthRow ? (
+            <div className="relative z-[70] w-full min-w-0 pointer-events-auto">{fullWidthRow}</div>
+          ) : null}
+
+          {!fullWidthRow ? (
             <div
               className={cn(
-                'flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-nowrap sm:items-center sm:justify-end sm:gap-3',
+                'flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-end sm:gap-3',
                 !guestMobileFullWidthCta && trailing && !hideDesktopLanguageSwitch && 'sm:shrink-0'
               )}
             >
@@ -311,8 +241,8 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               ) : null}
             </div>
-          </div>
-        )}
+          ) : null}
+        </div>
       </div>
     </header>
   );
