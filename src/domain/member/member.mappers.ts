@@ -17,7 +17,7 @@ import type {
 import type { ContactPreference, Member, MemberContact, MemberIdentity } from './member.types';
 import { sanitizeHighlightedNeeds } from '../../needOptions';
 import { sanitizePassionIds } from '../../lib/passionConfig';
-import { calculateProfileCompletion } from './member.completion';
+import { calculateProfileCompletion } from './profile-completion';
 
 const LANGUAGE_CODE_SET = new Set<LanguageCode>(['fr', 'es', 'en', 'pt', 'de', 'it', 'zh']);
 
@@ -364,7 +364,7 @@ function identityFromProfile(p: UserProfile): MemberIdentity {
   };
 }
 
-export function mapLegacyProfileToMember(p: UserProfile): Member {
+export function mapUserProfileToMember(p: UserProfile): Member {
   const slots = Array.isArray(p.companyActivities) ? p.companyActivities : [];
   const companies = slots.map((s) => mapCompanyFromSlot(s, p)).filter((c): c is Company => Boolean(c));
   const company = companies[0] ?? fallbackCompanyFromProfile(p);
