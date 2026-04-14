@@ -170,6 +170,33 @@ export default function AdminDashboard({ lang, t, initialTab }: AdminDashboardPr
   );
 }
 
+class MiniErrorBoundary extends React.Component<
+  { children: React.ReactNode; label: string },
+  { hasError: boolean; msg: string }
+> {
+  // See note in `src/App.tsx` SectionErrorBoundary.
+  declare props: { children: React.ReactNode; label: string };
+  declare setState: (s: Partial<{ hasError: boolean; msg: string }>) => void;
+  state: { hasError: boolean; msg: string } = { hasError: false, msg: '' };
+  static getDerivedStateFromError() {
+    return { hasError: true, msg: '' };
+  }
+  componentDidCatch(error: unknown) {
+    const msg = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    console.error(`[AdminDashboard] ${this.props.label} crashed:`, error);
+    this.setState({ msg });
+  }
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    return (
+      <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+        <p className="font-semibold">Widget en erreur: {this.props.label}</p>
+        {this.state.msg ? <p className="mt-1 text-xs text-rose-800">{this.state.msg}</p> : null}
+      </div>
+    );
+  }
+}
+
 function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
   const [insightTab, setInsightTab] = useState<AdminInsightTab>('overview');
   const { period, setPeriod } = useTimePeriod();
@@ -277,10 +304,12 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard label={t('members') || 'Membres'} value={stats.totalProfiles} />
             <StatCard label="Nouveaux inscrits" value={stats.newProfilesInPeriod} />
-            <ProfileCompletionGauge
-              totalMembers={stats.totalProfiles}
-              completedProfiles={stats.completedProfilesStrict}
-            />
+            <MiniErrorBoundary label="ProfileCompletionGauge">
+              <ProfileCompletionGauge
+                totalMembers={stats.totalProfiles}
+                completedProfiles={stats.completedProfilesStrict}
+              />
+            </MiniErrorBoundary>
             <StatCard label="Clics contact" value={stats.totalClicks} />
           </div>
 
@@ -290,16 +319,18 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
                 <h3 className="text-sm font-semibold text-stone-900">📍 Localisation des membres</h3>
                 <p className="mt-1 text-xs text-stone-500">Guadalajara et alentours</p>
                 <div className="mt-3">
-                  <MembersMap
-                    members={stats.profilesForDashboard.map((m) => ({
-                      id: m.id,
-                      nom: m.nom,
-                      entreprise: m.entreprise,
-                      secteur: m.secteur,
-                      latitude: m.latitude,
-                      longitude: m.longitude,
-                    }))}
-                  />
+                  <MiniErrorBoundary label="MembersMap">
+                    <MembersMap
+                      members={stats.profilesForDashboard.map((m) => ({
+                        id: m.id,
+                        nom: m.nom,
+                        entreprise: m.entreprise,
+                        secteur: m.secteur,
+                        latitude: m.latitude,
+                        longitude: m.longitude,
+                      }))}
+                    />
+                  </MiniErrorBoundary>
                 </div>
               </div>
             </div>
@@ -316,23 +347,31 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
 
           <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-5">
             <div className="xl:col-span-3">
-              <InscriptionAreaChart members={stats.profilesCreatedAt} />
+              <MiniErrorBoundary label="InscriptionAreaChart">
+                <InscriptionAreaChart members={stats.profilesCreatedAt} />
+              </MiniErrorBoundary>
             </div>
             <div className="xl:col-span-2">
-              <ConversionFunnel
-                inscritsOAuth={stats.totalProfiles}
-                profilsComplets={stats.completedProfilesStrict}
-                membresActifs={stats.activeMembersWithContactClicks}
-              />
+              <MiniErrorBoundary label="ConversionFunnel">
+                <ConversionFunnel
+                  inscritsOAuth={stats.totalProfiles}
+                  profilsComplets={stats.completedProfilesStrict}
+                  membresActifs={stats.activeMembersWithContactClicks}
+                />
+              </MiniErrorBoundary>
             </div>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-5">
             <div className="xl:col-span-3">
-              <ActivityHeatmap members={stats.profilesCreatedAt} />
+              <MiniErrorBoundary label="ActivityHeatmap">
+                <ActivityHeatmap members={stats.profilesCreatedAt} />
+              </MiniErrorBoundary>
             </div>
             <div className="xl:col-span-2">
-              <EngagementLeaderboard members={stats.profilesForDashboard as any} />
+              <MiniErrorBoundary label="EngagementLeaderboard">
+                <EngagementLeaderboard members={stats.profilesForDashboard as any} />
+              </MiniErrorBoundary>
             </div>
           </div>
 

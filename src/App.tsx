@@ -345,21 +345,37 @@ function BrandApple({ className }: { className?: string }) {
 
 class SectionErrorBoundary extends React.Component<
   { fallback: React.ReactNode; children: React.ReactNode },
-  { hasError: boolean }
+  { hasError: boolean; errorText: string }
 > {
+  // NOTE: TS in this repo doesn't expose React.Component instance members on subclasses.
+  // We declare them to keep error reporting without affecting runtime behavior.
   declare props: { fallback: React.ReactNode; children: React.ReactNode };
-  state: { hasError: boolean } = { hasError: false };
+  declare setState: (s: Partial<{ hasError: boolean; errorText: string }>) => void;
+  state: { hasError: boolean; errorText: string } = { hasError: false, errorText: '' };
 
-  static getDerivedStateFromError(): { hasError: boolean } {
-    return { hasError: true };
+  static getDerivedStateFromError(): { hasError: boolean; errorText: string } {
+    return { hasError: true, errorText: '' };
   }
 
   componentDidCatch(error: unknown) {
+    const msg = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     console.error('Section render error:', error);
+    this.setState({ errorText: msg });
   }
 
   render() {
-    if (this.state.hasError) return this.props.fallback;
+    if (this.state.hasError) {
+      return (
+        <div className="space-y-2">
+          {this.props.fallback}
+          {this.state.errorText ? (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs text-rose-900">
+              <span className="font-semibold">Détail erreur:</span> {this.state.errorText}
+            </div>
+          ) : null}
+        </div>
+      );
+    }
     return this.props.children;
   }
 }
