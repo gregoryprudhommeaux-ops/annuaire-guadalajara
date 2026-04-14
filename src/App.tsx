@@ -2125,15 +2125,21 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   useEffect(() => {
     // Route guards are driven by the central role model.
+    // Wait for the app to finish its initial auth/profile load, otherwise we can create
+    // confusing transient redirects (especially around admin detection).
+    if (loading) return;
     if (canAccessRoute(role, location.pathname)) return;
     if (role === 'guest') {
-      openAuthModal();
+      // Avoid referencing `openAuthModal` here: it's declared later in this file (TDZ risk).
+      setAuthError(null);
+      setAuthModalResetKey((k) => k + 1);
+      setShowAuthModal(true);
       navigate('/', { replace: true });
       return;
     }
     // Logged-in non-admin trying to access admin space.
     navigate('/dashboard', { replace: true });
-  }, [location.pathname, navigate, openAuthModal, role]);
+  }, [loading, location.pathname, navigate, role]);
 
   useLayoutEffect(() => {
     if (location.pathname === '/membres' || location.pathname === '/network') {
