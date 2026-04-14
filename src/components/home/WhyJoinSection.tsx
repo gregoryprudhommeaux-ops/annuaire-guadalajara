@@ -37,11 +37,11 @@ export function WhyJoinSection({ className }: WhyJoinSectionProps) {
     <section
       aria-labelledby="why-join-title"
       className={cn(
-        'rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6',
+        'flex min-h-0 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6',
         className
       )}
     >
-      <div className="max-w-2xl">
+      <div className="max-w-2xl shrink-0">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
           {t('home.whyJoin.eyebrow')}
         </p>
@@ -54,11 +54,11 @@ export function WhyJoinSection({ className }: WhyJoinSectionProps) {
         <p className="mt-2 text-sm leading-6 text-slate-600">{t('home.whyJoin.description')}</p>
       </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-3">
+      <div className="mt-5 grid min-h-0 flex-1 gap-3 md:grid-cols-3 md:items-stretch">
         {items.map((item) => (
           <div
             key={item.id}
-            className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+            className="flex min-h-0 flex-col rounded-xl border border-slate-200 bg-slate-50 p-4"
           >
             <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
             <p className="mt-1 text-sm leading-6 text-slate-600">{item.description}</p>
