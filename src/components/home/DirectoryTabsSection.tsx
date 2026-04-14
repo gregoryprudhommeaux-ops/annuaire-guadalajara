@@ -19,21 +19,24 @@ export function DirectoryTabsSection({
   stickyWrapClassName,
   children,
 }: DirectoryTabsSectionProps) {
+  const showTabs = Array.isArray(tabs) && tabs.length > 0;
   return (
     <>
-      <div
-        className={cn(
-          'sticky top-24 z-40 w-full min-w-0 bg-slate-50 py-2 sm:top-16',
-          stickyWrapClassName
-        )}
-      >
-        <DirectoryTabBar
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={onTabChange}
-          className={className}
-        />
-      </div>
+      {showTabs ? (
+        <div
+          className={cn(
+            'sticky top-24 z-40 w-full min-w-0 bg-slate-50 py-2 sm:top-16',
+            stickyWrapClassName
+          )}
+        >
+          <DirectoryTabBar
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+            className={className}
+          />
+        </div>
+      ) : null}
       <div className="w-full min-w-0 space-y-6">{children}</div>
     </>
   );

@@ -6803,13 +6803,18 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             )}
 
             <DirectoryTabsSection
-              tabs={directoryViewTabs.map((tab) => ({
-                id: tab.id,
-                label: tab.label,
-                icon: <tab.icon size={16} aria-hidden />,
-              }))}
+              tabs={
+                isNetworkRoute
+                  ? []
+                  : directoryViewTabs.map((tab) => ({
+                      id: tab.id,
+                      label: tab.label,
+                      icon: <tab.icon size={16} aria-hidden />,
+                    }))
+              }
               activeTab={viewMode}
               onTabChange={(id) => {
+                if (isNetworkRoute) return;
                 if (id === 'dashboard') {
                   setSelectedProfile(null);
                   setShowValidationPanel(false);
@@ -8353,6 +8358,7 @@ const App = () => {
             <Route path="/membres" element={<MainApp />} />
             <Route path="/network" element={<MainApp />} />
             <Route path="/requests" element={<MainApp />} />
+            <Route path="/radar" element={<MainApp initialViewMode="radar" />} />
             <Route path="/admin" element={<MainApp />} />
             <Route path="/requests/:id" element={<RequestsRedirect />} />
             <Route path="/network/member/:slug" element={<MemberRedirect />} />

@@ -10,7 +10,8 @@ export const primaryNav: PrimaryNavItem[] = [
   { label: 'Accueil', href: '/', visibility: 'all' },
   { label: 'Réseau', href: '/network', visibility: 'all' },
   { label: 'Demandes', href: '/requests', visibility: 'all' },
-  { label: 'Dashboard', href: '/dashboard', visibility: 'member' },
+  { label: 'Radar', href: '/radar', visibility: 'all' },
+  { label: 'Mon profil', href: '/profile/edit', visibility: 'member' },
   { label: 'Admin', href: '/admin', visibility: 'admin' },
 ];
 
