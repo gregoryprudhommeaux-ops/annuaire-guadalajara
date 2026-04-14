@@ -2186,6 +2186,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const isDashboardRoute = location.pathname === '/dashboard';
   const isNetworkRoute = location.pathname === '/network';
   const isRequestsRoute = location.pathname === '/requests';
+  const isRadarRoute = location.pathname === '/radar';
   const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
   const isEditProfileRoute = location.pathname === '/profile/edit';
   const isMembersDirectoryRoute = location.pathname === '/membres' || isNetworkRoute;
@@ -2218,6 +2219,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       setMembersSortMode(parseMembersSortFromSearch(location.search));
     } else if (location.pathname === '/dashboard') {
       setViewMode('dashboard');
+      setDirectoryDiscoveryStripsHidden(true);
+    } else if (location.pathname === '/radar') {
+      setViewMode('radar');
       setDirectoryDiscoveryStripsHidden(true);
     } else if (location.pathname === '/requests') {
       setViewMode('members');
@@ -6544,6 +6548,63 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 onDelete={handleDeleteMemberRequest}
                 postModalOpenNonce={memberRequestModalNonce}
               />
+            </div>
+          </div>
+        ) : isRadarRoute && !isAdminDashboard ? (
+          <div className="w-full px-4 py-6 sm:px-6">
+            <div className="mx-auto w-full max-w-none">
+              <SectionErrorBoundary
+                fallback={
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+                    {pickLang(
+                      'Le module Radar a rencontré une erreur.',
+                      'El módulo Radar encontró un error.',
+                      'Radar module crashed.',
+                      lang
+                    )}
+                  </div>
+                }
+              >
+                <React.Suspense
+                  fallback={
+                    <div className="rounded-xl border border-stone-200 bg-white p-6 text-sm text-stone-500">
+                      {pickLang('Chargement du radar...', 'Cargando radar...', 'Loading radar...', lang)}
+                    </div>
+                  }
+                >
+                  <NetworkRadarSection
+                    lang={lang}
+                    t={t}
+                    allProfiles={allProfiles}
+                    viewerProfile={profile}
+                    user={user}
+                    copy={h}
+                    activityCategoryLabel={activityCategoryLabel}
+                    needOptionLabel={needOptionLabel}
+                    getPassionEmoji={getPassionEmoji}
+                    getPassionLabel={getPassionLabel}
+                    onNeedClick={(needId) => {
+                      navigate('/network');
+                      setPassionIdFilter('');
+                      setHighlightedNeedFilter(needId);
+                    }}
+                    onPassionClick={(passionId) => {
+                      navigate('/network');
+                      setHighlightedNeedFilter('');
+                      setPassionIdFilter(passionId);
+                    }}
+                    onCreateProfile={openAuthModal}
+                    registeredWithProfile={!!user && !!profile}
+                    onUnlockRadar={() => {
+                      if (!user) {
+                        openAuthModal();
+                      } else {
+                        setShowOnboarding(true);
+                      }
+                    }}
+                  />
+                </React.Suspense>
+              </SectionErrorBoundary>
             </div>
           </div>
         ) : (
