@@ -29,6 +29,8 @@ import { getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/pass
 import PassionsCrossHeatmap, { type CrossPick } from '@/components/dashboard/PassionsCrossHeatmap';
 import TopActiveMembersTable from '@/components/dashboard/TopActiveMembersTable';
 
+const RadarChartsLazy = React.lazy(() => import('@/components/admin/RadarCharts'));
+
 type TFn = (key: string) => string;
 
 type AdminDashboardProps = {
@@ -337,14 +339,27 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
             <StatCard label="Vues profils" value={stats.totalProfileViewEvents} />
           </div>
 
+          {/* ── Graphiques profil communauté ── */}
+          <MiniErrorBoundary label="RadarCharts">
+            <React.Suspense
+              fallback={
+                <div className="mt-6 rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                  Chargement des graphiques…
+                </div>
+              }
+            >
+              <RadarChartsLazy profiles={stats.profilesForDashboard as any} />
+            </React.Suspense>
+          </MiniErrorBoundary>
+
           {/* Row 1 — Courbe inscriptions (large) + Donut secteurs */}
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-            <div className="lg:col-span-3">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
+            <div className="min-w-0 xl:col-span-3">
               <MiniErrorBoundary label="InscriptionAreaChart">
                 <InscriptionAreaChart members={stats.profilesCreatedAt} height={316} />
               </MiniErrorBoundary>
             </div>
-            <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm lg:col-span-2">
+            <div className="min-w-0 rounded-xl border border-stone-200 bg-white p-4 shadow-sm xl:col-span-2">
               <h3 className="text-sm font-semibold text-stone-900">Répartition par secteur</h3>
               <p className="mt-1 text-xs text-stone-500">Donut + légende</p>
               <div className="mt-3">

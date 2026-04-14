@@ -946,6 +946,40 @@ const MatchCard = ({ m, p, onShare, expanded, onToggleHook }: {
   );
 };
 
+const SHARE_NEEDS_CACHE_PREFIX = 'ai_share_needs_v1:'; // bump to invalidate
+const SHARE_NEEDS_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+const shareNeedsInFlight = new Map<string, Promise<string>>();
+
+function readShareNeedsCached(key: string): string | null {
+  try {
+    const raw = globalThis.localStorage?.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { out: string; ts: number };
+    if (!parsed || typeof parsed.out !== 'string' || typeof parsed.ts !== 'number') return null;
+    if (!Number.isFinite(parsed.ts) || parsed.ts <= 0) return null;
+    if (Date.now() - parsed.ts > SHARE_NEEDS_TTL_MS) {
+      globalThis.localStorage?.removeItem(key);
+      return null;
+    }
+    return parsed.out.trim() || null;
+  } catch {
+    try {
+      globalThis.localStorage?.removeItem(key);
+    } catch {
+      // ignore
+    }
+    return null;
+  }
+}
+
+function writeShareNeedsCached(key: string, out: string) {
+  try {
+    globalThis.localStorage?.setItem(key, JSON.stringify({ out, ts: Date.now() }));
+  } catch {
+    /* ignore quota/storage errors */
+  }
+}
+
 const ShareNeedsModal = ({ isOpen, onClose, profile }: { isOpen: boolean, onClose: () => void, profile: UserProfile }) => {
   const { lang } = useLanguage();
   const [message, setMessage] = useState('');
@@ -975,22 +1009,57 @@ const ShareNeedsModal = ({ isOpen, onClose, profile }: { isOpen: boolean, onClos
   const handleRegenerate = async () => {
     setIsGenerating(true);
     try {
-      const { GoogleGenAI } = await import("@google/genai");
       const apiKey = getGeminiApiKey();
       if (!apiKey) throw new Error('missing-gemini-api-key');
-      const ai = new GoogleGenAI({ apiKey });
       const needsForAi = formatHighlightedNeedsForText(profile.highlightedNeeds, lang) || '—';
+      const cacheKey = `${SHARE_NEEDS_CACHE_PREFIX}${lang}:${profile.uid}:${needsForAi}`;
+      const cached = readShareNeedsCached(cacheKey);
+      if (cached) {
+        const footer = pickLang(
+          `\n\nMon profil : ${window.location.origin}/profil/${profile.uid}`,
+          `\n\nMi perfil: ${window.location.origin}/profil/${profile.uid}`,
+          `\n\nMy profile: ${window.location.origin}/profil/${profile.uid}`,
+          lang
+        );
+        setMessage(`${cached}${footer}`);
+        return;
+      }
+
+      const existing = shareNeedsInFlight.get(cacheKey);
+      if (existing) {
+        const out = await existing;
+        const footer = pickLang(
+          `\n\nMon profil : ${window.location.origin}/profil/${profile.uid}`,
+          `\n\nMi perfil: ${window.location.origin}/profil/${profile.uid}`,
+          `\n\nMy profile: ${window.location.origin}/profil/${profile.uid}`,
+          lang
+        );
+        setMessage(`${out}${footer}`);
+        return;
+      }
+
       const prompt = pickLang(
         `Reformule de manière professionnelle et engageante pour un partage LinkedIn/WhatsApp. Besoins structurés (tags): "${needsForAi}". Message court (max 200 caractères), sans guillemets autour du résultat.`,
         `Reformula de forma profesional y atractiva para compartir en LinkedIn/WhatsApp. Necesidades estructuradas (etiquetas): "${needsForAi}". Mensaje breve (máx. 200 caracteres), sin comillas alrededor del resultado.`,
         `Rephrase in a professional, engaging way for LinkedIn/WhatsApp sharing. Structured needs (tags): "${needsForAi}". Short message (max 200 characters), no quotes around the result.`,
         lang
       );
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
+      const task = (async () => {
+        const { GoogleGenAI } = await import("@google/genai");
+        const ai = new GoogleGenAI({ apiKey });
+        const response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: prompt,
+        });
+        const text = (response.text || '').trim();
+        if (text) writeShareNeedsCached(cacheKey, text);
+        return text;
+      })().finally(() => {
+        shareNeedsInFlight.delete(cacheKey);
       });
-      const text = response.text || '';
+      shareNeedsInFlight.set(cacheKey, task);
+
+      const text = await task;
       const footer = pickLang(
         `\n\nMon profil : ${window.location.origin}/profil/${profile.uid}`,
         `\n\nMi perfil: ${window.location.origin}/profil/${profile.uid}`,
@@ -2834,9 +2903,16 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     try {
       const readiness = getProfileAiRecommendationReadiness(u);
       const storageKey = `ai_matches_v2_${u.uid}`;
+      const persistentKey = `ai_matches_v3_${u.uid}`;
+      const PERSIST_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
       if (readiness < 0.8) {
         sessionStorage.removeItem(storageKey);
+        try {
+          localStorage.removeItem(persistentKey);
+        } catch {
+          // ignore
+        }
         setMatches([]);
         setMatchLoading(false);
         setMatchBlockReason('incomplete_profile');
@@ -2859,6 +2935,32 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
           }
         } catch {
           sessionStorage.removeItem(storageKey);
+        }
+      }
+
+      // Persistent cache (survives refresh). Validate against current uid set.
+      try {
+        const raw = localStorage.getItem(persistentKey);
+        if (raw) {
+          const parsed = JSON.parse(raw) as { ts: number; data: MatchSuggestion[] };
+          const ts = Number(parsed?.ts ?? 0);
+          const data = parsed?.data;
+          if (Number.isFinite(ts) && ts > 0 && Date.now() - ts < PERSIST_TTL_MS && Array.isArray(data) && data.length) {
+            const validUids = new Set(profiles.map((p) => p.uid).filter(Boolean));
+            const filtered = data.filter((m) => validUids.has(m.profileId));
+            if (filtered.length > 0) {
+              setMatches(filtered);
+              setMatchBlockReason(null);
+              sessionStorage.setItem(storageKey, JSON.stringify(filtered));
+              return;
+            }
+          }
+        }
+      } catch {
+        try {
+          localStorage.removeItem(persistentKey);
+        } catch {
+          // ignore
         }
       }
 
@@ -2898,6 +3000,11 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
         }
 
         sessionStorage.setItem(storageKey, JSON.stringify(result));
+        try {
+          localStorage.setItem(persistentKey, JSON.stringify({ ts: Date.now(), data: result }));
+        } catch {
+          // ignore
+        }
         setMatches(result);
         setMatchBlockReason(null);
       } catch (error) {
@@ -4135,6 +4242,57 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     setOptimizationBusy(true);
     setOptimizationError(null);
     try {
+      const OPT_CACHE_PREFIX = 'ai_opt_suggestion_v1:'; // bump to invalidate
+      const OPT_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+      const optCacheKey = `${OPT_CACHE_PREFIX}${targetProfile.uid}`;
+
+      // If we already have a recent suggestion in Firestore data, don't spend tokens again.
+      const existing = targetProfile.optimizationSuggestion as any;
+      if (
+        existing &&
+        typeof existing.bioSuggested === 'string' &&
+        Array.isArray(existing.summary) &&
+        typeof existing.generatedAt === 'number' &&
+        Number.isFinite(existing.generatedAt) &&
+        Date.now() - existing.generatedAt < OPT_TTL_MS
+      ) {
+        setOptimizationBusy(false);
+        return;
+      }
+
+      // Persistent cache (survives refresh). Used as token-saver when user clicks generate again.
+      try {
+        const raw = localStorage.getItem(optCacheKey);
+        if (raw) {
+          const parsed = JSON.parse(raw) as { out: OptimizationSuggestion; ts: number };
+          const ts = Number(parsed?.ts ?? 0);
+          const out = parsed?.out;
+          if (
+            Number.isFinite(ts) &&
+            ts > 0 &&
+            Date.now() - ts < OPT_TTL_MS &&
+            out &&
+            typeof out.bioSuggested === 'string' &&
+            Array.isArray(out.summary) &&
+            out.summary.length > 0
+          ) {
+            await setDoc(doc(db, 'users', targetProfile.uid), { optimizationSuggestion: out }, { merge: true });
+            setSelectedProfile((prev) =>
+              prev && prev.uid === targetProfile.uid ? { ...prev, optimizationSuggestion: out } : prev
+            );
+            setAllProfiles((prev) => prev.map((p) => (p.uid === targetProfile.uid ? { ...p, optimizationSuggestion: out } : p)));
+            setOptimizationBusy(false);
+            return;
+          }
+        }
+      } catch {
+        try {
+          localStorage.removeItem(optCacheKey);
+        } catch {
+          // ignore
+        }
+      }
+
       const apiKey = getGeminiApiKey();
       if (!apiKey) throw new Error('missing-gemini-api-key');
       const { GoogleGenAI } = await import('@google/genai');
@@ -4174,6 +4332,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       await setDoc(doc(db, 'users', targetProfile.uid), { optimizationSuggestion: suggestion }, { merge: true });
       setSelectedProfile((prev) => prev && prev.uid === targetProfile.uid ? { ...prev, optimizationSuggestion: suggestion } : prev);
       setAllProfiles((prev) => prev.map(p => p.uid === targetProfile.uid ? { ...p, optimizationSuggestion: suggestion } : p));
+
+      try {
+        localStorage.setItem(optCacheKey, JSON.stringify({ ts: Date.now(), out: suggestion }));
+      } catch {
+        // ignore
+      }
     } catch (error) {
       console.error('Optimization generation failed', error);
       const msg = (error as { message?: string; code?: string })?.message || '';

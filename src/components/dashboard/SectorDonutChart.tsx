@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export type SectorDonutDatum = { secteur: string; count: number };
@@ -11,6 +11,20 @@ export default function SectorDonutChart({
   /** Hauteur (px) de la zone graphique (donut + légende). */
   height?: number;
 }) {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [wrapWidth, setWrapWidth] = useState<number>(0);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries?.[0]?.contentRect?.width ?? 0;
+      setWrapWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const rows = useMemo(() => {
     return (data ?? [])
       .map((d) => ({
@@ -40,6 +54,8 @@ export default function SectorDonutChart({
       </div>
     );
   }
+
+  const isNarrow = wrapWidth > 0 ? wrapWidth < 420 : false;
 
   const label = ({
     cx,
@@ -79,15 +95,15 @@ export default function SectorDonutChart({
   };
 
   return (
-    <div className="w-full min-w-0" style={{ height }}>
+    <div ref={wrapRef} className="w-full min-w-0" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
             data={rows}
             dataKey="count"
             nameKey="secteur"
-            cx="40%"
-            cy="50%"
+            cx={isNarrow ? '50%' : '40%'}
+            cy={isNarrow ? '42%' : '50%'}
             innerRadius={Math.round(Math.min(78, Math.max(54, height * 0.24)))}
             outerRadius={Math.round(Math.min(118, Math.max(90, height * 0.38)))}
             paddingAngle={2}
@@ -109,11 +125,15 @@ export default function SectorDonutChart({
             }}
           />
           <Legend
-            layout="vertical"
-            verticalAlign="middle"
-            align="right"
+            layout={isNarrow ? 'horizontal' : 'vertical'}
+            verticalAlign={isNarrow ? 'bottom' : 'middle'}
+            align={isNarrow ? 'center' : 'right'}
             iconSize={10}
-            wrapperStyle={{ fontSize: 12, maxHeight: 260, overflow: 'auto' }}
+            wrapperStyle={
+              isNarrow
+                ? { fontSize: 12, width: '100%', paddingTop: 8, lineHeight: 1.25 }
+                : { fontSize: 12, maxHeight: 260, overflow: 'auto' }
+            }
             formatter={(value: unknown, _entry: unknown, index: number) => {
               const name = String(value ?? '');
               const r = rows[index];

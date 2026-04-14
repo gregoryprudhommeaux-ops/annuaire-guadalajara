@@ -1,4 +1,3 @@
-import { GoogleGenAI } from '@google/genai';
 import type { Language } from '../types';
 import { getGeminiApiKey } from './geminiEnv';
 
@@ -15,6 +14,8 @@ function norm(s: string): string {
 const inFlightTranslations = new Map<string, Promise<string>>();
 const QUOTA_COOLDOWN_KEY = 'ai_ft_quota_cooldown_until_ms';
 const QUOTA_COOLDOWN_MS = 10 * 60 * 1000;
+const TRANSLATION_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const TRANSLATION_CACHE_PREFIX = 'ai_ft_cache_v1:'; // bump to invalidate all
 const MAX_CONCURRENT_TRANSLATIONS = 2;
 let activeTranslations = 0;
 const translationQueue: Array<() => void> = [];
@@ -92,6 +93,43 @@ export function cacheKeyForFreeTextTranslation(lang: Language, text: string): st
   return `ai_ft_v1_${lang}_${(h >>> 0).toString(16)}_${t.length}`;
 }
 
+type CachedTranslationV1 = { out: string; ts: number };
+
+function readPersistentTranslation(key: string): string | null {
+  const storage = globalThis.localStorage;
+  if (!storage) return null;
+  try {
+    const raw = storage.getItem(`${TRANSLATION_CACHE_PREFIX}${key}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CachedTranslationV1;
+    if (!parsed || typeof parsed.out !== 'string' || typeof parsed.ts !== 'number') return null;
+    if (!Number.isFinite(parsed.ts) || parsed.ts <= 0) return null;
+    if (Date.now() - parsed.ts > TRANSLATION_CACHE_TTL_MS) {
+      storage.removeItem(`${TRANSLATION_CACHE_PREFIX}${key}`);
+      return null;
+    }
+    return parsed.out.trim() || null;
+  } catch {
+    try {
+      storage.removeItem(`${TRANSLATION_CACHE_PREFIX}${key}`);
+    } catch {
+      // ignore
+    }
+    return null;
+  }
+}
+
+function writePersistentTranslation(key: string, out: string) {
+  const storage = globalThis.localStorage;
+  if (!storage) return;
+  try {
+    const value: CachedTranslationV1 = { out, ts: Date.now() };
+    storage.setItem(`${TRANSLATION_CACHE_PREFIX}${key}`, JSON.stringify(value));
+  } catch {
+    /* ignore quota/storage errors */
+  }
+}
+
 /**
  * Traduit un texte libre vers la langue d’interface. Sans clé API, renvoie le texte d’origine.
  */
@@ -109,12 +147,16 @@ export async function translateFreeTextToUiLang(text: string, targetLang: Langua
   }
 
   const key = cacheKeyForFreeTextTranslation(targetLang, trimmed);
+  const persisted = readPersistentTranslation(key);
+  if (persisted) return persisted;
+
   const existing = inFlightTranslations.get(key);
   if (existing) return existing;
 
   const task = runWithTranslationConcurrency(async () => {
     const target = TARGET_LANG_NAME[targetLang];
     const safe = trimmed.length > 12000 ? `${trimmed.slice(0, 12000)}…` : trimmed;
+    const { GoogleGenAI } = await import('@google/genai');
     const ai = new GoogleGenAI({ apiKey });
     const prompt = `Translate the following user-written text into ${target} for a B2B business directory. Preserve meaning, tone, and meaningful line breaks. Output ONLY the translation — no quotes, no title, no "Here is the translation".
 
@@ -128,7 +170,11 @@ ${safe}
       contents: prompt,
     });
     const out = (res.text || '').trim();
-    return out || trimmed;
+    const finalOut = out || trimmed;
+    if (finalOut && finalOut !== trimmed) {
+      writePersistentTranslation(key, finalOut);
+    }
+    return finalOut;
   })
     .catch((err) => {
       const msg = String((err as { message?: string })?.message ?? err ?? '');

@@ -12,7 +12,49 @@ import {
   effectiveTypicalClientSizesForProfile,
   firstSlotActivityDescription,
 } from './companyActivities';
-import { GoogleGenAI } from '@google/genai';
+
+const PROFILE_COACH_CACHE_PREFIX = 'ai_profile_coach_v1:'; // bump to invalidate
+const PROFILE_COACH_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+const inFlightCoach = new Map<string, Promise<string | null>>();
+
+function coachCacheKey(fingerprint: string, lang: Language): string {
+  // include lang; fingerprint already reflects profile content we use.
+  return `${PROFILE_COACH_CACHE_PREFIX}${lang}:${fingerprint}`;
+}
+
+function readCoachCached(key: string): string | null {
+  const storage = globalThis.localStorage;
+  if (!storage) return null;
+  try {
+    const raw = storage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { out: string; ts: number };
+    if (!parsed || typeof parsed.out !== 'string' || typeof parsed.ts !== 'number') return null;
+    if (!Number.isFinite(parsed.ts) || parsed.ts <= 0) return null;
+    if (Date.now() - parsed.ts > PROFILE_COACH_TTL_MS) {
+      storage.removeItem(key);
+      return null;
+    }
+    return parsed.out.trim() || null;
+  } catch {
+    try {
+      storage.removeItem(key);
+    } catch {
+      // ignore
+    }
+    return null;
+  }
+}
+
+function writeCoachCached(key: string, out: string) {
+  const storage = globalThis.localStorage;
+  if (!storage) return;
+  try {
+    storage.setItem(key, JSON.stringify({ out, ts: Date.now() }));
+  } catch {
+    /* ignore quota/storage errors */
+  }
+}
 
 export function profileCoachFingerprint(p: UserProfile): string {
   const tcs = effectiveTypicalClientSizesForProfile(p);
@@ -171,7 +213,14 @@ export async function fetchAiProfileCoachLine(
   profile: UserProfile,
   lang: Language
 ): Promise<string | null> {
-  const ai = new GoogleGenAI({ apiKey });
+  const fp = profileCoachFingerprint(profile);
+  const key = coachCacheKey(fp, lang);
+  const cached = readCoachCached(key);
+  if (cached) return cached;
+
+  const existing = inFlightCoach.get(key);
+  if (existing) return existing;
+
   const facts = summarizeProfileForPrompt(profile);
   const prompt = pickLang(
     lang,
@@ -179,11 +228,23 @@ export async function fetchAiProfileCoachLine(
     `Entrenas a un miembro de un directorio B2B en Guadalajara. Datos del perfil (interno, una línea por campo):\n${facts}\n\nResponde con UNA SOLA frase en español: el consejo de mejora más útil (presentación, bio o campo faltante prioritario). Frase completa, máximo 200 caracteres, sin listas, sin comillas, sin "Hola", sin varios signos de exclamación.`,
     `You coach a member of a B2B directory in Guadalajara. Profile facts (internal, one field per line):\n${facts}\n\nReply with EXACTLY ONE English sentence: the single most useful improvement tip (pitch, bio, or top missing field). Complete sentence, max 200 characters, no bullet list, no quotes, no "Hello", no multiple exclamation marks.`
   );
-  const res = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: prompt,
-  });
-  const text = (res.text || '').replace(/\s+/g, ' ').trim();
-  if (!text) return null;
-  return normalizeAiCoachToSingleTip(text);
+  const task = (async () => {
+    const { GoogleGenAI } = await import('@google/genai');
+    const ai = new GoogleGenAI({ apiKey });
+    const res = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+    });
+    const text = (res.text || '').replace(/\s+/g, ' ').trim();
+    if (!text) return null;
+    const normalized = normalizeAiCoachToSingleTip(text);
+    if (normalized) writeCoachCached(key, normalized);
+    return normalized || null;
+  })()
+    .finally(() => {
+      inFlightCoach.delete(key);
+    });
+
+  inFlightCoach.set(key, task);
+  return task;
 }

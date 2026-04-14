@@ -56,7 +56,8 @@ export default function TopActiveMembersTable({
       </div>
 
       <div className="mt-4 overflow-hidden rounded-lg border border-stone-200">
-        <table className="w-full text-left text-sm">
+        <div className="w-full overflow-x-auto">
+          <table className="min-w-[520px] w-full text-left text-sm">
           <thead className="bg-stone-50 text-stone-600">
             <tr className="text-[11px] font-semibold uppercase tracking-wide">
               <th className="px-3 py-2">Membre</th>
@@ -90,8 +91,13 @@ export default function TopActiveMembersTable({
                   </div>
                 </td>
                 <td className="px-3 py-2">
-                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${badgeClass(m.secteur)}`}>
-                    {m.secteur ?? '—'}
+                  <span
+                    className={`inline-flex max-w-[220px] items-center truncate rounded-full border px-2 py-0.5 text-xs font-semibold ${badgeClass(
+                      m.secteur
+                    )}`}
+                    title={m.secteur ?? '—'}
+                  >
+                    <span className="truncate">{m.secteur ?? '—'}</span>
                   </span>
                 </td>
                 <td className="px-3 py-2">
@@ -110,7 +116,8 @@ export default function TopActiveMembersTable({
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
     </div>
   );

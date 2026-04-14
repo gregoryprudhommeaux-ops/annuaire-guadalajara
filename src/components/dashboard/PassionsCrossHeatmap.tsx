@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ResponsiveHeatMap } from '@nivo/heatmap';
 import type { Language } from '@/types';
 import { getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/passionConfig';
@@ -59,8 +59,21 @@ export default function PassionsCrossHeatmap({
 }) {
   const [dimension, setDimension] = useState<DimensionKey>('sector');
   const locale = normalizeLang(lang);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [wrapWidth, setWrapWidth] = useState<number>(0);
 
   const dimLabel = dimension === 'sector' ? 'Secteur' : dimension === 'poste' ? 'Poste' : 'Industrie';
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries?.[0]?.contentRect?.width ?? 0;
+      setWrapWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const computed = useMemo(() => {
     const passionTotals = new Map<string, number>();
@@ -124,8 +137,10 @@ export default function PassionsCrossHeatmap({
     return { data, hasAny, xToFull, yToFull, yToPassionId };
   }, [members, dimension, locale]);
 
+  const isNarrow = wrapWidth > 0 ? wrapWidth < 520 : false;
+
   return (
-    <section className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+    <section ref={wrapRef} className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-sm font-semibold text-stone-900">Croisement passions × {dimLabel}</h3>
@@ -147,10 +162,15 @@ export default function PassionsCrossHeatmap({
           Pas assez de données passions pour afficher la heatmap.
         </div>
       ) : (
-        <div className="mt-3 h-[340px] w-full min-w-0">
-          <ResponsiveHeatMap
-            data={computed.data as any}
-            margin={{ top: 16, right: 12, bottom: 44, left: 140 }}
+        <div className="mt-3 w-full min-w-0">
+          <div
+            className="h-[340px] w-full min-w-0 overflow-x-auto overflow-y-hidden"
+            style={{ WebkitOverflowScrolling: 'touch' as any }}
+          >
+            <div className={isNarrow ? 'min-w-[680px] h-full' : 'h-full'}>
+              <ResponsiveHeatMap
+                data={computed.data as any}
+                margin={{ top: 16, right: 12, bottom: 44, left: isNarrow ? 110 : 140 }}
             valueFormat=">-.0f"
             onClick={(cell: any) => {
               const xCompact = String(cell?.data?.x ?? '');
@@ -212,7 +232,9 @@ export default function PassionsCrossHeatmap({
             theme={chartTheme as any}
             motionConfig="gentle"
             role="application"
-          />
+              />
+            </div>
+          </div>
         </div>
       )}
     </section>

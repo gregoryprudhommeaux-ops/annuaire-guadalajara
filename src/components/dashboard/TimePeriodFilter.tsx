@@ -23,7 +23,7 @@ export default function TimePeriodFilter() {
               type="button"
               onClick={() => setPeriod(p.key)}
               className={cn(
-                'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
+                'rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:px-4 sm:text-sm',
                 active
                   ? 'bg-indigo-600 text-white'
                   : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
