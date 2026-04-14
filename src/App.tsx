@@ -6380,6 +6380,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 }
                 hero={
                   <HeroSection
+                    topActions={
+                      <HeroTopActions
+                        currentLocale={lang}
+                        isAuthenticated={Boolean(user)}
+                        onChangeLocale={setLang}
+                        onLogout={handleLogout}
+                        onLogin={openAuthModal}
+                      />
+                    }
                     copy={{
                       ...h,
                       ctaPrimary: user ? t('dashboardTab') : h.ctaPrimary,

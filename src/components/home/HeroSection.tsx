@@ -5,6 +5,8 @@ import { pagePadX } from '../../lib/pageLayout';
 
 type Props = {
   copy: HomeLandingCopy;
+  /** Optional top-right actions bar inside the hero (language, login/logout, etc.). */
+  topActions?: React.ReactNode;
   onCreateProfile: () => void;
   onExploreMembers: () => void;
   authBusy: boolean;
@@ -14,6 +16,7 @@ type Props = {
 /** Hero — promesse principale + CTA + 3 étapes (accueil visiteurs). */
 export default function HeroSection({
   copy,
+  topActions,
   onCreateProfile,
   onExploreMembers,
   authBusy,
@@ -30,6 +33,7 @@ export default function HeroSection({
     >
       <div className="flex min-h-0 w-full flex-1 flex-col justify-between gap-5">
         <div className="min-w-0">
+          {topActions ? <div className="mb-4 flex w-full justify-end">{topActions}</div> : null}
           <h1
             id="home-hero-title"
             className="text-xl font-bold tracking-tight text-stone-900 break-words sm:text-2xl sm:leading-snug"

@@ -12,8 +12,8 @@
   align-items: center;
   gap: 4px;
   padding: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(10px);
   border-radius: 999px;
 }
@@ -25,7 +25,7 @@
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: #ffffff;
+  color: #0f172a;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -34,12 +34,12 @@
 }
 
 .lang-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.06);
 }
 
 .lang-btn.active {
-  background: #ffffff;
-  color: #111827;
+  background: #0b5cff;
+  color: #ffffff;
 }
 
 .account-btn {
@@ -54,22 +54,22 @@
 }
 
 .logout-btn {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+  border: 1px solid rgba(15, 23, 42, 0.12);
 }
 
 .logout-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(15, 23, 42, 0.1);
 }
 
 .login-btn {
-  background: #ffffff;
-  color: #111827;
+  background: #0b5cff;
+  color: #ffffff;
 }
 
 .login-btn:hover {
-  background: #f3f4f6;
+  background: #0649cc;
 }
 
 @media (max-width: 768px) {
