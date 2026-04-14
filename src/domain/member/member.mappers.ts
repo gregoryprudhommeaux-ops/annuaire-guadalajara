@@ -59,7 +59,7 @@ export function mapLegacyPassionIdToHobbyKey(id: string): HobbyKey | undefined {
   return LEGACY_PASSION_ID_TO_HOBBY[id];
 }
 
-function slugFromProfile(p: UserProfile): string {
+export function slugFromProfile(p: UserProfile): string {
   const raw = p.fullName?.trim().toLowerCase() || '';
   const slug = raw
     .normalize('NFD')

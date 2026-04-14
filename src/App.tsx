@@ -216,6 +216,15 @@ import First50MembersBanner from './components/home/First50MembersBanner';
 import HeroSearchSection from './components/home/HeroSearchSection';
 import DirectoryTabsSection from './components/home/DirectoryTabsSection';
 import OnboardingIntroBanner from './components/home/OnboardingIntroBanner';
+import { MemberCard } from './features/network/components/MemberCard';
+import { NetworkSidebar } from './features/network/components/NetworkSidebar';
+import { slugFromProfile } from './domain/member/member.mappers';
+import {
+  memberCardBioBodyClassName,
+  memberCardBioTitleAttr,
+  memberCardDefaultNameClassName,
+  memberCardRootClassName,
+} from './features/network/utils/memberCard';
 import { homeLanding } from './copy/homeLanding';
 import AffinityScore from './components/AffinityScore';
 import { MemberPublicProfile } from './components/profile/MemberPublicProfile';
@@ -717,6 +726,7 @@ const ProfileCard = ({
   guestDirectoryTeaser = false,
   onGuestJoin,
   viewerIsAdmin = false,
+  networkListing = false,
 }: {
   p: UserProfile;
   isOwn?: boolean;
@@ -731,6 +741,8 @@ const ProfileCard = ({
   onGuestJoin?: () => void;
   /** Édition / suppression fiches (admin annuaire). */
   viewerIsAdmin?: boolean;
+  /** Mise en forme annuaire `/network` (scanabilité, styles `fn-network-*`). */
+  networkListing?: boolean;
 }) => {
   const { lang, t } = useLanguage();
   // Désactivation volontaire : l’admin ne modifie pas les profils via l’UI (évite incohérences).
@@ -748,7 +760,8 @@ const ProfileCard = ({
       onClick={() => onSelect(p)}
       className={cn(
         'relative flex min-h-0 cursor-pointer flex-col rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow group hover:shadow-md',
-        guestDirectoryTeaser ? 'h-auto p-3 sm:p-5' : 'h-full p-4 sm:p-5'
+        guestDirectoryTeaser ? 'h-auto p-3 sm:p-5' : 'h-full p-4 sm:p-5',
+        memberCardRootClassName(networkListing)
       )}
     >
       <div
@@ -853,9 +866,7 @@ const ProfileCard = ({
             )}
             {!guestDirectoryTeaser && variant === 'default' && (
               <>
-                <h3 className="line-clamp-2 break-words font-bold leading-tight text-stone-900 transition-colors group-hover:text-stone-700">
-                  {p.fullName}
-                </h3>
+                <h3 className={memberCardDefaultNameClassName(networkListing)}>{p.fullName}</h3>
                 <p className="mt-0.5 truncate text-xs font-medium text-stone-600">{p.companyName}</p>
                 <p className="mt-0.5 line-clamp-2 text-xs text-stone-500">
                   {(() => {
@@ -894,10 +905,18 @@ const ProfileCard = ({
       {!guestDirectoryTeaser ? (
         <div className="mt-1 min-h-0 shrink-0">
           {variant === 'default' && effectiveMemberBio(p).trim() ? (
-            <p className="line-clamp-2 text-xs leading-relaxed text-stone-600">{effectiveMemberBio(p)}</p>
+            <p
+              title={memberCardBioTitleAttr(effectiveMemberBio(p), networkListing)}
+              className={memberCardBioBodyClassName(networkListing)}
+            >
+              {effectiveMemberBio(p)}
+            </p>
           ) : null}
           {(variant === 'company' || variant === 'activity') && firstSlotActivityDescription(p).trim() ? (
-            <p className="line-clamp-2 text-xs leading-relaxed text-stone-600">
+            <p
+              title={memberCardBioTitleAttr(firstSlotActivityDescription(p), networkListing)}
+              className={memberCardBioBodyClassName(networkListing)}
+            >
               {firstSlotActivityDescription(p)}
             </p>
           ) : null}
@@ -4223,6 +4242,36 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     else if (v === 'member') setViewMode('members');
   }, []);
 
+  const networkSidebarSectorOptions = useMemo(
+    () => [
+      { value: '', label: t('filterSectorDefault') },
+      ...ACTIVITY_CATEGORIES.map((c) => ({
+        value: c,
+        label: activityCategoryLabel(c, lang),
+      })),
+    ],
+    [lang, t]
+  );
+
+  const networkSidebarProfileOptions = useMemo(
+    () => [
+      { value: '', label: t('filterTypeDefault') },
+      { value: 'company', label: t('filterTypeCompany') },
+      { value: 'member', label: t('filterTypeMember') },
+    ],
+    [t]
+  );
+
+  const networkSidebarLocationOptions = useMemo(
+    () => [
+      { value: '', label: t('filterLocationDefault') },
+      { value: 'guadalajara', label: t('filterLocationGuadalajara') },
+      { value: 'zapopan', label: t('filterLocationZapopan') },
+      { value: 'other', label: t('filterLocationOther') },
+    ],
+    [t]
+  );
+
   const membersFiltered = useMemo(() => {
     return filteredProfiles.filter((p) => {
       if (highlightedNeedFilter && !(p.highlightedNeeds || []).includes(highlightedNeedFilter)) {
@@ -6688,7 +6737,21 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
           </div>
         ) : (
-        <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
+        <>
+        <div
+          className={cn(
+            'min-w-0',
+            user &&
+              isNetworkRoute &&
+              !isEditProfileRoute &&
+              !isAdminDashboard
+              ? 'fn-network-page network-layout'
+              : cn(
+                  'grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch',
+                  isNetworkRoute && 'fn-network-page'
+                )
+          )}
+        >
           {/* Invités : hero + recherche, puis blocs d’accueil (pile unique) */}
           {!user && !isAdminDashboard && !isSignupLandingRoute && (
             <div className="flex w-full flex-col gap-6 lg:col-span-12">
@@ -6761,37 +6824,76 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           {user && !isAdminDashboard && !isEditProfileRoute && (
           <div
             className={cn(
-              'order-1 min-w-0 w-full space-y-4 sm:space-y-6 lg:order-1 lg:col-start-1 lg:col-span-4 lg:self-start',
+              'order-1 min-w-0 w-full lg:order-1',
+              !(
+                user &&
+                isNetworkRoute &&
+                !isEditProfileRoute &&
+                !isAdminDashboard
+              ) && 'lg:col-start-1 lg:col-span-4 lg:self-start',
               isAdminDashboard && 'hidden'
             )}
           >
-            <SearchBlock
-              lang={lang}
-              t={t}
-              searchTerm={searchTerm}
-              onSearchTermChange={setSearchTerm}
-              filterCategory={filterCategory}
-              onFilterCategoryChange={setFilterCategory}
-              filterProfileType={filterProfileType}
-              onFilterProfileTypeChange={handleFilterProfileTypeChange}
-              filterLocation={filterLocation}
-              onFilterLocationChange={setFilterLocation}
-              onSearchSubmit={scrollDirectoryIntoView}
-              onClearFilters={clearDirectoryFilters}
-              onRandomProfile={handleRandomProfile}
-              randomDisabled={guestVisibleProfilesForRandom.length === 0}
-              showClearFilters={showDirectoryClearFilters}
-            />
-
-            {stats.total < FIRST_50_MEMBER_TARGET ? (
-              <First50MembersBanner
-                currentCount={stats.total}
-                targetCount={FIRST_50_MEMBER_TARGET}
-                inviteUrl={getSignupJoinUrl()}
-                className="w-full min-w-0"
-                narrow
+            {isNetworkRoute ? (
+              <NetworkSidebar
+                query={searchTerm}
+                onQueryChange={setSearchTerm}
+                onSubmitSearch={scrollDirectoryIntoView}
+                sectorOptions={networkSidebarSectorOptions}
+                profileOptions={networkSidebarProfileOptions}
+                locationOptions={networkSidebarLocationOptions}
+                selectedSector={filterCategory}
+                selectedProfile={filterProfileType}
+                selectedLocation={filterLocation}
+                onSectorChange={setFilterCategory}
+                onProfileChange={(v) => handleFilterProfileTypeChange(v as ProfileTypeFilterKey)}
+                onLocationChange={(v) => setFilterLocation(v as LocationFilterKey)}
+                onSuggestContact={handleRandomProfile}
+                suggestContactDisabled={guestVisibleProfilesForRandom.length === 0}
+                showClearFilters={showDirectoryClearFilters}
+                onClearFilters={clearDirectoryFilters}
+                launchProgress={
+                  stats.total < FIRST_50_MEMBER_TARGET
+                    ? {
+                        currentCount: stats.total,
+                        targetCount: FIRST_50_MEMBER_TARGET,
+                        inviteUrl: getSignupJoinUrl(),
+                        defaultOpen: false,
+                      }
+                    : null
+                }
               />
-            ) : null}
+            ) : (
+              <div className="space-y-4 sm:space-y-6">
+                <SearchBlock
+                  lang={lang}
+                  t={t}
+                  searchTerm={searchTerm}
+                  onSearchTermChange={setSearchTerm}
+                  filterCategory={filterCategory}
+                  onFilterCategoryChange={setFilterCategory}
+                  filterProfileType={filterProfileType}
+                  onFilterProfileTypeChange={handleFilterProfileTypeChange}
+                  filterLocation={filterLocation}
+                  onFilterLocationChange={setFilterLocation}
+                  onSearchSubmit={scrollDirectoryIntoView}
+                  onClearFilters={clearDirectoryFilters}
+                  onRandomProfile={handleRandomProfile}
+                  randomDisabled={guestVisibleProfilesForRandom.length === 0}
+                  showClearFilters={showDirectoryClearFilters}
+                />
+
+                {stats.total < FIRST_50_MEMBER_TARGET ? (
+                  <First50MembersBanner
+                    currentCount={stats.total}
+                    targetCount={FIRST_50_MEMBER_TARGET}
+                    inviteUrl={getSignupJoinUrl()}
+                    className="w-full min-w-0"
+                    narrow
+                  />
+                ) : null}
+              </div>
+            )}
 
             {/* Opportunités retirées du produit */}
           </div>
@@ -6803,11 +6905,22 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             id="directory-main"
             className={cn(
               'order-2 min-w-0 w-full scroll-mt-24 space-y-6 lg:order-2',
-              isAdminDashboard
-                ? 'lg:col-span-12 lg:col-start-1'
-                : !user
+              user &&
+                isNetworkRoute &&
+                !isEditProfileRoute &&
+                !isAdminDashboard &&
+                'network-main',
+              !(
+                user &&
+                isNetworkRoute &&
+                !isEditProfileRoute &&
+                !isAdminDashboard
+              ) &&
+                (isAdminDashboard
                   ? 'lg:col-span-12 lg:col-start-1'
-                  : 'lg:col-span-8 lg:col-start-5',
+                  : !user
+                    ? 'lg:col-span-12 lg:col-start-1'
+                    : 'lg:col-span-8 lg:col-start-5'),
               user && showDiscoveryStrips && !isAdminDashboard && 'lg:space-y-5'
             )}
           >
@@ -6942,12 +7055,23 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             {isMembersDirectoryRoute && !isAdminDashboard && (
               <header
                 data-testid="members-directory-page"
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5"
+                className={cn(
+                  isNetworkRoute
+                    ? 'network-directory-header'
+                    : 'rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5'
+                )}
               >
-                <h1 className="text-xl font-bold tracking-tight text-stone-900 sm:text-2xl">
+                <h1
+                  className={cn(
+                    !isNetworkRoute &&
+                      'text-xl font-bold tracking-tight text-stone-900 sm:text-2xl'
+                  )}
+                >
                   {t('membersPageTitle')}
                 </h1>
-                <p className="mt-2 text-sm leading-snug text-stone-600">{t('membersPageSubtitle')}</p>
+                <p className={cn(!isNetworkRoute && 'mt-2 text-sm leading-snug text-stone-600')}>
+                  {t('membersPageSubtitle')}
+                </p>
               </header>
             )}
 
@@ -7012,11 +7136,26 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               {viewMode === 'members' && (
                 <div className="space-y-6">
                   {isMembersDirectoryRoute && (
-                    <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-                      <div className="min-w-0 flex-1 space-y-1">
+                    <div
+                      className={cn(
+                        isNetworkRoute
+                          ? 'network-sort-panel'
+                          : 'flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:gap-6'
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'min-w-0 flex-1',
+                          !isNetworkRoute && 'space-y-1'
+                        )}
+                      >
                         <label
                           htmlFor="members-directory-sort"
-                          className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
+                          className={cn(
+                            'block',
+                            !isNetworkRoute &&
+                              'text-xs font-semibold uppercase tracking-wider text-stone-500'
+                          )}
                         >
                           {t('membersSortLabel')}
                         </label>
@@ -7035,11 +7174,18 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             const p = new URLSearchParams(location.search);
                             p.set('sort', sortParam);
                             navigate(
-                              { pathname: '/membres', search: `?${p.toString()}` },
+                              {
+                                pathname: isNetworkRoute ? '/network' : '/membres',
+                                search: `?${p.toString()}`,
+                              },
                               { replace: true }
                             );
                           }}
-                          className="w-full max-w-md rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-medium text-stone-800 outline-none transition-all focus:ring-2 focus:ring-blue-600"
+                          className={cn(
+                            isNetworkRoute
+                              ? 'network-select'
+                              : 'w-full max-w-md rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-medium text-stone-800 outline-none transition-all focus:ring-2 focus:ring-blue-600'
+                          )}
                         >
                           <option value="recent">{t('membersSortOptionRecent')}</option>
                           <option value="alphabetical">{t('membersSortOptionAlphabetical')}</option>
@@ -7085,22 +7231,50 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       </button>
                     </div>
                   )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
-                    {membersDirectoryList.map((p) => (
-                      <React.Fragment key={p.uid}>
-                        <ProfileCard 
-                          p={p} 
-                          onSelect={setSelectedProfile}
-                          onEdit={startEditing}
-                          onDelete={setProfileToDelete}
-                          user={user}
-                          profile={profile}
-                          viewerIsAdmin={viewerIsAdmin}
-                          guestDirectoryTeaser={guestDirectoryRestricted}
-                          onGuestJoin={onGuestDirectoryJoin}
-                        />
-                      </React.Fragment>
-                    ))}
+                  <div
+                    className={cn(
+                      isNetworkRoute
+                        ? 'member-grid'
+                        : 'grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch'
+                    )}
+                  >
+                    {membersDirectoryList.map((p) => {
+                      const cats = profileDistinctActivityCategories(p);
+                      const sectorLine = cats.length
+                        ? cats.map((c) => activityCategoryLabel(c, lang)).join(' · ')
+                        : undefined;
+                      const needLabels = sanitizeHighlightedNeeds(p.highlightedNeeds ?? []).map((id) =>
+                        needOptionLabel(id, lang)
+                      );
+                      return (
+                        <React.Fragment key={p.uid}>
+                          {isNetworkRoute && !guestDirectoryRestricted ? (
+                            <MemberCard
+                              slug={slugFromProfile(p)}
+                              fullName={p.fullName}
+                              companyName={p.companyName}
+                              sector={sectorLine}
+                              bio={effectiveMemberBio(p)}
+                              photoUrl={p.photoURL}
+                              needs={needLabels}
+                            />
+                          ) : (
+                            <ProfileCard
+                              p={p}
+                              onSelect={setSelectedProfile}
+                              onEdit={startEditing}
+                              onDelete={setProfileToDelete}
+                              user={user}
+                              profile={profile}
+                              viewerIsAdmin={viewerIsAdmin}
+                              guestDirectoryTeaser={guestDirectoryRestricted}
+                              onGuestJoin={onGuestDirectoryJoin}
+                              networkListing={isNetworkRoute}
+                            />
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </div>
                   {guestDirectoryRestricted && membersDirectoryHiddenCount > 0 && (
                     <GuestDirectoryInterstitial
@@ -7343,8 +7517,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             )}
             </DirectoryTabsSection>
             )}
+          </div>
         </div>
-      </div>
+        </>
         )}
     </main>
 

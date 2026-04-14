@@ -1,9 +1,1 @@
-export function NetworkPage() {
-  return (
-    <main>
-      <h1>Réseau</h1>
-      <p>Recherche, filtres et exploration des profils.</p>
-    </main>
-  );
-}
-
+export { NetworkPage, type DirectoryMember, type NetworkPageProps } from '@/features/network/NetworkPage';

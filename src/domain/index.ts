@@ -25,6 +25,7 @@ export {
   mapLegacyActivityCategoryToSectorKey,
   mapLegacyPassionIdToHobbyKey,
   mapUserProfileToMember,
+  slugFromProfile,
 } from './member/member.mappers';
 
 export type {

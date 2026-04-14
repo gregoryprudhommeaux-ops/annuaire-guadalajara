@@ -26,6 +26,8 @@ type Props = {
   showClearFilters: boolean;
   /** Masquer le bouton « contact à rencontrer » (ex. bloc centré onglet Secteurs — bouton reste dans la colonne gauche). */
   hideRandomButton?: boolean;
+  /** Fusionné sur la `<section>` racine (ex. variante embarquée dans la colonne `/network`). */
+  className?: string;
 };
 
 const randomBtnClass = cn(
@@ -75,6 +77,7 @@ export default function SearchBlock({
   randomDisabled,
   showClearFilters,
   hideRandomButton = false,
+  className,
 }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -92,7 +95,8 @@ export default function SearchBlock({
     <section
       className={cn(
         'search-section min-w-0 rounded-xl border border-slate-200 bg-white shadow-sm',
-        cardPad
+        cardPad,
+        className
       )}
     >
       <header className="search-header mb-4 flex items-start justify-between gap-3">
