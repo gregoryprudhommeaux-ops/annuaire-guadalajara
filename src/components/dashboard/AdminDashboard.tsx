@@ -24,11 +24,8 @@ import SectorDonutChart from '@/components/dashboard/SectorDonutChart';
 import TimePeriodFilter from '@/components/dashboard/TimePeriodFilter';
 import { TimePeriodProvider, useTimePeriod } from '@/contexts/TimePeriodContext';
 import ProfileCompletionGauge from '@/components/dashboard/ProfileCompletionGauge';
-import ConversionFunnel from '@/components/dashboard/ConversionFunnel';
-import ActivityHeatmap from '@/components/dashboard/ActivityHeatmap';
 import EngagementLeaderboard from '@/components/dashboard/EngagementLeaderboard';
 import InscriptionAreaChart from '@/components/dashboard/InscriptionAreaChart';
-import PassionsTreemap from '@/components/dashboard/PassionsTreemap';
 import { getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/passionConfig';
 import PassionsCrossHeatmap, { type CrossPick } from '@/components/dashboard/PassionsCrossHeatmap';
 
@@ -218,7 +215,6 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
   >(null);
   const stats = useAdminStats(period as PeriodKey);
   const loadingLabel = lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
-  const [pickedPassion, setPickedPassion] = useState<string>('');
   const [pickedCross, setPickedCross] = useState<CrossPick | null>(null);
   const bySectorData = useMemo(
     () => Object.entries(stats.profilesBySector).map(([name, value]) => ({ name, value })),
@@ -262,16 +258,6 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
     if (!initialTab) return;
     setInsightTab(initialTab);
   }, [initialTab]);
-
-  const pickedPassionMembers = useMemo(() => {
-    if (!pickedPassion) return { label: '', rows: [] as typeof stats.profilesForDashboard };
-    const locale = lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr';
-    const label = `${getPassionEmoji(pickedPassion)} ${getPassionLabel(pickedPassion, locale)}`;
-    const rows = (stats.profilesForDashboard ?? []).filter((m) =>
-      sanitizePassionIds((m as any).passionIds).includes(pickedPassion)
-    );
-    return { label, rows };
-  }, [pickedPassion, stats.profilesForDashboard, lang]);
 
   const pickedCrossMembers = useMemo(() => {
     if (!pickedCross) return { title: '', rows: [] as typeof stats.profilesForDashboard };
@@ -341,9 +327,12 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
 
       {!stats.loading && !stats.error && insightTab === 'overview' ? (
         <>
-          <div className="grid auto-rows-min grid-cols-1 items-start gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label={t('members') || 'Membres'} value={stats.totalProfiles} />
-            <StatCard label="Nouveaux inscrits" value={stats.newProfilesInPeriod} />
+          <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2 xl:grid-cols-3">
+            <div className="flex flex-col gap-3">
+              <StatCard label={t('members') || 'Membres'} value={stats.totalProfiles} />
+              <StatCard label="Nouveaux inscrits" value={stats.newProfilesInPeriod} />
+              <StatCard label="Clics contact" value={stats.totalClicks} />
+            </div>
             <MiniErrorBoundary label="ProfileCompletionGauge">
               <ProfileCompletionGauge
                 totalMembers={stats.totalProfiles}
@@ -351,7 +340,9 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
                 compact
               />
             </MiniErrorBoundary>
-            <StatCard label="Clics contact" value={stats.totalClicks} />
+            <MiniErrorBoundary label="InscriptionAreaChart">
+              <InscriptionAreaChart members={stats.profilesCreatedAt} />
+            </MiniErrorBoundary>
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -362,37 +353,13 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
                 <SectorDonutChart data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))} />
               </div>
             </div>
-
-            <MiniErrorBoundary label="ConversionFunnel">
-              <ConversionFunnel
-                inscritsOAuth={stats.totalProfiles}
-                profilsComplets={stats.completedProfilesStrict}
-                membresActifs={stats.activeMembersWithContactClicks}
-              />
-            </MiniErrorBoundary>
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <MiniErrorBoundary label="InscriptionAreaChart">
-              <InscriptionAreaChart members={stats.profilesCreatedAt} />
-            </MiniErrorBoundary>
-
             <MiniErrorBoundary label="EngagementLeaderboard">
               <EngagementLeaderboard members={stats.profilesForDashboard as any} />
             </MiniErrorBoundary>
           </div>
-
-          <MiniErrorBoundary label="PassionsTreemap">
-            <PassionsTreemap
-              members={stats.profilesForDashboard.map((m) => ({
-                id: m.id,
-                nom: m.nom,
-                passionIds: (m as any).passionIds,
-              }))}
-              lang={lang}
-              onPickPassion={(id) => setPickedPassion(id)}
-            />
-          </MiniErrorBoundary>
 
           <MiniErrorBoundary label="PassionsCrossHeatmap">
             <PassionsCrossHeatmap
@@ -405,54 +372,10 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
               }))}
               lang={lang}
               onPickCell={(pick) => {
-                setPickedPassion('');
                 setPickedCross(pick);
               }}
             />
           </MiniErrorBoundary>
-
-          <MiniErrorBoundary label="ActivityHeatmap">
-            <ActivityHeatmap members={stats.profilesCreatedAt} />
-          </MiniErrorBoundary>
-
-          {pickedPassion ? (
-            <div className="fixed inset-0 z-[400] flex items-center justify-center bg-stone-900/50 p-4">
-              <div className="w-full max-w-2xl rounded-2xl border border-stone-200 bg-white p-4 shadow-2xl sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="text-base font-semibold text-stone-900">{pickedPassionMembers.label}</h3>
-                    <p className="mt-1 text-xs text-stone-500">{pickedPassionMembers.rows.length} membre(s)</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setPickedPassion('')}
-                    className="shrink-0 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
-                  >
-                    Fermer
-                  </button>
-                </div>
-
-                <div className="mt-4 max-h-[60vh] overflow-auto rounded-lg border border-stone-200">
-                  <ul className="divide-y divide-stone-100">
-                    {pickedPassionMembers.rows.map((m) => (
-                      <li key={m.id} className="flex items-center justify-between gap-3 px-3 py-2">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-stone-900">{m.nom}</p>
-                          {m.entreprise ? <p className="truncate text-xs text-stone-500">{m.entreprise}</p> : null}
-                        </div>
-                        <a
-                          href={`/membres/${encodeURIComponent(m.id)}`}
-                          className="shrink-0 rounded-md bg-blue-700 px-2.5 py-1 text-xs font-semibold text-white"
-                        >
-                          Voir
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          ) : null}
 
           {pickedCross ? (
             <div className="fixed inset-0 z-[410] flex items-center justify-center bg-stone-900/50 p-4">
