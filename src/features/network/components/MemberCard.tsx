@@ -3,13 +3,9 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import ProfileAvatar from '@/components/ProfileAvatar';
 import { cn } from '@/lib/cn';
+import { getMemberBioPreview } from '@/features/network/utils/memberContent';
 import { pickLang } from '@/lib/uiLocale';
-import {
-  clampText,
-  getVisibleNeeds,
-  normalizeCompanyName,
-  normalizeSectorName,
-} from '../utils/memberCard';
+import { getVisibleNeeds, normalizeCompanyName, normalizeSectorName } from '../utils/memberCard';
 import '../network.css';
 
 type MemberCardProps = {
@@ -36,7 +32,6 @@ export function MemberCard({
   onOpen,
 }: MemberCardProps) {
   const { lang } = useLanguage();
-  const safeBio = clampText(bio, 240);
   const visibleNeeds = getVisibleNeeds(needs, 3);
   const chips =
     visibleNeeds.length > 0
@@ -56,12 +51,10 @@ export function MemberCard({
   const sectorLine =
     normalizeSectorName(sector) ||
     pickLang('Secteur non renseigné', 'Sector no indicado', 'Sector not specified', lang);
-  const bioLine =
-    safeBio ||
-    pickLang('Présentation à compléter.', 'Completa tu presentación.', 'Add a short bio.', lang);
-
   const profilPath = `/profil/${encodeURIComponent(profileUid)}`;
   const cardLabel = pickLang(`Profil de ${fullName}`, `Perfil de ${fullName}`, `Profile: ${fullName}`, lang);
+  const bioFull = (bio ?? '').replace(/\s+/g, ' ').trim();
+  const bioPreview = getMemberBioPreview(bio, lang, 210);
 
   const activate = () => {
     onOpen?.();
@@ -103,7 +96,9 @@ export function MemberCard({
         </div>
       </div>
 
-      <p className="member-card__bio">{bioLine}</p>
+      <p className="member-card__bio" title={bioFull.length > 210 ? bioFull : undefined}>
+        {bioPreview}
+      </p>
 
       <div className="member-card__needsBlock">
         <p className="member-card__label">

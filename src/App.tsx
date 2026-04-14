@@ -218,12 +218,18 @@ import DirectoryTabsSection from './components/home/DirectoryTabsSection';
 import OnboardingIntroBanner from './components/home/OnboardingIntroBanner';
 import { MemberCard } from './features/network/components/MemberCard';
 import { NetworkSidebar } from './features/network/components/NetworkSidebar';
+import { ProfileSectionHint } from '@/features/profile/components/ProfileSectionHint';
+import { ProfileSectionTag } from '@/features/profile/components/ProfileSectionTag';
+import { ProfileFieldHint } from '@/features/profile/components/ProfileFieldHint';
+import { PROFILE_FIELD_LABELS } from '@/features/profile/utils/profileFieldLabels';
+import { PROFILE_FIELD_HELP } from '@/features/profile/utils/profileFieldHelp';
 import {
   memberCardBioBodyClassName,
   memberCardBioTitleAttr,
   memberCardDefaultNameClassName,
   memberCardRootClassName,
 } from './features/network/utils/memberCard';
+import { memberListingBioSource } from '@/features/network/utils/memberContent';
 import { homeLanding } from './copy/homeLanding';
 import AffinityScore from './components/AffinityScore';
 import { MemberPublicProfile } from './components/profile/MemberPublicProfile';
@@ -5315,7 +5321,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               ref={directoryProfileFormRef}
                               key={profileFormRemountKey}
                               onSubmit={handleSaveProfile}
-                              className="space-y-8"
+                              className={cn('space-y-8', isEditProfileRoute && 'profile-edit-density space-y-6')}
                             >
                           {editingProfile && editingProfile.uid !== user.uid ? (
                             <p
@@ -5341,41 +5347,64 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             ) : null}
                           </div>
 
-                          <section className="space-y-4 rounded-xl border border-stone-200 bg-stone-50/40 p-4">
-                            <h2 className="mb-1 text-sm font-semibold text-stone-900">{t('profileFormSectionPerson')}</h2>
-                            <p className="mb-4 text-[10px] text-stone-500">
+                          <section className="profile-card-compact space-y-4">
+                            <div className="profile-section-header">
+                              <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
+                                {t('profileFormSectionPerson')}
+                              </h2>
+                              <ProfileSectionTag
+                                tone="public"
+                                label={pickLang(
+                                  'Visible publiquement',
+                                  'Visible públicamente',
+                                  'Shown on your public profile',
+                                  lang
+                                )}
+                              />
+                              <ProfileSectionTag
+                                tone="matching"
+                                label={pickLang(
+                                  'Important pour le matching',
+                                  'Importante para el emparejamiento',
+                                  'Used for matching',
+                                  lang
+                                )}
+                              />
+                            </div>
+
+                            <ProfileSectionHint tone="public">
                               {pickLang(
                                 'Identité affichée, moyens de contact et langues d’échange.',
                                 'Identidad mostrada, contacto e idiomas de intercambio.',
                                 'Display identity, contact channels and languages you use.',
                                 lang
                               )}
-                            </p>
+                            </ProfileSectionHint>
 
-                            <div className="mb-4 space-y-1">
-                              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                {t('fullName')}
-                                <span className="text-red-500 font-semibold" aria-hidden>
-                                  {' *'}
-                                </span>
-                              </label>
-                              <input
-                                id="profile-completion-fullName"
-                                name="fullName"
-                                defaultValue={
-                                  formDraftT?.fullName ??
-                                  editingProfile?.fullName ??
-                                  profile?.fullName ??
-                                  ''
-                                }
-                                className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                              />
-                            </div>
-
-                            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                              <div className="space-y-1">
+                            <div className="profile-form-grid-2">
+                              <div className="profile-form-block--dense space-y-1">
                                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('email')}
+                                  {lang === 'fr' ? PROFILE_FIELD_LABELS.fullName : t('fullName')}
+                                  <span className="text-red-500 font-semibold" aria-hidden>
+                                    {' *'}
+                                  </span>
+                                </label>
+                                <input
+                                  id="profile-completion-fullName"
+                                  name="fullName"
+                                  defaultValue={
+                                    formDraftT?.fullName ??
+                                    editingProfile?.fullName ??
+                                    profile?.fullName ??
+                                    ''
+                                  }
+                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                />
+                              </div>
+
+                              <div className="profile-form-block--dense space-y-1">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                  {lang === 'fr' ? PROFILE_FIELD_LABELS.email : t('email')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
@@ -5394,70 +5423,78 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
                               </div>
-                              <div className="space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {t('linkedin')}
-                                </label>
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                                  <input
-                                    name="linkedin"
-                                    id="linkedin-input"
-                                    type="url"
-                                    autoComplete="url"
-                                    defaultValue={
-                                      formDraftT?.linkedin ??
-                                      editingProfile?.linkedin ??
-                                      profile?.linkedin ??
-                                      ''
-                                    }
-                                    placeholder="https://linkedin.com/in/..."
-                                    className="h-10 min-w-0 w-full flex-1 rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900 sm:min-w-[12rem]"
-                                  />
-                                </div>
-                              </div>
-                            </div>
 
-                            <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-[minmax(9rem,12rem)_1fr]">
-                              <div className="space-y-1">
-                                <label
-                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                  htmlFor="whatsappDial"
-                                >
-                                  {t('profileFormPhoneCountryLabel')}
-                                </label>
-                                <select
-                                  id="whatsappDial"
-                                  name="whatsappDial"
-                                  defaultValue={formDraftT?.whatsappDial ?? profileWhatsappDialDefault}
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                >
-                                  {phoneDialRowsOrderedForUi().map((row) => (
-                                    <option key={row.dial} value={row.dial}>
-                                      {dialLabelForLang(row.dial, lang)}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="space-y-1">
-                                <label
-                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                  htmlFor="whatsappLocal"
-                                >
-                                  {t('profileFormPhoneLocalLabel')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
+                              <div className="profile-form-block--dense min-w-0 space-y-1 sm:col-span-2">
+                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                  {lang === 'fr' ? PROFILE_FIELD_LABELS.linkedinUrl : t('linkedin')}
                                 </label>
                                 <input
-                                  id="whatsappLocal"
-                                  type="tel"
-                                  name="whatsappLocal"
-                                  defaultValue={formDraftT?.whatsappLocal ?? profileWhatsappLocalDefault}
-                                  placeholder={pickLang('ex. 33 1234 5678', 'ej. 33 1234 5678', 'e.g. 33 1234 5678', lang)}
-                                  autoComplete="tel-national"
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                  name="linkedin"
+                                  id="linkedin-input"
+                                  type="url"
+                                  autoComplete="url"
+                                  defaultValue={
+                                    formDraftT?.linkedin ??
+                                    editingProfile?.linkedin ??
+                                    profile?.linkedin ??
+                                    ''
+                                  }
+                                  placeholder="https://linkedin.com/in/..."
+                                  className="h-10 min-w-0 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
-                                <p className="mt-1 text-[10px] text-stone-400">{t('profileFormPhoneLocalHint')}</p>
+                              </div>
+
+                              <div className="profile-form-block--dense min-w-0 sm:col-span-2">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(9rem,12rem)_1fr]">
+                                  <div className="space-y-1">
+                                    <label
+                                      className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                      htmlFor="whatsappDial"
+                                    >
+                                      {lang === 'fr' ? PROFILE_FIELD_LABELS.countryDialCode : t('profileFormPhoneCountryLabel')}
+                                    </label>
+                                    <select
+                                      id="whatsappDial"
+                                      name="whatsappDial"
+                                      defaultValue={formDraftT?.whatsappDial ?? profileWhatsappDialDefault}
+                                      className="h-10 w-full rounded-lg border border-stone-200 bg-white px-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                    >
+                                      {phoneDialRowsOrderedForUi().map((row) => (
+                                        <option key={row.dial} value={row.dial}>
+                                          {dialLabelForLang(row.dial, lang)}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label
+                                      className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                      htmlFor="whatsappLocal"
+                                    >
+                                      {lang === 'fr' ? PROFILE_FIELD_LABELS.phoneWhatsapp : t('profileFormPhoneLocalLabel')}
+                                      <span className="text-red-500 font-semibold" aria-hidden>
+                                        {' *'}
+                                      </span>
+                                    </label>
+                                    <input
+                                      id="whatsappLocal"
+                                      type="tel"
+                                      name="whatsappLocal"
+                                      defaultValue={formDraftT?.whatsappLocal ?? profileWhatsappLocalDefault}
+                                      placeholder={pickLang('ex. 33 1234 5678', 'ej. 33 1234 5678', 'e.g. 33 1234 5678', lang)}
+                                      autoComplete="tel-national"
+                                      className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                    />
+                                    <ProfileFieldHint>
+                                      {pickLang(
+                                        PROFILE_FIELD_HELP.phoneWhatsapp,
+                                        'Número sin repetir el prefijo internacional.',
+                                        'Number without repeating the country prefix.',
+                                        lang
+                                      )}
+                                    </ProfileFieldHint>
+                                  </div>
+                                </div>
                               </div>
                             </div>
 
@@ -5548,48 +5585,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               </div>
                             ) : null}
 
-                            {formAdminPrivateReady && formAdminPrivate !== null ? (
-                              <div
-                                key={`person-admin-${editingProfile?.uid ?? profile?.uid}`}
-                                className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2"
-                              >
-                                <div className="space-y-1">
-                                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                    {t('genderStatLabel')}
-                                  </label>
-                                  <select
-                                    name="genderStat"
-                                    defaultValue={formDraftT?.genderStat ?? formAdminPrivate.genderStat ?? ''}
-                                    className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                  >
-                                    <option value="">{t('genderStatSelectPlaceholder')}</option>
-                                    <option value="male">{t('genderStatMale')}</option>
-                                    <option value="female">{t('genderStatFemale')}</option>
-                                    <option value="other">{t('genderStatOther')}</option>
-                                    <option value="prefer_not_say">{t('genderStatPreferNotSay')}</option>
-                                  </select>
-                                  <p className="mt-1 text-[10px] text-stone-400 leading-snug">{t('genderStatHint')}</p>
-                                </div>
-                                <div className="space-y-1">
-                                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                    {t('nationalityLabel')}
-                                  </label>
-                                  <select
-                                    name="nationality"
-                                    defaultValue={formDraftT?.nationality ?? formAdminPrivate.nationality ?? ''}
-                                    className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                  >
-                                    <option value="">{t('nationalitySelectPlaceholder')}</option>
-                                    {NATIONALITY_OPTIONS.map((o) => (
-                                      <option key={o.code} value={o.code}>
-                                        {nationalityLabel(o.code, lang)}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                              </div>
-                            ) : null}
-
                             <input type="hidden" name="photoURL" value={profilePhotoUrlDraft} />
                             <div className="space-y-1">
                               <label
@@ -5622,11 +5617,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 )}
                                 className="min-h-[90px] w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                               />
-                              <p className="mt-1 text-[10px] text-stone-400">{t('profileFormMemberBioHint')}</p>
+                              <ProfileFieldHint>
+                                {lang === 'fr' ? PROFILE_FIELD_HELP.bio : t('profileFormMemberBioHint')}
+                              </ProfileFieldHint>
                             </div>
                             <div className="space-y-1">
                               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                {t('profileFormProfilePhotoLabel')}
+                                {lang === 'fr' ? PROFILE_FIELD_LABELS.profilePhoto : t('profileFormProfilePhotoLabel')}
                               </label>
                               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex min-h-10 items-center gap-3">
@@ -5720,9 +5717,42 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                           <section
                             id="profile-completion-passions"
-                            className="space-y-4 rounded-xl border border-stone-200 bg-white p-4"
+                            className={cn(
+                              'space-y-3 rounded-xl border border-stone-200 bg-white p-4',
+                              isEditProfileRoute && 'profile-card-compact'
+                            )}
                           >
-                            <h2 className="mb-2 text-sm font-semibold text-stone-900">{t('profileFormSectionPassions')}</h2>
+                            <div className="profile-section-header">
+                              <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
+                                {t('profileFormSectionPassions')}
+                              </h2>
+                              <ProfileSectionTag
+                                tone="public"
+                                label={pickLang(
+                                  'Visible publiquement',
+                                  'Visible públicamente',
+                                  'Shown on your public profile',
+                                  lang
+                                )}
+                              />
+                              <ProfileSectionTag
+                                tone="matching"
+                                label={pickLang(
+                                  'Important pour le matching',
+                                  'Importante para el emparejamiento',
+                                  'Used for matching',
+                                  lang
+                                )}
+                              />
+                            </div>
+                            <ProfileSectionHint tone="public">
+                              {pickLang(
+                                PROFILE_FIELD_HELP.passions,
+                                'Intereses fuera de tu actividad principal: humanizan tu ficha y el matching.',
+                                'Interests outside your core work humanize your profile and matching.',
+                                lang
+                              )}
+                            </ProfileSectionHint>
                             <IceBreakerInterests
                               lang={lang}
                               value={passionIdsDraft}
@@ -5731,10 +5761,32 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             />
                           </section>
 
-                          <section className="space-y-4 rounded-xl border border-stone-200 bg-stone-50/40 p-4">
-                            <h2 className="mb-1 text-sm font-semibold text-stone-900">{t('profileFormSectionCompanyActivity')}</h2>
-                            <p className="mb-2 text-[10px] text-stone-400">{t('profileFormCompanyDetailsIntro')}</p>
-                            <p className="mb-4 text-xs font-medium text-stone-700">
+                          <section className="space-y-3 rounded-xl border border-stone-200 bg-stone-50/40 p-4">
+                            <div className="profile-section-header">
+                              <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
+                                {t('profileFormSectionCompanyActivity')}
+                              </h2>
+                              <ProfileSectionTag
+                                tone="public"
+                                label={pickLang(
+                                  'Visible publiquement',
+                                  'Visible públicamente',
+                                  'Shown on your public profile',
+                                  lang
+                                )}
+                              />
+                              <ProfileSectionTag
+                                tone="matching"
+                                label={pickLang(
+                                  'Important pour le matching',
+                                  'Importante para el emparejamiento',
+                                  'Used for matching',
+                                  lang
+                                )}
+                              />
+                            </div>
+                            <ProfileSectionHint tone="public">{t('profileFormCompanyDetailsIntro')}</ProfileSectionHint>
+                            <p className="mb-3 text-xs font-medium text-stone-700">
                               {companyActivitiesDraft
                                 .map((s) => s.companyName.trim())
                                 .filter(Boolean)
@@ -6137,9 +6189,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                             )}
                                             className="min-h-[90px] w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                           />
-                                          <p className="mt-1 text-[10px] text-stone-400">
-                                            {t('profileFormActivityDescriptionHint')}
-                                          </p>
+                                          <ProfileFieldHint>
+                                            {lang === 'fr'
+                                              ? PROFILE_FIELD_HELP.activityDescription
+                                              : t('profileFormActivityDescriptionHint')}
+                                          </ProfileFieldHint>
                                         </div>
                                       </div>
                                     ) : null}
@@ -6161,9 +6215,22 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           </section>
 
 
-                          <section className="space-y-4 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
-                            <h2 className="text-sm font-semibold text-stone-900">{t('profileFormSectionNeedsKeywords')}</h2>
-                            <p className="mb-3 text-[10px] text-stone-500 leading-relaxed">{t('profileFormSectionCore')}</p>
+                          <section className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
+                            <div className="profile-section-header">
+                              <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
+                                {t('profileFormSectionNeedsKeywords')}
+                              </h2>
+                              <ProfileSectionTag
+                                tone="matching"
+                                label={pickLang(
+                                  'Important pour le matching',
+                                  'Importante para el emparejamiento',
+                                  'Used for matching',
+                                  lang
+                                )}
+                              />
+                            </div>
+                            <ProfileSectionHint tone="matching">{t('profileFormSectionCore')}</ProfileSectionHint>
 
                             <div>
                               <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -6188,7 +6255,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 placeholder={t('profileNetworkGoalPlaceholder')}
                                 className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none ring-0 placeholder:text-stone-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/25"
                               />
-                              <p className="mt-1 text-xs leading-5 text-stone-500">{t('profileNetworkGoalHint')}</p>
+                              <ProfileFieldHint>
+                                {lang === 'fr'
+                                  ? PROFILE_FIELD_HELP.lookingForText
+                                  : t('profileNetworkGoalHint')}
+                              </ProfileFieldHint>
                             </div>
 
                             <div id="profile-completion-highlightedNeeds">
@@ -6230,7 +6301,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   </div>
                                 ))}
                               </div>
-                              <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('highlightedNeedsHint')}</p>
+                              <ProfileFieldHint>
+                                {lang === 'fr' ? PROFILE_FIELD_HELP.currentNeeds : t('highlightedNeedsHint')}
+                              </ProfileFieldHint>
                             </div>
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -6254,7 +6327,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   placeholder={t('profileHelpNewcomersPlaceholder')}
                                   className="w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
                                 />
-                                <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('profileHelpNewcomersHint')}</p>
+                                <ProfileFieldHint>
+                                  {lang === 'fr' ? PROFILE_FIELD_HELP.helpOfferText : t('profileHelpNewcomersHint')}
+                                </ProfileFieldHint>
                               </div>
 
                               <div className="space-y-1">
@@ -6277,7 +6352,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   placeholder={t('contactPrefsCtaPlaceholder')}
                                   className="w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
                                 />
-                                <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsCtaHint')}</p>
+                                <ProfileFieldHint>
+                                  {lang === 'fr'
+                                    ? PROFILE_FIELD_HELP.preferredContactText
+                                    : t('contactPrefsCtaHint')}
+                                </ProfileFieldHint>
                               </div>
                             </div>
 
@@ -6301,14 +6380,37 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 placeholder={t('needKeywordsPlaceholder')}
                                 className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
                               />
-                              <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('needKeywordsHint')}</p>
+                              <ProfileFieldHint>
+                                {lang === 'fr' ? PROFILE_FIELD_HELP.keywords : t('needKeywordsHint')}
+                              </ProfileFieldHint>
                             </div>
 
                           </section>
 
 
-                          <section className="space-y-4">
-                            <h2 className="text-sm font-semibold text-stone-900">{t('profileFormSectionVisibility')}</h2>
+                          <section className="space-y-3">
+                            <div className="profile-section-header">
+                              <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
+                                {t('profileFormSectionVisibility')}
+                              </h2>
+                              <ProfileSectionTag
+                                tone="public"
+                                label={pickLang(
+                                  'Visible publiquement',
+                                  'Visible públicamente',
+                                  'Shown on your public profile',
+                                  lang
+                                )}
+                              />
+                            </div>
+                            <ProfileSectionHint tone="public">
+                              {pickLang(
+                                'Ces options contrôlent ce que les autres membres voient sur votre fiche.',
+                                'Estas opciones controlan lo que otros miembros ven en tu ficha.',
+                                'These options control what other members see on your profile.',
+                                lang
+                              )}
+                            </ProfileSectionHint>
                             <div className="space-y-1">
                               <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                 {t('contactPrefsOpenToLabel')}
@@ -6373,34 +6475,110 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   </label>
                                 )}
                               </div>
-                              <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsOpenToHint')}</p>
+                              <ProfileFieldHint>
+                                {lang === 'fr' ? PROFILE_FIELD_HELP.openness : t('contactPrefsOpenToHint')}
+                              </ProfileFieldHint>
                             </div>
                           </section>
 
-                          <section className="border-t border-stone-200 pt-4">
-                            <h2 className="mb-1 text-sm font-semibold text-stone-900">{t('profileFormSectionUnpublished')}</h2>
-                            <p className="mb-4 text-[10px] text-stone-400">{t('profileFormUnpublishedIntro')}</p>
-
-                            {formAdminPrivateReady && formAdminPrivate !== null ? (
-                              <div className="mb-4 flex flex-col gap-2">
-                                <label className="flex cursor-pointer items-start gap-2 rounded-lg p-1 text-sm text-stone-700 hover:bg-stone-50 hover:text-stone-900">
-                                  <input
-                                    type="checkbox"
-                                    name="acceptsDelegationVisits"
-                                    defaultChecked={
-                                      formDraftC?.acceptsDelegationVisits ??
-                                      formAdminPrivate.acceptsDelegationVisits === true
-                                    }
-                                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                  />
-                                  <span className="min-w-0">
-                                    <span className="block">{t('acceptsDelegationVisitsLabel')}</span>
-                                    <span className="mt-0.5 block text-[10px] text-stone-500">{t('acceptsDelegationVisitsHint')}</span>
-                                  </span>
-                                </label>
+                          {formAdminPrivateReady && formAdminPrivate !== null ? (
+                            <section
+                              key={`unpublished-admin-${editingProfile?.uid ?? profile?.uid}`}
+                              className="profile-card-compact space-y-4 border-t border-stone-200 pt-4"
+                            >
+                              <div className="profile-section-header">
+                                <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
+                                  {t('profileFormSectionUnpublished')}
+                                </h2>
+                                <ProfileSectionTag
+                                  tone="internal"
+                                  label={pickLang('Interne uniquement', 'Solo interno', 'Internal only', lang)}
+                                />
                               </div>
-                            ) : null}
-                          </section>
+
+                              <ProfileSectionHint tone="internal">
+                                {pickLang(
+                                  'Ces informations servent aux statistiques et à l’animation du réseau.',
+                                  'Estos datos sirven para estadísticas y la dinámica de la red.',
+                                  'This information supports statistics and how we run the community.',
+                                  lang
+                                )}
+                              </ProfileSectionHint>
+
+                              <div className="profile-form-grid-2">
+                                <div className="profile-form-block--dense space-y-1">
+                                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                    {lang === 'fr' ? PROFILE_FIELD_LABELS.gender : t('genderStatLabel')}
+                                  </label>
+                                  <select
+                                    name="genderStat"
+                                    defaultValue={formDraftT?.genderStat ?? formAdminPrivate.genderStat ?? ''}
+                                    className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                  >
+                                    <option value="">{t('genderStatSelectPlaceholder')}</option>
+                                    <option value="male">{t('genderStatMale')}</option>
+                                    <option value="female">{t('genderStatFemale')}</option>
+                                    <option value="other">{t('genderStatOther')}</option>
+                                    <option value="prefer_not_say">{t('genderStatPreferNotSay')}</option>
+                                  </select>
+                                  <ProfileFieldHint>
+                                    {pickLang(
+                                      PROFILE_FIELD_HELP.gender,
+                                      'Solo con fines estadísticos.',
+                                      'For internal statistics only.',
+                                      lang
+                                    )}
+                                  </ProfileFieldHint>
+                                </div>
+
+                                <div className="profile-form-block--dense space-y-1">
+                                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                                    {lang === 'fr' ? PROFILE_FIELD_LABELS.nationality : t('nationalityLabel')}
+                                  </label>
+                                  <select
+                                    name="nationality"
+                                    defaultValue={formDraftT?.nationality ?? formAdminPrivate.nationality ?? ''}
+                                    className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                  >
+                                    <option value="">{t('nationalitySelectPlaceholder')}</option>
+                                    {NATIONALITY_OPTIONS.map((o) => (
+                                      <option key={o.code} value={o.code}>
+                                        {nationalityLabel(o.code, lang)}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <ProfileFieldHint>{t('nationalityHint')}</ProfileFieldHint>
+                                </div>
+
+                                <div className="profile-form-block--dense space-y-2 sm:col-span-2">
+                                  <label className="flex cursor-pointer items-start gap-2 rounded-lg p-1 text-sm text-stone-700 hover:bg-stone-50 hover:text-stone-900">
+                                    <input
+                                      type="checkbox"
+                                      name="acceptsDelegationVisits"
+                                      defaultChecked={
+                                        formDraftC?.acceptsDelegationVisits ??
+                                        formAdminPrivate.acceptsDelegationVisits === true
+                                      }
+                                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                    />
+                                    <span className="min-w-0 font-medium">
+                                      {lang === 'fr'
+                                        ? PROFILE_FIELD_LABELS.hostDelegations
+                                        : t('acceptsDelegationVisitsLabel')}
+                                    </span>
+                                  </label>
+                                  <ProfileFieldHint>
+                                    {pickLang(
+                                      PROFILE_FIELD_HELP.hostDelegations,
+                                      'Solo para el equipo de administración (no es público).',
+                                      'For the admin team only (not shown publicly).',
+                                      lang
+                                    )}
+                                  </ProfileFieldHint>
+                                </div>
+                              </div>
+                            </section>
+                          ) : null}
 
                           <div className="flex justify-end gap-3 border-t border-stone-200 pt-6">
                             <button
@@ -7277,7 +7455,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               fullName={p.fullName}
                               companyName={p.companyName}
                               sector={sectorLine}
-                              bio={effectiveMemberBio(p)}
+                              bio={memberListingBioSource(p)}
                               photoUrl={p.photoURL}
                               needs={needLabels}
                               onOpen={() => setSelectedProfile(p)}

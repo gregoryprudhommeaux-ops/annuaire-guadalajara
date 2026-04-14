@@ -1,0 +1,115 @@
+.profile-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.profile-section-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.profile-section-tag--public {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.profile-section-tag--matching {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.profile-section-tag--internal {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.profile-section-hint {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.profile-section-hint--public {
+  color: #1d4ed8;
+}
+
+.profile-section-hint--matching {
+  color: #92400e;
+}
+
+.profile-section-hint--internal {
+  color: #6b7280;
+}
+
+.profile-field-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6b7280;
+}
+
+.profile-form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.profile-form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.profile-form-block--dense textarea,
+.profile-form-block--dense input,
+.profile-form-block--dense select {
+  min-height: 42px;
+}
+
+.profile-form-block--dense textarea {
+  min-height: 110px;
+}
+
+.profile-card-compact {
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.profile-divider-soft {
+  height: 1px;
+  background: #eef2f7;
+  margin: 20px 0;
+  border: 0;
+}
+
+@media (max-width: 900px) {
+  .profile-form-grid-2,
+  .profile-form-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Densité accrue sur /profile/edit : combiner avec `space-y-6` sur le <form>. */
+.profile-edit-density .profile-card-compact {
+  padding: 14px;
+}
+
+.profile-edit-density .profile-form-grid-2 {
+  gap: 10px 12px;
+}
+
+.profile-edit-density .profile-section-hint {
+  margin-bottom: 12px;
+  font-size: 13px;
+}
