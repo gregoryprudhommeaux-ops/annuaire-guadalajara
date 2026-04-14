@@ -6676,7 +6676,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           )}
 
           {/* Colonne gauche — recherche (membres connectés uniquement), stats */}
-          {user && !isAdminDashboard && (
+          {user && !isAdminDashboard && !isEditProfileRoute && (
           <div
             className={cn(
               'order-1 min-w-0 w-full space-y-4 sm:space-y-6 lg:order-1 lg:col-start-1 lg:col-span-4 lg:self-start',
