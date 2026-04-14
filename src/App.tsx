@@ -2481,9 +2481,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     };
   }, [showValidationPanel, viewerIsAdmin, pendingUidsKey, pendingProfiles]);
 
-  useEffect(() => {
-    setProfileReminderDismissed(false);
-  }, [user?.uid]);
+  // Removed legacy "mandatory profile update" banner; no per-session dismiss state needed.
 
   /**
    * Synchronise les brouillons (besoins / passions / langues) depuis le profil au passage en édition
