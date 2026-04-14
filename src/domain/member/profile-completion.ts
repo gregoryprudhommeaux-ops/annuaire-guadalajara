@@ -171,7 +171,7 @@ function coerceWorkLanguages(raw?: string[]): LanguageCode[] {
   const out: LanguageCode[] = [];
   const seen = new Set<string>();
   for (const x of raw) {
-    const c = String(x).trim() as LanguageCode;
+    const c = String(x).trim().toLowerCase() as LanguageCode;
     if (!LANGUAGE_CODE_SET.has(c) || seen.has(c)) continue;
     seen.add(c);
     out.push(c);

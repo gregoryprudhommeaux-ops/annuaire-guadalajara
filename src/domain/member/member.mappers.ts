@@ -88,7 +88,8 @@ function mapWorkLanguages(p: UserProfile): LanguageCode[] {
   const out: LanguageCode[] = [];
   const seen = new Set<string>();
   for (const x of raw) {
-    const c = String(x).trim() as LanguageCode;
+    // Form options use uppercase (FR, ES); canonical LanguageCode is lowercase.
+    const c = String(x).trim().toLowerCase() as LanguageCode;
     if (!LANGUAGE_CODE_SET.has(c) || seen.has(c)) continue;
     seen.add(c);
     out.push(c);

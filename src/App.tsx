@@ -4929,67 +4929,65 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur">
-                    <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
-                      <div className="min-w-0 flex-1">
-                        <ProfileCompletionCard
-                          profile={profileCompletionCardSource}
-                          t={t}
-                          lang={lang}
-                          onEditField={scrollToProfileCompletionField}
-                          className="border-0 bg-transparent p-0 shadow-none"
-                          rightActions={
-                            <button
-                              type="button"
-                              disabled={profileSaveBusy}
-                              onClick={() => {
-                                setIsProfileExpanded(true);
-                                setIsEditing(true);
-                                window.requestAnimationFrame(() => {
-                                  profileFormLayoutRef.current?.scrollIntoView({
-                                    behavior: 'smooth',
-                                    block: 'start',
-                                  });
-                                  const form = directoryProfileFormRef.current;
-                                  if (!form) return;
-                                  if (typeof (form as any).requestSubmit === 'function') {
-                                    (form as any).requestSubmit();
-                                    return;
-                                  }
-                                  form.dispatchEvent(
-                                    new Event('submit', { bubbles: true, cancelable: true })
-                                  );
+                    <div className="p-3 sm:p-4">
+                      <ProfileCompletionCard
+                        profile={profileCompletionCardSource}
+                        t={t}
+                        lang={lang}
+                        onEditField={scrollToProfileCompletionField}
+                        className="border-0 bg-transparent p-0 shadow-none"
+                        rightActions={
+                          <button
+                            type="button"
+                            disabled={profileSaveBusy}
+                            onClick={() => {
+                              setIsProfileExpanded(true);
+                              setIsEditing(true);
+                              window.requestAnimationFrame(() => {
+                                profileFormLayoutRef.current?.scrollIntoView({
+                                  behavior: 'smooth',
+                                  block: 'start',
                                 });
-                              }}
-                              className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
-                            >
-                              {profileSaveBusy
-                                ? pickLang('Enregistrement...', 'Guardando...', 'Saving...', lang)
-                                : 'Enregistrer'}
-                            </button>
-                          }
-                        />
-                      </div>
-                      <div className="flex justify-end sm:justify-start">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setProfileVisibilityBandHidden(true);
-                            try {
-                              window.sessionStorage.setItem('fn_profile_visibility_band_hidden', '1');
-                            } catch {
-                              // ignore
-                            }
-                          }}
-                          className="text-xs font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700 hover:decoration-slate-400 sm:text-sm"
-                        >
-                          {pickLang(
-                            'Masquer ce bandeau',
-                            'Ocultar este banner',
-                            'Hide this banner',
-                            lang
-                          )}
-                        </button>
-                      </div>
+                                const form = directoryProfileFormRef.current;
+                                if (!form) return;
+                                if (typeof (form as any).requestSubmit === 'function') {
+                                  (form as any).requestSubmit();
+                                  return;
+                                }
+                                form.dispatchEvent(
+                                  new Event('submit', { bubbles: true, cancelable: true })
+                                );
+                              });
+                            }}
+                            className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
+                          >
+                            {profileSaveBusy
+                              ? pickLang('Enregistrement...', 'Guardando...', 'Saving...', lang)
+                              : 'Enregistrer'}
+                          </button>
+                        }
+                        discreetRightFooter={
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setProfileVisibilityBandHidden(true);
+                              try {
+                                window.sessionStorage.setItem('fn_profile_visibility_band_hidden', '1');
+                              } catch {
+                                // ignore
+                              }
+                            }}
+                            className="text-[10px] font-normal leading-snug text-slate-400 transition-colors hover:text-slate-600 sm:text-xs"
+                          >
+                            {pickLang(
+                              'Masquer ce bandeau',
+                              'Ocultar este banner',
+                              'Hide this banner',
+                              lang
+                            )}
+                          </button>
+                        }
+                      />
                     </div>
                   </div>
                 )}
@@ -5252,6 +5250,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           <div className="min-w-0 space-y-6">
                             {user &&
                             profileCompletionPct < 100 &&
+                            profileCompletionPct <= 50 &&
+                            profile?.isValidated !== true &&
+                            !editingSomeoneElse &&
                             !isAdminEmail(user.email) ? (
                               <OnboardingIntroBanner t={t} className="w-full" />
                             ) : null}
@@ -5274,14 +5275,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               )}
                             </p>
                           ) : null}
-                          <p className="rounded-md border border-stone-200/70 bg-stone-50/60 px-2 py-1 text-[11px] leading-snug text-stone-500">
-                            {t('profileFormRequiredLegend')}
-                          </p>
-                          {user && !editingSomeoneElse ? (
-                            <p className="rounded-md border border-blue-100/70 bg-blue-50/50 px-2 py-1 text-[11px] leading-snug text-blue-900/90">
-                              {t('profileFormDraftLocalHint')}
+                          <div className="space-y-1.5">
+                            <p className="rounded-md border border-stone-200/70 bg-stone-50/60 px-2 py-1 text-[11px] leading-snug text-stone-500">
+                              {t('profileFormRequiredLegend')}
                             </p>
-                          ) : null}
+                            {user && !editingSomeoneElse ? (
+                              <p className="rounded-md border border-blue-100/70 bg-blue-50/50 px-2 py-1 text-[11px] leading-snug text-blue-900/90">
+                                {t('profileFormDraftLocalHint')}
+                              </p>
+                            ) : null}
+                          </div>
 
                           <section className="space-y-4 rounded-xl border border-stone-200 bg-stone-50/40 p-4">
                             <h2 className="mb-1 text-sm font-semibold text-stone-900">{t('profileFormSectionPerson')}</h2>

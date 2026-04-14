@@ -16,6 +16,8 @@ export type ProfileCompletionCardProps = {
   className?: string;
   onEditField?: (fieldKey: string) => void;
   rightActions?: React.ReactNode;
+  /** Lien ou texte secondaire sous les actions (ex. masquer le bandeau), aligné à droite. */
+  discreetRightFooter?: React.ReactNode;
 };
 
 export function ProfileCompletionCard({
@@ -25,6 +27,7 @@ export function ProfileCompletionCard({
   className,
   onEditField,
   rightActions,
+  discreetRightFooter,
 }: ProfileCompletionCardProps) {
   const labels = useMemo(() => profileCompletionDefaultLabels(lang), [lang]);
   const percent = getProfileCompletionPercentFromDomain(profile);
@@ -59,14 +62,15 @@ export function ProfileCompletionCard({
           <p className="mt-2 text-sm leading-6 text-slate-600">{t('profileCompletionDescription')}</p>
         </div>
 
-        <div className="shrink-0 text-right">
-          <div className="flex items-center justify-end gap-3">
-            <div>
-              <div className="text-2xl font-semibold tracking-tight text-slate-900">{percent}%</div>
-              <div className="text-xs text-slate-500">{t('profileCompletionProgressShort')}</div>
-            </div>
-            {rightActions ? <div className="self-center">{rightActions}</div> : null}
+        <div className="flex shrink-0 flex-col items-end gap-2 text-right">
+          <div>
+            <div className="text-2xl font-semibold tracking-tight text-slate-900">{percent}%</div>
+            <div className="text-xs text-slate-500">{t('profileCompletionProgressShort')}</div>
           </div>
+          {rightActions ? <div className="flex w-full justify-end">{rightActions}</div> : null}
+          {discreetRightFooter ? (
+            <div className="flex w-full justify-end pt-0.5">{discreetRightFooter}</div>
+          ) : null}
         </div>
       </div>
 
