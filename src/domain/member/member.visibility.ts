@@ -1,5 +1,20 @@
 import type { Member, ProfileRole } from './member.types';
 
+export type ContactVisibility = {
+  emailPublic: boolean;
+  phonePublic: boolean;
+};
+
+export type InternalOnlyFields = {
+  gender?: string;
+  delegationVisitsHost?: boolean;
+};
+
+export type VisibilitySettings = {
+  contact: ContactVisibility;
+  internalOnly: InternalOnlyFields;
+};
+
 export type VisibilityProjection = 'public' | 'member' | 'admin';
 
 export function projectMemberVisibility(
@@ -13,8 +28,11 @@ export function projectMemberVisibility(
 
   return {
     ...member,
-    email: hideEmail ? undefined : member.email,
-    whatsapp: hideWhatsapp ? undefined : member.whatsapp,
+    contact: {
+      ...member.contact,
+      email: hideEmail ? undefined : member.contact.email,
+      phoneWhatsapp: hideWhatsapp ? undefined : member.contact.phoneWhatsapp,
+    },
   };
 }
 
@@ -23,4 +41,3 @@ export function projectionForViewerRole(role: ProfileRole | 'guest'): Visibility
   if (role === 'member') return 'member';
   return 'public';
 }
-

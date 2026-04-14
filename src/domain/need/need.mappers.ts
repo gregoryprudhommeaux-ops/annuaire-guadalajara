@@ -1,6 +1,45 @@
-import type { MemberNetworkRequest } from '../../types';
+import type { Language, MemberNetworkRequest } from '../../types';
+import { needOptionLabel } from '../../needOptions';
 import type { NeedCategoryKey } from '../taxonomy/taxonomy.types';
 import type { Need, NetworkRequest } from './need.types';
+
+/** Maps legacy highlighted need codes (`NEED_*`) to canonical {@link NeedCategoryKey}. */
+const LEGACY_HIGHLIGHTED_NEED_ID_TO_CATEGORY: Record<string, NeedCategoryKey> = {
+  NEED_CLIENTS: 'new_clients',
+  NEED_DISTRIB: 'distributors_resellers_agents',
+  NEED_PARTNERS: 'strategic_partners',
+  NEED_SUPPLIERS: 'suppliers_manufacturers',
+  NEED_SERVICE_PROV: 'service_providers',
+  NEED_INVESTORS: 'investors_funding',
+  NEED_LEGAL: 'legal_support',
+  NEED_HR: 'hr_support',
+  NEED_FIN_SUPPORT: 'finance_support',
+  NEED_IT: 'it_support',
+  NEED_MKT: 'marketing_support',
+  NEED_LOG: 'logistics_support',
+  NEED_RESEARCH: 'market_intelligence',
+  NEED_MENTOR: 'mentoring_board',
+  NEED_VISIBILITY: 'visibility_pr',
+  NEED_ECOSYSTEM: 'local_institutions',
+  NEED_OTHER: 'other',
+};
+
+export function mapLegacyHighlightedNeedIdToNeed(
+  memberId: string,
+  needId: string,
+  lang: Language = 'fr'
+): Need {
+  const category = LEGACY_HIGHLIGHTED_NEED_ID_TO_CATEGORY[needId] ?? 'other';
+  return {
+    id: needId,
+    memberId,
+    title: needOptionLabel(needId, lang),
+    categories: [category],
+    visibility: 'members',
+    status: 'active',
+    highlighted: true,
+  };
+}
 
 type LegacyNeedInput = {
   id?: string;

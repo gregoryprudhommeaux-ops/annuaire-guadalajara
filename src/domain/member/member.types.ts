@@ -1,59 +1,63 @@
-import type { Language } from '../../types';
-import type { Company, Location } from '../company/company.types';
+import type { Company } from '../company/company.types';
+import type { Need } from '../need/need.types';
+import type {
+  CommunityOpennessKey,
+  HobbyKey,
+  LanguageCode,
+  LocaleCode,
+  SectorKey,
+} from '../taxonomy/taxonomy.types';
+import type { VisibilitySettings } from './member.visibility';
 
 export type MemberId = string;
 
 export type ProfileRole = 'member' | 'admin';
 
-export type ContactVisibility = {
-  emailPublic: boolean;
-  phonePublic: boolean;
+export type ContactPreference = 'email' | 'whatsapp' | 'linkedin' | 'phone' | 'other';
+
+export type MemberContact = {
+  email?: string;
+  linkedinUrl?: string;
+  countryDialCode?: string;
+  phoneWhatsapp?: string;
+  preferredContactChannels?: ContactPreference[];
+  preferredContactText?: string;
 };
 
-export type InternalOnlyFields = {
+export type MemberIdentity = {
+  id: string;
+  slug: string;
+  fullName: string;
+  photoUrl?: string;
+  bio?: string;
+  nationality?: string;
   gender?: string;
-  delegationVisitsHost?: boolean;
+  locale?: LocaleCode;
+  workLanguages: LanguageCode[];
+  arrivalYearInMexico?: number;
 };
 
-export type VisibilitySettings = {
-  contact: ContactVisibility;
-  internalOnly: InternalOnlyFields;
-};
-
-export type CommunityOpenness = {
-  openToMentoring: boolean;
-  openToTalks: boolean;
-  openToEvents: boolean;
-};
-
-export type ProfileCompletion = {
-  percent: number;
-  missingTopKeys: string[];
+export type MemberNetworkProfile = {
+  tagline?: string;
+  lookingForText?: string;
+  helpOfferText?: string;
+  currentNeeds: Need[];
+  keywords: string[];
+  hobbies: HobbyKey[];
+  openness: CommunityOpennessKey[];
+  searchableSectors: SectorKey[];
 };
 
 export type Member = {
-  id: MemberId;
-  role: ProfileRole;
-  fullName: string;
-  email?: string; // may be absent depending on visibility projection
-  whatsapp?: string; // may be absent depending on visibility projection
-  linkedin?: string;
-  photoUrl?: string;
-  languages: Language[];
-  location?: Location;
-  primaryCompany?: Company;
-  companies?: Company[];
-  highlightedNeedIds: string[];
-  hobbyIds: string[];
-  keywords: string[];
-  contactPreferenceCta?: string;
-  communityGoal?: string;
-  helpNewcomers?: string;
+  id: string;
+  slug: string;
+  identity: MemberIdentity;
+  contact: MemberContact;
+  company: Company;
+  networkProfile: MemberNetworkProfile;
   visibility: VisibilitySettings;
-  openness: CommunityOpenness;
-  createdAtMs?: number;
-  lastSeenMs?: number;
-  validated?: boolean;
-  completion?: ProfileCompletion;
+  publicProfileCompleted: boolean;
+  profileCompletionPercent: number;
+  createdAt?: string;
+  updatedAt?: string;
 };
-

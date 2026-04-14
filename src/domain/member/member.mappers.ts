@@ -1,33 +1,138 @@
-import type { UserProfile, Language, CompanyActivitySlot, EmployeeCountRange } from '../../types';
+import type { UserProfile, CompanyActivitySlot, EmployeeCountRange } from '../../types';
 import { normalizedTargetKeywords } from '../../types';
-import type { Company, Location } from '../company/company.types';
+import type { Company } from '../company/company.types';
+import { mapLegacyHighlightedNeedIdToNeed } from '../need/need.mappers';
 import type {
   CityKey,
   ClientSizeKey,
+  CommunityOpennessKey,
   CompanySizeRangeKey,
   CompanyTypeKey,
+  HobbyKey,
+  LanguageCode,
   ProfessionalStatusKey,
   ProfileRoleKey,
   SectorKey,
 } from '../taxonomy/taxonomy.types';
-import type { Member, ProfileRole } from './member.types';
+import type { ContactPreference, Member, MemberContact, MemberIdentity } from './member.types';
 import { sanitizeHighlightedNeeds } from '../../needOptions';
 import { sanitizePassionIds } from '../../lib/passionConfig';
-import { getProfileCompletionPercent, getPriorityMissingFields } from '../../lib/profileCompletion';
+import { getProfileCompletionPercent } from '../../lib/profileCompletion';
 
-function mapRole(role: UserProfile['role']): ProfileRole {
-  return role === 'admin' ? 'admin' : 'member';
+const LANGUAGE_CODE_SET = new Set<LanguageCode>(['fr', 'es', 'en', 'pt', 'de', 'it', 'zh']);
+
+const LEGACY_PASSION_ID_TO_HOBBY: Record<string, HobbyKey> = {
+  golf: 'golf',
+  peche: 'fishing',
+  padel: 'padel',
+  petanque: 'petanque',
+  randonnee: 'hiking',
+  surf: 'surf',
+  tennis: 'tennis',
+  cyclisme: 'cycling',
+  yoga: 'yoga',
+  natation: 'swimming',
+  plongee: 'diving',
+  escalade: 'climbing',
+  camping: 'camping',
+  voyage: 'travel',
+  moto: 'motorcycle',
+  cuisine: 'cooking',
+  vins: 'wine',
+  gastronomie: 'gastronomy',
+  mixologie: 'mixology',
+  patisserie: 'pastry',
+  musique: 'music',
+  cinema: 'cinema',
+  litterature: 'literature',
+  art: 'art',
+  photographie: 'photography',
+  theatre: 'theater',
+  startups: 'startups',
+  ia: 'artificial_intelligence',
+  investissement: 'investment',
+  crypto: 'crypto_web3',
+  ecommerce: 'ecommerce',
+};
+
+function slugFromProfile(p: UserProfile): string {
+  const raw = p.fullName?.trim().toLowerCase() || '';
+  const slug = raw
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 96);
+  return slug || p.uid;
 }
 
-function slotLocation(slot: Partial<CompanyActivitySlot> | undefined, p: UserProfile): Location | undefined {
-  const city = slot?.city ?? p.city;
-  const state = slot?.state ?? p.state;
-  const neighborhood = slot?.neighborhood ?? p.neighborhood;
-  const country = slot?.country ?? p.country;
-  const latitude = p.latitude;
-  const longitude = p.longitude;
-  if (!city && !state && !neighborhood && !country && !latitude && !longitude) return undefined;
-  return { city, state, neighborhood, country, latitude, longitude };
+function millisToIso(ms: number | undefined): string | undefined {
+  if (ms == null || !Number.isFinite(ms)) return undefined;
+  return new Date(ms).toISOString();
+}
+
+function memberBioText(p: UserProfile): string | undefined {
+  const mb = p.memberBio?.trim();
+  if (mb) return mb;
+  const slots = Array.isArray(p.companyActivities) ? p.companyActivities : [];
+  const first = slots[0]?.activityDescription?.trim();
+  return first || p.bio?.trim() || undefined;
+}
+
+function mapWorkLanguages(p: UserProfile): LanguageCode[] {
+  const raw = Array.isArray(p.workingLanguageCodes) ? p.workingLanguageCodes : [];
+  const out: LanguageCode[] = [];
+  const seen = new Set<string>();
+  for (const x of raw) {
+    const c = String(x).trim() as LanguageCode;
+    if (!LANGUAGE_CODE_SET.has(c) || seen.has(c)) continue;
+    seen.add(c);
+    out.push(c);
+  }
+  return out;
+}
+
+function mapPassionIdsToHobbies(p: UserProfile): HobbyKey[] {
+  const ids = sanitizePassionIds(p.passionIds);
+  const out: HobbyKey[] = [];
+  const seen = new Set<string>();
+  for (const id of ids) {
+    const key = LEGACY_PASSION_ID_TO_HOBBY[id];
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(key);
+  }
+  return out;
+}
+
+function mapOpennessKeys(p: UserProfile): CommunityOpennessKey[] {
+  const o: CommunityOpennessKey[] = [];
+  if (p.openToMentoring) o.push('mentorship');
+  if (p.openToTalks) o.push('speaking');
+  if (p.openToEvents) o.push('event_cocreation');
+  return o;
+}
+
+function inferPreferredContactChannels(text?: string): ContactPreference[] | undefined {
+  const t = text?.trim().toLowerCase();
+  if (!t) return undefined;
+  const out: ContactPreference[] = [];
+  if (t.includes('whatsapp') || t.includes('whats')) out.push('whatsapp');
+  if (t.includes('linkedin')) out.push('linkedin');
+  if (t.includes('mail') || t.includes('email') || t.includes('courriel')) out.push('email');
+  if (t.includes('tél') || t.includes('tel') || t.includes('phone')) out.push('phone');
+  return out.length ? out : ['other'];
+}
+
+function memberContactFromProfile(p: UserProfile): MemberContact {
+  const cta = p.contactPreferenceCta?.trim();
+  return {
+    email: p.email?.trim() || undefined,
+    linkedinUrl: p.linkedin?.trim() || undefined,
+    phoneWhatsapp: p.whatsapp?.trim() || undefined,
+    preferredContactText: cta || undefined,
+    preferredContactChannels: inferPreferredContactChannels(cta),
+  };
 }
 
 function normalizeCityToken(raw: string): string {
@@ -54,8 +159,6 @@ function mapSectorKeyFromActivityCategory(raw?: string): SectorKey {
   const t = normalizeCityToken(String(raw ?? ''));
   if (!t) return 'other';
 
-  // Heuristic mapping from legacy free-text sector labels (FR-heavy) → canonical SectorKey.
-  // Unknown values safely fall back to `other` (non-destructive for legacy data).
   const rules: Array<{ test: RegExp; key: SectorKey }> = [
     { test: /(conseil|consult)/, key: 'consulting_services' },
     { test: /(tech|informat|logiciel|saas|digital|cyber)/, key: 'technology_it' },
@@ -148,7 +251,6 @@ function mapEmployeeRangeKey(raw?: EmployeeCountRange | number | ''): CompanySiz
   };
   if (map[s]) return map[s];
 
-  // Legacy numeric-ish values: best-effort bucket
   const n = Number(s);
   if (!Number.isFinite(n)) return undefined;
   if (n <= 5) return '1_5';
@@ -216,35 +318,83 @@ function mapCompanyFromSlot(slot: CompanyActivitySlot, p: UserProfile): Company 
   };
 }
 
+function fallbackCompanyFromProfile(p: UserProfile): Company {
+  const slots = Array.isArray(p.companyActivities) ? p.companyActivities : [];
+  const slot0 = slots[0];
+  const name = p.companyName?.trim() || '—';
+  const city = mapCityKey(slot0?.city ?? p.city);
+  const country = String(slot0?.country ?? p.country ?? 'Mexico').trim() || 'Mexico';
+
+  return {
+    id: slot0?.id ?? `fallback-${p.uid}`,
+    name,
+    website: p.website?.trim() || undefined,
+    sector: mapSectorKeyFromActivityCategory(slot0?.activityCategory ?? p.activityCategory),
+    location: {
+      city,
+      district: slot0?.neighborhood?.trim() || p.neighborhood?.trim() || undefined,
+      state: (slot0?.state ?? p.state)?.trim() || undefined,
+      country,
+    },
+    roleInCompany: mapProfileRoleKeyFromPositionCategory(slot0?.positionCategory ?? p.positionCategory),
+    foundedYear: typeof p.creationYear === 'number' ? p.creationYear : undefined,
+    employeeRange: mapEmployeeRangeKey(slot0?.employeeCount ?? p.employeeCount),
+    companyType: mapCompanyTypeKey(slot0?.communityCompanyKind ?? p.communityCompanyKind),
+    professionalStatus: mapProfessionalStatusKey(slot0?.communityMemberStatus ?? p.communityMemberStatus),
+    typicalClientSizes: mapClientSizeKeys(slot0?.typicalClientSizes ?? p.typicalClientSizes),
+    activityDescription: slot0?.activityDescription?.trim() || undefined,
+  };
+}
+
+function searchableSectorsFromCompanies(companies: Company[], fallback: SectorKey): SectorKey[] {
+  const keys = companies.map((c) => c.sector).filter(Boolean);
+  const uniq = Array.from(new Set(keys));
+  return uniq.length ? uniq : [fallback];
+}
+
+function identityFromProfile(p: UserProfile): MemberIdentity {
+  return {
+    id: p.uid,
+    slug: slugFromProfile(p),
+    fullName: p.fullName?.trim() || '—',
+    photoUrl: p.photoURL?.trim() || undefined,
+    bio: memberBioText(p),
+    workLanguages: mapWorkLanguages(p),
+    arrivalYearInMexico: typeof p.arrivalYear === 'number' ? p.arrivalYear : undefined,
+  };
+}
+
 export function mapLegacyProfileToMember(p: UserProfile): Member {
   const slots = Array.isArray(p.companyActivities) ? p.companyActivities : [];
   const companies = slots.map((s) => mapCompanyFromSlot(s, p)).filter((c): c is Company => Boolean(c));
-  const primaryCompany = companies[0];
-  const loc = slotLocation(slots[0], p);
-  const langs: Language[] = (Array.isArray(p.workingLanguageCodes) ? p.workingLanguageCodes : [])
-    .map((x) => String(x).trim())
-    .filter((x): x is Language => x === 'fr' || x === 'es' || x === 'en');
+  const company = companies[0] ?? fallbackCompanyFromProfile(p);
+  const searchableSectors = searchableSectorsFromCompanies(companies, company.sector);
 
-  const missing = getPriorityMissingFields(p).map((x) => x.key);
+  const percent = getProfileCompletionPercent(p);
+  const createdAtMs =
+    typeof (p as { createdAt?: { toMillis?: () => number } }).createdAt?.toMillis === 'function'
+      ? (p as { createdAt: { toMillis: () => number } }).createdAt.toMillis()
+      : undefined;
+
+  const identity = identityFromProfile(p);
+  const needIds = sanitizeHighlightedNeeds(p.highlightedNeeds);
+  const currentNeeds = needIds.map((id) => mapLegacyHighlightedNeedIdToNeed(p.uid, id));
 
   return {
     id: p.uid,
-    role: mapRole(p.role),
-    fullName: p.fullName?.trim() || '—',
-    email: p.email?.trim() || undefined,
-    whatsapp: p.whatsapp?.trim() || undefined,
-    linkedin: p.linkedin?.trim() || undefined,
-    photoUrl: p.photoURL?.trim() || undefined,
-    languages: langs,
-    location: loc,
-    primaryCompany,
-    companies,
-    highlightedNeedIds: sanitizeHighlightedNeeds(p.highlightedNeeds),
-    hobbyIds: sanitizePassionIds(p.passionIds),
-    keywords: normalizedTargetKeywords(p),
-    contactPreferenceCta: p.contactPreferenceCta?.trim() || undefined,
-    communityGoal: p.networkGoal?.trim() || undefined,
-    helpNewcomers: p.helpNewcomers?.trim() || undefined,
+    slug: identity.slug,
+    identity,
+    contact: memberContactFromProfile(p),
+    company,
+    networkProfile: {
+      lookingForText: p.networkGoal?.trim() || undefined,
+      helpOfferText: p.helpNewcomers?.trim() || undefined,
+      currentNeeds,
+      keywords: normalizedTargetKeywords(p),
+      hobbies: mapPassionIdsToHobbies(p),
+      openness: mapOpennessKeys(p),
+      searchableSectors,
+    },
     visibility: {
       contact: {
         emailPublic: Boolean(p.isEmailPublic),
@@ -252,17 +402,9 @@ export function mapLegacyProfileToMember(p: UserProfile): Member {
       },
       internalOnly: {},
     },
-    openness: {
-      openToMentoring: Boolean(p.openToMentoring),
-      openToTalks: Boolean(p.openToTalks),
-      openToEvents: Boolean(p.openToEvents),
-    },
-    createdAtMs: typeof (p as any)?.createdAt?.toMillis === 'function' ? (p as any).createdAt.toMillis() : undefined,
-    lastSeenMs: typeof p.lastSeen === 'number' ? p.lastSeen : undefined,
-    validated: p.isValidated !== false,
-    completion: {
-      percent: getProfileCompletionPercent(p),
-      missingTopKeys: missing,
-    },
+    publicProfileCompleted: percent >= 85,
+    profileCompletionPercent: percent,
+    createdAt: millisToIso(createdAtMs),
+    updatedAt: millisToIso(typeof p.lastSeen === 'number' ? p.lastSeen : undefined),
   };
 }
