@@ -3383,6 +3383,13 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       const v = getTrimmed(key);
       return v.length > 0 ? v : undefined;
     };
+    const normalizeLinkedInPhotoUrl = (url: string) => {
+      const trimmed = String(url ?? '').trim();
+      if (!trimmed) return '';
+      if (!/licdn\.com|media\.linkedin\.com/i.test(trimmed)) return trimmed;
+      // LinkedIn URLs often carry expiring query params (e=...&t=...). Keep the stable path.
+      return trimmed.split('#')[0].split('?')[0];
+    };
     const optionalNumber = (key: string) => {
       const raw = getTrimmed(key);
       if (!raw) return undefined;
@@ -3828,6 +3835,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const networkGoalVal = optionalString('networkGoal');
 
     const companySlotsPayload = slotsToFirestoreList(slotsWithName);
+    const photoUrlRaw = optionalString('photoURL');
+    const photoUrlNormalized = photoUrlRaw ? normalizeLinkedInPhotoUrl(photoUrlRaw) : undefined;
 
     const newProfile = {
       uid: targetUid,
@@ -3838,7 +3847,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       email: getTrimmed('email'),
       whatsapp: whatsappMerged || undefined,
       linkedin: optionalString('linkedin'),
-      photoURL: optionalString('photoURL'),
+      photoURL: photoUrlNormalized,
       employeeCount: employeeCountVal,
       isEmailPublic: formData.get('isEmailPublic') === 'on',
       isWhatsappPublic: formData.get('isWhatsappPublic') === 'on',
@@ -5625,11 +5634,24 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   autoComplete="url"
                                   value={profilePhotoUrlDraft}
                                   onChange={(e) => setProfilePhotoUrlDraft(e.target.value)}
+                                  onBlur={() => {
+                                    setProfilePhotoUrlDraft((prev) => {
+                                      const trimmed = String(prev ?? '').trim();
+                                      if (!trimmed) return '';
+                                      if (!/licdn\.com|media\.linkedin\.com/i.test(trimmed)) return trimmed;
+                                      return trimmed.split('#')[0].split('?')[0];
+                                    });
+                                  }}
                                   onPaste={(e) => {
                                     const text = e.clipboardData?.getData('text') ?? '';
                                     if (!text) return;
                                     e.preventDefault();
-                                    setProfilePhotoUrlDraft(text.trim());
+                                    const trimmed = text.trim();
+                                    setProfilePhotoUrlDraft(
+                                      /licdn\.com|media\.linkedin\.com/i.test(trimmed)
+                                        ? trimmed.split('#')[0].split('?')[0]
+                                        : trimmed
+                                    );
                                   }}
                                   placeholder="https://..."
                                   className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
