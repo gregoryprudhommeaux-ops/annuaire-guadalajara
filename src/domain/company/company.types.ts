@@ -1,21 +1,40 @@
-import type { EmployeeCountRange } from '../../types';
+import type {
+  CityKey,
+  ClientSizeKey,
+  CompanySizeRangeKey,
+  CompanyTypeKey,
+  CountryKey,
+  ProfileRoleKey,
+  SectorKey,
+  ProfessionalStatusKey,
+} from '../taxonomy/taxonomy.types';
 
-export type CompanyId = string;
+export type CompanyLocation = {
+  city: CityKey;
+  district?: string;
+  state?: string;
+  country: CountryKey;
+};
 
-export type CompanyType =
-  | 'startup'
-  | 'pme'
-  | 'corporate'
-  | 'independent'
-  | 'association'
-  | 'nonprofit'
-  | 'club'
-  | 'unknown';
+export type Company = {
+  id: string;
+  name: string;
+  website?: string;
+  sector: SectorKey;
+  location: CompanyLocation;
+  roleInCompany?: ProfileRoleKey;
+  foundedYear?: number;
+  employeeRange?: CompanySizeRangeKey;
+  companyType?: CompanyTypeKey;
+  professionalStatus?: ProfessionalStatusKey;
+  typicalClientSizes?: ClientSizeKey[];
+  activityDescription?: string;
+};
 
-export type ProfessionalStatus = 'freelance' | 'employee' | 'owner' | 'volunteer' | 'unknown';
-
-export type CompanySizeRange = EmployeeCountRange | 'unknown';
-
+/**
+ * Member-level geo (legacy-friendly): free-text + optional coordinates.
+ * Distinct from {@link CompanyLocation} which is keyed for analytics/matching.
+ */
 export type Location = {
   city?: string;
   state?: string;
@@ -24,19 +43,3 @@ export type Location = {
   latitude?: number;
   longitude?: number;
 };
-
-export type Company = {
-  id: CompanyId;
-  name: string;
-  sectorId?: string;
-  website?: string;
-  positionCategory?: string;
-  createdYear?: number;
-  employeeCount?: CompanySizeRange;
-  location?: Location;
-  companyType?: CompanyType;
-  professionalStatus?: ProfessionalStatus;
-  typicalClientSizes?: ('independant' | 'pme' | 'corporate' | 'mixte')[];
-  activityDescription?: string;
-};
-
