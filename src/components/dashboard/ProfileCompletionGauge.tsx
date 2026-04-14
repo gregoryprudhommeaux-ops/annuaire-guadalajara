@@ -9,15 +9,18 @@ export function getGaugeColor(pct: number): string {
 export default function ProfileCompletionGauge({
   totalMembers,
   completedProfiles,
+  compact = false,
 }: {
   totalMembers: number;
   completedProfiles: number;
+  compact?: boolean;
 }) {
   const pct = totalMembers > 0 ? Math.round((completedProfiles / totalMembers) * 100) : 0;
   const color = getGaugeColor(pct);
   const incomplete = Math.max(0, totalMembers - completedProfiles);
   const [open, setOpen] = useState(false);
 
+  const chartHeight = compact ? 132 : 220;
   const series = useMemo(() => [pct], [pct]);
   const options = useMemo(
     () => ({
@@ -27,15 +30,20 @@ export default function ProfileCompletionGauge({
       },
       plotOptions: {
         radialBar: {
-          hollow: { size: '62%' },
+          hollow: { size: compact ? '66%' : '62%' },
           track: { background: '#e5e7eb' },
           dataLabels: {
-            name: { show: true, fontSize: '12px', offsetY: 14, color: '#64748b' },
+            name: {
+              show: !compact,
+              fontSize: '12px',
+              offsetY: 14,
+              color: '#64748b',
+            },
             value: {
               show: true,
-              fontSize: '28px',
+              fontSize: compact ? '22px' : '28px',
               fontWeight: 800,
-              offsetY: -12,
+              offsetY: compact ? 2 : -12,
               color: '#0f172a',
               formatter: (v: number) => `${Math.round(v)}%`,
             },
@@ -46,22 +54,24 @@ export default function ProfileCompletionGauge({
       colors: [color],
       stroke: { lineCap: 'round' as const },
     }),
-    [color]
+    [color, compact]
   );
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+    <div className={`rounded-xl border border-stone-200 bg-white shadow-sm ${compact ? 'p-3' : 'p-4'}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-stone-900">Complétion des profils</h3>
-          <p className="mt-1 text-xs text-stone-500">
+          <h3 className={`font-semibold text-stone-900 ${compact ? 'text-xs' : 'text-sm'}`}>Complétion des profils</h3>
+          <p className={`text-stone-500 ${compact ? 'mt-0.5 text-[11px]' : 'mt-1 text-xs'}`}>
             {totalMembers === 0 ? 'Aucun membre' : `${completedProfiles}/${totalMembers} profils complets`}
           </p>
         </div>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-stone-200 text-stone-500 hover:bg-stone-50"
+          className={`inline-flex items-center justify-center rounded-lg border border-stone-200 text-stone-500 hover:bg-stone-50 ${
+            compact ? 'h-8 w-8' : 'h-9 w-9'
+          }`}
           aria-label="Voir les critères"
           title="Voir les critères"
         >
@@ -70,16 +80,20 @@ export default function ProfileCompletionGauge({
       </div>
 
       {open ? (
-        <div className="mt-3 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-700">
+        <div
+          className={`rounded-lg border border-stone-200 bg-stone-50 text-stone-700 ${
+            compact ? 'mt-2 px-2 py-1.5 text-[11px]' : 'mt-3 px-3 py-2 text-xs'
+          }`}
+        >
           Profil complet = nom + secteur + description (≥ 30 caractères) + photo.
         </div>
       ) : null}
 
-      <div className="mt-3 h-[220px] w-full">
-        <ReactApexChart options={options as any} series={series as any} type="radialBar" height={220} />
+      <div className={`${compact ? 'mt-2' : 'mt-3'} w-full`} style={{ height: chartHeight }}>
+        <ReactApexChart options={options as any} series={series as any} type="radialBar" height={chartHeight} />
       </div>
 
-      <div className="mt-2 grid grid-cols-1 gap-1 text-xs">
+      <div className={`${compact ? 'mt-1.5' : 'mt-2'} grid grid-cols-2 gap-x-3 gap-y-1 text-xs`}>
         <p className="text-stone-700">
           <span className="mr-1 text-green-600">●</span>
           {completedProfiles} profils complets

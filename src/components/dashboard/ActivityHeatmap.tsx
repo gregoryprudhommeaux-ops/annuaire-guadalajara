@@ -72,13 +72,11 @@ export default function ActivityHeatmap({ members }: { members: HeatmapMember[] 
           blockSize={13}
           blockMargin={4}
           fontSize={12}
-          colorScheme={colorScheme}
           labels={labels as any}
           showWeekdayLabels
-          theme={{
-            light: { text: '#475569' },
-            dark: { text: '#e2e8f0' },
-          }}
+          // `react-activity-calendar` expects `theme.light/dark` to be an array
+          // of 2 or 5 colors (depending on maxLevel). We use 5 (level 0..4).
+          theme={colorScheme as any}
           renderBlock={(block, activity) => {
             const a = activity as unknown as DayRow;
             const date = parseISO(a.date);

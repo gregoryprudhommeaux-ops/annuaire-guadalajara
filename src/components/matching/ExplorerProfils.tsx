@@ -1,12 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResponsiveRadar } from '@nivo/radar';
-import { VennDiagram } from 'react-venn-diagram';
 import type { Language } from '../../types';
 import { pickLang } from '../../lib/uiLocale';
 import { useExplorerProfilsI18n } from '../../copy/explorerProfilsI18n';
 import {
   computeRadarData,
-  computeVennData,
   type CompanySize,
   type ExplorerMember,
 } from '../../lib/explorerProfilsCompute';
@@ -16,7 +14,6 @@ export type {
   ExplorerMember,
   RadarAxis,
   RadarDatum,
-  VennCommunityResult,
 } from '../../lib/explorerProfilsCompute';
 
 const RADAR_SEGMENT_COLOR: Record<'community' | CompanySize, string> = {
@@ -140,8 +137,6 @@ export default function ExplorerProfils({
     [filteredMembers, lang]
   );
 
-  const vennCommunity = useMemo(() => computeVennData(filteredMembers), [filteredMembers]);
-
   const radarKeys: SegmentKey[] = [segment];
   const nivoRadarRows = useMemo(() => {
     return radarDatum.map((d) => {
@@ -159,10 +154,6 @@ export default function ExplorerProfils({
   const segmentHasRadarData =
     filteredMembers.length > 0 &&
     (segment === 'community' || filteredMembers.some((m) => m.companySize === segment));
-
-  const showVenn =
-    filteredMembers.length > 0 &&
-    (vennCommunity.a > 0 || vennCommunity.b > 0 || vennCommunity.intersection > 0);
 
   const serieLabel = (key: SegmentKey) => {
     if (key === 'community') return t('radarSeriesCommunity');
@@ -266,95 +257,6 @@ export default function ExplorerProfils({
           )}
         </section>
 
-        <section className="min-w-0 rounded-xl border border-stone-200 bg-white p-5 sm:p-6">
-          <h2 className="text-base font-semibold text-stone-900 sm:text-lg">{t('vennTitle')}</h2>
-          <p className="mt-2 max-w-prose text-sm leading-relaxed text-stone-500">{t('vennHint')}</p>
-
-          {!showVenn ? (
-            <div className="mt-6 rounded-lg border border-dashed border-stone-200 bg-stone-50/60 px-4 py-10 text-center">
-              <p className="mx-auto max-w-md text-sm text-stone-600">{t('vennNoTags')}</p>
-            </div>
-          ) : (
-            <div className="mt-6 space-y-8">
-              <div className="relative isolate flex justify-center overflow-x-auto py-2">
-                <div className="inline-flex rounded-lg bg-white p-2 shadow-none ring-1 ring-stone-100">
-                  <VennDiagram
-                    width={280}
-                    height={260}
-                    data={{
-                      a: vennCommunity.a,
-                      b: vennCommunity.b,
-                      intersection: vennCommunity.intersection,
-                    }}
-                    labels={{
-                      labelA: t('vennLegendFB'),
-                      labelB: t('vennLegendNetworking'),
-                      labelIntersection: '\u00a0',
-                    }}
-                    colors={{
-                      colorA: '#6366f1',
-                      colorB: '#10b981',
-                      fontColorA: '#1c1917',
-                      fontColorB: '#1c1917',
-                      fontColorIntersection: '#1c1917',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="mx-auto max-w-lg border-t border-stone-100 pt-6">
-                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-stone-400">
-                  {pickLang('Chiffres', 'Cifras', 'Counts', lang)}
-                </p>
-                <ul className="space-y-2.5 text-sm text-stone-700">
-                  <li className="flex items-baseline justify-between gap-4 border-b border-stone-50 pb-2">
-                    <span className="flex items-center gap-2 min-w-0">
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-indigo-500" aria-hidden />
-                      <span className="truncate">{t('vennLegendFB')}</span>
-                    </span>
-                    <strong className="tabular-nums text-stone-900">{vennCommunity.a}</strong>
-                  </li>
-                  <li className="flex items-baseline justify-between gap-4 border-b border-stone-50 pb-2">
-                    <span className="flex items-center gap-2 min-w-0">
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
-                      <span className="truncate">{t('vennLegendNetworking')}</span>
-                    </span>
-                    <strong className="tabular-nums text-stone-900">{vennCommunity.b}</strong>
-                  </li>
-                  <li className="flex items-baseline justify-between gap-4 border-b border-stone-50 pb-2">
-                    <span className="flex items-center gap-2 min-w-0">
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-cyan-500" aria-hidden />
-                      <span className="truncate">{t('vennLegendAfterwork')}</span>
-                    </span>
-                    <strong className="tabular-nums text-stone-900">
-                      {vennCommunity.extras.totalAfterwork}
-                    </strong>
-                  </li>
-                </ul>
-                <ul className="mt-4 space-y-2 text-xs text-stone-600 sm:text-sm">
-                  <li className="flex justify-between gap-4">
-                    <span className="min-w-0 pr-2">{t('vennStatFbAfter')}</span>
-                    <strong className="tabular-nums text-stone-800">
-                      {vennCommunity.extras.fbAndAfterwork}
-                    </strong>
-                  </li>
-                  <li className="flex justify-between gap-4">
-                    <span className="min-w-0 pr-2">{t('vennStatNetAfter')}</span>
-                    <strong className="tabular-nums text-stone-800">
-                      {vennCommunity.extras.networkingAndAfterwork}
-                    </strong>
-                  </li>
-                  <li className="flex justify-between gap-4">
-                    <span className="min-w-0 pr-2">{t('vennStatTriple')}</span>
-                    <strong className="tabular-nums text-stone-800">
-                      {vennCommunity.extras.allThree}
-                    </strong>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          )}
-        </section>
       </div>
 
       <section className="mt-6 min-w-0 rounded-xl border border-stone-200 bg-white p-5 sm:mt-8 sm:p-6">

@@ -3671,13 +3671,22 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
         const first = companyActivitiesDraft[0];
         const hasLat = typeof (sanitizedProfile as any).latitude === 'number';
         const hasLng = typeof (sanitizedProfile as any).longitude === 'number';
-        if (!hasLat && !hasLng && first?.city && first?.state && first?.country) {
-          const addrBits = [first.neighborhood, first.city, first.state, first.country]
+        if (!hasLat && !hasLng) {
+          const neighborhood = String((first as any)?.neighborhood ?? '').trim();
+          const district = String((first as any)?.district ?? '').trim();
+          const city = String((first as any)?.city ?? '').trim();
+          const state = String((first as any)?.state ?? '').trim();
+          const country = String((first as any)?.country ?? '').trim();
+
+          // On accepte un niveau “quartier/district” même si on n’a pas toute l’adresse.
+          // La fonction `geocodeAddress` ajoute déjà (city, Jalisco, Mexico) comme contexte.
+          const addrBits = [neighborhood || district, city || state || country]
             .map((x) => String(x ?? '').trim())
             .filter(Boolean);
-          const addr = addrBits.join(', ');
-          if (addr) {
-            const coords = await geocodeAddress(addr, first.city);
+          const approx = addrBits.join(', ');
+
+          if (approx) {
+            const coords = await geocodeAddress(approx, city || 'Guadalajara');
             if (coords) {
               await updateDoc(doc(db, 'users', targetUid), {
                 latitude: coords.lat,

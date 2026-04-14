@@ -29,6 +29,9 @@ import ConversionFunnel from '@/components/dashboard/ConversionFunnel';
 import ActivityHeatmap from '@/components/dashboard/ActivityHeatmap';
 import EngagementLeaderboard from '@/components/dashboard/EngagementLeaderboard';
 import InscriptionAreaChart from '@/components/dashboard/InscriptionAreaChart';
+import { collection, doc, getDocs, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { db } from '@/firebase';
+import { geocodeAddress } from '@/utils/geocoding';
 
 type TFn = (key: string) => string;
 
@@ -211,6 +214,9 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
   >(null);
   const stats = useAdminStats(period as PeriodKey);
   const loadingLabel = lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
+  const [geoBusy, setGeoBusy] = useState(false);
+  const [geoMsg, setGeoMsg] = useState<string>('');
+  const canGeocode = Boolean(String((import.meta as any)?.env?.VITE_GOOGLE_MAPS_API_KEY ?? '').trim());
   const bySectorData = useMemo(
     () => Object.entries(stats.profilesBySector).map(([name, value]) => ({ name, value })),
     [stats.profilesBySector]
@@ -253,6 +259,69 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
     if (!initialTab) return;
     setInsightTab(initialTab);
   }, [initialTab]);
+
+  async function geocodeMissingProfilesBatch() {
+    if (geoBusy) return;
+    setGeoMsg('');
+    setGeoBusy(true);
+    try {
+      const snap = await getDocs(collection(db, 'users'));
+      const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) }));
+
+      const candidates = rows.filter((p) => {
+        const lat = (p as any).latitude;
+        const lng = (p as any).longitude;
+        if (typeof lat === 'number' && typeof lng === 'number') return false;
+        const first = (p as any)?.companyActivities?.[0];
+        const neighborhood = String(first?.neighborhood ?? '').trim();
+        const district = String(first?.district ?? '').trim();
+        const city = String(first?.city ?? '').trim();
+        return Boolean(neighborhood || district || city);
+      });
+
+      // Limite volontaire: évite quota/latence et permet de relancer plusieurs fois.
+      const BATCH = 12;
+      const slice = candidates.slice(0, BATCH);
+      let ok = 0;
+      let fail = 0;
+
+      for (const p of slice) {
+        const first = (p as any)?.companyActivities?.[0] ?? {};
+        const neighborhood = String(first?.neighborhood ?? '').trim();
+        const district = String(first?.district ?? '').trim();
+        const city = String(first?.city ?? '').trim() || 'Guadalajara';
+        const state = String(first?.state ?? '').trim();
+        const country = String(first?.country ?? '').trim();
+
+        const approx = [neighborhood || district, city || state || country].filter(Boolean).join(', ');
+        if (!approx) {
+          fail++;
+          continue;
+        }
+        const coords = await geocodeAddress(approx, city);
+        if (!coords) {
+          fail++;
+          continue;
+        }
+        try {
+          await updateDoc(doc(db, 'users', String((p as any).id)), {
+            latitude: coords.lat,
+            longitude: coords.lng,
+            geocodedAt: serverTimestamp(),
+          });
+          ok++;
+        } catch {
+          fail++;
+        }
+      }
+
+      setGeoMsg(`Géocodage: ${ok} ok, ${fail} échecs (sur ${slice.length}). Recharge le dashboard pour voir la carte.`);
+    } catch (e) {
+      setGeoMsg(`Géocodage: erreur (${e instanceof Error ? e.message : String(e)})`);
+    } finally {
+      setGeoBusy(false);
+    }
+  }
 
   return (
     <section className="space-y-6">
@@ -308,6 +377,7 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
               <ProfileCompletionGauge
                 totalMembers={stats.totalProfiles}
                 completedProfiles={stats.completedProfilesStrict}
+                compact
               />
             </MiniErrorBoundary>
             <StatCard label="Clics contact" value={stats.totalClicks} />
@@ -316,8 +386,27 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
           <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-5">
             <div className="xl:col-span-3">
               <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-semibold text-stone-900">📍 Localisation des membres</h3>
-                <p className="mt-1 text-xs text-stone-500">Guadalajara et alentours</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-stone-900">📍 Localisation des membres</h3>
+                    <p className="mt-1 text-xs text-stone-500">Guadalajara et alentours</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void geocodeMissingProfilesBatch()}
+                    disabled={!canGeocode || geoBusy}
+                    className="shrink-0 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-60 disabled:pointer-events-none"
+                    title={
+                      !canGeocode
+                        ? 'Clé Google Geocoding manquante (VITE_GOOGLE_MAPS_API_KEY)'
+                        : geoBusy
+                          ? 'Géocodage en cours…'
+                          : 'Géocoder les profils sans coordonnées (quartier/district)'
+                    }
+                  >
+                    {geoBusy ? 'Géocodage…' : 'Géocoder profils'}
+                  </button>
+                </div>
                 <div className="mt-3">
                   <MiniErrorBoundary label="MembersMap">
                     <MembersMap
@@ -332,6 +421,11 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
                     />
                   </MiniErrorBoundary>
                 </div>
+                {geoMsg ? (
+                  <p className="mt-3 rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-700">
+                    {geoMsg}
+                  </p>
+                ) : null}
               </div>
             </div>
             <div className="xl:col-span-2">
