@@ -28,6 +28,8 @@ export interface AdminStats {
     nom: string;
     entreprise?: string;
     secteur?: string;
+    activityCategory?: string;
+    positionCategory?: string;
     description?: string;
     photo?: string;
     latitude?: number;
@@ -437,6 +439,8 @@ export function useAdminStats(period: PeriodKey): AdminStats {
               nom: String(up.fullName ?? '').trim() || String(up.email ?? '').trim() || up.uid,
               entreprise: String(up.companyName ?? '').trim() || undefined,
               secteur: firstSector || undefined,
+              activityCategory: String((up as any).activityCategory ?? '').trim() || undefined,
+              positionCategory: String((up as any).positionCategory ?? '').trim() || undefined,
               description: desc || undefined,
               photo: String(up.photoURL ?? '').trim() || undefined,
               latitude: typeof (up as any).latitude === 'number' ? ((up as any).latitude as number) : undefined,

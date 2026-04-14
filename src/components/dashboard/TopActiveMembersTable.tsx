@@ -1,0 +1,118 @@
+import React, { useMemo } from 'react';
+import type { Language } from '@/types';
+import { calculateEngagementScore, type MemberWithStats } from '@/components/dashboard/EngagementLeaderboard';
+
+function badgeClass(secteur?: string) {
+  const s = String(secteur ?? '').toLowerCase();
+  if (s.includes('tech')) return 'bg-blue-50 text-blue-700 border-blue-200';
+  if (s.includes('f&b') || s.includes('food') || s.includes('gastr')) return 'bg-amber-50 text-amber-700 border-amber-200';
+  if (s.includes('finance')) return 'bg-teal-50 text-teal-700 border-teal-200';
+  if (s.includes('conseil')) return 'bg-violet-50 text-violet-700 border-violet-200';
+  return 'bg-stone-50 text-stone-700 border-stone-200';
+}
+
+function initials(name: string) {
+  const parts = String(name ?? '').trim().split(/\s+/).filter(Boolean);
+  const a = parts[0]?.[0] ?? '';
+  const b = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : '';
+  return (a + b).toUpperCase() || '•';
+}
+
+function dots(score: number) {
+  const n = Math.max(0, Math.min(5, Math.round(score / 20)));
+  return Array.from({ length: 5 }, (_, i) => i < n);
+}
+
+export default function TopActiveMembersTable({
+  members,
+  lang,
+}: {
+  members: MemberWithStats[];
+  lang: Language;
+}) {
+  const rows = useMemo(() => {
+    const list = (members ?? []).map((m) => ({ ...m, score: calculateEngagementScore(m) }));
+    list.sort((a, b) => b.score - a.score);
+    return list.slice(0, 8);
+  }, [members]);
+
+  if ((members?.length ?? 0) < 2) {
+    return (
+      <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="text-sm font-semibold text-stone-900">Membres les plus actifs</h3>
+          <span className="text-xs text-stone-500">Score</span>
+        </div>
+        <p className="mt-4 text-sm text-stone-500">—</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className="text-sm font-semibold text-stone-900">Membres les plus actifs</h3>
+        <span className="text-xs text-stone-500">Score d'engagement</span>
+      </div>
+
+      <div className="mt-4 overflow-hidden rounded-lg border border-stone-200">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-stone-50 text-stone-600">
+            <tr className="text-[11px] font-semibold uppercase tracking-wide">
+              <th className="px-3 py-2">Membre</th>
+              <th className="px-3 py-2">Secteur</th>
+              <th className="px-3 py-2 text-right">Score</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-stone-100">
+            {rows.map((m) => (
+              <tr key={m.id} className="hover:bg-stone-50">
+                <td className="px-3 py-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-blue-50 text-blue-700">
+                      {m.photo ? (
+                        <img
+                          src={m.photo}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[11px] font-bold">
+                          {initials(m.nom)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-stone-900">{m.nom}</p>
+                      <p className="truncate text-xs text-stone-500">{m.entreprise ?? '—'}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-3 py-2">
+                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${badgeClass(m.secteur)}`}>
+                    {m.secteur ?? '—'}
+                  </span>
+                </td>
+                <td className="px-3 py-2">
+                  <div className="flex items-center justify-end gap-2">
+                    <div className="flex gap-1">
+                      {dots(m.score).map((on, i) => (
+                        <span
+                          key={i}
+                          className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-blue-700' : 'bg-stone-200'}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs font-bold tabular-nums text-stone-600">{m.score}</span>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+

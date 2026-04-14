@@ -8,10 +8,12 @@ export type CrossMember = {
   secteur?: string;
   city?: string;
   status?: string;
+  positionCategory?: string;
+  activityCategory?: string;
   passionIds?: string[];
 };
 
-type DimensionKey = 'sector' | 'status' | 'city';
+type DimensionKey = 'sector' | 'poste' | 'industrie';
 export type CrossPick = { passionId: string; dimValue: string; dimension: DimensionKey };
 
 function normalizeLang(lang: Language): 'fr' | 'es' | 'en' {
@@ -58,7 +60,7 @@ export default function PassionsCrossHeatmap({
   const [dimension, setDimension] = useState<DimensionKey>('sector');
   const locale = normalizeLang(lang);
 
-  const dimLabel = dimension === 'sector' ? 'Secteur' : dimension === 'status' ? 'Statut' : 'Ville';
+  const dimLabel = dimension === 'sector' ? 'Secteur' : dimension === 'poste' ? 'Poste' : 'Industrie';
 
   const computed = useMemo(() => {
     const passionTotals = new Map<string, number>();
@@ -72,9 +74,9 @@ export default function PassionsCrossHeatmap({
       const rawDim =
         dimension === 'sector'
           ? String(m.secteur ?? '').trim()
-          : dimension === 'status'
-            ? String(m.status ?? '').trim()
-            : String(m.city ?? '').trim();
+          : dimension === 'poste'
+            ? String(m.positionCategory ?? m.status ?? '').trim()
+            : String(m.activityCategory ?? '').trim();
       const dimVal = rawDim || '—';
 
       ids.forEach((pid) => {
@@ -135,8 +137,8 @@ export default function PassionsCrossHeatmap({
           className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 sm:w-auto"
         >
           <option value="sector">Secteur</option>
-          <option value="status">Statut</option>
-          <option value="city">Ville</option>
+          <option value="poste">Poste</option>
+          <option value="industrie">Industrie</option>
         </select>
       </div>
 
