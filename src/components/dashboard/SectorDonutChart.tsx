@@ -3,7 +3,14 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 
 export type SectorDonutDatum = { secteur: string; count: number };
 
-export default function SectorDonutChart({ data }: { data: SectorDonutDatum[] }) {
+export default function SectorDonutChart({
+  data,
+  height = 280,
+}: {
+  data: SectorDonutDatum[];
+  /** Hauteur (px) de la zone graphique (donut + légende). */
+  height?: number;
+}) {
   const rows = useMemo(() => {
     return (data ?? [])
       .map((d) => ({
@@ -28,7 +35,7 @@ export default function SectorDonutChart({ data }: { data: SectorDonutDatum[] })
 
   if (rows.length === 0) {
     return (
-      <div className="flex h-[280px] w-full items-center justify-center text-sm text-stone-500">
+      <div className="flex w-full items-center justify-center text-sm text-stone-500" style={{ height }}>
         Pas encore assez de données
       </div>
     );
@@ -72,7 +79,7 @@ export default function SectorDonutChart({ data }: { data: SectorDonutDatum[] })
   };
 
   return (
-    <div className="h-[280px] w-full min-w-0">
+    <div className="w-full min-w-0" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -81,8 +88,8 @@ export default function SectorDonutChart({ data }: { data: SectorDonutDatum[] })
             nameKey="secteur"
             cx="40%"
             cy="50%"
-            innerRadius={70}
-            outerRadius={110}
+            innerRadius={Math.round(Math.min(78, Math.max(54, height * 0.24)))}
+            outerRadius={Math.round(Math.min(118, Math.max(90, height * 0.38)))}
             paddingAngle={2}
             labelLine={false}
             label={label}

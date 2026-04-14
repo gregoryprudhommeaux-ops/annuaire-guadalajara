@@ -16,7 +16,14 @@ const PERIODS: Array<{ key: PeriodKey; label: string }> = [
   { key: 'all', label: 'Tout' },
 ];
 
-export default function InscriptionAreaChart({ members }: { members: InscriptionAreaChartMember[] }) {
+export default function InscriptionAreaChart({
+  members,
+  height = 260,
+}: {
+  members: InscriptionAreaChartMember[];
+  /** Hauteur (px) de la zone graphique (sans le header). */
+  height?: number;
+}) {
   const [period, setPeriod] = useState<PeriodKey>('30d');
 
   const dateFilter = useMemo(() => {
@@ -97,7 +104,7 @@ export default function InscriptionAreaChart({ members }: { members: Inscription
         </div>
       </div>
 
-      <div className="mt-3 h-[260px] w-full">
+      <div className="mt-3 w-full" style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={rows} margin={{ top: 8, right: 8, bottom: 8, left: 4 }}>
             <CartesianGrid strokeDasharray="3 3" />

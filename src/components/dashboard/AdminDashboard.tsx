@@ -23,10 +23,10 @@ import AdminEvents from '@/components/dashboard/AdminEvents';
 import SectorDonutChart from '@/components/dashboard/SectorDonutChart';
 import TimePeriodFilter from '@/components/dashboard/TimePeriodFilter';
 import { TimePeriodProvider, useTimePeriod } from '@/contexts/TimePeriodContext';
+import ProfileCompletionGauge from '@/components/dashboard/ProfileCompletionGauge';
 import InscriptionAreaChart from '@/components/dashboard/InscriptionAreaChart';
 import { getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/passionConfig';
 import PassionsCrossHeatmap, { type CrossPick } from '@/components/dashboard/PassionsCrossHeatmap';
-import ProfileCompletionBars from '@/components/dashboard/ProfileCompletionBars';
 import TopActiveMembersTable from '@/components/dashboard/TopActiveMembersTable';
 
 type TFn = (key: string) => string;
@@ -338,17 +338,20 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
           </div>
 
           {/* Row 1 — Courbe inscriptions (large) + Donut secteurs */}
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+            <div className="lg:col-span-3">
               <MiniErrorBoundary label="InscriptionAreaChart">
-                <InscriptionAreaChart members={stats.profilesCreatedAt} />
+                <InscriptionAreaChart members={stats.profilesCreatedAt} height={316} />
               </MiniErrorBoundary>
             </div>
-            <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+            <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm lg:col-span-2">
               <h3 className="text-sm font-semibold text-stone-900">Répartition par secteur</h3>
               <p className="mt-1 text-xs text-stone-500">Donut + légende</p>
               <div className="mt-3">
-                <SectorDonutChart data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))} />
+                <SectorDonutChart
+                  data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))}
+                  height={316}
+                />
               </div>
             </div>
           </div>
@@ -371,20 +374,10 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
           {/* Row 3 — Completion bars + Top active members */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="lg:col-span-1">
-              <MiniErrorBoundary label="ProfileCompletionBars">
-                <ProfileCompletionBars
-                  members={stats.profilesForDashboard.map((m) => ({
-                    id: m.id,
-                    photo: m.photo,
-                    description: m.description,
-                    secteur: m.secteur,
-                    activityCategory: (m as any).activityCategory,
-                    positionCategory: (m as any).positionCategory,
-                    passionIds: (m as any).passionIds,
-                    links: m.links,
-                    city: (m as any).city,
-                  }))}
-                  lang={lang}
+              <MiniErrorBoundary label="ProfileCompletionGauge">
+                <ProfileCompletionGauge
+                  totalMembers={stats.totalProfiles}
+                  completedProfiles={stats.completedProfilesStrict}
                 />
               </MiniErrorBoundary>
             </div>
