@@ -288,6 +288,7 @@ import EmailAuthPanel from './components/EmailAuthPanel';
 import { HomePage as MarketingHomePage } from '@/components/home/HomePage';
 import { getPrimaryNav } from '@/routes/primaryNav';
 import { canAccessRoute, getAppRole } from '@/auth/roleModel';
+import { HeroTopActions } from '@/components/home/HeroTopActions';
 
 const loadNetworkRadarSection = () => import('./components/home/NetworkRadarSection');
 const loadDashboardPage = () => import('./components/dashboard/DashboardPage');
@@ -4728,56 +4729,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         trailing={
           user ? (
             headerAdminLayout ? null : (
-              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
-                <div className="flex shrink-0 items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200">
-                  {(['fr', 'es', 'en'] as const).map((code) => {
-                    const isActive = lang === code;
-                    return (
-                      <button
-                        key={code}
-                        type="button"
-                        onClick={() => setLang(code)}
-                        aria-pressed={isActive}
-                        className={cn(
-                          'px-3 py-1.5 text-xs font-semibold transition-colors',
-                          isActive
-                            ? 'bg-blue-700 text-white'
-                            : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                        )}
-                      >
-                        {code.toUpperCase()}
-                      </button>
-                    );
-                  })}
-                </div>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-red-600"
-                  title={t('logout')}
-                >
-                  <LogOut size={18} />
-                  <span className="hidden sm:inline">{t('logout')}</span>
-                </button>
-                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200">
-                  <ProfileAvatar
-                    photoURL={user.photoURL}
-                    fullName={user.displayName || user.email || ''}
-                    className="h-full w-full"
-                    initialsClassName="text-[10px] font-bold text-slate-600"
-                    iconSize={16}
-                  />
-                </div>
-              </div>
+              <HeroTopActions
+                currentLocale={lang}
+                isAuthenticated
+                onChangeLocale={setLang}
+                onLogout={handleLogout}
+              />
             )
           ) : (
-            <HeaderSocialLoginButtons
-              lang={lang}
-              t={t}
-              busy={authProviderBusy}
-              emailBusy={authEmailBusy}
-              onEmail={openAuthModal}
-              onSignIn={(p) => void handleSocialLogin(p)}
+            <HeroTopActions
+              currentLocale={lang}
+              isAuthenticated={false}
+              onChangeLocale={setLang}
+              onLogout={handleLogout}
+              onLogin={openAuthModal}
             />
           )
         }
