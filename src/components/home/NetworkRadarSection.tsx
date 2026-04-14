@@ -436,7 +436,7 @@ export default function NetworkRadarSection({
               style={{ height: Math.min(380, 28 + needsBarData.length * needsBarRowHeight) }}
             >
               <div className="h-full w-full min-w-0">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" debounce={150}>
                   <BarChart
                     layout="vertical"
                     data={needsBarData}
@@ -469,6 +469,7 @@ export default function NetworkRadarSection({
                     dataKey="count"
                     radius={[0, 4, 4, 0]}
                     maxBarSize={26}
+                    isAnimationActive={false}
                     cursor="pointer"
                     onClick={(data: { payload?: { id?: string } }) => {
                       const id = data?.payload?.id;
@@ -602,7 +603,7 @@ export default function NetworkRadarSection({
                   </ul>
                 </div>
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" debounce={150}>
                   <BarChart
                     layout="vertical"
                     data={needsBarData}
@@ -628,7 +629,7 @@ export default function NetworkRadarSection({
                       contentStyle={{ borderRadius: 8, border: '1px solid rgb(226 232 240)', fontSize: 12 }}
                     />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={28}>
+                    <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={28} isAnimationActive={false}>
                       {needsBarData.map((_, i) => (
                         <Cell key={i} fill="#3B82F6" fillOpacity={Math.max(0.45, 1 - i * 0.12)} />
                       ))}
