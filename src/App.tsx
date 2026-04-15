@@ -5050,29 +5050,32 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     </div>
                   ) : null}
                   <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold tracking-tight">
-                        {editingSomeoneElse && editingProfile
-                          ? pickLang(
-                              `Fiche membre : ${editingProfile.fullName || editingProfile.email || editingProfile.uid}`,
-                              `Ficha del miembro: ${editingProfile.fullName || editingProfile.email || editingProfile.uid}`,
-                              `Member profile: ${editingProfile.fullName || editingProfile.email || editingProfile.uid}`,
-                              lang
-                            )
-                          : t('myProfile')}
-                      </h2>
-                      <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
-                        {editingSomeoneElse
-                          ? pickLang('Édition admin', 'Edición admin', 'Admin edit', lang)
-                          : isAdminEmail(user?.email)
-                            ? pickLang('Admin', 'Admin', 'Admin', lang)
-                            : pickLang(
-                                `Profil: ${profileCompletionPct}%`,
-                                `Perfil: ${profileCompletionPct}%`,
-                                `Profile: ${profileCompletionPct}%`,
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <h2 className="text-lg font-semibold tracking-tight">
+                          {editingSomeoneElse && editingProfile
+                            ? pickLang(
+                                `Fiche membre : ${editingProfile.fullName || editingProfile.email || editingProfile.uid}`,
+                                `Ficha del miembro: ${editingProfile.fullName || editingProfile.email || editingProfile.uid}`,
+                                `Member profile: ${editingProfile.fullName || editingProfile.email || editingProfile.uid}`,
                                 lang
-                              )}
-                      </span>
+                              )
+                            : t('myProfile')}
+                        </h2>
+                        <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
+                          {editingSomeoneElse
+                            ? pickLang('Édition admin', 'Edición admin', 'Admin edit', lang)
+                            : isAdminEmail(user?.email)
+                              ? pickLang('Admin', 'Admin', 'Admin', lang)
+                              : pickLang(
+                                  `Profil: ${profileCompletionPct}%`,
+                                  `Perfil: ${profileCompletionPct}%`,
+                                  `Profile: ${profileCompletionPct}%`,
+                                  lang
+                                )}
+                        </span>
+                      </div>
+
                       {isEditProfileRoute &&
                       (editingProfile?.uid ?? profile?.uid) &&
                       profileVisibilityBandHidden ? (
@@ -5087,7 +5090,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               // ignore
                             }
                           }}
-                          className="inline-flex min-h-[36px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 sm:text-sm"
+                          className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
                         >
                           {pickLang(
                             'Afficher la visibilité du profil',

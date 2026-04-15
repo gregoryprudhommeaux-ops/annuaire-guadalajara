@@ -59,9 +59,23 @@
   border-radius: 18px;
   border: 1px solid rgb(226 232 240);
   background: #fff;
+  position: relative;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
+}
+
+.fn-network-page .recommended-card__overlayLink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 18px;
+  text-decoration: none;
+}
+
+.fn-network-page .recommended-card:focus-within {
+  outline: 2px solid rgb(29 78 216);
+  outline-offset: 2px;
 }
 
 .fn-network-page .recommended-card:hover {
@@ -257,6 +271,14 @@
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid rgb(241 245 249);
+}
+
+.fn-network-page .recommended-card__top,
+.fn-network-page .recommended-card__content,
+.fn-network-page .recommended-card__toolbar,
+.fn-network-page .recommended-card__footer {
+  position: relative;
+  z-index: 2;
 }
 
 .fn-network-page .recommended-card__link {

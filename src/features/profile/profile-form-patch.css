@@ -106,6 +106,9 @@
 }
 
 .profile-edit-page .inline-checkboxes label {
+  display: inline-flex;
+  align-items: center;
+  column-gap: 10px;
   margin-bottom: 0;
   font-size: 13px;
   font-weight: 600;

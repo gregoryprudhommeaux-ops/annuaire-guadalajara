@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Bookmark, BookmarkCheck, Star } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageProvider';
@@ -61,8 +62,18 @@ export function RecommendedMemberCard({
     lang
   );
 
+  const stop = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
     <article className="recommended-card">
+      <Link
+        to={profilPath}
+        className="recommended-card__overlayLink"
+        aria-label={pickLang(`Ouvrir le profil de ${fullName}`, `Abrir perfil de ${fullName}`, `Open profile: ${fullName}`, lang)}
+      />
       <div className="recommended-card__top">
         <div className="recommended-card__identity">
           <div className="recommended-card__avatar">
@@ -103,7 +114,10 @@ export function RecommendedMemberCard({
         <button
           type="button"
           className={cn('recommended-card__toolBtn', isSaved && 'recommended-card__toolBtn--active')}
-          onClick={onToggleSave}
+          onClick={(e) => {
+            stop(e);
+            onToggleSave();
+          }}
           aria-pressed={isSaved}
           aria-label={
             isSaved
@@ -130,7 +144,10 @@ export function RecommendedMemberCard({
         <button
           type="button"
           className="recommended-card__toolBtn recommended-card__toolBtn--muted"
-          onClick={onMarkKnown}
+          onClick={(e) => {
+            stop(e);
+            onMarkKnown();
+          }}
           aria-label={pickLang(
             'Ne plus me recommander ce profil',
             'No recomendar este perfil',
@@ -143,7 +160,7 @@ export function RecommendedMemberCard({
       </div>
 
       <div className="recommended-card__footer">
-        <Link to={profilPath} className="recommended-card__link">
+        <Link to={profilPath} className="recommended-card__link" onClick={stop}>
           {pickLang('Voir le profil', 'Ver perfil', 'View profile', lang)}
         </Link>
       </div>
