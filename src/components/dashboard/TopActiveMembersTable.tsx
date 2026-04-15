@@ -4,11 +4,14 @@ import { calculateEngagementScore, type MemberWithStats } from '@/components/das
 import { formatPersonName } from '@/shared/utils/formatPersonName';
 
 function activeMemberKey(m: { id?: string; nom?: string; entreprise?: string }): string {
-  const id = String(m.id ?? '').trim();
-  if (id) return `id:${id}`;
+  // Prefer a display-level dedupe key (name + company) to avoid showing duplicates
+  // when the same real-world person exists under multiple backend IDs.
   const name = formatPersonName(m.nom).trim().toLowerCase();
   const company = String(m.entreprise ?? '').trim().toLowerCase();
-  return `fallback:${name}|${company}`;
+  if (name && company) return `name_company:${name}|${company}`;
+  if (name) return `name:${name}`;
+  const id = String(m.id ?? '').trim();
+  return id ? `id:${id}` : 'unknown';
 }
 
 function dedupeActiveMembers<T extends { id: string; score: number; nom?: string; entreprise?: string }>(members: T[]): T[] {
