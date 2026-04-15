@@ -164,13 +164,38 @@ export default function PassionsCrossHeatmap({
       ) : (
         <div className="mt-3 w-full min-w-0">
           <div
-            className="h-[340px] w-full min-w-0 overflow-x-auto overflow-y-hidden"
+            className="h-[340px] w-full min-w-0 overflow-x-auto overflow-y-visible"
             style={{ WebkitOverflowScrolling: 'touch' as any }}
           >
             <div className={isNarrow ? 'min-w-[680px] h-full' : 'h-full'}>
               <ResponsiveHeatMap
                 data={computed.data as any}
                 margin={{ top: 16, right: 12, bottom: 44, left: isNarrow ? 110 : 140 }}
+                tooltip={({ cell }: any) => {
+                  const xCompact = String(cell?.data?.x ?? '');
+                  const yCompact = String(cell?.serieId ?? '');
+                  const dimValue = computed.xToFull.get(xCompact) ?? xCompact;
+                  const passionLabel = computed.yToFull.get(yCompact) ?? yCompact;
+                  const value = cell?.data?.y ?? 0;
+                  return (
+                    <div
+                      style={{
+                        transform: 'translateY(14px)',
+                        background: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: 12,
+                        padding: '8px 10px',
+                        boxShadow: '0 10px 28px -18px rgba(15, 23, 42, 0.18), 0 1px 2px rgba(16, 24, 40, 0.06)',
+                        maxWidth: 320,
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>
+                        {passionLabel} · {dimValue}: {value}
+                      </div>
+                    </div>
+                  );
+                }}
             valueFormat=">-.0f"
             onClick={(cell: any) => {
               const xCompact = String(cell?.data?.x ?? '');

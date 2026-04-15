@@ -332,7 +332,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           {/* D. Analytics grid */}
           <div className="admin-analytics-grid">
             <div className="admin-stack">
-              <article className="admin-chart-card admin-chart-card--balanced admin-chart-card--tall">
+              <article className="admin-chart-card admin-chart-card--compact">
                 <p className="admin-chart-card__title">Évolution des inscriptions</p>
                 <p className="admin-chart-card__subtitle">Courbe basée sur les profils créés</p>
                 <div className="admin-chart-card__body">
@@ -344,7 +344,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                 </div>
               </article>
 
-              <article className="admin-chart-card admin-chart-card--balanced admin-chart-card--donut">
+              <article className="admin-chart-card admin-chart-card--compact admin-chart-card--donut">
                 <p className="admin-chart-card__title">Répartition par secteur</p>
                 <p className="admin-chart-card__subtitle">Lecture rapide par univers d’activité</p>
                 <div className="admin-chart-card__body">
@@ -359,7 +359,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
             </div>
 
             <div className="admin-stack">
-              <article className="admin-chart-card admin-chart-card--balanced">
+              <article className="admin-chart-card admin-chart-card--compact">
                 <p className="admin-chart-card__title">Complétion des profils</p>
                 <p className="admin-chart-card__subtitle">Vue “strict” (nom, secteur, description, photo)</p>
                 <div className="admin-chart-card__body">
@@ -374,7 +374,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                 </div>
               </article>
 
-              <article className="admin-chart-card admin-chart-card--balanced admin-chart-card--table">
+              <article className="admin-chart-card admin-chart-card--table">
                 <p className="admin-chart-card__title">Membres les plus actifs</p>
                 <p className="admin-chart-card__subtitle">Basé sur les clics de contact</p>
                 <div className="admin-chart-card__body">
@@ -390,7 +390,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
           {/* E. Deep-dive */}
           <div className="admin-bottom-section">
-            <article className="admin-chart-card admin-chart-card--tall admin-chart-card--heatmap">
+            <article className="admin-chart-card admin-chart-card--matrix">
               <p className="admin-chart-card__title">Croisement passions × secteur</p>
               <p className="admin-chart-card__subtitle">Cliquez une case pour lister les membres</p>
               <div className="admin-chart-card__body">

@@ -140,7 +140,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
   const recentRequestsUi = useMemo(() => {
     if (!recentRequests) return null;
     return (
-      <article className="admin-card admin-card--balanced">
+      <article className="admin-card">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="admin-card__title">Dernières demandes</h2>
@@ -183,7 +183,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
   const unansweredNeedsUi = useMemo(() => {
     if (!unansweredNeeds) return null;
     return (
-      <article className="admin-card admin-card--featured admin-card--tall">
+      <article className="admin-card admin-card--featured">
         <p className="admin-card__eyebrow">PRIORITÉ</p>
         <h2 className="admin-card__title">Besoins sans réponse</h2>
         <p className="admin-card__text">
@@ -243,7 +243,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
               unansweredNeeds ? (
                 unansweredNeedsUi
               ) : (
-                <article className="admin-card admin-card--featured admin-card--tall">
+                <article className="admin-card admin-card--featured">
                   <p className="admin-card__eyebrow">PRIORITÉ</p>
                   <h2 className="admin-card__title">Besoins sans réponse</h2>
                   <div className="admin-card__body">
@@ -256,7 +256,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
               recentRequests ? (
                 recentRequestsUi
               ) : (
-                <article className="admin-card admin-card--balanced">
+                <article className="admin-card">
                   <h2 className="admin-card__title">Dernières demandes</h2>
                   <div className="admin-card__body">
                     <p className="admin-card__text">{loading}</p>
