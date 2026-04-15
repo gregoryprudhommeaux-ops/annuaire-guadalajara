@@ -1,30 +1,8 @@
+import type { CompatibilityMember, CompatibilityReason } from '../types/compatibility';
+
+export type { CompatibilityMember, CompatibilityReason } from '../types/compatibility';
+
 type MaybeArray = string[] | undefined | null;
-
-export type CompatibilityMember = {
-  id?: string;
-  slug?: string;
-  fullName?: string;
-  companyName?: string;
-  sector?: string;
-  city?: string;
-  /** Photo de profil si disponible (même source que `UserProfile.photoURL`). */
-  photoURL?: string;
-  currentNeeds?: string[];
-  helpOfferText?: string;
-  lookingForText?: string;
-  passions?: string[];
-  openness?: string[];
-  keywords?: string[] | string;
-};
-
-export type CompatibilityReason =
-  | 'Besoin compatible'
-  | 'Peut vous aider'
-  | 'Même secteur'
-  | 'Même ville'
-  | 'Passion commune'
-  | 'Ouvert au mentorat'
-  | 'Mots-clés proches';
 
 export function normalizeText(value?: string | null): string {
   return (value ?? '')

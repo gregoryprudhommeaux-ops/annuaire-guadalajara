@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RecommendedMemberCard } from './RecommendedMemberCard';
+import type { CompatibilityMember, CompatibilityReason } from '../types/compatibility';
 import {
-  type CompatibilityMember,
-  type CompatibilityReason,
   compatibilityStarCount,
   computeCompatibilityScore,
   getCompatibilityLevel,
   getCompatibilityReasons,
 } from '../utils/memberCompatibility';
+import type { RecommendedCompatibilityMember } from '../utils/compatibilityFromProfile';
 import { loadRecommendationPrefs, saveRecommendationPrefs } from '../utils/recommendationPreferences';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { pickLang } from '@/lib/uiLocale';
@@ -17,10 +17,10 @@ import '../network-recommendations.css';
 
 type RecommendedMembersSectionProps = {
   currentUser?: CompatibilityMember | null;
-  members: CompatibilityMember[];
+  members: RecommendedCompatibilityMember[];
 };
 
-function memberUid(m: CompatibilityMember): string {
+function memberUid(m: Pick<CompatibilityMember, 'id' | 'slug'>): string {
   return (m.id ?? m.slug ?? '').trim();
 }
 

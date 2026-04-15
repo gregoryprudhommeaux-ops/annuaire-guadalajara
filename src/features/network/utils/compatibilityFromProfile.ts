@@ -2,7 +2,10 @@ import type { Language, UserProfile } from '@/types';
 import { normalizedTargetKeywords } from '@/types';
 import { needOptionLabel, sanitizeHighlightedNeeds } from '@/needOptions';
 import { getPassionLabel, sanitizePassionIds, type PassionLocale } from '@/lib/passionConfig';
-import type { CompatibilityMember } from '@/features/network/utils/memberCompatibility';
+import type { CompatibilityMember } from '../types/compatibility';
+
+/** Données d’affichage recommandations : même shape que `CompatibilityMember` + photo optionnelle. */
+export type RecommendedCompatibilityMember = CompatibilityMember & { photoURL?: string };
 
 const MENTORING_LABEL_FR = 'Mentorat / partage d’expérience';
 const TALKS_LABEL_FR = 'Interventions / prises de parole';
@@ -28,12 +31,21 @@ export function userProfileToCompatibilityMember(p: UserProfile, lang: Language)
     companyName: p.companyName,
     sector: p.activityCategory,
     city: p.city,
-    photoURL: p.photoURL?.trim() || undefined,
     currentNeeds: currentNeedsLabels,
     helpOfferText: p.helpNewcomers,
     lookingForText: p.networkGoal ?? p.lookingFor,
     passions,
     openness,
     keywords: normalizedTargetKeywords(p),
+  };
+}
+
+export function userProfileToRecommendedMember(
+  p: UserProfile,
+  lang: Language
+): RecommendedCompatibilityMember {
+  return {
+    ...userProfileToCompatibilityMember(p, lang),
+    photoURL: p.photoURL?.trim() || undefined,
   };
 }

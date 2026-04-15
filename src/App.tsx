@@ -218,7 +218,8 @@ import DirectoryTabsSection from './components/home/DirectoryTabsSection';
 import OnboardingIntroBanner from './components/home/OnboardingIntroBanner';
 import { MemberCard } from './features/network/components/MemberCard';
 import { RecommendedMembersSection } from './features/network/components/RecommendedMembersSection';
-import { userProfileToCompatibilityMember } from './features/network/utils/compatibilityFromProfile';
+import { useCurrentCompatibilityMember } from './features/network/hooks/useCurrentCompatibilityMember';
+import { userProfileToRecommendedMember } from './features/network/utils/compatibilityFromProfile';
 import { NetworkSidebar } from './features/network/components/NetworkSidebar';
 import { ProfileSectionHint } from '@/features/profile/components/ProfileSectionHint';
 import { ProfileSectionTag } from '@/features/profile/components/ProfileSectionTag';
@@ -2033,6 +2034,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [adminSelfProfileOptIn, setAdminSelfProfileOptIn] = useState(false);
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
   const profileUidSet = useMemo(() => new Set(allProfiles.map((p) => p.uid)), [allProfiles]);
+  const networkCompatibilityCurrentUser = useCurrentCompatibilityMember({ profile });
   const showEmailVerifyBanner = useMemo(
     () =>
       Boolean(
@@ -7414,16 +7416,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             )}
 
             {user &&
-              profile &&
+              networkCompatibilityCurrentUser &&
               isNetworkRoute &&
               !guestDirectoryRestricted &&
               isMembersDirectoryRoute &&
               !isAdminDashboard && (
                 <RecommendedMembersSection
-                  currentUser={userProfileToCompatibilityMember(profile, lang)}
+                  currentUser={networkCompatibilityCurrentUser}
                   members={membersDirectoryList
-                    .filter((p) => p.uid !== profile.uid)
-                    .map((p) => userProfileToCompatibilityMember(p, lang))}
+                    .filter((p) => p.uid !== profile?.uid)
+                    .map((p) => userProfileToRecommendedMember(p, lang))}
                 />
               )}
 

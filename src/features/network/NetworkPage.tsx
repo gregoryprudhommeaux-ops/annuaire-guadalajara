@@ -8,8 +8,11 @@ import {
 } from './components/NetworkSidebar';
 import { MemberCard } from './components/MemberCard';
 import { RecommendedMembersSection } from './components/RecommendedMembersSection';
-import type { CompatibilityMember } from './utils/memberCompatibility';
+import type { UserProfile } from '@/types';
+import { useCurrentCompatibilityMember } from './hooks/useCurrentCompatibilityMember';
+import { mapGridDirectoryMemberToRecommendedCompatibilityMember } from './utils/mapGridDirectoryMemberToRecommendedCompatibilityMember';
 import './network.css';
+import './network-recommendations.css';
 
 export type DirectoryMember = {
   /** UID Firestore — requis pour liens `/profil/:uid` et clés stables. */
@@ -58,9 +61,8 @@ const DEFAULT_LOCATION_OPTIONS: NetworkOption[] = [
 
 export type NetworkPageProps = {
   members: DirectoryMember[];
-  /** Si renseignés, affiche le bloc recommandations heuristiques au-dessus du titre annuaire. */
-  recommendedCurrentUser?: CompatibilityMember | null;
-  recommendedMembers?: CompatibilityMember[];
+  /** Même source que le profil session / édition (`MainApp` state `profile`) — pour recommandations. */
+  profile?: UserProfile | null;
   sectorOptions?: NetworkOption[];
   profileOptions?: NetworkOption[];
   locationOptions?: NetworkOption[];
@@ -69,8 +71,7 @@ export type NetworkPageProps = {
 
 export function NetworkPage({
   members,
-  recommendedCurrentUser = null,
-  recommendedMembers,
+  profile = null,
   sectorOptions = DEFAULT_SECTOR_OPTIONS,
   profileOptions = DEFAULT_PROFILE_OPTIONS,
   locationOptions = DEFAULT_LOCATION_OPTIONS,
@@ -79,6 +80,13 @@ export function NetworkPage({
   const { t } = useLanguage();
   const navigate = useNavigate();
   const memberGridRef = useRef<HTMLDivElement>(null);
+
+  const currentUser = useCurrentCompatibilityMember({ profile });
+
+  const compatibleMembers = useMemo(
+    () => members.map(mapGridDirectoryMemberToRecommendedCompatibilityMember),
+    [members]
+  );
 
   const [query, setQuery] = useState('');
   const [selectedSector, setSelectedSector] = useState('all');
@@ -158,11 +166,8 @@ export function NetworkPage({
       />
 
       <section className="network-main">
-        {recommendedCurrentUser && recommendedMembers && recommendedMembers.length > 0 ? (
-          <RecommendedMembersSection
-            currentUser={recommendedCurrentUser}
-            members={recommendedMembers}
-          />
+        {currentUser && compatibleMembers.length > 0 ? (
+          <RecommendedMembersSection currentUser={currentUser} members={compatibleMembers} />
         ) : null}
 
         <header className="network-directory-header">
