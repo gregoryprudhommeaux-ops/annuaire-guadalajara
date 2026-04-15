@@ -26,22 +26,7 @@ export function HeroTopActions({
 }: HeroTopActionsProps) {
   return (
     <div className="hero-top-actions">
-      <div className="language-switcher" role="group" aria-label="Choix de la langue">
-        {LANGUAGES.map((lang) => {
-          const isActive = currentLocale === lang.key;
-          return (
-            <button
-              key={lang.key}
-              type="button"
-              className={`lang-btn ${isActive ? 'active' : ''}`}
-              onClick={() => onChangeLocale(lang.key)}
-              aria-pressed={isActive}
-            >
-              {lang.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* Language switch lives in the global header (top-right). */}
 
       {isAuthenticated ? (
         <button type="button" className="account-btn logout-btn" onClick={onLogout}>
