@@ -237,7 +237,7 @@ export default function PassionsCrossHeatmap({
                     <text
                       textAnchor="middle"
                       dominantBaseline="hanging"
-                      style={{ fill: '#78716c', fontSize: 10, pointerEvents: 'none' }}
+                      style={{ fill: '#78716c', fontSize: 12, pointerEvents: 'none' }}
                     >
                       {compact}
                     </text>

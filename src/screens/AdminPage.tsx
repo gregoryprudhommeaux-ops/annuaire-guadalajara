@@ -33,17 +33,23 @@ function AdminPeriodPills() {
   ];
   return (
     <div className="admin-toolbar" aria-label="Période">
-      {items.map((p) => (
-        <button
-          key={p.key}
-          type="button"
-          className={cn('admin-pill', p.key === period && 'is-active')}
-          onClick={() => setPeriod(p.key)}
-        >
-          {p.label}
-        </button>
-      ))}
-      <span className="text-sm text-slate-500">{getPeriodLabel()}</span>
+      <div className="admin-period">
+        <div className="admin-period__pills" role="group" aria-label="Périodes">
+          {items.map((p) => (
+            <button
+              key={p.key}
+              type="button"
+              className={cn('admin-pill', p.key === period && 'is-active')}
+              onClick={() => setPeriod(p.key)}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <span className="admin-period__range" aria-label="Période sélectionnée">
+          {getPeriodLabel()}
+        </span>
+      </div>
     </div>
   );
 }
