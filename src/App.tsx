@@ -6903,7 +6903,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         to="/profile/edit"
                         className="home-cta-row__primary inline-flex min-h-[44px] items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
                       >
-                        Modifier mon profil
+                        {t('editProfile')}
                       </Link>
                     ) : (
                       <Link
@@ -6922,7 +6922,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       </Link>
                     ) : null}
                     <Link to="/requests" className="home-cta-row__tertiary">
-                      Voir les demandes
+                      {t('homeViewRequestsCta')}
                     </Link>
                   </div>
                 }
@@ -6959,13 +6959,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     to="/network"
                     className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 hover:bg-stone-50"
                   >
-                    Explorer le réseau
+                    {t('homeExploreNetworkCta')}
                   </Link>
                   <Link
                     to="/requests"
                     className="inline-flex items-center justify-center rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 hover:bg-stone-50"
                   >
-                    Voir les demandes
+                    {t('homeViewRequestsCta')}
                   </Link>
                 </div>
               </div>

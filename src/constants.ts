@@ -640,6 +640,10 @@ export const TRANSLATIONS: Translations = {
   noProfile: { fr: "Vous n'avez pas encore de profil. Veuillez en créer un pour apparaître dans l'annuaire.", es: "Aún no tienes un perfil. Por favor, crea uno para aparecer en el directorio." },
   edit: { fr: "Modifier", es: "Editar" },
   editProfile: { fr: "Modifier mon profil", es: "Editar mi perfil" },
+  /** CTA accueil (membre connecté) → liste des demandes réseau. */
+  homeViewRequestsCta: { fr: 'Voir les demandes', es: 'Ver las solicitudes' },
+  /** CTA accueil → annuaire / réseau. */
+  homeExploreNetworkCta: { fr: 'Explorer le réseau', es: 'Explorar la red' },
   loading: { fr: "Chargement...", es: "Cargando..." },
   deleteProfile: { fr: "Supprimer mon profil", es: "Eliminar mi perfil" },
   confirmDelete: { fr: "Êtes-vous sûr de vouloir supprimer ce profil ? Cette action est irréversible.", es: "¿Seguro que quieres eliminar este perfil? Esta acción no se puede deshacer." },

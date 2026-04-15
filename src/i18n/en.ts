@@ -253,6 +253,8 @@ export const EN_STRINGS: Record<string, string> = {
   noProfile: "You don’t have a profile yet. Create one to appear in the directory.",
   edit: "Edit",
   editProfile: "Edit my profile",
+  homeViewRequestsCta: "View requests",
+  homeExploreNetworkCta: "Explore the network",
   loading: "Loading…",
   deleteProfile: "Delete my profile",
   confirmDelete: "Are you sure you want to delete this profile? This cannot be undone.",
