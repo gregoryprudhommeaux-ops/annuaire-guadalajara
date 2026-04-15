@@ -10,6 +10,7 @@ import {
   workingLanguageLabel,
 } from '../../lib/contactPreferences';
 import { pickLang } from '../../lib/uiLocale';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import {
   companyActivityNamesJoined,
   profileDistinctActivityCategories,
@@ -52,6 +53,7 @@ export function MemberPublicProfile({
   canViewWhatsapp,
   onViewNeed,
 }: MemberPublicProfileProps) {
+  const displayName = formatPersonName(profile.fullName);
   const location = [profile.city, profile.neighborhood, profile.state, profile.country]
     .filter(Boolean)
     .join(', ');
@@ -82,7 +84,7 @@ export function MemberPublicProfile({
       <header className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
           <h1 className="inline-flex max-w-full flex-wrap items-center gap-2 text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
-            <span className="min-w-0 break-words">{profile.fullName}</span>
+            <span className="min-w-0 break-words">{displayName || profile.fullName}</span>
             {profile.linkedin?.trim() ? (
               <a
                 href={

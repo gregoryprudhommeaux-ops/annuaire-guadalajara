@@ -5,6 +5,7 @@ import { useLanguage } from '@/i18n/LanguageProvider';
 import ProfileAvatar from '@/components/ProfileAvatar';
 import { pickLang } from '@/lib/uiLocale';
 import { cn } from '@/lib/cn';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 
 export type RecommendedMemberCardProps = {
   slug: string;
@@ -54,6 +55,7 @@ export function RecommendedMemberCard({
   onMarkKnown,
 }: RecommendedMemberCardProps) {
   const { lang } = useLanguage();
+  const displayName = formatPersonName(fullName);
   const profilPath = `/profil/${encodeURIComponent(slug)}`;
   const starsLabel = pickLang(
     `Pertinence : ${starCount} sur 5`,
@@ -72,14 +74,19 @@ export function RecommendedMemberCard({
       <Link
         to={profilPath}
         className="recommended-card__overlayLink"
-        aria-label={pickLang(`Ouvrir le profil de ${fullName}`, `Abrir perfil de ${fullName}`, `Open profile: ${fullName}`, lang)}
+        aria-label={pickLang(
+          `Ouvrir le profil de ${displayName}`,
+          `Abrir perfil de ${displayName}`,
+          `Open profile: ${displayName}`,
+          lang
+        )}
       />
       <div className="recommended-card__top">
         <div className="recommended-card__identity">
           <div className="recommended-card__avatar">
             <ProfileAvatar
               photoURL={photoURL}
-              fullName={fullName}
+              fullName={displayName || fullName}
               className="recommended-card__avatarInner"
               imgClassName="recommended-card__avatarImg"
               iconSize={22}
@@ -93,9 +100,15 @@ export function RecommendedMemberCard({
       </div>
 
       <div className="recommended-card__content">
-        <h3 className="recommended-card__name">{fullName}</h3>
+        <h3 className="recommended-card__name" title={displayName || fullName}>
+          {displayName || fullName}
+        </h3>
 
-        {companyName ? <p className="recommended-card__company">{companyName}</p> : null}
+        {companyName ? (
+          <p className="recommended-card__company" title={companyName}>
+            {companyName}
+          </p>
+        ) : null}
 
         {sector ? <p className="recommended-card__sector">{sector}</p> : null}
 

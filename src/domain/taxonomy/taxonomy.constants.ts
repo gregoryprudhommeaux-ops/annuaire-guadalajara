@@ -2,7 +2,7 @@ import type { Language } from '../../types';
 import { NEED_OPTIONS, NEED_OPTION_VALUE_SET, needOptionLabel } from '../../needOptions';
 import {
   PASSIONS_CATEGORIES,
-  PASSION_OPTION_ID_SET,
+  KNOWN_PASSION_ID_SET,
   getPassionCategoryLabel,
   getPassionEmoji,
   getPassionLabel,
@@ -44,7 +44,7 @@ export function listNeeds(): Need[] {
   return out;
 }
 
-export const HOBBY_ID_SET = PASSION_OPTION_ID_SET;
+export const HOBBY_ID_SET = KNOWN_PASSION_ID_SET;
 
 export function isHobbyId(x: unknown): x is string {
   return typeof x === 'string' && HOBBY_ID_SET.has(x);

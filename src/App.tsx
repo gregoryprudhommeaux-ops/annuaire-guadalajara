@@ -93,6 +93,7 @@ import {
 } from './constants';
 import { LanguageProvider, useLanguage } from './i18n/LanguageProvider';
 import { pickLang, uiLocale, sortLocale, formatProfileLastSeen } from './lib/uiLocale';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import {
   profileMatchesLocationFilter,
   type LocationFilterKey,
@@ -1293,6 +1294,7 @@ const ProfilePage = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentProfile, setCurrentProfile] = useState<UserProfile | null>(null);
   const navigate = useNavigate();
+  const displayName = formatPersonName(profile?.fullName);
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
@@ -1328,7 +1330,7 @@ const ProfilePage = () => {
   const handleShare = () => {
     if (profile && navigator.share) {
       navigator.share({
-        title: `Profil de ${profile.fullName}`,
+        title: `Profil de ${displayName || profile.fullName}`,
         text: effectiveMemberBio(profile) || firstSlotActivityDescription(profile) || '',
         url: window.location.href
       });
@@ -1343,7 +1345,7 @@ const ProfilePage = () => {
     return (
       <div className="min-h-screen bg-stone-50 px-4 py-10">
         <Helmet>
-          <title>{profile.fullName} | Community Hub</title>
+          <title>{displayName || profile.fullName} | Community Hub</title>
         </Helmet>
         <div className="mx-auto max-w-lg">
           <button
@@ -1355,7 +1357,7 @@ const ProfilePage = () => {
             {pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
           </button>
           <div className="rounded-3xl border border-stone-200 bg-white p-8 text-center shadow-xl">
-            <h1 className="text-2xl font-bold text-stone-900 break-words">{profile.fullName}</h1>
+            <h1 className="text-2xl font-bold text-stone-900 break-words">{displayName || profile.fullName}</h1>
             <p className="mt-2 text-lg text-stone-600">{profile.companyName}</p>
             <div className="relative mt-8 min-h-[200px] overflow-hidden rounded-2xl border border-stone-100 bg-stone-50">
               <div className="pointer-events-none select-none p-6 blur-lg opacity-60" aria-hidden>
@@ -1386,8 +1388,8 @@ const ProfilePage = () => {
   return (
     <div className="profile-detail-page min-h-screen bg-stone-50 pb-20">
       <Helmet>
-        <title>{profile.fullName} | Community Hub</title>
-        <meta property="og:title" content={`Profil de ${profile.fullName}`} />
+        <title>{displayName || profile.fullName} | Community Hub</title>
+        <meta property="og:title" content={`Profil de ${displayName || profile.fullName}`} />
         <meta
           property="og:description"
           content={(
@@ -1420,14 +1422,14 @@ const ProfilePage = () => {
                   <div className="profile-hero__avatar">
                     <ProfileAvatar
                       photoURL={profile.photoURL}
-                      fullName={profile.fullName}
+                      fullName={displayName || profile.fullName}
                       className="h-full w-full"
                       initialsClassName="text-2xl font-bold text-stone-400"
                       iconSize={40}
                     />
                   </div>
                   <div className="min-w-0">
-                    <h1 className="profile-hero__name">{profile.fullName}</h1>
+                    <h1 className="profile-hero__name">{displayName || profile.fullName}</h1>
                     <p className="profile-hero__company">
                       {companyActivityNamesJoined(profile) || profile.companyName || '—'}
                     </p>
@@ -1691,6 +1693,7 @@ const NeedPage = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentProfile, setCurrentProfile] = useState<UserProfile | null>(null);
   const navigate = useNavigate();
+  const displayName = formatPersonName(profile?.fullName);
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
@@ -1796,8 +1799,8 @@ const NeedPage = () => {
   return (
     <div className="min-h-screen bg-stone-50 pb-20">
       <Helmet>
-        <title>Besoin de {profile.fullName} | Community Hub</title>
-        <meta property="og:title" content={`Besoin de ${profile.fullName}`} />
+        <title>Besoin de {displayName || profile.fullName} | Community Hub</title>
+        <meta property="og:title" content={`Besoin de ${displayName || profile.fullName}`} />
         <meta
           property="og:description"
           content={
@@ -1819,14 +1822,14 @@ const NeedPage = () => {
               <div className="h-16 w-16 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
                 <ProfileAvatar
                   photoURL={profile.photoURL}
-                  fullName={profile.fullName}
+                  fullName={displayName || profile.fullName}
                   className="h-full w-full"
                   initialsClassName="text-lg font-bold text-stone-400"
                   iconSize={32}
                 />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-stone-900">{profile.fullName}</h1>
+                <h1 className="text-2xl font-bold text-stone-900">{displayName || profile.fullName}</h1>
                 <p className="text-stone-500 font-medium">{profile.companyName}</p>
               </div>
               {/* Opportunités retirées du produit */}

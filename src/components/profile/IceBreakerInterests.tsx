@@ -5,6 +5,8 @@ import {
   MAX_PASSIONS,
   MIN_PASSIONS,
   PASSIONS_CATEGORIES,
+  PASSION_OPTION_ID_SET,
+  getPassionLabel,
   type PassionLocale,
 } from '@/lib/passionConfig';
 import { cardPad } from '@/lib/pageLayout';
@@ -30,8 +32,12 @@ const OPTION_ICONS: Record<string, string> = {
   randonnee: '🥾',
   surf: '🏄',
   tennis: '🎾',
+  foot: '⚽',
+  rugby: '🏉',
+  baseball: '⚾',
   cyclisme: '🚴',
   yoga: '🧘',
+  meditation: '🪷',
   natation: '🏊',
   plongee: '🤿',
   escalade: '🧗',
@@ -43,6 +49,10 @@ const OPTION_ICONS: Record<string, string> = {
   gastronomie: '🍽️',
   mixologie: '🍸',
   patisserie: '🧁',
+  video_games: '🎮',
+  poker: '🃏',
+  tarot: '🔮',
+  bridge: '♠️',
   musique: '🎵',
   cinema: '🎬',
   litterature: '📚',
@@ -135,6 +145,7 @@ export function IceBreakerInterests({
   markRequired = false,
 }: IceBreakerInterestsProps) {
   const selected = value ?? [];
+  const legacySelected = selected.filter((id) => !PASSION_OPTION_ID_SET.has(id));
   const locale = lang as PassionLocale;
   const header = headerTexts[lang] ?? headerTexts.fr;
   const count = selected.length;
@@ -230,6 +241,39 @@ export function IceBreakerInterests({
           </div>
         ))}
       </div>
+
+      {legacySelected.length > 0 ? (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/90 px-3 py-3">
+          <p className="text-xs font-medium text-amber-950">
+            {pickLang(
+              'Ces centres d’intérêt ne figurent plus au catalogue ; tu peux les retirer pour en choisir d’autres.',
+              'Estos intereses ya no están en el catálogo; puedes quitarlos para elegir otros.',
+              'These interests are no longer in the catalog — remove them to pick others.',
+              lang
+            )}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {legacySelected.map((id) => {
+              const icon = OPTION_ICONS[id] ?? '🍷';
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => toggleInterest(id)}
+                  className={cn(
+                    'inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border px-3 py-1.5 text-left text-xs transition md:text-sm',
+                    'border-amber-300 bg-white text-amber-950 hover:bg-amber-100',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1'
+                  )}
+                >
+                  <span aria-hidden>{icon}</span>
+                  <span className="break-words">{getPassionLabel(id, locale)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       <p
         className={cn(

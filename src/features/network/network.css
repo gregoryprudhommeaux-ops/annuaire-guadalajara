@@ -418,6 +418,10 @@
 }
 
 .fn-network-page .member-card__header {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-height: 84px;
   margin-bottom: 14px;
 }
 
@@ -445,17 +449,24 @@
 }
 
 .fn-network-page .member-card__identityText {
+  flex: 1;
   min-width: 0;
 }
 
 .fn-network-page .member-card__name {
-  margin: 0;
+  margin: 0 0 6px;
   font-size: 1.125rem; /* text-lg — cohérent ProfileCard annuaire */
-  font-weight: 700;
-  line-height: 1.25;
+  font-weight: 800;
+  line-height: 1.2;
   letter-spacing: -0.02em;
   color: rgb(28 25 23);
   word-break: break-word;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(1.2em * 2);
 }
 
 @media (min-width: 640px) {
@@ -465,11 +476,16 @@
 }
 
 .fn-network-page .member-card__company {
-  margin: 0.25rem 0 0.125rem;
-  font-size: 0.875rem;
+  margin: 0 0 8px;
+  font-size: 0.98rem;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.3;
   color: rgb(68 64 60); /* stone-700 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(1.3em * 2);
 }
 
 .fn-network-page .member-card__sector {

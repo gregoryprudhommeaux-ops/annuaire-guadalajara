@@ -8,6 +8,7 @@ import { cn } from '../../cn';
 import { directoryFeedCardClass } from '../../lib/pageLayout';
 import { pickLang } from '../../lib/uiLocale';
 import { companyActivityNamesJoined, profileDistinctActivityCategories } from '../../lib/companyActivities';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import ProfileAvatar from '../ProfileAvatar';
 
 type Props = {
@@ -126,6 +127,7 @@ export default function NewMembersStrip({
             )}
           >
           {display.map((p, index) => {
+            const displayName = formatPersonName(p.fullName) || p.fullName;
             const cats = profileDistinctActivityCategories(p);
             const sectorLine = cats.length
               ? cats.map((c) => activityCategoryLabel(c, lang)).join(' · ')
@@ -147,7 +149,7 @@ export default function NewMembersStrip({
                       >
                         <ProfileAvatar
                           photoURL={p.photoURL}
-                          fullName={p.fullName}
+                          fullName={displayName}
                           className="h-full w-full bg-white"
                           initialsClassName="text-[11px] font-bold text-blue-800 sm:text-xs"
                           iconSize={18}
@@ -160,7 +162,7 @@ export default function NewMembersStrip({
                   ) : (
                     <ProfileAvatar
                       photoURL={p.photoURL}
-                      fullName={p.fullName}
+                      fullName={displayName}
                       className="h-full w-full bg-white"
                       initialsClassName="text-[11px] font-bold text-blue-800 sm:text-xs"
                       iconSize={18}
@@ -168,8 +170,8 @@ export default function NewMembersStrip({
                   )}
                 </div>
                 <div className={cn('flex min-w-0 flex-1 flex-col justify-center gap-1 text-left', compact ? 'min-h-[3.75rem]' : 'min-h-[4.25rem]')}>
-                  <p className="truncate text-sm font-semibold leading-tight text-stone-900 sm:text-[15px]" title={p.fullName}>
-                    {p.fullName}
+                  <p className="truncate text-sm font-semibold leading-tight text-stone-900 sm:text-[15px]" title={displayName}>
+                    {displayName}
                   </p>
                   <p
                     className="truncate text-xs leading-tight text-stone-600 sm:text-sm"
@@ -221,9 +223,9 @@ export default function NewMembersStrip({
                       'text-left transition-colors hover:border-stone-200 hover:bg-stone-100/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2'
                     )}
                     aria-label={pickLang(
-                      `Ouvrir la fiche de ${p.fullName}`,
-                      `Abrir la ficha de ${p.fullName}`,
-                      `Open profile: ${p.fullName}`,
+                      `Ouvrir la fiche de ${displayName}`,
+                      `Abrir la ficha de ${displayName}`,
+                      `Open profile: ${displayName}`,
                       lang
                     )}
                   >

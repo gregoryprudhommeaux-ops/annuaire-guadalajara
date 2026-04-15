@@ -47,13 +47,7 @@ const NETWORKING_NEED_IDS = new Set([
   'NEED_RESEARCH',
 ]);
 
-const GASTRONOMY_PASSION_IDS = new Set([
-  'cuisine',
-  'vins',
-  'gastronomie',
-  'mixologie',
-  'patisserie',
-]);
+const GASTRONOMY_PASSION_IDS = new Set(['cuisine', 'vins', 'patisserie']);
 
 function companySizeToExplorer(
   companySize: UserProfile['companySize'] | undefined

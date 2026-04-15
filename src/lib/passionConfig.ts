@@ -37,8 +37,12 @@ export const PASSIONS_CATEGORIES: PassionCategory[] = [
       { id: 'randonnee', label: { fr: 'Randonnée', es: 'Senderismo', en: 'Hiking' } },
       { id: 'surf', label: { fr: 'Surf', es: 'Surf', en: 'Surf' } },
       { id: 'tennis', label: { fr: 'Tennis', es: 'Tenis', en: 'Tennis' } },
+      { id: 'foot', label: { fr: 'Foot', es: 'Fútbol', en: 'Soccer' } },
+      { id: 'rugby', label: { fr: 'Rugby', es: 'Rugby', en: 'Rugby' } },
+      { id: 'baseball', label: { fr: 'Baseball', es: 'Béisbol', en: 'Baseball' } },
       { id: 'cyclisme', label: { fr: 'Cyclisme', es: 'Ciclismo', en: 'Cycling' } },
       { id: 'yoga', label: { fr: 'Yoga', es: 'Yoga', en: 'Yoga' } },
+      { id: 'meditation', label: { fr: 'Méditation', es: 'Meditación', en: 'Meditation' } },
       { id: 'natation', label: { fr: 'Natation', es: 'Natación', en: 'Swimming' } },
       { id: 'plongee', label: { fr: 'Plongée', es: 'Buceo', en: 'Diving' } },
       { id: 'escalade', label: { fr: 'Escalade', es: 'Escalada', en: 'Climbing' } },
@@ -54,9 +58,18 @@ export const PASSIONS_CATEGORIES: PassionCategory[] = [
     options: [
       { id: 'cuisine', label: { fr: 'Cuisine', es: 'Cocina', en: 'Cooking' } },
       { id: 'vins', label: { fr: 'Vins', es: 'Vinos', en: 'Wine' } },
-      { id: 'gastronomie', label: { fr: 'Gastronomie', es: 'Gastronomía', en: 'Gastronomy' } },
-      { id: 'mixologie', label: { fr: 'Mixologie', es: 'Mixología', en: 'Mixology' } },
       { id: 'patisserie', label: { fr: 'Pâtisserie', es: 'Repostería', en: 'Pastry' } },
+    ],
+  },
+  {
+    id: 'jeux',
+    label: { fr: 'Jeux', es: 'Juegos', en: 'Games' },
+    emoji: '🎮',
+    options: [
+      { id: 'video_games', label: { fr: 'Jeux vidéo', es: 'Videojuegos', en: 'Video games' } },
+      { id: 'poker', label: { fr: 'Poker', es: 'Póker', en: 'Poker' } },
+      { id: 'tarot', label: { fr: 'Tarot', es: 'Tarot', en: 'Tarot' } },
+      { id: 'bridge', label: { fr: 'Bridge', es: 'Bridge', en: 'Bridge' } },
     ],
   },
   {
@@ -91,8 +104,22 @@ export const MIN_PASSIONS = 1;
 
 export const MAX_PASSIONS = 5;
 
-const ALL_OPTION_IDS = PASSIONS_CATEGORIES.flatMap((c) => c.options.map((o) => o.id));
-export const PASSION_OPTION_ID_SET = new Set(ALL_OPTION_IDS);
+/**
+ * Anciens ids encore présents en base : conservés pour l’affichage et la désélection,
+ * mais plus proposés dans le sélecteur (voir {@link PASSION_OPTION_ID_SET}).
+ */
+const DEPRECATED_PASSION_LABELS: Record<string, TriLabel> = {
+  gastronomie: { fr: 'Gastronomie', es: 'Gastronomía', en: 'Gastronomy' },
+  mixologie: { fr: 'Mixologie', es: 'Mixología', en: 'Mixology' },
+};
+
+const ALL_ACTIVE_OPTION_IDS = PASSIONS_CATEGORIES.flatMap((c) => c.options.map((o) => o.id));
+export const PASSION_OPTION_ID_SET = new Set(ALL_ACTIVE_OPTION_IDS);
+
+export const KNOWN_PASSION_ID_SET = new Set([
+  ...PASSION_OPTION_ID_SET,
+  ...Object.keys(DEPRECATED_PASSION_LABELS),
+]);
 
 /** Libellé d’une passion à partir de son id (langue courante). */
 export function getPassionLabel(id: string, lang: PassionLocale): string {
@@ -100,6 +127,8 @@ export function getPassionLabel(id: string, lang: PassionLocale): string {
     const found = cat.options.find((o) => o.id === id);
     if (found) return found.label[lang];
   }
+  const legacy = DEPRECATED_PASSION_LABELS[id];
+  if (legacy) return legacy[lang];
   return id;
 }
 
@@ -109,6 +138,7 @@ export function getPassionEmoji(id: string): string {
     const found = cat.options.find((o) => o.id === id);
     if (found) return cat.emoji;
   }
+  if (DEPRECATED_PASSION_LABELS[id]) return '🍷';
   return '🎯';
 }
 
@@ -129,7 +159,7 @@ export function sanitizePassionIds(raw: unknown): string[] {
   const seen = new Set<string>();
   for (const x of raw) {
     if (typeof x !== 'string' || out.length >= MAX_PASSIONS) break;
-    if (!PASSION_OPTION_ID_SET.has(x) || seen.has(x)) continue;
+    if (!KNOWN_PASSION_ID_SET.has(x) || seen.has(x)) continue;
     seen.add(x);
     out.push(x);
   }

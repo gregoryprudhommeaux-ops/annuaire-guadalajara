@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ProfileEmptyState } from '@/components/members/ProfileEmptyState';
 import { useTranslation } from '@/i18n/useTranslation';
 import { cn } from '@/lib/cn';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 
 export type MemberCardMember = {
   fullName: string;
@@ -26,6 +27,7 @@ export type MemberCardProps = {
  */
 export function MemberCard({ member, className }: MemberCardProps) {
   const { t } = useTranslation();
+  const displayName = formatPersonName(member.fullName);
   const hasBio = Boolean(member.bio && member.bio.trim().length > 0);
   const needs = (member.currentNeeds ?? []).filter(Boolean);
   const hasNeeds = needs.length > 0;
@@ -37,7 +39,7 @@ export function MemberCard({ member, className }: MemberCardProps) {
         className
       )}
     >
-      <h3 className="text-lg font-semibold text-slate-900">{member.fullName}</h3>
+      <h3 className="text-lg font-semibold text-slate-900">{displayName || member.fullName}</h3>
 
       {member.company?.trim() ? (
         <p className="mt-1 text-sm text-slate-700">{member.company}</p>

@@ -5,7 +5,13 @@
 
 import { cn } from '../cn';
 import type { Language } from '../types';
-import { PASSIONS_CATEGORIES, MAX_PASSIONS } from '../lib/passionConfig';
+import {
+  PASSIONS_CATEGORIES,
+  MAX_PASSIONS,
+  PASSION_OPTION_ID_SET,
+  getPassionLabel,
+} from '../lib/passionConfig';
+import { pickLang } from '../lib/uiLocale';
 
 export interface PassionPickerProps {
   value: string[];
@@ -15,6 +21,8 @@ export interface PassionPickerProps {
 }
 
 function PassionPicker({ value, onChange, lang, t }: PassionPickerProps) {
+  const legacyIds = value.filter((id) => !PASSION_OPTION_ID_SET.has(id));
+
   const toggle = (id: string) => {
     if (value.includes(id)) {
       onChange(value.filter((v) => v !== id));
@@ -76,6 +84,31 @@ function PassionPicker({ value, onChange, lang, t }: PassionPickerProps) {
           </div>
         </div>
       ))}
+
+      {legacyIds.length > 0 ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50/90 p-3">
+          <p className="text-[10px] font-semibold leading-snug text-amber-950">
+            {pickLang(
+              'Ces centres d’intérêt ne figurent plus au catalogue ; vous pouvez les retirer pour en choisir d’autres.',
+              'Estos intereses ya no están en el catálogo; puede quitarlos para elegir otros.',
+              'These interests are no longer in the catalog — remove them to pick others.',
+              lang
+            )}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {legacyIds.map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => toggle(id)}
+                className="max-w-full min-w-0 rounded-full border border-amber-300 bg-white px-3 py-1.5 text-left text-xs font-medium text-amber-950 hover:bg-amber-100"
+              >
+                <span className="break-words">{getPassionLabel(id, lang)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {value.length >= MAX_PASSIONS && (
         <p className="text-xs text-violet-600 font-medium">{t('passionsMaxReached')}</p>

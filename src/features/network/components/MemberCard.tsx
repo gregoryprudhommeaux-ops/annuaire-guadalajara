@@ -4,8 +4,9 @@ import { useLanguage } from '@/i18n/LanguageProvider';
 import ProfileAvatar from '@/components/ProfileAvatar';
 import { cn } from '@/lib/cn';
 import { pickLang } from '@/lib/uiLocale';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { getVisibleNeeds, normalizeCompanyName, normalizeSectorName } from '../utils/memberCard';
-import { getCleanPreviewText, getPreferredContactPreview } from '@/features/network/utils/memberProfilePreview';
+import { getCleanPreviewText } from '@/features/network/utils/memberProfilePreview';
 import '../network.css';
 
 type MemberCardProps = {
@@ -35,6 +36,7 @@ export function MemberCard({
   onOpen,
 }: MemberCardProps) {
   const { lang } = useLanguage();
+  const displayName = formatPersonName(fullName);
   const visibleNeeds = getVisibleNeeds(needs, 3);
   const chips =
     visibleNeeds.length > 0
@@ -55,7 +57,12 @@ export function MemberCard({
     normalizeSectorName(sector) ||
     pickLang('Secteur non renseigné', 'Sector no indicado', 'Sector not specified', lang);
   const profilPath = `/profil/${encodeURIComponent(profileUid)}`;
-  const cardLabel = pickLang(`Profil de ${fullName}`, `Perfil de ${fullName}`, `Profile: ${fullName}`, lang);
+  const cardLabel = pickLang(
+    `Profil de ${displayName}`,
+    `Perfil de ${displayName}`,
+    `Profile: ${displayName}`,
+    lang
+  );
   const bioFull = (bio ?? '').replace(/\s+/g, ' ').trim();
   const bioFallback = pickLang(
     'Présentation à compléter.',
@@ -64,8 +71,6 @@ export function MemberCard({
     lang
   );
   const bioPreview = getCleanPreviewText(bio, bioFallback, 210);
-  const contactPreview =
-    contactPreferenceCta?.trim() ? getPreferredContactPreview(contactPreferenceCta) : null;
 
   const activate = () => {
     onOpen?.();
@@ -93,15 +98,19 @@ export function MemberCard({
           <div className="member-card__avatar">
             <ProfileAvatar
               photoURL={photoUrl}
-              fullName={fullName}
+              fullName={displayName || fullName}
               className="member-card__avatarInner"
               imgClassName="member-card__avatarImg"
             />
           </div>
 
           <div className="member-card__identityText">
-            <h3 className="member-card__name">{fullName}</h3>
-            <p className="member-card__company">{companyLine}</p>
+            <h3 className="member-card__name" title={displayName || fullName}>
+              {displayName || fullName}
+            </h3>
+            <p className="member-card__company" title={companyLine}>
+              {companyLine}
+            </p>
             <p className="member-card__sector">{sectorLine}</p>
           </div>
         </div>
@@ -124,12 +133,6 @@ export function MemberCard({
           ))}
         </div>
       </div>
-
-      {contactPreview ? (
-        <p className="member-card__contactPref" title={contactPreferenceCta}>
-          {contactPreview}
-        </p>
-      ) : null}
 
       <div className="member-card__footer">
         <Link
