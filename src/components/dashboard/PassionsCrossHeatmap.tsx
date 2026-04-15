@@ -189,10 +189,14 @@ export default function PassionsCrossHeatmap({
                   const dimValue = computed.xToFull.get(xCompact) ?? xCompact;
                   const passionLabel = computed.yToFull.get(yCompact) ?? yCompact;
                   const value = cell?.data?.y ?? 0;
+                  const yPx = Number(cell?.y ?? 0);
+                  // Nivo positions tooltips near cursor; for the first row,
+                  // we push it further down to avoid clipping at the top edge.
+                  const tooltipOffsetY = yPx <= 24 ? 34 : 14;
                   return (
                     <div
                       style={{
-                        transform: 'translateY(14px)',
+                        transform: `translateY(${tooltipOffsetY}px)`,
                         background: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: 12,
