@@ -332,72 +332,85 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           {/* D. Analytics grid */}
           <div className="admin-analytics-grid">
             <div className="admin-stack">
-              <div className="admin-chart-card">
+              <article className="admin-chart-card admin-chart-card--balanced admin-chart-card--tall">
                 <p className="admin-chart-card__title">Évolution des inscriptions</p>
                 <p className="admin-chart-card__subtitle">Courbe basée sur les profils créés</p>
-                <div className="admin-chart-frame">
-                  <MiniErrorBoundary label="InscriptionAreaChart">
-                    <InscriptionAreaChart members={stats.profilesCreatedAt} height={320} />
-                  </MiniErrorBoundary>
+                <div className="admin-chart-card__body">
+                  <div className="admin-chart-frame">
+                    <MiniErrorBoundary label="InscriptionAreaChart">
+                      <InscriptionAreaChart members={stats.profilesCreatedAt} height={320} />
+                    </MiniErrorBoundary>
+                  </div>
                 </div>
-              </div>
+              </article>
 
-              <div className="admin-chart-card">
+              <article className="admin-chart-card admin-chart-card--balanced admin-chart-card--donut">
                 <p className="admin-chart-card__title">Répartition par secteur</p>
                 <p className="admin-chart-card__subtitle">Lecture rapide par univers d’activité</p>
-                <div className="admin-chart-frame admin-chart-frame--sm">
-                  <SectorDonutChart
-                    data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))}
-                    height={280}
-                  />
+                <div className="admin-chart-card__body">
+                  <div className="admin-chart-frame admin-chart-frame--sm">
+                    <SectorDonutChart
+                      data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))}
+                      height={280}
+                    />
+                  </div>
                 </div>
-              </div>
+              </article>
             </div>
 
             <div className="admin-stack">
-              <div className="admin-chart-card">
+              <article className="admin-chart-card admin-chart-card--balanced">
                 <p className="admin-chart-card__title">Complétion des profils</p>
                 <p className="admin-chart-card__subtitle">Vue “strict” (nom, secteur, description, photo)</p>
-                <div className="admin-chart-frame admin-chart-frame--sm">
-                  <MiniErrorBoundary label="ProfileCompletionGauge">
-                    <ProfileCompletionGauge totalMembers={stats.totalProfiles} completedProfiles={stats.completedProfilesStrict} />
-                  </MiniErrorBoundary>
+                <div className="admin-chart-card__body">
+                  <div className="admin-chart-frame admin-chart-frame--sm">
+                    <MiniErrorBoundary label="ProfileCompletionGauge">
+                      <ProfileCompletionGauge
+                        totalMembers={stats.totalProfiles}
+                        completedProfiles={stats.completedProfilesStrict}
+                      />
+                    </MiniErrorBoundary>
+                  </div>
                 </div>
-              </div>
+              </article>
 
-              <div className="admin-chart-card">
+              <article className="admin-chart-card admin-chart-card--balanced admin-chart-card--table">
                 <p className="admin-chart-card__title">Membres les plus actifs</p>
                 <p className="admin-chart-card__subtitle">Basé sur les clics de contact</p>
-                <div className="admin-table-wrap">
-                  <MiniErrorBoundary label="TopActiveMembersTable">
-                    <TopActiveMembersTable members={stats.profilesForDashboard as any} lang={lang} />
-                  </MiniErrorBoundary>
+                <div className="admin-chart-card__body">
+                  <div className="admin-table-wrap">
+                    <MiniErrorBoundary label="TopActiveMembersTable">
+                      <TopActiveMembersTable members={stats.profilesForDashboard as any} lang={lang} />
+                    </MiniErrorBoundary>
+                  </div>
                 </div>
-              </div>
+              </article>
             </div>
           </div>
 
           {/* E. Deep-dive */}
           <div className="admin-bottom-section">
-            <div className="admin-chart-card">
+            <article className="admin-chart-card admin-chart-card--tall">
               <p className="admin-chart-card__title">Croisement passions × secteur</p>
               <p className="admin-chart-card__subtitle">Cliquez une case pour lister les membres</p>
-              <div className="admin-chart-frame">
-                <MiniErrorBoundary label="PassionsCrossHeatmap">
-                  <PassionsCrossHeatmap
-                    members={stats.profilesForDashboard.map((m) => ({
-                      id: m.id,
-                      secteur: m.secteur,
-                      positionCategory: (m as any).positionCategory,
-                      activityCategory: (m as any).activityCategory,
-                      passionIds: (m as any).passionIds,
-                    }))}
-                    lang={lang}
-                    onPickCell={(pick) => setPickedCross(pick)}
-                  />
-                </MiniErrorBoundary>
+              <div className="admin-chart-card__body">
+                <div className="admin-chart-frame">
+                  <MiniErrorBoundary label="PassionsCrossHeatmap">
+                    <PassionsCrossHeatmap
+                      members={stats.profilesForDashboard.map((m) => ({
+                        id: m.id,
+                        secteur: m.secteur,
+                        positionCategory: (m as any).positionCategory,
+                        activityCategory: (m as any).activityCategory,
+                        passionIds: (m as any).passionIds,
+                      }))}
+                      lang={lang}
+                      onPickCell={(pick) => setPickedCross(pick)}
+                    />
+                  </MiniErrorBoundary>
+                </div>
               </div>
-            </div>
+            </article>
           </div>
 
           {pickedCross ? (

@@ -140,7 +140,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
   const recentRequestsUi = useMemo(() => {
     if (!recentRequests) return null;
     return (
-      <div className="admin-card">
+      <article className="admin-card admin-card--balanced">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="admin-card__title">Dernières demandes</h2>
@@ -152,63 +152,67 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
             Ouvrir
           </a>
         </div>
-        <div className="admin-list">
-          {recentRequests.length === 0 ? (
-            <p className="text-sm text-slate-600">Aucune demande.</p>
-          ) : (
-            recentRequests.map((r) => (
-              <a
-                key={r.id}
-                href="/requests"
-                className="admin-list-item"
-                style={{ textDecoration: 'none' }}
-              >
-                <div className="admin-list-item__main">
-                  <p className="admin-list-item__title">{r.text}</p>
-                  <p className="admin-list-item__meta">
-                    {[r.authorName, r.authorCompany, r.zone].filter(Boolean).join(' · ')}
-                  </p>
-                </div>
-                <span className="admin-list-item__count">→</span>
-              </a>
-            ))
-          )}
+        <div className="admin-card__body">
+          <div className="admin-list">
+            {recentRequests.length === 0 ? (
+              <p className="text-sm text-slate-600">Aucune demande.</p>
+            ) : (
+              recentRequests.map((r) => (
+                <a
+                  key={r.id}
+                  href="/requests"
+                  className="admin-list-item"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <div className="admin-list-item__main">
+                    <p className="admin-list-item__title">{r.text}</p>
+                    <p className="admin-list-item__meta">
+                      {[r.authorName, r.authorCompany, r.zone].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                  <span className="admin-list-item__count">→</span>
+                </a>
+              ))
+            )}
+          </div>
         </div>
-      </div>
+      </article>
     );
   }, [recentRequests]);
 
   const unansweredNeedsUi = useMemo(() => {
     if (!unansweredNeeds) return null;
     return (
-      <div className="admin-card admin-card--featured">
+      <article className="admin-card admin-card--featured admin-card--tall">
         <p className="admin-card__eyebrow">PRIORITÉ</p>
         <h2 className="admin-card__title">Besoins sans réponse</h2>
         <p className="admin-card__text">
           Profils avec besoins mis en avant et 0 commentaire.
         </p>
-        <div className="admin-highlight-number">{unansweredCount}</div>
-        <div className="admin-list">
-          {unansweredNeeds.length === 0 ? (
-            <p className="text-sm text-slate-600">Aucun besoin en attente.</p>
-          ) : (
-            unansweredNeeds.map((row) => (
-              <a
-                key={row.uid}
-                href={`/profil/${encodeURIComponent(row.uid)}`}
-                className="admin-list-item"
-                style={{ textDecoration: 'none' }}
-              >
-                <div className="admin-list-item__main">
-                  <p className="admin-list-item__title">{row.name}</p>
-                  {row.company ? <p className="admin-list-item__meta">{row.company}</p> : null}
-                </div>
-                <span className="admin-list-item__count">{row.needsCount}</span>
-              </a>
-            ))
-          )}
+        <div className="admin-card__body">
+          <div className="admin-highlight-number">{unansweredCount}</div>
+          <div className="admin-list">
+            {unansweredNeeds.length === 0 ? (
+              <p className="text-sm text-slate-600">Aucun besoin en attente.</p>
+            ) : (
+              unansweredNeeds.map((row) => (
+                <a
+                  key={row.uid}
+                  href={`/profil/${encodeURIComponent(row.uid)}`}
+                  className="admin-list-item"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <div className="admin-list-item__main">
+                    <p className="admin-list-item__title">{row.name}</p>
+                    {row.company ? <p className="admin-list-item__meta">{row.company}</p> : null}
+                  </div>
+                  <span className="admin-list-item__count">{row.needsCount}</span>
+                </a>
+              ))
+            )}
+          </div>
         </div>
-      </div>
+      </article>
     );
   }, [unansweredNeeds, unansweredCount]);
 
@@ -239,21 +243,25 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
               unansweredNeeds ? (
                 unansweredNeedsUi
               ) : (
-                <div className="admin-card admin-card--featured">
+                <article className="admin-card admin-card--featured admin-card--tall">
                   <p className="admin-card__eyebrow">PRIORITÉ</p>
                   <h2 className="admin-card__title">Besoins sans réponse</h2>
-                  <p className="admin-card__text">{loading}</p>
-                </div>
+                  <div className="admin-card__body">
+                    <p className="admin-card__text">{loading}</p>
+                  </div>
+                </article>
               )
             }
             priorityRight={
               recentRequests ? (
                 recentRequestsUi
               ) : (
-                <div className="admin-card">
+                <article className="admin-card admin-card--balanced">
                   <h2 className="admin-card__title">Dernières demandes</h2>
-                  <p className="admin-card__text">{loading}</p>
-                </div>
+                  <div className="admin-card__body">
+                    <p className="admin-card__text">{loading}</p>
+                  </div>
+                </article>
               )
             }
           />
