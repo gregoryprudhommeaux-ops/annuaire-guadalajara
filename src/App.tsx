@@ -4588,7 +4588,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         title={t('title')}
         subtitle={t('subtitle')}
         notificationCount={viewerIsAdmin ? pendingProfiles.length : 0}
-        homeAriaLabel={pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
+        homeAriaLabel={t('nav.backHome')}
         onHomeClick={(e) => {
           e.preventDefault();
           window.location.assign('/');
@@ -4782,7 +4782,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                       )}
                     >
-                      {item.label}
+                      {t(item.labelKey)}
                     </Link>
                   );
                 })}

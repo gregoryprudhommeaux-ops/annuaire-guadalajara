@@ -1,18 +1,19 @@
 import type { AppRole } from '@/auth/roleModel';
 
 export type PrimaryNavItem = {
-  label: string;
+  /** Clé imbriquée résolue par `t()` (ex. `nav.home`). */
+  labelKey: string;
   href: string;
   visibility: 'guest' | 'member' | 'admin' | 'all';
 };
 
 export const primaryNav: PrimaryNavItem[] = [
-  { label: 'Accueil', href: '/', visibility: 'all' },
-  { label: 'Réseau', href: '/network', visibility: 'all' },
-  { label: 'Demandes', href: '/requests', visibility: 'all' },
-  { label: 'Radar', href: '/radar', visibility: 'all' },
-  { label: 'Mon profil', href: '/profile/edit', visibility: 'member' },
-  { label: 'Admin', href: '/admin', visibility: 'admin' },
+  { labelKey: 'nav.home', href: '/', visibility: 'all' },
+  { labelKey: 'nav.network', href: '/network', visibility: 'all' },
+  { labelKey: 'nav.requests', href: '/requests', visibility: 'all' },
+  { labelKey: 'nav.radar', href: '/radar', visibility: 'all' },
+  { labelKey: 'nav.myProfile', href: '/profile/edit', visibility: 'member' },
+  { labelKey: 'nav.admin', href: '/admin', visibility: 'admin' },
 ];
 
 export function getPrimaryNav(role: AppRole) {
@@ -24,4 +25,3 @@ export function getPrimaryNav(role: AppRole) {
     return false;
   });
 }
-

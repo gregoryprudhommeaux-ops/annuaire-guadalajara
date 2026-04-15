@@ -255,6 +255,8 @@ export interface Translations {
   [key: string]: {
     fr: string;
     es: string;
+    /** Optionnel : sinon `EN_STRINGS` / repli FR côté `LanguageProvider`. */
+    en?: string;
   };
 }
 

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Bookmark, BookmarkCheck, Star } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import ProfileAvatar from '@/components/ProfileAvatar';
-import { pickLang } from '@/lib/uiLocale';
 import { cn } from '@/lib/cn';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
 
@@ -54,15 +53,10 @@ export function RecommendedMemberCard({
   onToggleSave,
   onMarkKnown,
 }: RecommendedMemberCardProps) {
-  const { lang } = useLanguage();
+  const { t } = useLanguage();
   const displayName = formatPersonName(fullName);
   const profilPath = `/profil/${encodeURIComponent(slug)}`;
-  const starsLabel = pickLang(
-    `Pertinence : ${starCount} sur 5`,
-    `Pertinencia: ${starCount} de 5`,
-    `Relevance: ${starCount} of 5`,
-    lang
-  );
+  const starsLabel = t('network.scoreLabel', { score: starCount });
 
   const stop = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -74,12 +68,7 @@ export function RecommendedMemberCard({
       <Link
         to={profilPath}
         className="recommended-card__overlayLink"
-        aria-label={pickLang(
-          `Ouvrir le profil de ${displayName}`,
-          `Abrir perfil de ${displayName}`,
-          `Open profile: ${displayName}`,
-          lang
-        )}
+        aria-label={t('network.recommendedCard.openProfileAria', { name: displayName })}
       />
       <div className="recommended-card__top">
         <div className="recommended-card__identity">
@@ -133,14 +122,7 @@ export function RecommendedMemberCard({
           }}
           aria-pressed={isSaved}
           aria-label={
-            isSaved
-              ? pickLang('Retirer des profils suivis', 'Quitar de guardados', 'Remove from saved', lang)
-              : pickLang(
-                  'Sauvegarder pour plus tard',
-                  'Guardar para más tarde',
-                  'Save for later',
-                  lang
-                )
+            isSaved ? t('network.recommendedCard.savedAria') : t('network.recommendedCard.saveAria')
           }
         >
           {isSaved ? (
@@ -149,9 +131,7 @@ export function RecommendedMemberCard({
             <Bookmark size={15} className="recommended-card__toolIcon" aria-hidden />
           )}
           <span>
-            {isSaved
-              ? pickLang('Enregistré', 'Guardado', 'Saved', lang)
-              : pickLang('Suivre', 'Seguir', 'Save', lang)}
+            {isSaved ? t('network.recommendedCard.labelSaved') : t('network.recommendedCard.labelFollow')}
           </span>
         </button>
         <button
@@ -161,20 +141,15 @@ export function RecommendedMemberCard({
             stop(e);
             onMarkKnown();
           }}
-          aria-label={pickLang(
-            'Ne plus me recommander ce profil',
-            'No recomendar este perfil',
-            'Stop recommending this profile',
-            lang
-          )}
+          aria-label={t('network.recommendedCard.hideRecoAria')}
         >
-          {pickLang('Je le connais déjà', 'Ya lo conozco', 'I already know them', lang)}
+          {t('network.recommendedCard.alreadyKnow')}
         </button>
       </div>
 
       <div className="recommended-card__footer">
         <Link to={profilPath} className="recommended-card__link" onClick={stop}>
-          {pickLang('Voir le profil', 'Ver perfil', 'View profile', lang)}
+          {t('network.recommendedCard.viewProfile')}
         </Link>
       </div>
     </article>

@@ -23,6 +23,6 @@ Roles:
   - `getAppRole(...)`
   - `routeAccessForPath(...)`
   - `canAccessRoute(...)`
-- **Navigation visibility**: `src/routes/primaryNav.ts` uses `getPrimaryNav(role)`
+- **Navigation visibility**: `src/routes/primaryNav.ts` uses `getPrimaryNav(role)` (libellés via `t(labelKey)` du `LanguageProvider`, ex. `nav.home`).
 - **Route guards**: `src/App.tsx` uses `canAccessRoute(role, pathname)`
 

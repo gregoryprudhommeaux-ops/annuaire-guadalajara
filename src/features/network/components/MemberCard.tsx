@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import ProfileAvatar from '@/components/ProfileAvatar';
 import { cn } from '@/lib/cn';
-import { pickLang } from '@/lib/uiLocale';
+import { activityCategoryLabel } from '@/constants';
+import type { Language } from '@/types';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { getVisibleNeeds, normalizeCompanyName, normalizeSectorName } from '../utils/memberCard';
 import { getCleanPreviewText } from '@/features/network/utils/memberProfilePreview';
@@ -35,41 +36,23 @@ export function MemberCard({
   contactPreferenceCta,
   onOpen,
 }: MemberCardProps) {
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
   const displayName = formatPersonName(fullName);
   const visibleNeeds = getVisibleNeeds(needs, 3);
   const chips =
     visibleNeeds.length > 0
       ? visibleNeeds
-      : [
-          pickLang(
-            'Aucun besoin structuré renseigné',
-            'Sin necesidades estructuradas',
-            'No structured needs listed',
-            lang
-          ),
-        ];
+      : [t('network.memberCard.noStructuredNeed')];
 
   const companyLine =
-    normalizeCompanyName(companyName) ||
-    pickLang('Entreprise non renseignée', 'Empresa no indicada', 'Company not specified', lang);
+    normalizeCompanyName(companyName) || t('network.memberCard.companyUnknown');
   const sectorLine =
-    normalizeSectorName(sector) ||
-    pickLang('Secteur non renseigné', 'Sector no indicado', 'Sector not specified', lang);
+    (sector ? activityCategoryLabel(sector, lang as Language) : '') ||
+    t('network.memberCard.sectorUnknown');
   const profilPath = `/profil/${encodeURIComponent(profileUid)}`;
-  const cardLabel = pickLang(
-    `Profil de ${displayName}`,
-    `Perfil de ${displayName}`,
-    `Profile: ${displayName}`,
-    lang
-  );
+  const cardLabel = t('network.memberCard.cardAria', { name: displayName || fullName });
   const bioFull = (bio ?? '').replace(/\s+/g, ' ').trim();
-  const bioFallback = pickLang(
-    'Présentation à compléter.',
-    'Presentación por completar.',
-    'Profile presentation to be completed.',
-    lang
-  );
+  const bioFallback = t('network.memberCard.bioIncomplete');
   const bioPreview = getCleanPreviewText(bio, bioFallback, 210);
 
   const activate = () => {
@@ -122,7 +105,7 @@ export function MemberCard({
 
       <div className="member-card__needsBlock">
         <p className="member-card__label">
-          {pickLang('BESOINS ACTUELS', 'NECESIDADES ACTUALES', 'CURRENT NEEDS', lang)}
+          {t('network.memberCard.currentNeedsLabel')}
         </p>
 
         <div className="member-card__chips">
@@ -141,7 +124,7 @@ export function MemberCard({
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
-          {pickLang('Voir le profil', 'Ver perfil', 'View profile', lang)}
+          {t('common.viewProfile')}
         </Link>
       </div>
     </article>

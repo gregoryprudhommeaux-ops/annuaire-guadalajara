@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageProvider';
+import { activityCategoryLabel } from '@/constants';
+import type { Language } from '@/types';
 import {
   NetworkSidebar,
   type NetworkOption,
@@ -77,9 +79,40 @@ export function NetworkPage({
   locationOptions = DEFAULT_LOCATION_OPTIONS,
   launchProgress = null,
 }: NetworkPageProps) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const memberGridRef = useRef<HTMLDivElement>(null);
+
+  const resolvedSectorOptions = useMemo(
+    () =>
+      sectorOptions.map((o) =>
+        o.value === 'all'
+          ? { ...o, label: t('network.filters.sectorAll') }
+          : { ...o, label: activityCategoryLabel(o.value, lang as Language) }
+      ),
+    [sectorOptions, lang, t]
+  );
+
+  const resolvedProfileOptions = useMemo(
+    () =>
+      profileOptions.map((o) => {
+        if (o.value === 'all') return { ...o, label: t('network.filters.profileAll') };
+        if (o.value === 'company') return { ...o, label: t('network.filters.company') };
+        if (o.value === 'member') return { ...o, label: t('network.filters.member') };
+        return o;
+      }),
+    [profileOptions, t]
+  );
+
+  const resolvedLocationOptions = useMemo(
+    () =>
+      locationOptions.map((o) => {
+        if (o.value === 'all') return { ...o, label: t('network.filters.locationAll') };
+        if (o.value === 'other') return { ...o, label: t('network.filters.other') };
+        return o;
+      }),
+    [locationOptions, t]
+  );
 
   const currentUser = useCurrentCompatibilityMember({ profile });
 
@@ -151,9 +184,9 @@ export function NetworkPage({
         query={query}
         onQueryChange={setQuery}
         onSubmitSearch={scrollToResults}
-        sectorOptions={sectorOptions}
-        profileOptions={profileOptions}
-        locationOptions={locationOptions}
+        sectorOptions={resolvedSectorOptions}
+        profileOptions={resolvedProfileOptions}
+        locationOptions={resolvedLocationOptions}
         selectedSector={selectedSector}
         selectedProfile={selectedProfile}
         selectedLocation={selectedLocation}

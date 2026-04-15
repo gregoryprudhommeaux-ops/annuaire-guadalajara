@@ -1,13 +1,10 @@
+import type { TranslateParams } from './LanguageProvider';
+
 export function formatT(
-  t: (key: string) => string,
+  t: (key: string, params?: TranslateParams) => string,
   key: string,
   params: Record<string, string | number>
 ): string {
-  let s = t(key);
-  for (const [k, v] of Object.entries(params)) {
-    const value = String(v);
-    s = s.replaceAll(`{${k}}`, value).replaceAll(`{{${k}}}`, value);
-  }
-  return s;
+  return t(key, params);
 }
 

@@ -10,7 +10,6 @@ import {
 import type { RecommendedCompatibilityMember } from '../utils/compatibilityFromProfile';
 import { loadRecommendationPrefs, saveRecommendationPrefs } from '../utils/recommendationPreferences';
 import { useLanguage } from '@/i18n/LanguageProvider';
-import { pickLang } from '@/lib/uiLocale';
 import { activityCategoryLabel } from '@/constants';
 import type { Language } from '@/types';
 import '../network-recommendations.css';
@@ -24,35 +23,35 @@ function memberUid(m: Pick<CompatibilityMember, 'id' | 'slug'>): string {
   return (m.id ?? m.slug ?? '').trim();
 }
 
-function localizedCompatibilityLevel(level: string, lang: Language): string {
+function localizedCompatibilityLevel(level: string, t: (k: string) => string): string {
   switch (level) {
     case 'Très pertinent':
-      return pickLang('Très pertinent', 'Muy pertinente', 'Highly relevant', lang);
+      return t('network.compatLevel.veryRelevant');
     case 'Pertinent':
-      return pickLang('Pertinent', 'Pertinente', 'Relevant', lang);
+      return t('network.compatLevel.relevant');
     case 'À explorer':
-      return pickLang('À explorer', 'Para explorar', 'Worth exploring', lang);
+      return t('network.compatLevel.explore');
     default:
       return level;
   }
 }
 
-function localizedCompatibilityReason(reason: CompatibilityReason, lang: Language): string {
+function localizedCompatibilityReason(reason: CompatibilityReason, t: (k: string) => string): string {
   switch (reason) {
     case 'Besoin compatible':
-      return pickLang('Besoin compatible', 'Necesidad afín', 'Aligned need', lang);
+      return t('network.compatReason.needMatch');
     case 'Peut vous aider':
-      return pickLang('Peut vous aider', 'Puede ayudarte', 'Can help you', lang);
+      return t('network.compatReason.canHelp');
     case 'Même secteur':
-      return pickLang('Même secteur', 'Mismo sector', 'Same sector', lang);
+      return t('network.compatReason.sameSector');
     case 'Même ville':
-      return pickLang('Même ville', 'Misma ciudad', 'Same city', lang);
+      return t('network.compatReason.sameCity');
     case 'Passion commune':
-      return pickLang('Passion commune', 'Pasión compartida', 'Shared passion', lang);
+      return t('network.compatReason.passion');
     case 'Ouvert au mentorat':
-      return pickLang('Ouvert au mentorat', 'Abierto a mentoría', 'Open to mentoring', lang);
+      return t('network.compatReason.mentoring');
     case 'Mots-clés proches':
-      return pickLang('Mots-clés proches', 'Palabras clave afines', 'Similar keywords', lang);
+      return t('network.compatReason.keywords');
     default: {
       const _exhaustive: never = reason;
       return _exhaustive;
@@ -63,7 +62,7 @@ function localizedCompatibilityReason(reason: CompatibilityReason, lang: Languag
 type RecoPrefsState = { known: Set<string>; saved: Set<string> };
 
 export function RecommendedMembersSection({ currentUser, members }: RecommendedMembersSectionProps) {
-  const { lang: L } = useLanguage();
+  const { lang: L, t } = useLanguage();
   const viewerUid = (currentUser?.id ?? currentUser?.slug ?? '').trim();
 
   const [recoPrefs, setRecoPrefs] = useState<RecoPrefsState>({ known: new Set(), saved: new Set() });
@@ -150,34 +149,19 @@ export function RecommendedMembersSection({ currentUser, members }: RecommendedM
 
   if (!recommended.length) return null;
 
-  const aria = pickLang(
-    'Profils recommandés pour vous',
-    'Perfiles recomendados para ti',
-    'Recommended profiles for you',
-    L
-  );
+  const aria = t('network.recommendations.aria');
 
   return (
     <section className="recommended-section" aria-label={aria}>
       <div className="recommended-section__header">
         <p className="recommended-section__eyebrow">
-          {pickLang('RECOMMANDATIONS', 'RECOMENDACIONES', 'RECOMMENDATIONS', L)}
+          {t('network.recommendations.eyebrow')}
         </p>
         <h2 className="recommended-section__title">
-          {pickLang(
-            'Profils recommandés pour vous',
-            'Perfiles recomendados para ti',
-            'Recommended profiles for you',
-            L
-          )}
+          {t('network.recommendations.title')}
         </h2>
         <p className="recommended-section__text">
-          {pickLang(
-            'Basé sur vos besoins actuels, votre activité et vos centres d’intérêt.',
-            'Basado en tus necesidades actuales, tu actividad y tus intereses.',
-            'Based on your current needs, your activity, and your interests.',
-            L
-          )}
+          {t('network.recommendations.subtitle')}
         </p>
       </div>
 
@@ -186,13 +170,13 @@ export function RecommendedMembersSection({ currentUser, members }: RecommendedM
           <RecommendedMemberCard
             key={uid}
             slug={member.slug!}
-            fullName={member.fullName ?? pickLang('Profil', 'Perfil', 'Profile', L)}
+            fullName={member.fullName ?? t('network.profileFallback')}
             companyName={member.companyName}
             sector={member.sector ? activityCategoryLabel(member.sector, L) : undefined}
             photoURL={member.photoURL}
-            compatibilityLevel={localizedCompatibilityLevel(level!, L)}
+            compatibilityLevel={localizedCompatibilityLevel(level!, t)}
             starCount={compatibilityStarCount(score)}
-            reasons={reasons.map((r) => localizedCompatibilityReason(r, L))}
+            reasons={reasons.map((r) => localizedCompatibilityReason(r, t))}
             isSaved={recoPrefs.saved.has(uid)}
             onToggleSave={() => toggleSave(uid)}
             onMarkKnown={() => markKnown(uid)}

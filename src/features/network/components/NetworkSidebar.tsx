@@ -1,5 +1,4 @@
 import { useLanguage } from '@/i18n/LanguageProvider';
-import { pickLang } from '@/lib/uiLocale';
 import { cn } from '@/lib/cn';
 import { LaunchProgressCard } from './LaunchProgressCard';
 import '../network.css';
@@ -59,15 +58,10 @@ export function NetworkSidebar({
   launchProgress,
   className,
 }: NetworkSidebarProps) {
-  const { lang, t } = useLanguage();
+  const { t } = useLanguage();
 
-  const searchEyebrow = pickLang('RECHERCHE', 'BÚSQUEDA', 'SEARCH', lang);
-  const searchAria = pickLang(
-    'Rechercher un membre, une entreprise ou un besoin',
-    'Buscar un miembro, empresa o necesidad',
-    'Search for a member, company, or need',
-    lang
-  );
+  const searchEyebrow = t('network.search.eyebrow');
+  const searchAria = t('network.search.memberCompanyNeedAria');
 
   return (
     <aside className={cn('network-sidebar', className)}>
