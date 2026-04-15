@@ -25,6 +25,7 @@ import { useTimePeriod } from '@/contexts/TimePeriodContext';
 import ProfileCompletionGauge from '@/components/dashboard/ProfileCompletionGauge';
 import InscriptionAreaChart from '@/components/dashboard/InscriptionAreaChart';
 import { getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/passionConfig';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import PassionsCrossHeatmap, { type CrossPick } from '@/components/dashboard/PassionsCrossHeatmap';
 import TopActiveMembersTable from '@/components/dashboard/TopActiveMembersTable';
 
@@ -682,7 +683,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                       ) : (
                         attentionConversion.topViewed.map((r) => (
                           <li key={r.id} className="admin-mini-table__row">
-                            <span className="admin-mini-table__name">{r.name}</span>
+                            <span className="admin-mini-table__name">{formatPersonName(r.name)}</span>
                             <span className="admin-mini-table__metric">{r.views} vues</span>
                           </li>
                         ))
@@ -697,7 +698,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                       ) : (
                         attentionConversion.topContacted.map((r) => (
                           <li key={r.id} className="admin-mini-table__row">
-                            <span className="admin-mini-table__name">{r.name}</span>
+                            <span className="admin-mini-table__name">{formatPersonName(r.name)}</span>
                             <span className="admin-mini-table__metric">{r.clicks} clics</span>
                           </li>
                         ))
@@ -750,7 +751,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                       ) : (
                         relationshipPotential.memberScores.map((m) => (
                           <li key={m.id} className="admin-mini-table__row">
-                            <span className="admin-mini-table__name">{String(m.nom ?? '').trim()}</span>
+                            <span className="admin-mini-table__name">{formatPersonName(String(m.nom ?? '').trim())}</span>
                             <span className="admin-mini-table__metric">{m.score} matchs</span>
                           </li>
                         ))
