@@ -167,7 +167,7 @@ function ChartCard({
 }
 
 type AdminInsightTab = 'overview' | 'profiles' | 'site' | 'events';
-type AffinityViewKey = 'top' | 'matrix' | 'insights' | 'table';
+type AffinityExploreKey = 'detail' | 'matrix';
 
 export default function AdminDashboard({ lang, t, initialTab }: AdminDashboardProps) {
   return <AdminDashboardInner lang={lang} t={t} initialTab={initialTab} />;
@@ -216,7 +216,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
   const loadingLabel = lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
   const [pickedCross, setPickedCross] = useState<CrossPick | null>(null);
   const [crossDimension, setCrossDimension] = useState<'sector' | 'poste' | 'industrie'>('sector');
-  const [affinityView, setAffinityView] = useState<AffinityViewKey>('top');
+  const [affinityExplore, setAffinityExplore] = useState<AffinityExploreKey>('detail');
   const bySectorData = useMemo(
     () => Object.entries(stats.profilesBySector).map(([name, value]) => ({ name, value })),
     [stats.profilesBySector]
@@ -310,7 +310,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     return rows;
   }, [stats.profilesForDashboard, lang]);
 
-  const affinityTop = useMemo(() => affinityRows.slice(0, 10), [affinityRows]);
+  const affinityTop3 = useMemo(() => affinityRows.slice(0, 3), [affinityRows]);
   const affinityInsights = useMemo(() => {
     if (affinityRows.length === 0) return null;
     const byPassion = new Map<string, number>();
@@ -334,6 +334,14 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       strongest,
     };
   }, [affinityRows, lang]);
+
+  function activationSuggestion(row: { members: number; passionId: string; sector: string }, rankIndex: number): string {
+    // Keep it deterministic and sparse; avoid repeating "dîner" everywhere.
+    if (row.members >= 6) return 'Afterwork transversal (gros potentiel)';
+    if (row.members >= 4) return 'Rencontres ciblées (petit groupe)';
+    if (row.members >= 2) return rankIndex === 0 ? 'Mise en relation éditoriale' : 'Intro 1:1 (test rapide)';
+    return 'Signal faible — à surveiller';
+  }
 
   // STEP 1 (today): focus on a clean decision-oriented overview. Keep other tabs intact for later.
   useEffect(() => {
@@ -450,202 +458,187 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
             <article className="admin-chart-card admin-chart-card--affinity">
               <p className="admin-chart-card__title">Affinités relationnelles du réseau</p>
               <p className="admin-chart-card__subtitle">
-                Identifie les centres d’intérêt transverses qui facilitent les connexions, les dîners thématiques et les formats d’événements ciblés.
+                Repère les terrains d’intérêt commun les plus utiles pour animer la communauté et accélérer les mises en relation.
               </p>
 
-              <div className="admin-affinity-tabs" role="tablist" aria-label="Vues affinités">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={affinityView === 'top'}
-                  className={affinityView === 'top' ? 'admin-affinity-tab is-active' : 'admin-affinity-tab'}
-                  onClick={() => setAffinityView('top')}
-                >
-                  Top affinités
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={affinityView === 'matrix'}
-                  className={affinityView === 'matrix' ? 'admin-affinity-tab is-active' : 'admin-affinity-tab'}
-                  onClick={() => setAffinityView('matrix')}
-                >
-                  Matrice
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={affinityView === 'insights'}
-                  className={affinityView === 'insights' ? 'admin-affinity-tab is-active' : 'admin-affinity-tab'}
-                  onClick={() => setAffinityView('insights')}
-                >
-                  Insights
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={affinityView === 'table'}
-                  className={affinityView === 'table' ? 'admin-affinity-tab is-active' : 'admin-affinity-tab'}
-                  onClick={() => setAffinityView('table')}
-                >
-                  Tableau
-                </button>
-              </div>
-
               <div className="admin-chart-card__body">
-                {affinityView === 'top' ? (
-                  <div className="admin-affinity-top">
-                    <p className="admin-affinity-hint">Les combinaisons les plus prometteuses pour animer la communauté.</p>
-                    <div className="admin-affinity-ranked">
-                      {affinityTop.length === 0 ? (
-                        <p className="text-sm text-slate-600">Pas encore assez de données pour classer les affinités.</p>
-                      ) : (
-                        affinityTop.map((r, idx) => (
-                          <div key={`${r.passionId}||${r.sector}`} className="admin-affinity-row">
-                            <div className="admin-affinity-row__main">
-                              <p className="admin-affinity-row__title">
-                                <span className="admin-affinity-rank">{idx + 1}</span>
-                                <span className="truncate">{r.passionLabel}</span>
-                                <span className="admin-affinity-sep">×</span>
-                                <span className="truncate">{r.sector}</span>
-                              </p>
-                              <p className="admin-affinity-row__meta">
-                                {r.members} membre(s) · usage suggéré : <strong>{r.actionType}</strong>
-                              </p>
-                            </div>
+                {/* LAYER A — Executive summary */}
+                <div className="admin-affinity-summary">
+                  {affinityInsights ? (
+                    <div className="admin-affinity-summary-grid">
+                      <div className="admin-mini-kpi">
+                        <p className="admin-mini-kpi__label">Passion la plus fédératrice</p>
+                        <p className="admin-mini-kpi__value">{affinityInsights.topPassionLabel}</p>
+                        <p className="admin-mini-kpi__meta">{affinityInsights.topPassionScore} occurrences (approx.)</p>
+                      </div>
+                      <div className="admin-mini-kpi">
+                        <p className="admin-mini-kpi__label">Secteur le plus affinitaire</p>
+                        <p className="admin-mini-kpi__value">{affinityInsights.topSector}</p>
+                        <p className="admin-mini-kpi__meta">{affinityInsights.topSectorScore} occurrences (approx.)</p>
+                      </div>
+                      <div className="admin-mini-kpi">
+                        <p className="admin-mini-kpi__label">Croisement le plus fort</p>
+                        <p className="admin-mini-kpi__value">
+                          {affinityInsights.strongest.passionLabel} × {affinityInsights.strongest.sector}
+                        </p>
+                        <p className="admin-mini-kpi__meta">{affinityInsights.strongest.members} membre(s)</p>
+                      </div>
+                      <div className="admin-mini-kpi">
+                        <p className="admin-mini-kpi__label">Format recommandé</p>
+                        <p className="admin-mini-kpi__value">
+                          {activationSuggestion(affinityInsights.strongest, 0)}
+                        </p>
+                        <p className="admin-mini-kpi__meta">Suggestion indicative (données actuelles)</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-600">Pas encore assez de données pour résumer les affinités.</p>
+                  )}
+                </div>
+
+                {/* LAYER B — Top 3 activable affinities */}
+                <div className="admin-affinity-top3">
+                  <div className="admin-affinity-top3-grid">
+                    {affinityTop3.length === 0 ? (
+                      <p className="text-sm text-slate-600">—</p>
+                    ) : (
+                      affinityTop3.map((r, idx) => (
+                        <div key={`${r.passionId}||${r.sector}`} className="admin-affinity-card">
+                          <p className="admin-affinity-card__title">
+                            <span className="truncate">{r.passionLabel}</span>
+                            <span className="admin-affinity-sep">×</span>
+                            <span className="truncate">{r.sector}</span>
+                          </p>
+                          <p className="admin-affinity-card__meta">{r.members} membre(s)</p>
+                          <p className="admin-affinity-card__suggestion">{activationSuggestion(r, idx)}</p>
+                          <div className="admin-affinity-card__actions">
                             <button
                               type="button"
-                              className="admin-affinity-cta"
+                              className="admin-affinity-action"
                               onClick={() => setPickedCross({ passionId: r.passionId, dimValue: r.sector, dimension: 'sector' })}
                             >
-                              Voir membres
+                              Voir les membres
                             </button>
                           </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-
-                {affinityView === 'matrix' ? (
-                  <>
-                    <div className="admin-matrix-toolbar">
-                      <p className="admin-matrix-caption">
-                        Cliquez une case pour identifier les membres associés à une combinaison d’intérêt.
-                      </p>
-                      <label>
-                        <span className="sr-only">Vue de la matrice</span>
-                        <select
-                          className="admin-matrix-filter"
-                          value={crossDimension}
-                          onChange={(e) => setCrossDimension(e.target.value as any)}
-                        >
-                          <option value="sector">Vue : secteur</option>
-                          <option value="poste">Vue : fonction</option>
-                          <option value="industrie">Vue : industrie</option>
-                        </select>
-                      </label>
-                    </div>
-                    <div className="admin-chart-frame">
-                      <MiniErrorBoundary label="PassionsCrossHeatmap">
-                        <PassionsCrossHeatmap
-                          members={stats.profilesForDashboard.map((m) => ({
-                            id: m.id,
-                            secteur: m.secteur,
-                            positionCategory: (m as any).positionCategory,
-                            activityCategory: (m as any).activityCategory,
-                            passionIds: (m as any).passionIds,
-                          }))}
-                          lang={lang}
-                          embedded
-                          showHeader={false}
-                          dimension={crossDimension as any}
-                          onDimensionChange={(next) => setCrossDimension(next as any)}
-                          onPickCell={(pick) => setPickedCross(pick)}
-                        />
-                      </MiniErrorBoundary>
-                    </div>
-                    <div className="admin-insight">
-                      <strong>Lecture rapide :</strong> la matrice sert à explorer la distribution des signaux. Pour une lecture immédiate et actionnable, utilisez “Top affinités”.
-                    </div>
-                  </>
-                ) : null}
-
-                {affinityView === 'insights' ? (
-                  <div className="admin-affinity-insights">
-                    {affinityInsights ? (
-                      <div className="admin-insight-grid">
-                        <div className="admin-insight-card">
-                          <p className="admin-insight-card__label">Passion la plus fédératrice</p>
-                          <p className="admin-insight-card__value">{affinityInsights.topPassionLabel}</p>
-                          <p className="admin-insight-card__meta">{affinityInsights.topPassionScore} occurrences (approx.)</p>
                         </div>
-                        <div className="admin-insight-card">
-                          <p className="admin-insight-card__label">Secteur le plus affinitaire</p>
-                          <p className="admin-insight-card__value">{affinityInsights.topSector}</p>
-                          <p className="admin-insight-card__meta">{affinityInsights.topSectorScore} occurrences (approx.)</p>
-                        </div>
-                        <div className="admin-insight-card">
-                          <p className="admin-insight-card__label">Croisement le plus fort</p>
-                          <p className="admin-insight-card__value">
-                            {affinityInsights.strongest.passionLabel} × {affinityInsights.strongest.sector}
-                          </p>
-                          <p className="admin-insight-card__meta">
-                            {affinityInsights.strongest.members} membre(s) · idée : <strong>{affinityInsights.strongest.actionType}</strong>
-                          </p>
-                        </div>
-                        <div className="admin-insight-card">
-                          <p className="admin-insight-card__label">Activation suggérée</p>
-                          <p className="admin-insight-card__value">Dîner thématique ciblé</p>
-                          <p className="admin-insight-card__meta">Test rapide: inviter 8–12 membres du top croisement.</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-slate-600">Pas encore assez de données pour produire des insights fiables.</p>
+                      ))
                     )}
                   </div>
-                ) : null}
+                </div>
 
-                {affinityView === 'table' ? (
-                  <div className="admin-affinity-table">
-                    <div className="admin-table-wrap">
-                      <table className="admin-table">
-                        <thead>
-                          <tr>
-                            <th>Passion</th>
-                            <th>Secteur</th>
-                            <th>Membres</th>
-                            <th>Usage suggéré</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {affinityRows.length === 0 ? (
-                            <tr>
-                              <td colSpan={4}>—</td>
-                            </tr>
-                          ) : (
-                            affinityRows.slice(0, 20).map((r) => (
-                              <tr key={`${r.passionId}||${r.sector}`}>
-                                <td>{r.passionLabel}</td>
-                                <td>{r.sector}</td>
-                                <td className="tabular-nums">{r.members}</td>
-                                <td>
-                                  <button
-                                    type="button"
-                                    className="admin-affinity-link"
-                                    onClick={() => setPickedCross({ passionId: r.passionId, dimValue: r.sector, dimension: 'sector' })}
-                                  >
-                                    {r.actionType} · voir
-                                  </button>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
+                {/* LAYER C — Secondary exploration (lower priority, collapsed by default) */}
+                <details className="admin-affinity-explore">
+                  <summary className="admin-affinity-explore__summary">
+                    Exploration (détail & matrice)
+                  </summary>
+
+                  <div className="admin-affinity-explore__body">
+                    <div className="admin-affinity-subtabs" role="tablist" aria-label="Exploration affinités">
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={affinityExplore === 'detail'}
+                        className={affinityExplore === 'detail' ? 'admin-affinity-subtab is-active' : 'admin-affinity-subtab'}
+                        onClick={() => setAffinityExplore('detail')}
+                      >
+                        Détail
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={affinityExplore === 'matrix'}
+                        className={affinityExplore === 'matrix' ? 'admin-affinity-subtab is-active' : 'admin-affinity-subtab'}
+                        onClick={() => setAffinityExplore('matrix')}
+                      >
+                        Matrice
+                      </button>
                     </div>
+
+                    {affinityExplore === 'detail' ? (
+                      <div className="admin-affinity-detail">
+                        <div className="admin-table-wrap">
+                          <table className="admin-table">
+                            <thead>
+                              <tr>
+                                <th>Passion</th>
+                                <th>Secteur</th>
+                                <th>Membres</th>
+                                <th>Action possible</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {affinityRows.length === 0 ? (
+                                <tr>
+                                  <td colSpan={4}>—</td>
+                                </tr>
+                              ) : (
+                                affinityRows.slice(0, 12).map((r, idx) => (
+                                  <tr key={`${r.passionId}||${r.sector}`}>
+                                    <td>{r.passionLabel}</td>
+                                    <td>{r.sector}</td>
+                                    <td className="tabular-nums">{r.members}</td>
+                                    <td>
+                                      <button
+                                        type="button"
+                                        className="admin-affinity-link"
+                                        onClick={() =>
+                                          setPickedCross({ passionId: r.passionId, dimValue: r.sector, dimension: 'sector' })
+                                        }
+                                      >
+                                        Explorer
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {affinityExplore === 'matrix' ? (
+                      <div className="admin-affinity-matrix">
+                        <div className="admin-matrix-toolbar">
+                          <p className="admin-matrix-caption">
+                            Vue exploratoire — utile pour voir la distribution globale des signaux.
+                          </p>
+                          <label>
+                            <span className="sr-only">Vue de la matrice</span>
+                            <select
+                              className="admin-matrix-filter"
+                              value={crossDimension}
+                              onChange={(e) => setCrossDimension(e.target.value as any)}
+                            >
+                              <option value="sector">Vue : secteur</option>
+                              <option value="poste">Vue : fonction</option>
+                              <option value="industrie">Vue : industrie</option>
+                            </select>
+                          </label>
+                        </div>
+                        <div className="admin-chart-frame">
+                          <MiniErrorBoundary label="PassionsCrossHeatmap">
+                            <PassionsCrossHeatmap
+                              members={stats.profilesForDashboard.map((m) => ({
+                                id: m.id,
+                                secteur: m.secteur,
+                                positionCategory: (m as any).positionCategory,
+                                activityCategory: (m as any).activityCategory,
+                                passionIds: (m as any).passionIds,
+                              }))}
+                              lang={lang}
+                              embedded
+                              showHeader={false}
+                              dimension={crossDimension as any}
+                              onDimensionChange={(next) => setCrossDimension(next as any)}
+                              onPickCell={(pick) => setPickedCross(pick)}
+                            />
+                          </MiniErrorBoundary>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
+                </details>
               </div>
             </article>
           </div>

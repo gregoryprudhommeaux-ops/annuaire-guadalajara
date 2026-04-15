@@ -3,25 +3,15 @@ import type { Language } from '@/types';
 import { calculateEngagementScore, type MemberWithStats } from '@/components/dashboard/EngagementLeaderboard';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
 
-function activeMemberKey(m: { id?: string; nom?: string; entreprise?: string }): string {
-  // Prefer a display-level dedupe key (name + company) to avoid showing duplicates
-  // when the same real-world person exists under multiple backend IDs.
-  const name = formatPersonName(m.nom).trim().toLowerCase();
-  const company = String(m.entreprise ?? '').trim().toLowerCase();
-  if (name && company) return `name_company:${name}|${company}`;
-  if (name) return `name:${name}`;
-  const id = String(m.id ?? '').trim();
-  return id ? `id:${id}` : 'unknown';
-}
-
-function dedupeActiveMembers<T extends { id: string; score: number; nom?: string; entreprise?: string }>(members: T[]): T[] {
-  const byKey = new Map<string, T>();
+function dedupeActiveMembersById<T extends { id: string; score: number }>(members: T[]): T[] {
+  const byId = new Map<string, T>();
   for (const m of members) {
-    const key = activeMemberKey(m);
-    const existing = byKey.get(key);
-    if (!existing || m.score > existing.score) byKey.set(key, m);
+    const id = String(m.id ?? '').trim();
+    if (!id) continue;
+    const existing = byId.get(id);
+    if (!existing || m.score > existing.score) byId.set(id, m);
   }
-  return Array.from(byKey.values());
+  return Array.from(byId.values());
 }
 
 function badgeClass(secteur?: string) {
@@ -54,7 +44,7 @@ export default function TopActiveMembersTable({
 }) {
   const rows = useMemo(() => {
     const list = (members ?? []).map((m) => ({ ...m, score: calculateEngagementScore(m) }));
-    const deduped = dedupeActiveMembers(list);
+    const deduped = dedupeActiveMembersById(list);
     deduped.sort((a, b) => b.score - a.score);
     return deduped.slice(0, 8);
   }, [members]);
@@ -91,7 +81,7 @@ export default function TopActiveMembersTable({
           </thead>
           <tbody className="divide-y divide-stone-100">
             {rows.map((m) => (
-              <tr key={activeMemberKey(m)} className="hover:bg-stone-50">
+              <tr key={m.id} className="hover:bg-stone-50">
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2.5">
                     <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-blue-50 text-blue-700">
@@ -117,7 +107,7 @@ export default function TopActiveMembersTable({
                 </td>
                 <td className="px-3 py-2">
                   <p className="max-w-[240px] truncate text-sm font-semibold text-stone-800" title={m.entreprise ?? '—'}>
-                    {m.entreprise ?? '—'}
+                    {String(m.entreprise ?? '').trim() || '—'}
                   </p>
                 </td>
                 <td className="px-3 py-2">
