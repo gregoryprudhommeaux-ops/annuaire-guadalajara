@@ -33,11 +33,11 @@ function compactLabel(label: string, max = 14): string {
 }
 
 const chartTheme = {
-  text: { fill: '#57534e', fontSize: 11 },
+  text: { fill: '#57534e', fontSize: 12 },
   grid: { line: { stroke: '#e7e5e4' } },
   axis: {
-    ticks: { text: { fill: '#78716c', fontSize: 10 } },
-    legend: { text: { fill: '#44403c', fontSize: 11 } },
+    ticks: { text: { fill: '#78716c', fontSize: 12 } },
+    legend: { text: { fill: '#44403c', fontSize: 12 } },
   },
 };
 
@@ -150,7 +150,9 @@ export default function PassionsCrossHeatmap({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-sm font-semibold text-stone-900">Croisement passions × {dimLabel}</h3>
-          <p className="mt-1 text-xs text-stone-500">Top 10 passions et top 10 valeurs</p>
+          <p className="mt-1 text-xs text-stone-500">
+            Top 10 passions et top 10 {dimLabel.toLowerCase()}. Plus la couleur est foncée, plus la combinaison est fréquente.
+          </p>
         </div>
         <select
           value={dimension}

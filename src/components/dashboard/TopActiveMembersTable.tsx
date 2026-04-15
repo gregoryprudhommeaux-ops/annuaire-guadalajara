@@ -1,6 +1,16 @@
 import React, { useMemo } from 'react';
 import type { Language } from '@/types';
 import { calculateEngagementScore, type MemberWithStats } from '@/components/dashboard/EngagementLeaderboard';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
+
+function dedupeActiveMembers<T extends { id: string; score: number }>(members: T[]): T[] {
+  const byId = new Map<string, T>();
+  for (const m of members) {
+    const existing = byId.get(m.id);
+    if (!existing || m.score > existing.score) byId.set(m.id, m);
+  }
+  return Array.from(byId.values());
+}
 
 function badgeClass(secteur?: string) {
   const s = String(secteur ?? '').toLowerCase();
@@ -32,8 +42,9 @@ export default function TopActiveMembersTable({
 }) {
   const rows = useMemo(() => {
     const list = (members ?? []).map((m) => ({ ...m, score: calculateEngagementScore(m) }));
-    list.sort((a, b) => b.score - a.score);
-    return list.slice(0, 8);
+    const deduped = dedupeActiveMembers(list);
+    deduped.sort((a, b) => b.score - a.score);
+    return deduped.slice(0, 8);
   }, [members]);
 
   if ((members?.length ?? 0) < 2) {
@@ -85,7 +96,9 @@ export default function TopActiveMembersTable({
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-stone-900">{m.nom}</p>
+                      <p className="truncate text-sm font-semibold text-stone-900">
+                        {formatPersonName(m.nom)}
+                      </p>
                       <p className="truncate text-xs text-stone-500">{m.entreprise ?? '—'}</p>
                     </div>
                   </div>
