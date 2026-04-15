@@ -227,6 +227,7 @@ import { ProfileFieldHint } from '@/features/profile/components/ProfileFieldHint
 import { PROFILE_FIELD_LABELS } from '@/features/profile/utils/profileFieldLabels';
 import { PROFILE_FIELD_HELP } from '@/features/profile/utils/profileFieldHelp';
 import { ProfileEditFormPatchStyles } from '@/features/profile/ProfileEditFormPatchStyles';
+import '@/features/profile/profile-detail.css';
 import {
   ProfileEditorialMemberBioField,
   ProfileEditorialNetworkGoalField,
@@ -1289,9 +1290,6 @@ const ProfilePage = () => {
   const { profileId } = useParams();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [recs, setRecs] = useState<Recommendation[]>([]);
-  const [showRecModal, setShowRecModal] = useState(false);
-  const [recText, setRecText] = useState('');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentProfile, setCurrentProfile] = useState<UserProfile | null>(null);
   const navigate = useNavigate();
@@ -1325,12 +1323,6 @@ const ProfilePage = () => {
       }
     };
     fetchProfile();
-
-    const q = query(collection(db, 'recommendations'), where('profileId', '==', profileId), orderBy('createdAt', 'desc'));
-    const unsubRecs = onSnapshot(q, (snapshot) => {
-      setRecs(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Recommendation)));
-    });
-    return unsubRecs;
   }, [profileId]);
 
   const handleShare = () => {
@@ -1343,23 +1335,6 @@ const ProfilePage = () => {
     }
   };
 
-  const handleAddRec = async () => {
-    if (!currentUser || !currentProfile || !profileId || !recText.trim()) return;
-    try {
-      await addDoc(collection(db, 'recommendations'), {
-        authorId: currentUser.uid,
-        authorName: currentProfile.fullName,
-        authorPhoto: currentProfile.photoURL || '',
-        profileId,
-        text: recText.substring(0, 200),
-        createdAt: Date.now()
-      });
-      setRecText('');
-      setShowRecModal(false);
-    } catch (error) {
-      console.error('Error adding recommendation:', error);
-    }
-  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-stone-50"><RefreshCw className="animate-spin text-indigo-600" /></div>;
   if (!profile) return <div className="min-h-screen flex items-center justify-center bg-stone-50">{t('profileNotFound')}</div>;
@@ -1406,11 +1381,10 @@ const ProfilePage = () => {
     );
   }
 
-  const hasAlreadyRecommended = recs.some(r => r.authorId === currentUser?.uid);
   const tp = t;
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-20">
+    <div className="profile-detail-page min-h-screen bg-stone-50 pb-20">
       <Helmet>
         <title>{profile.fullName} | Community Hub</title>
         <meta property="og:title" content={`Profil de ${profile.fullName}`} />
@@ -1429,291 +1403,280 @@ const ProfilePage = () => {
         {profile.photoURL && <meta property="og:image" content={profile.photoURL} />}
       </Helmet>
 
-      <div className="mx-auto max-w-4xl px-4 pt-8 sm:px-6 lg:px-8">
-        <button onClick={() => navigate('/')} className="mb-6 flex items-center gap-2 text-stone-500 hover:text-stone-900 font-bold transition-colors">
+      <div className="profile-detail-shell">
+        <button
+          onClick={() => navigate('/')}
+          className="mb-6 flex items-center gap-2 font-bold text-stone-500 transition-colors hover:text-stone-900"
+        >
           <ArrowLeft size={20} />
           {pickLang("Retour à l'accueil", 'Volver al inicio', 'Back to home', lang)}
         </button>
 
-        <div className="bg-white rounded-[2.5rem] shadow-xl border border-stone-200 overflow-hidden">
-          <div className="h-48 bg-gradient-to-r from-indigo-600 to-violet-600 relative">
-            <div className="absolute -bottom-16 left-4 p-2 bg-white rounded-3xl shadow-lg sm:left-8">
-              <div className="h-32 w-32 overflow-hidden rounded-2xl border-4 border-white bg-stone-100">
-                <ProfileAvatar
-                  photoURL={profile.photoURL}
-                  fullName={profile.fullName}
-                  className="h-full w-full"
-                  initialsClassName="text-2xl font-bold text-stone-400 sm:text-3xl"
-                  iconSize={48}
-                />
-              </div>
-            </div>
-            <button 
-              onClick={handleShare}
-              className="absolute right-4 top-4 rounded-2xl border border-white/30 bg-white/20 p-3 text-white shadow-lg backdrop-blur-md transition-all hover:bg-white/30 sm:right-6 sm:top-6"
-            >
-              <Share2 size={20} />
-            </button>
-          </div>
+        <div className="profile-detail-grid">
+          <main className="profile-main">
+            <header className="profile-hero">
+              <div className="profile-hero__top">
+                <div className="profile-hero__identity">
+                  <div className="profile-hero__avatar">
+                    <ProfileAvatar
+                      photoURL={profile.photoURL}
+                      fullName={profile.fullName}
+                      className="h-full w-full"
+                      initialsClassName="text-2xl font-bold text-stone-400"
+                      iconSize={40}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <h1 className="profile-hero__name">{profile.fullName}</h1>
+                    <p className="profile-hero__company">
+                      {companyActivityNamesJoined(profile) || profile.companyName || '—'}
+                    </p>
+                    <p className="profile-hero__meta">
+                      {[profile.positionCategory ? workFunctionLabel(profile.positionCategory, lang) : '', profile.city]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                    {(() => {
+                      const cats = profileDistinctActivityCategories(profile);
+                      const first = cats[0];
+                      return first ? (
+                        <span className="profile-hero__sector">{activityCategoryLabel(first, lang)}</span>
+                      ) : null;
+                    })()}
+                  </div>
+                </div>
 
-          <div className="px-4 pb-8 pt-20 sm:px-6 sm:pb-10 md:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="md:col-span-2 space-y-8">
-                {currentProfile?.role === 'admin' ? (
-                  <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    <span className="font-semibold text-slate-900">{t('adminLastSeenLabel')}</span>
-                    {': '}
-                    {formatProfileLastSeen(profile.lastSeen, lang) ?? t('adminLastSeenUnknown')}
-                  </p>
+                <div className="profile-hero__actions">
+                  <a
+                    className="profile-action profile-action--ghost"
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleShare();
+                    }}
+                  >
+                    {pickLang('Partager', 'Compartir', 'Share', lang)}
+                  </a>
+                  {profile.email && (profile.isEmailPublic || (currentUser && currentProfile?.isValidated)) ? (
+                    <a
+                      className="profile-action profile-action--secondary"
+                      href={`mailto:${profile.email}`}
+                    >
+                      {t('cardContactByEmail')}
+                    </a>
+                  ) : null}
+                  {profile.whatsapp && (profile.isWhatsappPublic || (currentUser && currentProfile?.isValidated)) ? (
+                    <a
+                      className="profile-action profile-action--primary"
+                      href={`https://wa.me/${profile.whatsapp.replace(/\\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t('cardContactByWhatsapp')}
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+            </header>
+
+            {currentProfile?.role === 'admin' ? (
+              <div className="profile-card profile-card--soft profile-card--full">
+                <p className="profile-card__text">
+                  <span className="font-semibold text-slate-900">{t('adminLastSeenLabel')}</span>
+                  {': '}
+                  {formatProfileLastSeen(profile.lastSeen, lang) ?? t('adminLastSeenUnknown')}
+                </p>
+              </div>
+            ) : null}
+
+            <div className="profile-main-grid">
+              {profile.networkGoal?.trim() ? (
+                <section className="profile-card">
+                  <p className="profile-card__label">{t('profileNetworkGoalLabel')}</p>
+                  <p className="profile-card__text">{profile.networkGoal}</p>
+                </section>
+              ) : (
+                <section className="profile-card profile-card--soft">
+                  <p className="profile-card__label">{t('profileNetworkGoalLabel')}</p>
+                  <p className="profile-card__text">{pickLang('—', '—', '—', lang)}</p>
+                </section>
+              )}
+
+              <section className="profile-card">
+                <p className="profile-card__label">{t('profilePublicCurrentNeeds')}</p>
+                <div className="profile-chip-list">
+                  {sanitizeHighlightedNeeds(profile.highlightedNeeds).length > 0 ? (
+                    sanitizeHighlightedNeeds(profile.highlightedNeeds).map((id) => (
+                      <span key={id} className="profile-chip">
+                        {needOptionLabel(id, lang)}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="profile-chip">{pickLang('—', '—', '—', lang)}</span>
+                  )}
+                </div>
+                {sanitizeHighlightedNeeds(profile.highlightedNeeds).length > 0 ? (
+                  <a className="profile-link-inline" href={`/besoin/${encodeURIComponent(profile.uid)}`}>
+                    {pickLang('Voir le besoin', 'Ver la necesidad', 'View need', lang)} <ChevronRight size={16} />
+                  </a>
                 ) : null}
-                <MemberPublicProfile
-                  profile={profile}
-                  lang={lang}
+              </section>
+            </div>
+
+            <div className="profile-section-stack">
+              {profile.helpNewcomers?.trim() ? (
+                <section className="profile-card profile-card--full">
+                  <p className="profile-card__label">{t('profileHelpNewcomersLabel')}</p>
+                  <div className="profile-richtext">
+                    <p className="profile-card__text whitespace-pre-wrap">{profile.helpNewcomers}</p>
+                  </div>
+                </section>
+              ) : null}
+
+              {effectiveMemberBio(profile).trim() ? (
+                <section className="profile-card profile-card--full">
+                  <p className="profile-card__label">{t('memberBio')}</p>
+                  <AiTranslatedFreeText
+                    lang={lang}
+                    t={t}
+                    text={effectiveMemberBio(profile)}
+                    pretranslatedByLang={
+                      profile.memberBio?.trim() ? profile.memberBioTranslations : profile.bioTranslations
+                    }
+                    className="profile-richtext"
+                    whitespace="pre-wrap"
+                  />
+                </section>
+              ) : null}
+
+              {(() => {
+                const slots = normalizeProfileCompanyActivities(profile);
+                const blocks = slots
+                  .map((slot) => {
+                    const text = displayActivityDescriptionForSlot(slot);
+                    if (!text.trim() || !slot.companyName.trim()) return null;
+                    return { slot, text };
+                  })
+                  .filter(Boolean) as { slot: (typeof slots)[0]; text: string }[];
+                if (blocks.length === 0) return null;
+                return (
+                  <section className="profile-card profile-card--full">
+                    <p className="profile-card__label">{t('profileFormActivityDescriptionLabel')}</p>
+                    <div className="profile-list">
+                      {blocks.map(({ slot, text }) => (
+                        <div key={slot.id} className="profile-card profile-card--soft">
+                          <p className="profile-card__label">{slot.companyName.trim()}</p>
+                          <AiTranslatedFreeText
+                            lang={lang}
+                            t={t}
+                            text={text}
+                            className="profile-richtext"
+                            whitespace="pre-wrap"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                );
+              })()}
+
+              {profile.pitchVideoUrl ? (
+                <section className="profile-card profile-card--full">
+                  <p className="profile-card__label">
+                    {pickLang('Pitch vidéo', 'Video pitch', 'Video pitch', lang)}
+                  </p>
+                  <div className="aspect-video overflow-hidden rounded-[18px] border border-slate-200 bg-stone-900">
+                    <video
+                      src={profile.pitchVideoUrl}
+                      controls
+                      className="h-full w-full object-contain"
+                      onPlay={(e) => {
+                        const v = e.target as HTMLVideoElement;
+                        if (v.duration > 60) {
+                          window.setTimeout(() => {
+                            v.pause();
+                            alert(
+                              pickLang(
+                                'Le pitch est limité à 60 secondes.',
+                                'El pitch está limitado a 60 segundos.',
+                                'The pitch is limited to 60 seconds.',
+                                lang
+                              )
+                            );
+                          }, 60000);
+                        }
+                      }}
+                    />
+                  </div>
+                </section>
+              ) : null}
+            </div>
+          </main>
+
+          <aside className="profile-side">
+            <section className="profile-side-card">
+              <h2 className="profile-side-card__title">{tp('details')}</h2>
+              <div className="profile-detail-items">
+                <div className="profile-detail-item">
+                  <div className="profile-detail-item__label">{tp('activityCategory')}</div>
+                  <div className="profile-detail-item__value">
+                    {(() => {
+                      const cats = profileDistinctActivityCategories(profile);
+                      return cats.length ? activityCategoryLabel(cats[0], lang) : '—';
+                    })()}
+                  </div>
+                </div>
+                <div className="profile-detail-item">
+                  <div className="profile-detail-item__label">
+                    {pickLang('Taille', 'Tamaño', 'Size', lang)}
+                  </div>
+                  <div className="profile-detail-item__value">
+                    {profile.companySize ? `${profile.companySize} ${pickLang('employés', 'empleados', 'employees', lang)}` : '—'}
+                  </div>
+                </div>
+                <div className="profile-detail-item">
+                  <div className="profile-detail-item__label">{pickLang('Ville', 'Ciudad', 'City', lang)}</div>
+                  <div className="profile-detail-item__value">{profile.city?.trim() || '—'}</div>
+                </div>
+              </div>
+            </section>
+
+            <section className="profile-side-card">
+              <h2 className="profile-side-card__title">{tp('contactLinks')}</h2>
+              <div className="profile-contact-stack">
+                <ProfileCardEmailContact
+                  email={profile.email}
+                  canView={Boolean(profile.isEmailPublic || (currentUser && currentProfile?.isValidated))}
                   t={t}
-                  canViewEmail={Boolean(
-                    profile.isEmailPublic || (currentUser && currentProfile?.isValidated)
-                  )}
-                  canViewWhatsapp={Boolean(
-                    profile.isWhatsappPublic || (currentUser && currentProfile?.isValidated)
-                  )}
-                  onViewNeed={
-                    sanitizeHighlightedNeeds(profile.highlightedNeeds).length > 0
-                      ? () => navigate(`/besoin/${profile.uid}`)
+                  trackProfile={
+                    currentUser
+                      ? {
+                          profileId: profile.uid,
+                          profileName: profile.fullName || profile.companyName || profile.uid,
+                        }
                       : undefined
                   }
                 />
-
-                {profile.pitchVideoUrl && (
-                  <section>
-                    <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">
-                      {pickLang('Pitch Vidéo', 'Video pitch', 'Video pitch', lang)}
-                    </h2>
-                    <div className="aspect-video bg-stone-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white ring-1 ring-stone-200">
-                      <video 
-                        src={profile.pitchVideoUrl} 
-                        controls 
-                        className="w-full h-full object-contain"
-                        onPlay={(e) => {
-                          const v = e.target as HTMLVideoElement;
-                          if (v.duration > 60) {
-                            setTimeout(() => {
-                              v.pause();
-                              alert(
-                                pickLang(
-                                  'Le pitch est limité à 60 secondes.',
-                                  'El pitch está limitado a 60 segundos.',
-                                  'The pitch is limited to 60 seconds.',
-                                  lang
-                                )
-                              );
-                            }, 60000);
-                          }
-                        }}
-                      />
-                    </div>
-                  </section>
-                )}
-
-                <section className="bg-stone-50 p-8 rounded-[2rem] border border-stone-200">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-stone-900 flex items-center gap-2">
-                      <Star className="text-amber-500" fill="currentColor" size={24} />
-                      {recs.length}{' '}
-                      {pickLang('Recommandations', 'Recomendaciones', 'Recommendations', lang)}
-                    </h2>
-                    {currentUser && !hasAlreadyRecommended && currentUser.uid !== profileId && (
-                      <button 
-                        onClick={() => setShowRecModal(true)}
-                        className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-                      >
-                        <Plus size={16} />
-                        {pickLang('Je recommande', 'Yo recomiendo', 'I recommend', lang)}
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="space-y-4">
-                    {recs.map(r => (
-                      <div key={r.id} className="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 bg-stone-100 rounded-xl overflow-hidden border border-stone-200">
-                            {r.authorPhoto ? (
-                              <img src={r.authorPhoto} alt={r.authorName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                            ) : (
-                              <UserIcon size={20} className="m-auto mt-2 text-stone-300" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-stone-900">{r.authorName}</p>
-                            <p className="text-[10px] text-stone-400 font-medium">
-                              {new Date(r.createdAt).toLocaleDateString(uiLocale(lang))}
-                            </p>
-                          </div>
-                        </div>
-                        <AiTranslatedFreeText
-                          lang={lang}
-                          t={t}
-                          text={r.text}
-                          className="text-stone-600 text-sm leading-relaxed italic"
-                        />
-                      </div>
-                    ))}
-                    {recs.length === 0 && (
-                      <p className="text-center text-stone-400 py-8 italic">
-                        {pickLang(
-                          'Aucune recommandation pour le moment.',
-                          'No hay recomendaciones por ahora.',
-                          'No recommendations yet.',
-                          lang
-                        )}
-                      </p>
-                    )}
-                  </div>
-                </section>
-              </div>
-
-              <div className="space-y-6">
-                {currentProfile && currentUser && currentProfile.uid !== profile.uid && (
-                  <AffinityScore
-                    viewer={currentProfile}
-                    target={profile}
-                    lang={lang}
+                {profile.whatsapp ? (
+                  <ProfileCardWhatsappContactFooter
+                    whatsapp={profile.whatsapp}
+                    canView={Boolean(profile.isWhatsappPublic || (currentUser && currentProfile?.isValidated))}
                     t={t}
-                    canRevealPrivateWhatsApp={!!currentUser}
+                    trackProfile={
+                      currentUser
+                        ? {
+                            profileId: profile.uid,
+                            profileName: profile.fullName || profile.companyName || profile.uid,
+                          }
+                        : undefined
+                    }
                   />
-                )}
-                <div className="bg-stone-50 p-6 rounded-3xl border border-stone-200">
-                  <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">{tp('details')}</h2>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-white rounded-lg shadow-sm text-indigo-600">
-                        <Activity size={18} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-stone-400 uppercase tracking-wider">{tp('activityCategory')}</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(() => {
-                            const cats = profileDistinctActivityCategories(profile);
-                            return cats.length ? (
-                              cats.map((cat) => (
-                                <span
-                                  key={cat}
-                                  className="inline-block rounded-lg bg-white px-2 py-1 text-sm font-bold text-stone-900 shadow-sm"
-                                >
-                                  {activityCategoryLabel(cat, lang)}
-                                </span>
-                              ))
-                            ) : (
-                              <p className="text-sm font-bold text-stone-900">—</p>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-white rounded-lg shadow-sm text-indigo-600">
-                        <Users size={18} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-stone-400 uppercase tracking-wider">Taille</p>
-                        <p className="text-sm font-bold text-stone-900">{profile.companySize} employés</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-white rounded-lg shadow-sm text-indigo-600">
-                        <MapPin size={18} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-stone-400 uppercase tracking-wider">Ville</p>
-                        <p className="text-sm font-bold text-stone-900">{profile.city}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-stone-50 p-6 rounded-3xl border border-stone-200">
-                  <h2 className="text-xs font-black text-stone-400 uppercase tracking-[0.2em] mb-4">{tp('contactLinks')}</h2>
-                  <div className="space-y-2">
-                    <ProfileCardEmailContact
-                      email={profile.email}
-                      canView={Boolean(
-                        profile.isEmailPublic || (currentUser && currentProfile?.isValidated)
-                      )}
-                      t={t}
-                      trackProfile={
-                        currentUser
-                          ? {
-                              profileId: profile.uid,
-                              profileName: profile.fullName || profile.companyName || profile.uid,
-                            }
-                          : undefined
-                      }
-                    />
-                    {profile.whatsapp ? (
-                      <ProfileCardWhatsappContactFooter
-                        whatsapp={profile.whatsapp}
-                        canView={Boolean(
-                          profile.isWhatsappPublic || (currentUser && currentProfile?.isValidated)
-                        )}
-                        t={t}
-                        trackProfile={
-                          currentUser
-                            ? {
-                                profileId: profile.uid,
-                                profileName: profile.fullName || profile.companyName || profile.uid,
-                              }
-                            : undefined
-                        }
-                      />
-                    ) : null}
-                  </div>
-                </div>
+                ) : null}
               </div>
-            </div>
-          </div>
+            </section>
+          </aside>
         </div>
       </div>
-
-      {showRecModal && (
-        <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl"
-          >
-            <h3 className="text-xl font-bold text-stone-900 mb-4">
-              {pickLang('Recommander', 'Recomendar', 'Recommend', lang)} {profile.fullName}
-            </h3>
-            <textarea 
-              value={recText}
-              onChange={(e) => setRecText(e.target.value)}
-              maxLength={200}
-              className="w-full h-32 p-4 bg-stone-50 border border-stone-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none mb-4"
-              placeholder={pickLang(
-                'Pourquoi recommandez-vous ce membre ? (max 200 caractères)',
-                '¿Por qué recomiendas a este miembro? (máx. 200 caracteres)',
-                'Why do you recommend this member? (max 200 characters)',
-                lang
-              )}
-            />
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setShowRecModal(false)}
-                className="flex-1 py-3 bg-stone-100 text-stone-600 rounded-2xl font-bold hover:bg-stone-200 transition-all"
-              >
-                {t('cancel')}
-              </button>
-              <button 
-                onClick={handleAddRec}
-                disabled={!recText.trim()}
-                className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50"
-              >
-                {pickLang('Publier', 'Publicar', 'Publish', lang)}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
   );
 };
