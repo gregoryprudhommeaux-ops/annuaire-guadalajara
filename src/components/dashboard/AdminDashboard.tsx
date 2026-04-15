@@ -21,8 +21,7 @@ import AdminProfileInsights from '@/components/dashboard/AdminProfileInsights';
 import AdminSiteInsights from '@/components/dashboard/AdminSiteInsights';
 import AdminEvents from '@/components/dashboard/AdminEvents';
 import SectorDonutChart from '@/components/dashboard/SectorDonutChart';
-import TimePeriodFilter from '@/components/dashboard/TimePeriodFilter';
-import { TimePeriodProvider, useTimePeriod } from '@/contexts/TimePeriodContext';
+import { useTimePeriod } from '@/contexts/TimePeriodContext';
 import ProfileCompletionGauge from '@/components/dashboard/ProfileCompletionGauge';
 import InscriptionAreaChart from '@/components/dashboard/InscriptionAreaChart';
 import { getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/passionConfig';
@@ -35,6 +34,9 @@ type AdminDashboardProps = {
   lang: Language;
   t: TFn;
   initialTab?: 'overview' | 'profiles' | 'site' | 'events';
+  /** Injected from `AdminPage` for STEP 1 priority zone. */
+  priorityLeft?: React.ReactNode;
+  priorityRight?: React.ReactNode;
 };
 
 function StatCard({ label, value }: { label: string; value: number }) {
@@ -167,11 +169,7 @@ function ChartCard({
 type AdminInsightTab = 'overview' | 'profiles' | 'site' | 'events';
 
 export default function AdminDashboard({ lang, t, initialTab }: AdminDashboardProps) {
-  return (
-    <TimePeriodProvider defaultPeriod="30d">
-      <AdminDashboardInner lang={lang} t={t} initialTab={initialTab} />
-    </TimePeriodProvider>
-  );
+  return <AdminDashboardInner lang={lang} t={t} initialTab={initialTab} />;
 }
 
 class MiniErrorBoundary extends React.Component<
@@ -201,7 +199,7 @@ class MiniErrorBoundary extends React.Component<
   }
 }
 
-function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
+function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight }: AdminDashboardProps) {
   const [insightTab, setInsightTab] = useState<AdminInsightTab>('overview');
   const { period, setPeriod } = useTimePeriod();
   const [activeChart, setActiveChart] = useState<
@@ -280,114 +278,125 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
     return { title, rows };
   }, [pickedCross, stats.profilesForDashboard, lang]);
 
-  return (
-    <section className="space-y-6">
-      <TimePeriodFilter />
-      <div className="flex flex-wrap gap-2 border-b border-stone-200 pb-3">
-        {(
-          [
-            ['overview', t('adminTabOverview')],
-            ['profiles', t('adminTabProfiles')],
-            ['site', t('adminTabSite')],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setInsightTab(key)}
-            className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:text-sm ${
-              insightTab === key
-                ? 'bg-stone-900 text-white'
-                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+  // STEP 1 (today): focus on a clean decision-oriented overview. Keep other tabs intact for later.
+  useEffect(() => {
+    if (insightTab !== 'overview') setInsightTab('overview');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      {stats.loading ? <p className="text-sm text-stone-500">{loadingLabel}</p> : null}
+  return (
+    <section>
+      {stats.loading ? <p className="text-sm text-slate-500">{loadingLabel}</p> : null}
       {!stats.loading && stats.error ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
           {stats.error}
         </p>
       ) : null}
 
-      {!stats.loading && !stats.error && insightTab === 'profiles' ? (
-        <>
-          <AdminProfileInsights stats={stats} lang={lang} t={t} />
-        </>
-      ) : null}
-
-      {!stats.loading && !stats.error && insightTab === 'site' ? (
-        <>
-          <AdminSiteInsights stats={stats} lang={lang} t={t} />
-        </>
-      ) : null}
-
       {!stats.loading && !stats.error && insightTab === 'overview' ? (
         <>
-          {/* KPI (compact, aligned to HTML density) */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            <StatCard label={t('members') || 'Membres'} value={stats.totalProfiles} />
-            <StatCard label="Nouveaux inscrits" value={stats.newProfilesInPeriod} />
-            <StatCard label="Clics contact" value={stats.totalClicks} />
-            <StatCard label="Profils complets" value={stats.completedProfilesStrict} />
-            <StatCard label="En attente" value={stats.pendingReviewProfiles} />
-            <StatCard label="Vues profils" value={stats.totalProfileViewEvents} />
+          {/* B. Strategic KPI band */}
+          <div className="admin-kpi-grid">
+            <div className="admin-kpi-card">
+              <p className="admin-kpi-card__label">{t('members') || 'Membres'}</p>
+              <p className="admin-kpi-card__value">{stats.totalProfiles}</p>
+            </div>
+            <div className="admin-kpi-card">
+              <p className="admin-kpi-card__label">Nouveaux inscrits</p>
+              <p className="admin-kpi-card__value">{stats.newProfilesInPeriod}</p>
+            </div>
+            <div className="admin-kpi-card">
+              <p className="admin-kpi-card__label">Clics contact</p>
+              <p className="admin-kpi-card__value">{stats.totalClicks}</p>
+            </div>
+            <div className="admin-kpi-card">
+              <p className="admin-kpi-card__label">Profils complets</p>
+              <p className="admin-kpi-card__value">{stats.completedProfilesStrict}</p>
+            </div>
+            <div className="admin-kpi-card">
+              <p className="admin-kpi-card__label">En attente</p>
+              <p className="admin-kpi-card__value">{stats.pendingReviewProfiles}</p>
+            </div>
+            <div className="admin-kpi-card">
+              <p className="admin-kpi-card__label">Vues profils</p>
+              <p className="admin-kpi-card__value">{stats.totalProfileViewEvents}</p>
+            </div>
           </div>
 
-          {/* Row 1 — Courbe inscriptions (large) + Donut secteurs */}
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-            <div className="min-w-0 xl:col-span-3">
-              <MiniErrorBoundary label="InscriptionAreaChart">
-                <InscriptionAreaChart members={stats.profilesCreatedAt} height={316} />
-              </MiniErrorBoundary>
+          {/* C. Priority action zone */}
+          <div className="admin-priority-grid">
+            <div className="min-w-0">{priorityLeft ?? null}</div>
+            <div className="min-w-0">{priorityRight ?? null}</div>
+          </div>
+
+          {/* D. Analytics grid */}
+          <div className="admin-analytics-grid">
+            <div className="admin-stack">
+              <div className="admin-chart-card">
+                <p className="admin-chart-card__title">Évolution des inscriptions</p>
+                <p className="admin-chart-card__subtitle">Courbe basée sur les profils créés</p>
+                <div className="admin-chart-frame">
+                  <MiniErrorBoundary label="InscriptionAreaChart">
+                    <InscriptionAreaChart members={stats.profilesCreatedAt} height={320} />
+                  </MiniErrorBoundary>
+                </div>
+              </div>
+
+              <div className="admin-chart-card">
+                <p className="admin-chart-card__title">Répartition par secteur</p>
+                <p className="admin-chart-card__subtitle">Lecture rapide par univers d’activité</p>
+                <div className="admin-chart-frame admin-chart-frame--sm">
+                  <SectorDonutChart
+                    data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))}
+                    height={280}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="min-w-0 rounded-xl border border-stone-200 bg-white p-4 shadow-sm xl:col-span-2">
-              <h3 className="text-sm font-semibold text-stone-900">Répartition par secteur</h3>
-              <p className="mt-1 text-xs text-stone-500">Donut + légende</p>
-              <div className="mt-3">
-                <SectorDonutChart
-                  data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))}
-                  height={316}
-                />
+
+            <div className="admin-stack">
+              <div className="admin-chart-card">
+                <p className="admin-chart-card__title">Complétion des profils</p>
+                <p className="admin-chart-card__subtitle">Vue “strict” (nom, secteur, description, photo)</p>
+                <div className="admin-chart-frame admin-chart-frame--sm">
+                  <MiniErrorBoundary label="ProfileCompletionGauge">
+                    <ProfileCompletionGauge totalMembers={stats.totalProfiles} completedProfiles={stats.completedProfilesStrict} />
+                  </MiniErrorBoundary>
+                </div>
+              </div>
+
+              <div className="admin-chart-card">
+                <p className="admin-chart-card__title">Membres les plus actifs</p>
+                <p className="admin-chart-card__subtitle">Basé sur les clics de contact</p>
+                <div className="admin-table-wrap">
+                  <MiniErrorBoundary label="TopActiveMembersTable">
+                    <TopActiveMembersTable members={stats.profilesForDashboard as any} lang={lang} />
+                  </MiniErrorBoundary>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Row 2 — Heatmap passions croisées (full width) */}
-          <MiniErrorBoundary label="PassionsCrossHeatmap">
-            <PassionsCrossHeatmap
-              members={stats.profilesForDashboard.map((m) => ({
-                id: m.id,
-                secteur: m.secteur,
-                positionCategory: (m as any).positionCategory,
-                activityCategory: (m as any).activityCategory,
-                passionIds: (m as any).passionIds,
-              }))}
-              lang={lang}
-              onPickCell={(pick) => setPickedCross(pick)}
-            />
-          </MiniErrorBoundary>
-
-          {/* Row 3 — Completion bars + Top active members */}
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-1">
-              <MiniErrorBoundary label="ProfileCompletionGauge">
-                <ProfileCompletionGauge
-                  totalMembers={stats.totalProfiles}
-                  completedProfiles={stats.completedProfilesStrict}
-                />
-              </MiniErrorBoundary>
-            </div>
-            <div className="lg:col-span-2">
-              <MiniErrorBoundary label="TopActiveMembersTable">
-                <TopActiveMembersTable
-                  members={stats.profilesForDashboard as any}
-                  lang={lang}
-                />
-              </MiniErrorBoundary>
+          {/* E. Deep-dive */}
+          <div className="admin-bottom-section">
+            <div className="admin-chart-card">
+              <p className="admin-chart-card__title">Croisement passions × secteur</p>
+              <p className="admin-chart-card__subtitle">Cliquez une case pour lister les membres</p>
+              <div className="admin-chart-frame">
+                <MiniErrorBoundary label="PassionsCrossHeatmap">
+                  <PassionsCrossHeatmap
+                    members={stats.profilesForDashboard.map((m) => ({
+                      id: m.id,
+                      secteur: m.secteur,
+                      positionCategory: (m as any).positionCategory,
+                      activityCategory: (m as any).activityCategory,
+                      passionIds: (m as any).passionIds,
+                    }))}
+                    lang={lang}
+                    onPickCell={(pick) => setPickedCross(pick)}
+                  />
+                </MiniErrorBoundary>
+              </div>
             </div>
           </div>
 
@@ -574,10 +583,6 @@ function AdminDashboardInner({ lang, t, initialTab }: AdminDashboardProps) {
         </div>
       )}
         </>
-      ) : null}
-
-      {insightTab === 'events' ? (
-        <AdminEvents lang={lang} t={t} />
       ) : null}
     </section>
   );

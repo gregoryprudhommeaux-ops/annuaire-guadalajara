@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { collection, getDocs, orderBy, query, where, limit } from 'firebase/firestore';
 import type { Language, MemberNetworkRequest, NeedComment, UserProfile } from '@/types';
-import AdminDashboard from '@/components/dashboard/AdminDashboard';
-import { db } from '@/firebase';
 import { cn } from '@/lib/cn';
-import { pageInnerMax, pageStack } from '@/lib/pageLayout';
+import { TimePeriodProvider, useTimePeriod } from '@/contexts/TimePeriodContext';
+import { db } from '@/firebase';
 import { MEMBER_REQUESTS_COLLECTION, mapMemberRequestDoc } from '@/lib/memberRequests';
+import AdminDashboard from '@/components/dashboard/AdminDashboard';
+import '@/features/admin/admin-dashboard.css';
 
 type TFn = (key: string) => string;
 
@@ -20,6 +21,32 @@ type UnansweredNeedRow = {
   company?: string;
   needsCount: number;
 };
+
+function AdminPeriodPills() {
+  const { period, setPeriod, getPeriodLabel } = useTimePeriod();
+  const items: Array<{ key: typeof period; label: string }> = [
+    { key: 'today', label: "Aujourd'hui" },
+    { key: '7d', label: '7 jours' },
+    { key: '30d', label: '30 jours' },
+    { key: '90d', label: '90 jours' },
+    { key: 'all', label: 'Tout' },
+  ];
+  return (
+    <div className="admin-toolbar" aria-label="Période">
+      {items.map((p) => (
+        <button
+          key={p.key}
+          type="button"
+          className={cn('admin-pill', p.key === period && 'is-active')}
+          onClick={() => setPeriod(p.key)}
+        >
+          {p.label}
+        </button>
+      ))}
+      <span className="text-sm text-slate-500">{getPeriodLabel()}</span>
+    </div>
+  );
+}
 
 export default function AdminPage({ lang, t }: AdminPageProps) {
   const [recentRequests, setRecentRequests] = useState<MemberNetworkRequest[] | null>(null);
@@ -113,32 +140,37 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
   const recentRequestsUi = useMemo(() => {
     if (!recentRequests) return null;
     return (
-      <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="admin-card">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-base font-semibold text-stone-900">Demandes publiées récemment</h2>
-            <p className="mt-1 text-xs text-stone-500">Dernières {Math.min(12, recentRequests.length)} demandes.</p>
+            <h2 className="admin-card__title">Dernières demandes</h2>
+            <p className="admin-card__text">
+              Dernières {Math.min(12, recentRequests.length)} demandes publiées.
+            </p>
           </div>
-          <a
-            href="/requests"
-            className="shrink-0 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
-          >
+          <a href="/requests" className="admin-pill" style={{ textDecoration: 'none' }}>
             Ouvrir
           </a>
         </div>
-        <div className="mt-3 divide-y divide-stone-100 overflow-hidden rounded-xl border border-stone-200">
+        <div className="admin-list">
           {recentRequests.length === 0 ? (
-            <p className="px-4 py-4 text-sm text-stone-600">Aucune demande.</p>
+            <p className="text-sm text-slate-600">Aucune demande.</p>
           ) : (
             recentRequests.map((r) => (
-              <div key={r.id} className="px-4 py-3">
-                <p className="text-sm font-semibold text-stone-900 line-clamp-2">{r.text}</p>
-                <p className="mt-1 text-xs text-stone-500">
-                  {r.authorName}
-                  {r.authorCompany ? ` · ${r.authorCompany}` : ''}
-                  {r.zone ? ` · ${r.zone}` : ''}
-                </p>
-              </div>
+              <a
+                key={r.id}
+                href="/requests"
+                className="admin-list-item"
+                style={{ textDecoration: 'none' }}
+              >
+                <div className="admin-list-item__main">
+                  <p className="admin-list-item__title">{r.text}</p>
+                  <p className="admin-list-item__meta">
+                    {[r.authorName, r.authorCompany, r.zone].filter(Boolean).join(' · ')}
+                  </p>
+                </div>
+                <span className="admin-list-item__count">→</span>
+              </a>
             ))
           )}
         </div>
@@ -149,27 +181,30 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
   const unansweredNeedsUi = useMemo(() => {
     if (!unansweredNeeds) return null;
     return (
-      <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold text-stone-900">Besoins sans réponse</h2>
-            <p className="mt-1 text-xs text-stone-500">
-              {unansweredCount} profil(s) avec besoins mis en avant et 0 commentaire.
-            </p>
-          </div>
-        </div>
-        <div className="mt-3 divide-y divide-stone-100 overflow-hidden rounded-xl border border-stone-200">
+      <div className="admin-card admin-card--featured">
+        <p className="admin-card__eyebrow">PRIORITÉ</p>
+        <h2 className="admin-card__title">Besoins sans réponse</h2>
+        <p className="admin-card__text">
+          Profils avec besoins mis en avant et 0 commentaire.
+        </p>
+        <div className="admin-highlight-number">{unansweredCount}</div>
+        <div className="admin-list">
           {unansweredNeeds.length === 0 ? (
-            <p className="px-4 py-4 text-sm text-stone-600">Aucun besoin en attente.</p>
+            <p className="text-sm text-slate-600">Aucun besoin en attente.</p>
           ) : (
             unansweredNeeds.map((row) => (
-              <div key={row.uid} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-stone-900">{row.name}</p>
-                  {row.company ? <p className="truncate text-xs text-stone-500">{row.company}</p> : null}
+              <a
+                key={row.uid}
+                href={`/profil/${encodeURIComponent(row.uid)}`}
+                className="admin-list-item"
+                style={{ textDecoration: 'none' }}
+              >
+                <div className="admin-list-item__main">
+                  <p className="admin-list-item__title">{row.name}</p>
+                  {row.company ? <p className="admin-list-item__meta">{row.company}</p> : null}
                 </div>
-                <div className="shrink-0 text-xs font-semibold text-stone-700">{row.needsCount}</div>
-              </div>
+                <span className="admin-list-item__count">{row.needsCount}</span>
+              </a>
             ))
           )}
         </div>
@@ -178,35 +213,52 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
   }, [unansweredNeeds, unansweredCount]);
 
   return (
-    <div className={cn(pageInnerMax, pageStack)}>
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-stone-900">Admin</h1>
-        <p className="text-sm text-stone-600">
-          Pilotage du réseau (croissance, qualité des profils, demandes, gaps secteurs/ville, export/modération).
-        </p>
-      </div>
-
-      {loadError ? (
-        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
-          {loadError}
-        </p>
-      ) : null}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        {recentRequests ? recentRequestsUi : (
-          <div className="rounded-2xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
-            {loading}
+    <div className="admin-dashboard-page">
+      <div className="admin-shell">
+        <TimePeriodProvider defaultPeriod="30d">
+          <div className="admin-header">
+            <div className="admin-header__copy">
+              <h1 className="admin-header__title">Admin</h1>
+              <p className="admin-header__text">
+                Pilotage du réseau : croissance, qualité des profils, demandes, gaps secteurs/ville et stats d’usage.
+              </p>
+            </div>
+            <AdminPeriodPills />
           </div>
-        )}
-        {unansweredNeeds ? unansweredNeedsUi : (
-          <div className="rounded-2xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
-            {loading}
-          </div>
-        )}
-      </div>
 
-      {/* Dashboard admin existant (profils: créés/validés/incomplets, secteurs, villes, complétion, export, validation). */}
-      <AdminDashboard lang={lang} t={t} />
+          {loadError ? (
+            <p className="admin-card" style={{ borderColor: '#fcd34d', background: '#fffbeb' }}>
+              <span className="admin-card__text">{loadError}</span>
+            </p>
+          ) : null}
+
+          <AdminDashboard
+            lang={lang}
+            t={t}
+            priorityLeft={
+              unansweredNeeds ? (
+                unansweredNeedsUi
+              ) : (
+                <div className="admin-card admin-card--featured">
+                  <p className="admin-card__eyebrow">PRIORITÉ</p>
+                  <h2 className="admin-card__title">Besoins sans réponse</h2>
+                  <p className="admin-card__text">{loading}</p>
+                </div>
+              )
+            }
+            priorityRight={
+              recentRequests ? (
+                recentRequestsUi
+              ) : (
+                <div className="admin-card">
+                  <h2 className="admin-card__title">Dernières demandes</h2>
+                  <p className="admin-card__text">{loading}</p>
+                </div>
+              )
+            }
+          />
+        </TimePeriodProvider>
+      </div>
     </div>
   );
 }
