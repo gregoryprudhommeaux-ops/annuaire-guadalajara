@@ -15,6 +15,7 @@ export type CrossMember = {
 
 type DimensionKey = 'sector' | 'poste' | 'industrie';
 export type CrossPick = { passionId: string; dimValue: string; dimension: DimensionKey };
+export type CrossDimensionKey = DimensionKey;
 
 function normalizeLang(lang: Language): 'fr' | 'es' | 'en' {
   return lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr';
@@ -53,14 +54,27 @@ export default function PassionsCrossHeatmap({
   lang,
   onPickCell,
   embedded = false,
+  dimension: dimensionProp,
+  onDimensionChange,
+  showHeader = true,
 }: {
   members: CrossMember[];
   lang: Language;
   onPickCell?: (pick: CrossPick) => void;
   /** Quand rendu dans une carte parente (ex. /admin), on évite la “double carte”. */
   embedded?: boolean;
+  /** Dimension contrôlée depuis le parent (optionnel). */
+  dimension?: DimensionKey;
+  onDimensionChange?: (next: DimensionKey) => void;
+  /** Permet de masquer le header interne (titre + select) si la carte parente le gère. */
+  showHeader?: boolean;
 }) {
-  const [dimension, setDimension] = useState<DimensionKey>('sector');
+  const [dimensionState, setDimensionState] = useState<DimensionKey>('sector');
+  const dimension = dimensionProp ?? dimensionState;
+  const setDimension = (next: DimensionKey) => {
+    onDimensionChange?.(next);
+    if (dimensionProp === undefined) setDimensionState(next);
+  };
   const locale = normalizeLang(lang);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [wrapWidth, setWrapWidth] = useState<number>(0);
@@ -147,23 +161,25 @@ export default function PassionsCrossHeatmap({
 
   return (
     <section ref={wrapRef} className={rootClassName}>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-stone-900">Croisement passions × {dimLabel}</h3>
-          <p className="mt-1 text-xs text-stone-500">
-            Top 10 passions et top 10 {dimLabel.toLowerCase()}. Plus la couleur est foncée, plus la combinaison est fréquente.
-          </p>
+      {showHeader ? (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-stone-900">Croisement passions × {dimLabel}</h3>
+            <p className="mt-1 text-xs text-stone-500">
+              Top 10 passions et top 10 {dimLabel.toLowerCase()}. Plus la couleur est foncée, plus la combinaison est fréquente.
+            </p>
+          </div>
+          <select
+            value={dimension}
+            onChange={(e) => setDimension(e.target.value as DimensionKey)}
+            className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 sm:w-auto"
+          >
+            <option value="sector">Secteur</option>
+            <option value="poste">Poste</option>
+            <option value="industrie">Industrie</option>
+          </select>
         </div>
-        <select
-          value={dimension}
-          onChange={(e) => setDimension(e.target.value as DimensionKey)}
-          className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 sm:w-auto"
-        >
-          <option value="sector">Secteur</option>
-          <option value="poste">Poste</option>
-          <option value="industrie">Industrie</option>
-        </select>
-      </div>
+      ) : null}
 
       {!computed.hasAny ? (
         <div className="mt-3 rounded-lg border border-stone-200 bg-stone-50 px-3 py-10 text-center text-sm text-stone-600">
@@ -193,6 +209,7 @@ export default function PassionsCrossHeatmap({
                   // Nivo positions tooltips near cursor; for the first row,
                   // we push it further down to avoid clipping at the top edge.
                   const tooltipOffsetY = yPx <= 24 ? 34 : 14;
+                  const label = `${passionLabel} × ${dimValue} — ${value}`;
                   return (
                     <div
                       style={{
@@ -200,15 +217,13 @@ export default function PassionsCrossHeatmap({
                         background: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: 12,
-                        padding: '8px 10px',
+                        padding: '6px 8px',
                         boxShadow: '0 10px 28px -18px rgba(15, 23, 42, 0.18), 0 1px 2px rgba(16, 24, 40, 0.06)',
-                        maxWidth: 320,
+                        maxWidth: 300,
                         pointerEvents: 'none',
                       }}
                     >
-                      <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>
-                        {passionLabel} · {dimValue}: {value}
-                      </div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>{label}</div>
                     </div>
                   );
                 }}

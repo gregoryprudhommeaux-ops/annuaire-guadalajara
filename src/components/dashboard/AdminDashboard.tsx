@@ -214,6 +214,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
   const stats = useAdminStats(period as PeriodKey);
   const loadingLabel = lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
   const [pickedCross, setPickedCross] = useState<CrossPick | null>(null);
+  const [crossDimension, setCrossDimension] = useState<'sector' | 'poste' | 'industrie'>('sector');
   const bySectorData = useMemo(
     () => Object.entries(stats.profilesBySector).map(([name, value]) => ({ name, value })),
     [stats.profilesBySector]
@@ -391,9 +392,28 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           {/* E. Deep-dive */}
           <div className="admin-bottom-section">
             <article className="admin-chart-card admin-chart-card--matrix">
-              <p className="admin-chart-card__title">Croisement passions × secteur</p>
-              <p className="admin-chart-card__subtitle">Cliquez une case pour lister les membres</p>
+              <p className="admin-chart-card__title">Affinités passions × secteurs</p>
+              <p className="admin-chart-card__subtitle">
+                Repère les centres d’intérêt les plus transverses pour favoriser les connexions entre membres.
+              </p>
               <div className="admin-chart-card__body">
+                <div className="admin-matrix-toolbar">
+                  <p className="admin-matrix-caption">
+                    Cliquez une case pour identifier les membres associés à une combinaison d’intérêt.
+                  </p>
+                  <label>
+                    <span className="sr-only">Vue de la matrice</span>
+                    <select
+                      className="admin-matrix-filter"
+                      value={crossDimension}
+                      onChange={(e) => setCrossDimension(e.target.value as any)}
+                    >
+                      <option value="sector">Vue : secteur</option>
+                      <option value="poste">Vue : fonction</option>
+                      <option value="industrie">Vue : industrie</option>
+                    </select>
+                  </label>
+                </div>
                 <div className="admin-chart-frame">
                   <MiniErrorBoundary label="PassionsCrossHeatmap">
                     <PassionsCrossHeatmap
@@ -406,9 +426,16 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                       }))}
                       lang={lang}
                       embedded
+                      showHeader={false}
+                      dimension={crossDimension as any}
+                      onDimensionChange={(next) => setCrossDimension(next as any)}
                       onPickCell={(pick) => setPickedCross(pick)}
                     />
                   </MiniErrorBoundary>
+                </div>
+                <div className="admin-insight">
+                  <strong>Lecture rapide :</strong> ce module aide à repérer des terrains d’affinité utiles pour le matching,
+                  les dîners thématiques et les formats d’événements ciblés.
                 </div>
               </div>
             </article>
