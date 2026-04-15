@@ -174,14 +174,10 @@ export default function PassionsCrossHeatmap({
           <div
             className={
               embedded
-                ? 'w-full min-w-0 overflow-x-auto overflow-y-visible'
+                ? 'h-[320px] w-full min-w-0 overflow-x-auto overflow-y-visible'
                 : 'h-[340px] w-full min-w-0 overflow-x-auto overflow-y-visible'
             }
-            style={
-              embedded
-                ? ({ height: '100%', WebkitOverflowScrolling: 'touch' as any } as any)
-                : ({ WebkitOverflowScrolling: 'touch' as any } as any)
-            }
+            style={{ WebkitOverflowScrolling: 'touch' as any }}
           >
             <div className={isNarrow ? 'min-w-[680px] h-full' : 'h-full'}>
               <ResponsiveHeatMap
