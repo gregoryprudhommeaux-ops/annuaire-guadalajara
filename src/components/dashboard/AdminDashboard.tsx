@@ -390,7 +390,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
           {/* E. Deep-dive */}
           <div className="admin-bottom-section">
-            <article className="admin-chart-card admin-chart-card--tall">
+            <article className="admin-chart-card admin-chart-card--tall admin-chart-card--heatmap">
               <p className="admin-chart-card__title">Croisement passions × secteur</p>
               <p className="admin-chart-card__subtitle">Cliquez une case pour lister les membres</p>
               <div className="admin-chart-card__body">

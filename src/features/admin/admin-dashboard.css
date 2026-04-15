@@ -359,6 +359,18 @@
   align-items: center;
 }
 
+.admin-dashboard-page .admin-chart-card--heatmap .admin-chart-frame,
+.admin-dashboard-page .admin-chart-card--heatmap .admin-chart-frame--sm {
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.admin-dashboard-page .admin-chart-card--heatmap .admin-chart-frame > *,
+.admin-dashboard-page .admin-chart-card--heatmap .admin-chart-frame--sm > * {
+  width: 100%;
+  max-width: 100%;
+}
+
 .admin-dashboard-page .admin-chart-card--table .admin-table-wrap {
   min-height: 340px;
 }
