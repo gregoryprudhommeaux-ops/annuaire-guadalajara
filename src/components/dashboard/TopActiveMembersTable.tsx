@@ -95,93 +95,76 @@ export default function TopActiveMembersTable({
   }, [members]);
 
   if ((members?.length ?? 0) < 2) {
-    return (
-      <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-        <div className="flex items-baseline justify-between gap-3">
-          <h3 className="text-sm font-semibold text-stone-900">Membres les plus actifs</h3>
-          <span className="text-xs text-stone-500">Score</span>
-        </div>
-        <p className="mt-4 text-sm text-stone-500">—</p>
-      </div>
-    );
+    return <p className="m-0 text-sm text-stone-500">—</p>;
   }
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-sm font-semibold text-stone-900">Membres les plus actifs</h3>
-        <span className="text-xs text-stone-500">Score d'engagement</span>
-      </div>
-
-      <div className="mt-4 overflow-hidden rounded-lg border border-stone-200">
-        <div className="w-full overflow-x-auto">
-          <table className="min-w-[520px] w-full text-left text-sm">
-          <thead className="bg-stone-50 text-stone-600">
-            <tr className="text-[11px] font-semibold uppercase tracking-wide">
-              <th className="px-3 py-2">Membre</th>
-              <th className="px-3 py-2">Entreprise</th>
-              <th className="px-3 py-2">Secteur</th>
-              <th className="px-3 py-2 text-right">Score</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-stone-100">
-            {rows.map((m) => (
-              <tr key={m.id} className="hover:bg-stone-50">
-                <td className="px-3 py-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-blue-50 text-blue-700">
-                      <ProfileAvatar
-                        photoURL={m.photo}
-                        fullName={formatPersonName(m.nom)}
-                        className="h-full w-full bg-blue-50"
-                        initialsClassName="text-[11px] text-blue-800"
-                        iconSize={16}
+    <div className="w-full overflow-x-auto overflow-hidden rounded-lg border border-stone-200 bg-white">
+      <table className="min-w-[520px] w-full text-left text-sm">
+        <thead className="bg-stone-50 text-stone-600">
+          <tr className="text-[11px] font-semibold uppercase tracking-wide">
+            <th className="px-3 py-2">Membre</th>
+            <th className="px-3 py-2">Entreprise</th>
+            <th className="px-3 py-2">Secteur</th>
+            <th className="px-3 py-2 text-right">Score</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-stone-100">
+          {rows.map((m) => (
+            <tr key={m.id} className="hover:bg-stone-50">
+              <td className="px-3 py-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-blue-50 text-blue-700">
+                    <ProfileAvatar
+                      photoURL={m.photo}
+                      fullName={formatPersonName(m.nom)}
+                      className="h-full w-full bg-blue-50"
+                      initialsClassName="text-[11px] text-blue-800"
+                      iconSize={16}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-stone-900">
+                      {formatPersonName(m.nom)}
+                    </p>
+                  </div>
+                </div>
+              </td>
+              <td className="px-3 py-2">
+                <p
+                  className="max-w-[240px] truncate text-sm font-semibold text-stone-800"
+                  title={formatCompanyName(m.entreprise) || '—'}
+                >
+                  {formatCompanyName(m.entreprise) || '—'}
+                </p>
+              </td>
+              <td className="px-3 py-2">
+                <span
+                  className={`inline-flex max-w-[220px] items-center truncate rounded-full border px-2 py-0.5 text-xs font-semibold ${badgeClass(
+                    m.secteur
+                  )}`}
+                  title={m.secteur ?? '—'}
+                >
+                  <span className="truncate">{m.secteur ?? '—'}</span>
+                </span>
+              </td>
+              <td className="px-3 py-2">
+                <div className="flex items-center justify-end gap-2">
+                  <div className="flex gap-1">
+                    {dots(m.score).map((on, i) => (
+                      <span
+                        key={i}
+                        className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-blue-700' : 'bg-stone-200'}`}
                       />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-stone-900">
-                        {formatPersonName(m.nom)}
-                      </p>
-                    </div>
+                    ))}
                   </div>
-                </td>
-                <td className="px-3 py-2">
-                  <p
-                    className="max-w-[240px] truncate text-sm font-semibold text-stone-800"
-                    title={formatCompanyName(m.entreprise) || '—'}
-                  >
-                    {formatCompanyName(m.entreprise) || '—'}
-                  </p>
-                </td>
-                <td className="px-3 py-2">
-                  <span
-                    className={`inline-flex max-w-[220px] items-center truncate rounded-full border px-2 py-0.5 text-xs font-semibold ${badgeClass(
-                      m.secteur
-                    )}`}
-                    title={m.secteur ?? '—'}
-                  >
-                    <span className="truncate">{m.secteur ?? '—'}</span>
-                  </span>
-                </td>
-                <td className="px-3 py-2">
-                  <div className="flex items-center justify-end gap-2">
-                    <div className="flex gap-1">
-                      {dots(m.score).map((on, i) => (
-                        <span
-                          key={i}
-                          className={`h-1.5 w-1.5 rounded-full ${on ? 'bg-blue-700' : 'bg-stone-200'}`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs font-bold tabular-nums text-stone-600">{m.score}</span>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          </table>
-        </div>
-      </div>
+                  <span className="text-xs font-bold tabular-nums text-stone-600">{m.score}</span>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

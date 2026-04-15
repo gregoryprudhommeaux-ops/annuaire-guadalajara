@@ -204,6 +204,32 @@ function ChartCard({
 type AdminInsightTab = 'overview' | 'profiles' | 'site' | 'events';
 type AffinityExploreKey = 'detail' | 'matrix';
 
+type AdminRecommendedPayload =
+  | { type: 'scroll'; id: string }
+  | { type: 'affinity'; cross: CrossPick };
+
+type AdminRecommendedItem = {
+  key: string;
+  priority: number;
+  title: string;
+  detail: string;
+  ctaLabel: string;
+  payload: AdminRecommendedPayload;
+};
+
+function scrollAdminSectionIntoView(id: string) {
+  requestAnimationFrame(() => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+function activationSuggestion(row: { members: number; passionId: string; sector: string }, rankIndex: number): string {
+  if (row.members >= 6) return 'Afterwork transversal (gros potentiel)';
+  if (row.members >= 4) return 'Rencontres ciblées (petit groupe)';
+  if (row.members >= 2) return rankIndex === 0 ? 'Mise en relation éditoriale' : 'Intro 1:1 (test rapide)';
+  return 'Signal faible — à surveiller';
+}
+
 export default function AdminDashboard({ lang, t, initialTab }: AdminDashboardProps) {
   return <AdminDashboardInner lang={lang} t={t} initialTab={initialTab} />;
 }
@@ -632,13 +658,166 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     return { memberScores, topOverlapPassions };
   }, [stats.profilesForDashboard, lang]);
 
-  function activationSuggestion(row: { members: number; passionId: string; sector: string }, rankIndex: number): string {
-    // Keep it deterministic and sparse; avoid repeating "dîner" everywhere.
-    if (row.members >= 6) return 'Afterwork transversal (gros potentiel)';
-    if (row.members >= 4) return 'Rencontres ciblées (petit groupe)';
-    if (row.members >= 2) return rankIndex === 0 ? 'Mise en relation éditoriale' : 'Intro 1:1 (test rapide)';
-    return 'Signal faible — à surveiller';
-  }
+  const runRecommendedAction = useCallback((payload: AdminRecommendedPayload) => {
+    if (payload.type === 'affinity') {
+      setPickedCross(payload.cross);
+      return;
+    }
+    scrollAdminSectionIntoView(payload.id);
+  }, []);
+
+  const recommendedActions = useMemo((): AdminRecommendedItem[] => {
+    const out: AdminRecommendedItem[] = [];
+    const total = stats.totalProfiles;
+    if (total <= 0) return out;
+
+    if (stats.pendingReviewProfiles > 0) {
+      out.push({
+        key: 'pending-review',
+        priority: 12,
+        title: 'Valider les profils en attente',
+        detail: `${stats.pendingReviewProfiles} fiche(s) encore à examiner côté validation.`,
+        ctaLabel: 'Voir les indicateurs',
+        payload: { type: 'scroll', id: 'admin-section-kpi' },
+      });
+    }
+
+    const topMissing = missingFieldRows[0];
+    if (topMissing && topMissing.missing > 0) {
+      const pct = Math.round((topMissing.missing / Math.max(1, total)) * 100);
+      if (topMissing.missing >= 4 || pct >= 12) {
+        out.push({
+          key: `missing-${topMissing.field}`,
+          priority: 18,
+          title: `Prioriser le champ « ${topMissing.field} »`,
+          detail: `${topMissing.missing} profil(s) incomplet(s) sur ce point (~${pct} % du réseau).`,
+          ctaLabel: 'Voir les champs',
+          payload: { type: 'scroll', id: 'admin-section-missing-fields' },
+        });
+      }
+    }
+
+    if (stats.incompleteProfilesStrict >= 3) {
+      const pctStrict = Math.round((stats.incompleteProfilesStrict / total) * 100);
+      out.push({
+        key: 'strict-completion',
+        priority: 22,
+        title: 'Remonter la complétion « stricte »',
+        detail: `${stats.incompleteProfilesStrict} profil(s) sans le bloc complet (nom, secteur, bio 30+, photo) — ~${pctStrict} %.`,
+        ctaLabel: 'Voir la jauge',
+        payload: { type: 'scroll', id: 'admin-section-completion' },
+      });
+    }
+
+    const hnc = attentionViewContact.editorial.counts.highAttentionLowContact;
+    if (hnc > 0) {
+      const sample = attentionViewContact.editorial.highAttentionLowContact[0];
+      const sampleName = sample ? formatPersonName(String(sample.nom ?? '').trim()) : '';
+      out.push({
+        key: 'attention-low-conversion',
+        priority: 28,
+        title: 'Intérêt fort, conversion faible',
+        detail: `${hnc} profil(s) vus sur la période sans aucun clic contact — opportunité de relais ou d’intro.${
+          sampleName ? ` Ex. ${sampleName}.` : ''
+        }`,
+        ctaLabel: 'Voir attention / conversion',
+        payload: { type: 'scroll', id: 'admin-section-attention' },
+      });
+    }
+
+    const topHub = relationshipPotential.memberScores[0];
+    const hubThreshold = total < 35 ? 2 : 4;
+    if (topHub && topHub.score >= hubThreshold) {
+      out.push({
+        key: 'connect-hub',
+        priority: 32,
+        title: 'Membre pivot pour intros',
+        detail: `${formatPersonName(String(topHub.nom ?? '').trim())} partage des passions avec ${topHub.score} autres membres — bon candidat pour accélérer le réseau.`,
+        ctaLabel: 'Préparer une intro',
+        payload: { type: 'scroll', id: 'admin-section-connect' },
+      });
+    }
+
+    if (coverageGapMatrixRows.length > 0) {
+      const g = coverageGapMatrixRows[0];
+      out.push({
+        key: 'coverage-gaps',
+        priority: 38,
+        title: 'Combler des trous de représentation',
+        detail: `${coverageGapMatrixRows.length} secteur(s) ou ville(s) très fins (≤2 membres) — ex. ${g.kind} « ${g.label} ».`,
+        ctaLabel: 'Voir les gaps',
+        payload: { type: 'scroll', id: 'admin-section-gaps' },
+      });
+    }
+
+    const aff = affinityTop3[0];
+    if (aff && aff.members >= 2) {
+      out.push({
+        key: 'affinity-activate',
+        priority: 42,
+        title: 'Activer une affinité forte',
+        detail: `${aff.passionLabel} × ${aff.sector} rassemble ${aff.members} membre(s) — ${activationSuggestion(aff, 0)}.`,
+        ctaLabel: 'Voir l’affinité',
+        payload: {
+          type: 'affinity',
+          cross: { passionId: aff.passionId, dimValue: aff.sector, dimension: 'sector' },
+        },
+      });
+    }
+
+    const topPassion = relationshipPotential.topOverlapPassions[0];
+    if (topPassion && topPassion.sectorCount >= 3 && (!aff || topPassion.pid !== aff.passionId)) {
+      out.push({
+        key: 'passion-transverse',
+        priority: 46,
+        title: 'Passion transversale à exploiter',
+        detail: `${topPassion.label} touche ${topPassion.sectorCount} secteurs (${topPassion.memberCount} membres) — utile pour un format collectif.`,
+        ctaLabel: 'Explorer',
+        payload: { type: 'scroll', id: 'admin-section-passions' },
+      });
+    }
+
+    const lv = attentionViewContact.editorial.counts.lowVisibility;
+    if (lv >= Math.max(6, Math.ceil(total * 0.15))) {
+      out.push({
+        key: 'visibility-lift',
+        priority: 48,
+        title: 'Donner de la visibilité',
+        detail: `${lv} profil(s) sans vue ni contact sur la période — mise en avant, newsletter ou relance ciblée.`,
+        ctaLabel: 'Explorer',
+        payload: { type: 'scroll', id: 'admin-section-attention' },
+      });
+    }
+
+    if (out.length < 4) {
+      out.push({
+        key: 'active-members-follow',
+        priority: 72,
+        title: 'S’appuyer sur les membres engagés',
+        detail: 'Identifier qui porte déjà le réseau sur la période pour co-animer ou coacher les autres.',
+        ctaLabel: 'Voir les profils',
+        payload: { type: 'scroll', id: 'admin-section-active-members' },
+      });
+    }
+
+    const seen = new Set<string>();
+    const deduped: AdminRecommendedItem[] = [];
+    for (const item of [...out].sort((a, b) => a.priority - b.priority)) {
+      if (seen.has(item.key)) continue;
+      seen.add(item.key);
+      deduped.push(item);
+    }
+    return deduped.slice(0, 6);
+  }, [
+    stats.totalProfiles,
+    stats.pendingReviewProfiles,
+    stats.incompleteProfilesStrict,
+    missingFieldRows,
+    attentionViewContact,
+    relationshipPotential,
+    coverageGapMatrixRows,
+    affinityTop3,
+  ]);
 
   // STEP 1 (today): focus on a clean decision-oriented overview. Keep other tabs intact for later.
   useEffect(() => {
@@ -658,7 +837,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       {!stats.loading && !stats.error && insightTab === 'overview' ? (
         <>
           {/* B. Strategic KPI band */}
-          <div className="admin-kpi-grid">
+          <div className="admin-kpi-grid" id="admin-section-kpi">
             <div className="admin-kpi-card">
               <p className="admin-kpi-card__label">{t('members') || 'Membres'}</p>
               <p className="admin-kpi-card__value">{stats.totalProfiles}</p>
@@ -685,8 +864,49 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
             </div>
           </div>
 
+          <article className="admin-chart-card admin-recommended-actions" id="admin-section-recommended">
+            <div className="admin-recommended-actions__head">
+              <div>
+                <p className="admin-chart-card__title admin-recommended-actions__title">Actions recommandées</p>
+                <p className="admin-chart-card__subtitle admin-recommended-actions__subtitle">
+                  Priorités dérivées des indicateurs du tableau de bord — à traiter en premier.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="admin-recommended-actions__link"
+                onClick={() => scrollAdminSectionIntoView('admin-section-priority')}
+              >
+                Zone priorité
+              </button>
+            </div>
+            <div className="admin-recommended-actions__body">
+              {recommendedActions.length === 0 ? (
+                <p className="admin-recommended-actions__empty">
+                  Pas assez de données pour proposer des actions sur cette période.
+                </p>
+              ) : (
+                <ul className="admin-recommended-actions__grid">
+                  {recommendedActions.map((item) => (
+                    <li key={item.key} className="admin-rec-card">
+                      <p className="admin-rec-card__title">{item.title}</p>
+                      <p className="admin-rec-card__detail">{item.detail}</p>
+                      <button
+                        type="button"
+                        className="admin-rec-card__cta"
+                        onClick={() => runRecommendedAction(item.payload)}
+                      >
+                        {item.ctaLabel}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </article>
+
           {/* C. Priority action zone */}
-          <div className="admin-priority-grid">
+          <div className="admin-priority-grid" id="admin-section-priority">
             <div className="min-w-0">{priorityLeft ?? null}</div>
             <div className="min-w-0">{priorityRight ?? null}</div>
           </div>
@@ -708,7 +928,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
             </div>
 
             <div className="admin-stack">
-              <article className="admin-chart-card admin-chart-card--compact">
+              <article className="admin-chart-card admin-chart-card--compact" id="admin-section-completion">
                 <p className="admin-chart-card__title">Complétion des profils</p>
                 <p className="admin-chart-card__subtitle">Vue “strict” (nom, secteur, description, photo)</p>
                 <div className="admin-chart-card__body">
@@ -728,9 +948,11 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           </div>
 
           <div className="admin-analytics-wide">
-            <article className="admin-chart-card admin-chart-card--table">
+            <article className="admin-chart-card admin-chart-card--table" id="admin-section-active-members">
               <p className="admin-chart-card__title">Membres les plus actifs</p>
-              <p className="admin-chart-card__subtitle">Basé sur les clics de contact</p>
+              <p className="admin-chart-card__subtitle">
+                Basé sur les clics de contact — score d’engagement par membre.
+              </p>
               <div className="admin-chart-card__body">
                 <div className="admin-table-wrap">
                   <MiniErrorBoundary label="TopActiveMembersTable">
@@ -790,7 +1012,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           </div>
 
           <div className="admin-decision-grid">
-            <article className="admin-chart-card admin-chart-card--compact">
+            <article className="admin-chart-card admin-chart-card--compact" id="admin-section-missing-fields">
               <p className="admin-chart-card__title">Champs les plus souvent manquants</p>
               <p className="admin-chart-card__subtitle">Où concentrer les relances de complétion.</p>
               <div className="admin-chart-card__body">
@@ -817,7 +1039,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
               </div>
             </article>
 
-            <article className="admin-chart-card admin-chart-card--compact">
+            <article className="admin-chart-card admin-chart-card--compact" id="admin-section-attention">
               <p className="admin-chart-card__title">Attention vs conversion</p>
               <p className="admin-chart-card__subtitle">
                 {attentionViewContact.useScatter
@@ -944,7 +1166,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
               </div>
             </article>
 
-            <article className="admin-chart-card admin-chart-card--compact">
+            <article className="admin-chart-card admin-chart-card--compact" id="admin-section-connect">
               <p className="admin-chart-card__title">Membres à connecter en priorité</p>
               <p className="admin-chart-card__subtitle">
                 Forte proximité de passions avec d’autres membres — utile pour intros ciblées.
@@ -979,7 +1201,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
               </div>
             </article>
 
-            <article className="admin-chart-card admin-chart-card--compact">
+            <article className="admin-chart-card admin-chart-card--compact" id="admin-section-passions">
               <p className="admin-chart-card__title">Passions les plus transverses</p>
               <p className="admin-chart-card__subtitle">S’étendent sur le plus de secteurs — leviers pour animations transverses.</p>
               <div className="admin-chart-card__body">
@@ -1004,7 +1226,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
               </div>
             </article>
 
-            <article className="admin-chart-card admin-chart-card--compact admin-decision-span-2">
+            <article className="admin-chart-card admin-chart-card--compact admin-decision-span-2" id="admin-section-gaps">
               <p className="admin-chart-card__title">Gaps secteurs & villes</p>
               <p className="admin-chart-card__subtitle">
                 Zones comptant ≤ 2 membres — à surveiller pour la représentativité du réseau.
@@ -1053,7 +1275,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
           {/* E. Deep-dive */}
           <div className="admin-bottom-section">
-            <article className="admin-chart-card admin-chart-card--affinity">
+            <article className="admin-chart-card admin-chart-card--affinity" id="admin-section-affinities">
               <p className="admin-chart-card__title">Affinités relationnelles du réseau</p>
               <p className="admin-chart-card__subtitle">
                 Repère les terrains d’intérêt commun les plus utiles pour animer la communauté et accélérer les mises en relation.
