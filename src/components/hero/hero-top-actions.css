@@ -51,6 +51,8 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-width: 220px;
+  text-align: center;
 }
 
 .logout-btn {
@@ -79,6 +81,7 @@
 
   .account-btn {
     width: 100%;
+    min-width: 0;
   }
 }
 

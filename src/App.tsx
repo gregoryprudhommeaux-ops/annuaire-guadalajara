@@ -4586,7 +4586,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       <div className="sm:hidden">
         <LanguageDropdownMobile lang={lang} onLangChange={setLang} />
       </div>
-      <div className="hidden shrink-0 items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
+      <div className="hidden w-[220px] shrink-0 items-center overflow-hidden rounded-full border border-slate-200 divide-x divide-slate-200 bg-white sm:flex">
         {(['fr', 'es', 'en'] as const).map((code) => {
           const isActive = lang === code;
           return (
@@ -4596,7 +4596,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               onClick={() => setLang(code)}
               aria-pressed={isActive}
               className={cn(
-                'px-3 py-1.5 text-xs font-semibold transition-colors',
+                'flex-1 px-3 py-2 text-xs font-semibold transition-colors',
                 isActive ? 'bg-blue-700 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
               )}
             >
