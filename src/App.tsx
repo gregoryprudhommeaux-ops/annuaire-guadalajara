@@ -217,6 +217,8 @@ import HeroSearchSection from './components/home/HeroSearchSection';
 import DirectoryTabsSection from './components/home/DirectoryTabsSection';
 import OnboardingIntroBanner from './components/home/OnboardingIntroBanner';
 import { MemberCard } from './features/network/components/MemberCard';
+import { RecommendedMembersSection } from './features/network/components/RecommendedMembersSection';
+import { userProfileToCompatibilityMember } from './features/network/utils/compatibilityFromProfile';
 import { NetworkSidebar } from './features/network/components/NetworkSidebar';
 import { ProfileSectionHint } from '@/features/profile/components/ProfileSectionHint';
 import { ProfileSectionTag } from '@/features/profile/components/ProfileSectionTag';
@@ -4974,32 +4976,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
           )}
           <div className={cn(pageSectionPad, isEditProfileRoute && 'profile-edit-page')}>
-            {isEditProfileRoute && (editingProfile?.uid ?? profile?.uid) ? (
+            {isEditProfileRoute && (editingProfile?.uid ?? profile?.uid) && !profileVisibilityBandHidden ? (
               <div className="sticky top-24 z-40 mb-4 sm:top-16">
-                {profileVisibilityBandHidden ? (
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileVisibilityBandHidden(false);
-                        try {
-                          window.sessionStorage.removeItem('fn_profile_visibility_band_hidden');
-                        } catch {
-                          // ignore
-                        }
-                      }}
-                      className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition-colors hover:bg-white"
-                    >
-                      {pickLang(
-                        'Afficher la visibilité du profil',
-                        'Mostrar visibilidad del perfil',
-                        'Show profile visibility',
-                        lang
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur">
+                <div className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur">
                     <div className="p-3 sm:p-4">
                       <ProfileCompletionCard
                         profile={profileCompletionCardSource}
@@ -5061,21 +5040,27 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       />
                     </div>
                   </div>
-                )}
               </div>
             ) : null}
             {showAdminSelfProfilePanel ? (
             <section className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden relative">
-              <div 
-                className="flex items-center justify-between gap-3 p-4 cursor-pointer hover:bg-stone-50 transition-colors"
-                onClick={() => {
-                  if (!isProfileExpanded) {
-                    setIsProfileExpanded(true);
-                    setIsEditing(true);
-                  } else {
-                    setIsProfileExpanded(false);
-                  }
-                }}
+              <div
+                className={cn(
+                  'flex items-center justify-between gap-3 p-4 transition-colors',
+                  !isEditProfileRoute && 'cursor-pointer hover:bg-stone-50'
+                )}
+                onClick={
+                  isEditProfileRoute
+                    ? undefined
+                    : () => {
+                        if (!isProfileExpanded) {
+                          setIsProfileExpanded(true);
+                          setIsEditing(true);
+                        } else {
+                          setIsProfileExpanded(false);
+                        }
+                      }
+                }
               >
                 <div
                   className={cn(
@@ -5123,6 +5108,30 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 lang
                               )}
                       </span>
+                      {isEditProfileRoute &&
+                      (editingProfile?.uid ?? profile?.uid) &&
+                      profileVisibilityBandHidden ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setProfileVisibilityBandHidden(false);
+                            try {
+                              window.sessionStorage.removeItem('fn_profile_visibility_band_hidden');
+                            } catch {
+                              // ignore
+                            }
+                          }}
+                          className="inline-flex min-h-[36px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 sm:text-sm"
+                        >
+                          {pickLang(
+                            'Afficher la visibilité du profil',
+                            'Mostrar visibilidad del perfil',
+                            'Show profile visibility',
+                            lang
+                          )}
+                        </button>
+                      ) : null}
                     </div>
                     {profile ? (
                       <div className="flex items-start gap-2">
@@ -5198,9 +5207,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       {t('register')}
                     </button>
                   )}
-                  <div className="p-2 text-stone-400">
-                    {isProfileExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                  </div>
+                  {!isEditProfileRoute ? (
+                    <div className="p-2 text-stone-400">
+                      {isProfileExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </div>
+                  ) : null}
                 </div>
               </div>
 
@@ -5632,7 +5643,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
                                   htmlFor="profile-member-bio"
                                 >
-                                  {t('memberBio')}
+                                  {profileEditFrUx ? PROFILE_FIELD_LABELS.bio : t('memberBio')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
@@ -6737,7 +6748,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               onClick={() => {
                                 setIsEditing(false);
                                 setEditingProfile(null);
-                                setIsProfileExpanded(false);
+                                if (!isEditProfileRoute) {
+                                  setIsProfileExpanded(false);
+                                }
                               }}
                               className="rounded-lg border border-stone-300 px-4 py-2 text-sm text-stone-700 transition-colors hover:bg-stone-50"
                             >
@@ -7399,6 +7412,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </div>
               </RecommendedForYouSection>
             )}
+
+            {user &&
+              profile &&
+              isNetworkRoute &&
+              !guestDirectoryRestricted &&
+              isMembersDirectoryRoute &&
+              !isAdminDashboard && (
+                <RecommendedMembersSection
+                  currentUser={userProfileToCompatibilityMember(profile, lang)}
+                  members={membersDirectoryList
+                    .filter((p) => p.uid !== profile.uid)
+                    .map((p) => userProfileToCompatibilityMember(p, lang))}
+                />
+              )}
 
             {isMembersDirectoryRoute && !isAdminDashboard && (
               <header

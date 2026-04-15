@@ -290,10 +290,10 @@ export const TRANSLATIONS: Translations = {
   state: { fr: "État", es: "Estado" },
   neighborhood: { fr: "Quartier", es: "Colonia" },
   country: { fr: "Pays", es: "País" },
-  activityCategory: { fr: "Secteur d'activité", es: "Sector de actividad" },
-  workFunction: { fr: "Fonction dans l'entreprise", es: "Función en la empresa" },
+  activityCategory: { fr: 'Secteur', es: "Sector de actividad" },
+  workFunction: { fr: 'Fonction', es: "Función en la empresa" },
   workFunctionHint: {
-    fr: "Rôle opérationnel (pas votre titre sur la carte de visite).",
+    fr: 'Décrivez votre rôle réel, pas seulement votre titre.',
     es: "Rol operativo (no tu título en tu tarjeta de presentación)."
   },
   selectWorkFunction: { fr: "Choisir une fonction...", es: "Elige una función..." },
@@ -318,9 +318,9 @@ export const TRANSLATIONS: Translations = {
     fr: "Ce membre n’a pas renseigné WhatsApp.",
     es: "Este miembro no registró WhatsApp.",
   },
-  arrivalYear: { fr: "Année d'arrivée au Mexique", es: "Año de llegada a México" },
+  arrivalYear: { fr: 'Arrivée au Mexique', es: "Año de llegada a México" },
   yearsInMexico: { fr: "Années au Mexique", es: "Años en México" },
-  employeeCount: { fr: "Nombre d'employés", es: "Número de empleados" },
+  employeeCount: { fr: 'Employés', es: "Número de empleados" },
   employeeCountOptional: { fr: "(facultatif)", es: "(opcional)" },
   isEmailPublic: { fr: "Rendre l'email public", es: "Hacer público mi correo" },
   isWhatsappPublic: { fr: "Rendre WhatsApp public", es: "Hacer público mi WhatsApp" },
@@ -352,7 +352,7 @@ export const TRANSLATIONS: Translations = {
   },
   nationalitySelectPlaceholder: { fr: "— Sélectionner —", es: "— Seleccionar —" },
   acceptsDelegationVisitsLabel: {
-    fr: "L’entreprise peut accueillir des visites de délégations",
+    fr: 'Accueil de délégations',
     es: "La empresa puede recibir visitas de delegaciones",
   },
   acceptsDelegationVisitsHint: {
@@ -712,7 +712,7 @@ export const TRANSLATIONS: Translations = {
     fr: 'Besoins, secteur et présentation',
     es: 'Necesidades, sector y presentación',
   },
-  profileFormPhoneCountryLabel: { fr: 'Indicatif pays', es: 'Prefijo país' },
+  profileFormPhoneCountryLabel: { fr: 'Indicatif', es: 'Prefijo país' },
   profileFormPhoneLocalLabel: { fr: 'Téléphone / WhatsApp', es: 'Teléfono / WhatsApp' },
   profileFormPhoneLocalHint: {
     fr: 'Numéro sans répéter l’indicatif (chiffres uniquement).',
@@ -743,7 +743,7 @@ export const TRANSLATIONS: Translations = {
     es: 'Mínimo 15 caracteres por cada empresa indicada. Sirve sobre todo para la búsqueda por empresa.',
   },
   profileFormMemberBioHint: {
-    fr: 'Minimum 15 caractères. Présentation personnelle, mise en avant dans la recherche par membre.',
+    fr: 'Présentez votre parcours et votre valeur pour le réseau.',
     es: 'Mínimo 15 caracteres. Presentación personal, destacada en la búsqueda por miembro.',
   },
   profileActivityToggleExpand: { fr: 'Afficher le détail', es: 'Mostrar detalle' },
@@ -768,12 +768,12 @@ export const TRANSLATIONS: Translations = {
   },
   profileFormCompanyType: { fr: "Type d'entreprise", es: 'Tipo de empresa' },
   profileFormProfessionalStatus: {
-    fr: 'Statut professionnel',
+    fr: 'Statut',
     es: 'Estatus profesional',
   },
   /** Court texte sous le libellé « année d'arrivée » (formulaire profil). */
   profileFormArrivalRegionHint: {
-    fr: "Sert à estimer l'ancienneté sur la région.",
+    fr: 'Permet d’estimer votre ancienneté locale.',
     es: 'Sirve para estimar la antigüedad en la región.',
   },
   profileFormSectionAbout: { fr: 'À propos de vous', es: 'Sobre ti' },
@@ -1064,7 +1064,7 @@ export const TRANSLATIONS: Translations = {
   },
   targetSectorsOptional: { fr: "(facultatif)", es: "(opcional)" },
   needKeywordsHint: {
-    fr: "Séparés par des virgules : secteur, type de clientèle, zone géographique…",
+    fr: 'Ajoutez 4 à 8 mots-clés utiles pour la recherche et le matching.',
     es: "Separados por comas: sector, tipo de cliente, zona geográfica…",
   },
   /** Libellé court du champ mots-clés (formulaire « À propos »). */
@@ -1074,11 +1074,11 @@ export const TRANSLATIONS: Translations = {
     es: "Ej. proveedores automotriz, Jalisco, exportación Francia…",
   },
   profileHelpNewcomersLabel: {
-    fr: "Je peux aider sur…",
+    fr: 'Je peux aider sur',
     es: "Puedo ayudar en…",
   },
   profileHelpNewcomersHint: {
-    fr: 'Explique en quoi tu peux être utile à d’autres membres du réseau.',
+    fr: 'Décrivez de façon concrète comment vous pouvez être utile à d’autres membres.',
     es: 'Explica en qué puedes ser útil para otros miembros de la comunidad.',
   },
   profileHelpNewcomersPlaceholder: {
@@ -1086,11 +1086,11 @@ export const TRANSLATIONS: Translations = {
     es: 'Ej: instalación en Guadalajara, red F&B, conexiones locales...',
   },
   profileNetworkGoalLabel: {
-    fr: 'Ce que je cherche via ce réseau',
+    fr: 'Je recherche',
     es: 'Lo que busco a través de esta red',
   },
   profileNetworkGoalHint: {
-    fr: 'Cette phrase aide les autres à comprendre rapidement comment t’aider.',
+    fr: 'Expliquez en une phrase ce que vous attendez concrètement du réseau.',
     es: 'Esta frase ayuda a los demás a entender rápidamente cómo pueden ayudarte.',
   },
   profileNetworkGoalPlaceholder: {
@@ -1319,11 +1319,11 @@ export const TRANSLATIONS: Translations = {
     es: 'Preferencias de contacto y colaboración',
   },
   contactPrefsCtaLabel: {
-    fr: 'Le contacter de préférence par…',
+    fr: 'Canal de contact préféré',
     es: 'Contactarme preferentemente por…',
   },
   contactPrefsCtaHint: {
-    fr: 'Précise le canal le plus simple pour un premier échange.',
+    fr: 'Indiquez le canal de contact le plus simple et le plus naturel pour vous.',
     es: 'Indica el canal más simple para un primer contacto.',
   },
   contactPrefsCtaPlaceholder: {
@@ -1331,7 +1331,7 @@ export const TRANSLATIONS: Translations = {
     es: 'Ej: WhatsApp, Email, LinkedIn',
   },
   contactPrefsWorkingLangLabel: {
-    fr: 'Langues de travail (max. 3)',
+    fr: 'Langues de travail',
     es: 'Idiomas de trabajo (máx. 3)',
   },
   contactPrefsWorkingLangHint: {
@@ -1339,7 +1339,7 @@ export const TRANSLATIONS: Translations = {
     es: 'Elige tus idiomas de trabajo prioritarios en la región.',
   },
   contactPrefsWorkingLangTip: {
-    fr: 'Astuce : gardez uniquement vos 2–3 langues les plus utilisées dans le business.',
+    fr: 'Gardez 2 à 3 langues réellement utilisées en business.',
     es: 'Consejo: deja solo tus 2–3 idiomas más usados en el negocio.',
   },
   contactPrefsClientSizeLabel: {
@@ -1359,7 +1359,7 @@ export const TRANSLATIONS: Translations = {
     es: 'Máximo 3 tamaños: desmarca una opción para añadir otra.',
   },
   contactPrefsOpenToLabel: {
-    fr: 'Ouvert à…',
+    fr: 'Ouvert à',
     es: 'Abierto a…',
   },
   contactPrefsOpenToHint: {
@@ -1393,7 +1393,7 @@ export const TRANSLATIONS: Translations = {
   },
   profilePublicAboutTitle: { fr: "À propos", es: "Sobre ti" },
   highlightedNeedsTitle: {
-    fr: "Besoins actuels (0 à 3)",
+    fr: 'Besoins actuels',
     es: "Necesidades actuales (0 a 3)",
   },
   highlightedNeedsOptional: { fr: "(facultatif)", es: "(opcional)" },

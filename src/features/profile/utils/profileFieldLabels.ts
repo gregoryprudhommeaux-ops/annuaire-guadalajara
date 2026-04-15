@@ -12,7 +12,7 @@ export const PROFILE_FIELD_LABELS = {
   arrivalYearInMexico: 'Arrivée au Mexique',
   gender: 'Genre',
   nationality: 'Nationalité',
-  bio: 'Bio membre',
+  bio: 'Bio',
   profilePhoto: 'Photo de profil',
   passions: 'Passions',
 

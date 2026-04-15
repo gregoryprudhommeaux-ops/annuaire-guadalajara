@@ -438,12 +438,12 @@ export const EN_STRINGS: Record<string, string> = {
   needKeywordsPlaceholder: "e.g. automotive suppliers, Jalisco, export France",
   profilePublicCurrentNeeds: "Current needs",
   profilePublicAboutTitle: "About",
-  profileHelpNewcomersLabel: "I can help with…",
+  profileHelpNewcomersLabel: "I can help with",
   profileHelpNewcomersHint:
     "Explain how you can be useful to other members of the network.",
   profileHelpNewcomersPlaceholder:
     "Ex: settling in Guadalajara, F&B network, local introductions...",
-  profileNetworkGoalLabel: "What I’m looking for through this network",
+  profileNetworkGoalLabel: "What I’m looking for",
   profileNetworkGoalHint:
     "This sentence helps others quickly understand how they can help you.",
   profileNetworkGoalPlaceholder:
@@ -561,7 +561,7 @@ export const EN_STRINGS: Record<string, string> = {
   contactPrefsOpenEventSponsoring: "Event sponsoring",
   contactPrefsOpenEventSponsoringPrivateHint:
     "Stored in your non-public data (same as gender and delegation preferences).",
-  highlightedNeedsTitle: "Current needs (0–3)",
+  highlightedNeedsTitle: "Current needs",
   highlightedNeedsOptional: "(optional)",
   highlightedNeedsHint:
     "If filled in, they will stand out on your public profile.",

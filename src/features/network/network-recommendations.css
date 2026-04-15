@@ -1,0 +1,139 @@
+/* Recommandations /network — scopé pour ne pas croiser .recommended-section (accueil) */
+
+.fn-network-page .recommended-section {
+  margin-bottom: 20px;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.fn-network-page .recommended-section__header {
+  margin-bottom: 14px;
+}
+
+.fn-network-page .recommended-section__eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+}
+
+.fn-network-page .recommended-section__title {
+  margin: 0 0 6px;
+  font-size: 22px;
+  line-height: 1.15;
+  color: #111827;
+}
+
+.fn-network-page .recommended-section__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.fn-network-page .recommended-section__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.fn-network-page .recommended-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #fcfcfd;
+}
+
+.fn-network-page .recommended-card__top {
+  margin-bottom: 12px;
+}
+
+.fn-network-page .recommended-card__level {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fn-network-page .recommended-card__content {
+  min-width: 0;
+}
+
+.fn-network-page .recommended-card__name {
+  margin: 0 0 4px;
+  font-size: 18px;
+  line-height: 1.2;
+  color: #111827;
+}
+
+.fn-network-page .recommended-card__company {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.fn-network-page .recommended-card__sector {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.fn-network-page .recommended-card__reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fn-network-page .recommended-card__reasonChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.fn-network-page .recommended-card__footer {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #eef2f7;
+}
+
+.fn-network-page .recommended-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1d4ed8;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.fn-network-page .recommended-card__link::after {
+  content: '›';
+  font-size: 18px;
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .fn-network-page .recommended-section__grid {
+    grid-template-columns: 1fr;
+  }
+}

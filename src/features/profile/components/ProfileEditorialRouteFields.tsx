@@ -71,7 +71,7 @@ export function ProfileEditorialMemberBioField({
         className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
         htmlFor="profile-member-bio"
       >
-        {t('memberBio')}
+        {profileEditFrUx ? PROFILE_FIELD_LABELS.bio : t('memberBio')}
         <span className="text-red-500 font-semibold" aria-hidden>
           {' *'}
         </span>
