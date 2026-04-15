@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import type { Language } from '@/types';
 import { calculateEngagementScore, type MemberWithStats } from '@/components/dashboard/EngagementLeaderboard';
+import ProfileAvatar from '@/components/ProfileAvatar';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
 
 function formatCompanyName(input?: string | null): string {
@@ -73,13 +74,6 @@ function badgeClass(secteur?: string) {
   return 'bg-stone-50 text-stone-700 border-stone-200';
 }
 
-function initials(name: string) {
-  const parts = String(name ?? '').trim().split(/\s+/).filter(Boolean);
-  const a = parts[0]?.[0] ?? '';
-  const b = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : '';
-  return (a + b).toUpperCase() || '•';
-}
-
 function dots(score: number) {
   const n = Math.max(0, Math.min(5, Math.round(score / 20)));
   return Array.from({ length: 5 }, (_, i) => i < n);
@@ -136,18 +130,13 @@ export default function TopActiveMembersTable({
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2.5">
                     <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-blue-50 text-blue-700">
-                      {m.photo ? (
-                        <img
-                          src={m.photo}
-                          alt=""
-                          className="h-full w-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[11px] font-bold">
-                          {initials(m.nom)}
-                        </div>
-                      )}
+                      <ProfileAvatar
+                        photoURL={m.photo}
+                        fullName={formatPersonName(m.nom)}
+                        className="h-full w-full bg-blue-50"
+                        initialsClassName="text-[11px] text-blue-800"
+                        iconSize={16}
+                      />
                     </div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-stone-900">

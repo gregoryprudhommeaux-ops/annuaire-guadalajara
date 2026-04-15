@@ -10,6 +10,8 @@ import {
   Pie,
   PieChart,
   ResponsiveContainer,
+  Scatter,
+  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
@@ -68,6 +70,38 @@ const legendProps = {
   },
   iconSize: 8,
 };
+
+/** Décalage déterministe pour éviter les points superposés (pas de Math.random). */
+function scatterJitter(id: string): { dx: number; dy: number } {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const u = (h >>> 0) / 0xffffffff;
+  const v = (Math.imul(h, 31) >>> 0) / 0xffffffff;
+  return { dx: (u - 0.5) * 0.42, dy: (v - 0.5) * 0.42 };
+}
+
+function AttentionScatterTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload?: { name: string; views: number; clicks: number } }>;
+}) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload;
+  if (!p) return null;
+  return (
+    <div className="admin-scatter-tooltip rounded-lg border border-stone-200 bg-white px-3 py-2 text-left shadow-lg">
+      <p className="text-[13px] font-semibold leading-snug text-stone-900">{p.name}</p>
+      <p className="mt-1 text-[11px] tabular-nums text-stone-600">
+        {p.views} vue{p.views > 1 ? 's' : ''} · {p.clicks} contact{p.clicks > 1 ? 's' : ''}
+      </p>
+    </div>
+  );
+}
 
 function compactLabel(label: string, max = 14): string {
   const text = String(label ?? '').trim();
@@ -449,13 +483,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     return rows.slice(0, 10);
   }, [stats.profilesBySector]);
 
-  const cityCoverageRows = useMemo(() => {
-    const rows = Object.entries(stats.profilesByCity ?? {})
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-    return rows.slice(0, 10);
-  }, [stats.profilesByCity]);
-
   const gapInsights = useMemo(() => {
     const sectors = Object.entries(stats.profilesBySector ?? {})
       .map(([name, value]) => ({ name, value }))
@@ -469,23 +496,93 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     };
   }, [stats.profilesBySector, stats.profilesByCity]);
 
-  const attentionConversion = useMemo(() => {
-    const profiles = stats.profilesForDashboard ?? [];
+  const attentionViewContact = useMemo(() => {
+    const profiles = (stats.profilesForDashboard ?? []) as any[];
+    const viewsMap = stats.profileViewsByUid ?? {};
     const byId = new Map<string, any>(profiles.map((p: any) => [String(p.id), p]));
-    const topViewed = (stats.topViewedProfiles ?? []).map((r) => ({
-      id: r.id,
-      name: r.name,
-      views: r.clickCount,
-      clicks: byId.get(String(r.id))?.contactClicks ?? 0,
+
+    const ids = new Set<string>();
+    Object.keys(viewsMap).forEach((id) => ids.add(id));
+    profiles.forEach((p) => {
+      if ((p.contactClicks ?? 0) > 0) ids.add(String(p.id));
+    });
+
+    const rawPoints = Array.from(ids)
+      .map((id) => {
+        const p = byId.get(id);
+        const views = viewsMap[id] ?? 0;
+        const clicks = p?.contactClicks ?? 0;
+        const name = p
+          ? formatPersonName(String(p.nom ?? '').trim())
+          : String(viewsMap[id] !== undefined ? 'Membre' : id);
+        return { id, name, views, clicks };
+      })
+      .filter((pt) => pt.views > 0 || pt.clicks > 0);
+
+    const jittered = rawPoints.map((pt) => {
+      const { dx, dy } = scatterJitter(pt.id);
+      return {
+        ...pt,
+        x: pt.views + dx,
+        y: pt.clicks + dy,
+      };
+    });
+
+    const useScatter = jittered.length >= 5;
+
+    const viewedNotContacted: typeof profiles = [];
+    const viewedAndContacted: typeof profiles = [];
+    const lowVisibility: typeof profiles = [];
+    for (const p of profiles) {
+      const id = String(p.id);
+      const v = viewsMap[id] ?? 0;
+      const c = p.contactClicks ?? 0;
+      if (c >= 1) viewedAndContacted.push(p);
+      else if (v >= 1) viewedNotContacted.push(p);
+      else lowVisibility.push(p);
+    }
+
+    const byScore = (a: any, b: any) => {
+      const va = viewsMap[String(a.id)] ?? 0;
+      const vb = viewsMap[String(b.id)] ?? 0;
+      return vb - va;
+    };
+    viewedNotContacted.sort(byScore);
+    viewedAndContacted.sort((a, b) => (b.contactClicks ?? 0) - (a.contactClicks ?? 0) || byScore(a, b));
+    lowVisibility.sort((a, b) => String(a.nom ?? '').localeCompare(String(b.nom ?? '')));
+
+    return {
+      scatter: jittered,
+      useScatter,
+      editorial: {
+        highAttentionLowContact: viewedNotContacted.slice(0, 5),
+        engaged: viewedAndContacted.slice(0, 5),
+        lowVisibility: lowVisibility.slice(0, 5),
+        counts: {
+          highAttentionLowContact: viewedNotContacted.length,
+          engaged: viewedAndContacted.length,
+          lowVisibility: lowVisibility.length,
+        },
+      },
+    };
+  }, [stats.profilesForDashboard, stats.profileViewsByUid]);
+
+  const coverageGapMatrixRows = useMemo(() => {
+    const sectors = Object.entries(stats.profilesBySector ?? {}).map(([label, value]) => ({
+      label,
+      kind: 'Secteur' as const,
+      value,
     }));
-    const topContacted = (stats.topContactedProfiles ?? []).map((r) => ({
-      id: r.id,
-      name: r.name,
-      clicks: r.clickCount,
-      views: (stats.profileViewsByUid ?? {})[String(r.id)] ?? 0,
+    const cities = Object.entries(stats.profilesByCity ?? {}).map(([label, value]) => ({
+      label,
+      kind: 'Ville' as const,
+      value,
     }));
-    return { topViewed, topContacted };
-  }, [stats.profilesForDashboard, stats.topViewedProfiles, stats.topContactedProfiles, stats.profileViewsByUid]);
+    return [...sectors, ...cities]
+      .filter((r) => r.value <= 2)
+      .sort((a, b) => a.value - b.value || a.label.localeCompare(b.label))
+      .slice(0, 10);
+  }, [stats.profilesBySector, stats.profilesByCity]);
 
   const relationshipPotential = useMemo(() => {
     const profiles = (stats.profilesForDashboard ?? []) as any[];
@@ -519,16 +616,18 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
         return { id, nom: p.nom, entreprise: p.entreprise, secteur: p.secteur, city: p.city, score: overlap.size };
       })
       .sort((a, b) => b.score - a.score)
-      .slice(0, 6);
+      .slice(0, 5);
 
+    const locale = lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr';
     const topOverlapPassions = Array.from(passionToSectors.entries())
-      .map(([pid, sectors]) => ({ pid, sectors: sectors.size }))
-      .sort((a, b) => b.sectors - a.sectors)
-      .slice(0, 6)
-      .map((r) => ({
-        label: `${getPassionEmoji(r.pid)} ${getPassionLabel(r.pid, lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr')}`,
-        sectors: r.sectors,
-      }));
+      .map(([pid, sectors]) => ({
+        pid,
+        sectorCount: sectors.size,
+        memberCount: passionToMembers.get(pid)?.size ?? 0,
+        label: `${getPassionEmoji(pid)} ${getPassionLabel(pid, locale)}`,
+      }))
+      .sort((a, b) => b.sectorCount - a.sectorCount || b.memberCount - a.memberCount)
+      .slice(0, 5);
 
     return { memberScores, topOverlapPassions };
   }, [stats.profilesForDashboard, lang]);
@@ -692,26 +791,26 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
           <div className="admin-decision-grid">
             <article className="admin-chart-card admin-chart-card--compact">
-              <p className="admin-chart-card__title">Champs profil manquants</p>
-              <p className="admin-chart-card__subtitle">Priorise les efforts de complétion.</p>
+              <p className="admin-chart-card__title">Champs les plus souvent manquants</p>
+              <p className="admin-chart-card__subtitle">Où concentrer les relances de complétion.</p>
               <div className="admin-chart-card__body">
-                <div className="admin-chart-frame admin-chart-frame--xs admin-chart-frame--center">
+                <div className="admin-chart-frame admin-chart-frame--decision-bar admin-chart-frame--center">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={missingFieldRows}
                       layout="vertical"
-                      margin={{ top: 6, right: 12, bottom: 6, left: 84 }}
+                      margin={{ top: 4, right: 10, bottom: 4, left: 4 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" />
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                       <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
                       <YAxis
                         type="category"
                         dataKey="field"
                         tick={{ fontSize: 11, fill: '#475569' }}
-                        width={84}
+                        width={92}
                       />
                       <Tooltip contentStyle={{ fontSize: 12 }} />
-                      <Bar dataKey="missing" name="Manquants" fill="#f59e0b" radius={[6, 6, 6, 6]} />
+                      <Bar dataKey="missing" name="Manquants" fill="#d97706" radius={[0, 6, 6, 0]} barSize={14} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -720,79 +819,234 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
             <article className="admin-chart-card admin-chart-card--compact">
               <p className="admin-chart-card__title">Attention vs conversion</p>
-              <p className="admin-chart-card__subtitle">Distingue visibilité et engagement.</p>
+              <p className="admin-chart-card__subtitle">
+                {attentionViewContact.useScatter
+                  ? 'Chaque point = un membre · axe X = vues profil, axe Y = clics contact.'
+                  : 'Vue segmentée (peu de signal sur la période) — priorités lisibles.'}
+              </p>
               <div className="admin-chart-card__body">
-                <div className="admin-split">
-                  <div className="admin-mini-table">
-                    <p className="admin-mini-table__title">Top vues</p>
-                    <ul className="admin-mini-table__rows">
-                      {attentionConversion.topViewed.length === 0 ? (
-                        <li className="admin-mini-table__row">—</li>
-                      ) : (
-                        attentionConversion.topViewed.map((r) => (
-                          <li key={r.id} className="admin-mini-table__row">
-                            <span className="admin-mini-table__name">{formatPersonName(r.name)}</span>
-                            <span className="admin-mini-table__metric">{r.views} vues</span>
-                          </li>
-                        ))
-                      )}
-                    </ul>
+                {attentionViewContact.scatter.length === 0 ? (
+                  <p className="admin-decision-empty">Pas encore de vues ni de contacts sur cette période.</p>
+                ) : attentionViewContact.useScatter ? (
+                  <div className="admin-chart-frame admin-chart-frame--scatter">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ScatterChart margin={{ top: 10, right: 14, bottom: 22, left: 16 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                        <XAxis
+                          type="number"
+                          dataKey="x"
+                          name="Vues"
+                          tick={{ fontSize: 11, fill: '#64748b' }}
+                          allowDecimals={false}
+                          label={{
+                            value: 'Vues profil',
+                            position: 'insideBottom',
+                            offset: -4,
+                            style: { fontSize: 11, fill: '#78716c' },
+                          }}
+                        />
+                        <YAxis
+                          type="number"
+                          dataKey="y"
+                          name="Contacts"
+                          tick={{ fontSize: 11, fill: '#64748b' }}
+                          allowDecimals={false}
+                          label={{
+                            value: 'Clics contact',
+                            angle: -90,
+                            position: 'insideLeft',
+                            style: { fontSize: 11, fill: '#78716c', textAnchor: 'middle' },
+                          }}
+                        />
+                        <Tooltip content={<AttentionScatterTooltip />} cursor={{ strokeDasharray: '4 4' }} />
+                        <Scatter data={attentionViewContact.scatter} fill="#4f46e5" fillOpacity={0.75} />
+                      </ScatterChart>
+                    </ResponsiveContainer>
                   </div>
-                  <div className="admin-mini-table">
-                    <p className="admin-mini-table__title">Top contacts</p>
-                    <ul className="admin-mini-table__rows">
-                      {attentionConversion.topContacted.length === 0 ? (
-                        <li className="admin-mini-table__row">—</li>
-                      ) : (
-                        attentionConversion.topContacted.map((r) => (
-                          <li key={r.id} className="admin-mini-table__row">
-                            <span className="admin-mini-table__name">{formatPersonName(r.name)}</span>
-                            <span className="admin-mini-table__metric">{r.clicks} clics</span>
-                          </li>
-                        ))
-                      )}
-                    </ul>
+                ) : (
+                  <div className="admin-attention-editorial">
+                    <div className="admin-attention-segment">
+                      <p className="admin-attention-segment__title">Très vus, peu contactés</p>
+                      <p className="admin-attention-segment__meta">
+                        {attentionViewContact.editorial.counts.highAttentionLowContact} profil
+                        {attentionViewContact.editorial.counts.highAttentionLowContact > 1 ? 's' : ''}
+                      </p>
+                      <ul className="admin-decision-rows">
+                        {attentionViewContact.editorial.highAttentionLowContact.length === 0 ? (
+                          <li className="admin-decision-rows__empty">—</li>
+                        ) : (
+                          attentionViewContact.editorial.highAttentionLowContact.map((m: any) => {
+                            const v = stats.profileViewsByUid?.[String(m.id)] ?? 0;
+                            return (
+                              <li key={m.id} className="admin-decision-rows__item">
+                                <span className="admin-decision-rows__primary">
+                                  {formatPersonName(String(m.nom ?? '').trim())}
+                                </span>
+                                <span className="admin-decision-rows__secondary">
+                                  {v} vue{v > 1 ? 's' : ''} · 0 contact
+                                </span>
+                              </li>
+                            );
+                          })
+                        )}
+                      </ul>
+                    </div>
+                    <div className="admin-attention-segment">
+                      <p className="admin-attention-segment__title">Vus et contactés</p>
+                      <p className="admin-attention-segment__meta">
+                        {attentionViewContact.editorial.counts.engaged} profil
+                        {attentionViewContact.editorial.counts.engaged > 1 ? 's' : ''}
+                      </p>
+                      <ul className="admin-decision-rows">
+                        {attentionViewContact.editorial.engaged.length === 0 ? (
+                          <li className="admin-decision-rows__empty">—</li>
+                        ) : (
+                          attentionViewContact.editorial.engaged.map((m: any) => {
+                            const v = stats.profileViewsByUid?.[String(m.id)] ?? 0;
+                            const c = m.contactClicks ?? 0;
+                            return (
+                              <li key={m.id} className="admin-decision-rows__item">
+                                <span className="admin-decision-rows__primary">
+                                  {formatPersonName(String(m.nom ?? '').trim())}
+                                </span>
+                                <span className="admin-decision-rows__secondary">
+                                  {v} vue{v > 1 ? 's' : ''} · {c} contact{c > 1 ? 's' : ''}
+                                </span>
+                              </li>
+                            );
+                          })
+                        )}
+                      </ul>
+                    </div>
+                    <div className="admin-attention-segment">
+                      <p className="admin-attention-segment__title">Encore peu visibles</p>
+                      <p className="admin-attention-segment__meta">
+                        {attentionViewContact.editorial.counts.lowVisibility} profil
+                        {attentionViewContact.editorial.counts.lowVisibility > 1 ? 's' : ''} sans signal
+                      </p>
+                      <ul className="admin-decision-rows">
+                        {attentionViewContact.editorial.lowVisibility.length === 0 ? (
+                          <li className="admin-decision-rows__empty">—</li>
+                        ) : (
+                          attentionViewContact.editorial.lowVisibility.map((m: any) => (
+                            <li key={m.id} className="admin-decision-rows__item">
+                              <span className="admin-decision-rows__primary">
+                                {formatPersonName(String(m.nom ?? '').trim())}
+                              </span>
+                              <span className="admin-decision-rows__secondary">0 vue · 0 contact</span>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </article>
 
             <article className="admin-chart-card admin-chart-card--compact">
-              <p className="admin-chart-card__title">Potentiel d’opportunité</p>
-              <p className="admin-chart-card__subtitle">Qui / quoi peut créer le plus de connexions.</p>
+              <p className="admin-chart-card__title">Membres à connecter en priorité</p>
+              <p className="admin-chart-card__subtitle">
+                Forte proximité de passions avec d’autres membres — utile pour intros ciblées.
+              </p>
               <div className="admin-chart-card__body">
-                <div className="admin-split">
-                  <div className="admin-mini-table">
-                    <p className="admin-mini-table__title">Membres à fort potentiel</p>
-                    <ul className="admin-mini-table__rows">
-                      {relationshipPotential.memberScores.length === 0 ? (
-                        <li className="admin-mini-table__row">—</li>
-                      ) : (
-                        relationshipPotential.memberScores.map((m) => (
-                          <li key={m.id} className="admin-mini-table__row">
-                            <span className="admin-mini-table__name">{formatPersonName(String(m.nom ?? '').trim())}</span>
-                            <span className="admin-mini-table__metric">{m.score} matchs</span>
-                          </li>
-                        ))
-                      )}
-                    </ul>
+                {relationshipPotential.memberScores.length === 0 ? (
+                  <p className="admin-decision-empty">Pas assez de passions renseignées pour estimer le potentiel.</p>
+                ) : (
+                  <ul className="admin-opportunity-member-list">
+                    {relationshipPotential.memberScores.map((m) => (
+                      <li key={m.id} className="admin-opportunity-member-list__row">
+                        <div className="admin-opportunity-member-list__text">
+                          <p className="admin-opportunity-member-list__name">
+                            {formatPersonName(String(m.nom ?? '').trim())}
+                          </p>
+                          {(m.entreprise || m.city) && (
+                            <p className="admin-opportunity-member-list__meta">
+                              {[String(m.entreprise ?? '').trim(), String(m.city ?? '').trim()]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </p>
+                          )}
+                        </div>
+                        <p className="admin-opportunity-member-list__score tabular-nums" title="Membres distincts partageant au moins une passion">
+                          {m.score}
+                          <span className="admin-opportunity-member-list__score-label"> recoupements</span>
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </article>
+
+            <article className="admin-chart-card admin-chart-card--compact">
+              <p className="admin-chart-card__title">Passions les plus transverses</p>
+              <p className="admin-chart-card__subtitle">S’étendent sur le plus de secteurs — leviers pour animations transverses.</p>
+              <div className="admin-chart-card__body">
+                {relationshipPotential.topOverlapPassions.length === 0 ? (
+                  <p className="admin-decision-empty">—</p>
+                ) : (
+                  <ul className="admin-opportunity-passion-list">
+                    {relationshipPotential.topOverlapPassions.map((p) => (
+                      <li key={p.pid} className="admin-opportunity-passion-list__row">
+                        <p className="admin-opportunity-passion-list__label">{p.label}</p>
+                        <div className="admin-opportunity-passion-list__metrics tabular-nums">
+                          <span title="Nombre de secteurs distincts">{p.sectorCount} sect.</span>
+                          <span className="admin-opportunity-passion-list__sep" aria-hidden>
+                            ·
+                          </span>
+                          <span title="Membres avec cette passion">{p.memberCount} membres</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </article>
+
+            <article className="admin-chart-card admin-chart-card--compact admin-decision-span-2">
+              <p className="admin-chart-card__title">Gaps secteurs & villes</p>
+              <p className="admin-chart-card__subtitle">
+                Zones comptant ≤ 2 membres — à surveiller pour la représentativité du réseau.
+              </p>
+              <div className="admin-chart-card__body">
+                {coverageGapMatrixRows.length === 0 ? (
+                  <p className="admin-decision-empty">
+                    Aucun secteur ni ville sous le seuil (≤2) avec les données actuelles.
+                  </p>
+                ) : (
+                  <div className="admin-gap-table-wrap">
+                    <table className="admin-gap-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Libellé</th>
+                          <th scope="col">Type</th>
+                          <th scope="col" className="admin-gap-table__num">
+                            Membres
+                          </th>
+                          <th scope="col">Niveau</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {coverageGapMatrixRows.map((row) => {
+                          const level = row.value <= 1 ? 'fragile' : 'faible';
+                          return (
+                            <tr key={`${row.kind}-${row.label}`}>
+                              <td className="admin-gap-table__label">{row.label}</td>
+                              <td>{row.kind}</td>
+                              <td className="admin-gap-table__num tabular-nums">{row.value}</td>
+                              <td>
+                                <span className={`admin-gap-pill admin-gap-pill--${level}`}>
+                                  {row.value <= 1 ? 'Très fin' : 'Fin'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                  <div className="admin-mini-table">
-                    <p className="admin-mini-table__title">Passions transverses</p>
-                    <ul className="admin-mini-table__rows">
-                      {relationshipPotential.topOverlapPassions.length === 0 ? (
-                        <li className="admin-mini-table__row">—</li>
-                      ) : (
-                        relationshipPotential.topOverlapPassions.map((p) => (
-                          <li key={p.label} className="admin-mini-table__row">
-                            <span className="admin-mini-table__name">{p.label}</span>
-                            <span className="admin-mini-table__metric">{p.sectors} secteurs</span>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </div>
-                </div>
+                )}
               </div>
             </article>
           </div>

@@ -3,6 +3,18 @@ import { User as UserIcon } from 'lucide-react';
 import { cn } from '../cn';
 import { profileInitialsFromName } from '../lib/profileInitials';
 
+function safeUrlPreviewForLog(url: string): string {
+  try {
+    const u = new URL(url);
+    u.search = '';
+    u.hash = '';
+    const s = u.toString();
+    return s.length > 140 ? `${s.slice(0, 140)}…` : s;
+  } catch {
+    return url.length > 140 ? `${url.slice(0, 140)}…` : url;
+  }
+}
+
 export type ProfileAvatarProps = {
   photoURL?: string | null;
   fullName: string;
@@ -42,7 +54,12 @@ export default function ProfileAvatar({
           src={trimmed}
           alt=""
           className={cn('h-full w-full object-cover', imgClassName)}
-          onError={() => setFailed(true)}
+          onError={() => {
+            if (import.meta.env.DEV) {
+              console.warn('[ProfileAvatar] image load failed, using fallback', safeUrlPreviewForLog(trimmed));
+            }
+            setFailed(true);
+          }}
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"

@@ -1879,12 +1879,13 @@ const NeedPage = () => {
             <div className="space-y-4">
               {comments.map(c => (
                 <div key={c.id} className="flex gap-4">
-                  <div className="w-10 h-10 bg-stone-100 rounded-xl overflow-hidden border border-stone-200 shrink-0">
-                    {c.authorPhoto ? (
-                      <img src={c.authorPhoto} alt={c.authorName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                    ) : (
-                      <UserIcon size={20} className="m-auto mt-2 text-stone-300" />
-                    )}
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-stone-200 bg-stone-100">
+                    <ProfileAvatar
+                      photoURL={c.authorPhoto}
+                      fullName={c.authorName}
+                      className="h-full w-full bg-stone-100"
+                      iconSize={20}
+                    />
                   </div>
                   <div className="flex-1 bg-stone-50 p-4 rounded-2xl border border-stone-100">
                     <div className="flex items-center justify-between mb-1">
@@ -5658,15 +5659,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               </label>
                               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex min-h-10 items-center gap-3">
-                                  {profilePhotoUrlDraft ? (
-                                    <img
-                                      src={profilePhotoUrlDraft}
-                                      alt={t('profileFormProfilePhotoLabel')}
-                                      className="h-10 w-10 shrink-0 rounded-full border border-stone-200 object-cover"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                      }}
-                                    />
+                                  {profilePhotoUrlDraft.trim() ? (
+                                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-stone-200">
+                                      <ProfileAvatar
+                                        photoURL={profilePhotoUrlDraft}
+                                        fullName={
+                                          editingProfile?.fullName ??
+                                          profile?.fullName ??
+                                          user?.displayName ??
+                                          ''
+                                        }
+                                        className="h-full w-full bg-stone-100"
+                                        iconSize={20}
+                                      />
+                                    </div>
                                   ) : (
                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-stone-300 bg-stone-100 text-[10px] text-stone-400">
                                       {t('profileFormPhotoPlaceholder')}

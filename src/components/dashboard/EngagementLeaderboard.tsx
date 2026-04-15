@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import type { Timestamp } from 'firebase/firestore';
 import { HelpCircle } from 'lucide-react';
+import ProfileAvatar from '@/components/ProfileAvatar';
 
 export type MemberWithStats = {
   id: string;
@@ -66,13 +67,6 @@ function rankLabel(i: number) {
   return String(i + 1);
 }
 
-function initials(name: string) {
-  const parts = String(name ?? '').trim().split(/\s+/).filter(Boolean);
-  const a = parts[0]?.[0] ?? '';
-  const b = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? '' : '';
-  return (a + b).toUpperCase() || '•';
-}
-
 export default function EngagementLeaderboard({ members }: { members: MemberWithStats[] }) {
   const [open, setOpen] = useState(false);
   const scored = useMemo(() => {
@@ -130,13 +124,13 @@ export default function EngagementLeaderboard({ members }: { members: MemberWith
               {rankLabel(i)}
             </span>
             <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-indigo-100 text-indigo-700">
-              {m.photo ? (
-                <img src={m.photo} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs font-bold">
-                  {initials(m.nom)}
-                </div>
-              )}
+              <ProfileAvatar
+                photoURL={m.photo}
+                fullName={m.nom}
+                className="h-full w-full bg-indigo-100"
+                initialsClassName="text-xs text-indigo-800"
+                iconSize={18}
+              />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-stone-900">{m.nom}</p>
