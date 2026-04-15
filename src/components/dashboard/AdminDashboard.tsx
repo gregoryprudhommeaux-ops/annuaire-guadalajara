@@ -408,19 +408,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                   </div>
                 </div>
               </article>
-
-              <article className="admin-chart-card admin-chart-card--compact admin-chart-card--donut">
-                <p className="admin-chart-card__title">Répartition par secteur</p>
-                <p className="admin-chart-card__subtitle">Lecture rapide par univers d’activité</p>
-                <div className="admin-chart-card__body">
-                  <div className="admin-chart-frame admin-chart-frame--sm">
-                    <SectorDonutChart
-                      data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))}
-                      height={280}
-                    />
-                  </div>
-                </div>
-              </article>
             </div>
 
             <div className="admin-stack">
@@ -433,24 +420,43 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                       <ProfileCompletionGauge
                         totalMembers={stats.totalProfiles}
                         completedProfiles={stats.completedProfilesStrict}
+                        compact
+                        embedded
                       />
                     </MiniErrorBoundary>
                   </div>
                 </div>
               </article>
-
-              <article className="admin-chart-card admin-chart-card--table">
-                <p className="admin-chart-card__title">Membres les plus actifs</p>
-                <p className="admin-chart-card__subtitle">Basé sur les clics de contact</p>
-                <div className="admin-chart-card__body">
-                  <div className="admin-table-wrap">
-                    <MiniErrorBoundary label="TopActiveMembersTable">
-                      <TopActiveMembersTable members={stats.profilesForDashboard as any} lang={lang} />
-                    </MiniErrorBoundary>
-                  </div>
-                </div>
-              </article>
             </div>
+          </div>
+
+          <div className="admin-analytics-wide">
+            <article className="admin-chart-card admin-chart-card--table">
+              <p className="admin-chart-card__title">Membres les plus actifs</p>
+              <p className="admin-chart-card__subtitle">Basé sur les clics de contact</p>
+              <div className="admin-chart-card__body">
+                <div className="admin-table-wrap">
+                  <MiniErrorBoundary label="TopActiveMembersTable">
+                    <TopActiveMembersTable members={stats.profilesForDashboard as any} lang={lang} />
+                  </MiniErrorBoundary>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div className="admin-analytics-secondary">
+            <article className="admin-chart-card admin-chart-card--compact admin-chart-card--donut">
+              <p className="admin-chart-card__title">Répartition par secteur</p>
+              <p className="admin-chart-card__subtitle">Lecture rapide par univers d’activité</p>
+              <div className="admin-chart-card__body">
+                <div className="admin-chart-frame admin-chart-frame--sm">
+                  <SectorDonutChart
+                    data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))}
+                    height={280}
+                  />
+                </div>
+              </div>
+            </article>
           </div>
 
           {/* E. Deep-dive */}

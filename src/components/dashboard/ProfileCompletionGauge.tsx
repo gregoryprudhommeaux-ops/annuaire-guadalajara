@@ -10,10 +10,13 @@ export default function ProfileCompletionGauge({
   totalMembers,
   completedProfiles,
   compact = false,
+  embedded = false,
 }: {
   totalMembers: number;
   completedProfiles: number;
   compact?: boolean;
+  /** When embedded in another card, remove the outer wrapper. */
+  embedded?: boolean;
 }) {
   const pct = totalMembers > 0 ? Math.round((completedProfiles / totalMembers) * 100) : 0;
   const color = getGaugeColor(pct);
@@ -57,8 +60,8 @@ export default function ProfileCompletionGauge({
     [color, compact]
   );
 
-  return (
-    <div className={`rounded-xl border border-stone-200 bg-white shadow-sm ${compact ? 'p-3' : 'p-4'}`}>
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className={`font-semibold text-stone-900 ${compact ? 'text-xs' : 'text-sm'}`}>Complétion des profils</h3>
@@ -103,7 +106,13 @@ export default function ProfileCompletionGauge({
           {incomplete} profils incomplets
         </p>
       </div>
-    </div>
+    </>
+  );
+
+  if (embedded) return <div className={compact ? 'p-1' : 'p-0'}>{content}</div>;
+
+  return (
+    <div className={`rounded-xl border border-stone-200 bg-white shadow-sm ${compact ? 'p-3' : 'p-4'}`}>{content}</div>
   );
 }
 

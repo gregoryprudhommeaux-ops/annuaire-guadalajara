@@ -264,10 +264,26 @@
 
 .admin-dashboard-page .admin-analytics-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.98fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 24px;
   align-items: start;
   margin-bottom: 24px;
+}
+
+.admin-dashboard-page .admin-analytics-wide {
+  margin-bottom: 24px;
+}
+
+.admin-dashboard-page .admin-analytics-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.admin-dashboard-page .admin-analytics-secondary > * {
+  flex: 1 1 420px;
+  min-width: 0;
 }
 
 .admin-dashboard-page .admin-stack {
@@ -305,6 +321,8 @@
 .admin-dashboard-page .admin-chart-frame {
   width: 100%;
   min-height: 260px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .admin-dashboard-page .admin-chart-frame--sm {
@@ -314,6 +332,7 @@
 
 .admin-dashboard-page .admin-table-wrap {
   overflow-x: auto;
+  max-width: 100%;
 }
 
 .admin-dashboard-page .admin-table {
