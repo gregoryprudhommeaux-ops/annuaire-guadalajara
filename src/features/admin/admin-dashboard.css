@@ -266,12 +266,20 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
   margin-bottom: 24px;
 }
 
 .admin-dashboard-page .admin-analytics-wide {
   margin-bottom: 24px;
+}
+
+.admin-dashboard-page .admin-analytics-grid .admin-stack {
+  height: 100%;
+}
+
+.admin-dashboard-page .admin-analytics-grid .admin-stack > .admin-chart-card {
+  height: 100%;
 }
 
 .admin-dashboard-page .admin-analytics-secondary {
