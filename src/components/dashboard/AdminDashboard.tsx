@@ -239,7 +239,10 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     }
   }, [affinityShortlist]);
   const bySectorData = useMemo(
-    () => Object.entries(stats.profilesBySector).map(([name, value]) => ({ name, value })),
+    () =>
+      Object.entries(stats.profilesBySector)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value),
     [stats.profilesBySector]
   );
   const byCityData = useMemo(
@@ -255,6 +258,14 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     { name: 'Membre', value: stats.profilesByType.membre },
   ];
   const COLORS = ['#1d4ed8', '#16a34a', '#0284c7', '#7c3aed', '#ea580c', '#334155'];
+  const SECTOR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
+  const sectorColorByName = useMemo(() => {
+    const map = new Map<string, string>();
+    bySectorData.forEach((s, idx) => {
+      map.set(String(s.name), SECTOR_COLORS[idx % SECTOR_COLORS.length]);
+    });
+    return map;
+  }, [bySectorData]);
   const chartTick = { fontSize: 10, fill: '#64748b' };
   const modalTick = { fontSize: 12, fill: '#475569' };
   const xTickCardAngled = (props: { x: number; y: number; payload?: { value?: string | number } }) => (
@@ -644,6 +655,39 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                 </div>
               </div>
             </article>
+
+            <article className="admin-chart-card admin-chart-card--compact">
+              <p className="admin-chart-card__title">Couverture secteurs / villes</p>
+              <p className="admin-chart-card__subtitle">Identifier forces & zones faibles.</p>
+              <div className="admin-chart-card__body">
+                <div className="admin-chart-frame admin-chart-frame--sm admin-chart-frame--center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={sectorCoverageRows} margin={{ top: 6, right: 10, bottom: 30, left: 6 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" tick={xTickCardAngled as any} interval={0} height={52} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <Tooltip contentStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="value" name="Membres" radius={[6, 6, 0, 0]}>
+                        {sectorCoverageRows.map((row, idx) => (
+                          <Cell key={`${row.name}-${idx}`} fill={sectorColorByName.get(row.name) ?? '#1d4ed8'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="admin-gaps">
+                  <p className="admin-gaps__title">Gaps (≤ 1 membre)</p>
+                  <ul className="admin-gaps__list">
+                    {gapInsights.weakSectors.slice(0, 3).map((s) => (
+                      <li key={`s-${s.name}`}>{s.name}</li>
+                    ))}
+                    {gapInsights.weakCities.slice(0, 2).map((c) => (
+                      <li key={`c-${c.name}`}>{c.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </article>
           </div>
 
           <div className="admin-decision-grid">
@@ -705,35 +749,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                       )}
                     </ul>
                   </div>
-                </div>
-              </div>
-            </article>
-
-            <article className="admin-chart-card admin-chart-card--compact">
-              <p className="admin-chart-card__title">Couverture secteurs / villes</p>
-              <p className="admin-chart-card__subtitle">Identifier forces & zones faibles.</p>
-              <div className="admin-chart-card__body">
-                <div className="admin-chart-frame admin-chart-frame--sm">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={sectorCoverageRows} margin={{ top: 6, right: 10, bottom: 30, left: 6 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={xTickCardAngled as any} interval={0} height={52} />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
-                      <Tooltip contentStyle={{ fontSize: 12 }} />
-                      <Bar dataKey="value" name="Membres" fill="#1d4ed8" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="admin-gaps">
-                  <p className="admin-gaps__title">Gaps (≤ 1 membre)</p>
-                  <ul className="admin-gaps__list">
-                    {gapInsights.weakSectors.slice(0, 3).map((s) => (
-                      <li key={`s-${s.name}`}>{s.name}</li>
-                    ))}
-                    {gapInsights.weakCities.slice(0, 2).map((c) => (
-                      <li key={`c-${c.name}`}>{c.name}</li>
-                    ))}
-                  </ul>
                 </div>
               </div>
             </article>
