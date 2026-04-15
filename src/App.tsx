@@ -4581,6 +4581,32 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
   }
 
   const headerAdminLayout = Boolean(user && viewerIsAdmin && isAdminRoute);
+  const languageControlsTopRight = (
+    <>
+      <div className="sm:hidden">
+        <LanguageDropdownMobile lang={lang} onLangChange={setLang} />
+      </div>
+      <div className="hidden shrink-0 items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
+        {(['fr', 'es', 'en'] as const).map((code) => {
+          const isActive = lang === code;
+          return (
+            <button
+              key={code}
+              type="button"
+              onClick={() => setLang(code)}
+              aria-pressed={isActive}
+              className={cn(
+                'px-3 py-1.5 text-xs font-semibold transition-colors',
+                isActive ? 'bg-blue-700 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+              )}
+            >
+              {code.toUpperCase()}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
 
   return (
     <div className="flex min-h-screen min-w-0 flex-col bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
@@ -4598,34 +4624,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         // Keep login + language controls in the top-right header (like before),
         // rather than pushing guest CTA into a full-width mobile bar.
         guestMobileFullWidthCta={false}
-        hideDesktopLanguageSwitch={headerAdminLayout}
+        // Language controls are always top-right to avoid duplicates.
+        hideDesktopLanguageSwitch
         topRight={
           headerAdminLayout && user ? (
             <div className="flex shrink-0 items-center gap-2">
-              <div className="sm:hidden">
-                <LanguageDropdownMobile lang={lang} onLangChange={setLang} />
-              </div>
-              <div className="hidden shrink-0 items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
-                {(['fr', 'es', 'en'] as const).map((code) => {
-                  const isActive = lang === code;
-                  return (
-                    <button
-                      key={code}
-                      type="button"
-                      onClick={() => setLang(code)}
-                      aria-pressed={isActive}
-                      className={cn(
-                        'px-3 py-1.5 text-xs font-semibold transition-colors',
-                        isActive
-                          ? 'bg-blue-700 text-white'
-                          : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                      )}
-                    >
-                      {code.toUpperCase()}
-                    </button>
-                  );
-                })}
-              </div>
+              {languageControlsTopRight}
               <button
                 type="button"
                 onClick={handleLogout}
@@ -4644,7 +4648,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 />
               </div>
             </div>
-          ) : undefined
+          ) : (
+            <div className="flex shrink-0 items-center gap-2">{languageControlsTopRight}</div>
+          )
         }
         fullWidthRow={
           headerAdminLayout ? (
