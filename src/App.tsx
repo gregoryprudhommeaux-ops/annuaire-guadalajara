@@ -4613,7 +4613,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       <AppHeader
         title={t('title')}
         subtitle={t('subtitle')}
-        notificationCount={viewerIsAdmin ? pendingProfiles.length : 0}
+        // Admin: show the "new profiles" badge on the dedicated button, not on the logo.
+        notificationCount={headerAdminLayout ? 0 : viewerIsAdmin ? pendingProfiles.length : 0}
         homeAriaLabel={t('nav.backHome')}
         onHomeClick={(e) => {
           e.preventDefault();
