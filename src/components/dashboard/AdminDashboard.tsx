@@ -217,6 +217,26 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
   const [pickedCross, setPickedCross] = useState<CrossPick | null>(null);
   const [crossDimension, setCrossDimension] = useState<'sector' | 'poste' | 'industrie'>('sector');
   const [affinityExplore, setAffinityExplore] = useState<AffinityExploreKey>('detail');
+  const [affinityShortlist, setAffinityShortlist] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('adminAffinityShortlist:v1');
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) setAffinityShortlist(new Set(parsed.map((x) => String(x))));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('adminAffinityShortlist:v1', JSON.stringify(Array.from(affinityShortlist)));
+    } catch {
+      // ignore
+    }
+  }, [affinityShortlist]);
   const bySectorData = useMemo(
     () => Object.entries(stats.profilesBySector).map(([name, value]) => ({ name, value })),
     [stats.profilesBySector]
@@ -280,6 +300,35 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     });
     return { title, rows };
   }, [pickedCross, stats.profilesForDashboard, lang]);
+
+  const pickedMemberIds = useMemo(() => {
+    return new Set((pickedCrossMembers.rows ?? []).map((m: any) => String(m.id)));
+  }, [pickedCrossMembers.rows]);
+
+  const shortlistCountInPick = useMemo(() => {
+    let n = 0;
+    pickedMemberIds.forEach((id) => {
+      if (affinityShortlist.has(id)) n += 1;
+    });
+    return n;
+  }, [pickedMemberIds, affinityShortlist]);
+
+  const toggleShortlist = (id: string) => {
+    setAffinityShortlist((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const copyText = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // ignore (non-secure context / permissions)
+    }
+  };
 
   const affinityRows = useMemo(() => {
     const locale = lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr';
@@ -651,40 +700,126 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
           {pickedCross ? (
             <div className="fixed inset-0 z-[410] flex items-center justify-center bg-stone-900/50 p-4">
-              <div className="w-full max-w-2xl rounded-2xl border border-stone-200 bg-white p-4 shadow-2xl sm:p-6">
+              <div className="w-full max-w-4xl rounded-2xl border border-stone-200 bg-white p-4 shadow-2xl sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h3 className="text-base font-semibold text-stone-900">{pickedCrossMembers.title}</h3>
-                    <p className="mt-1 text-xs text-stone-500">{pickedCrossMembers.rows.length} membre(s)</p>
+                    <p className="mt-1 text-xs text-stone-500">
+                      {pickedCrossMembers.rows.length} membre(s) · shortlist: {shortlistCountInPick}
+                    </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setPickedCross(null)}
-                    className="shrink-0 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
-                  >
-                    Fermer
-                  </button>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const lines = pickedCrossMembers.rows.map((m: any) =>
+                          [m.nom, m.entreprise, m.secteur].filter(Boolean).join(' — ')
+                        );
+                        void copyText(lines.join('\n'));
+                      }}
+                      className="shrink-0 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                      title="Copier la liste des membres"
+                    >
+                      Copier liste
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const names = pickedCrossMembers.rows.map((m: any) => String(m.nom ?? '').trim()).filter(Boolean);
+                        const msg =
+                          `Bonjour,\n\nJe vous contacte via l’annuaire (admin) car votre profil semble pertinent pour: ${pickedCrossMembers.title}.\n` +
+                          `Seriez-vous ouvert(e) à une introduction / échange rapide ?\n\nMerci,\n`;
+                        void copyText(msg);
+                      }}
+                      className="shrink-0 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                      title="Copier un texte d'intro"
+                    >
+                      Copier intro
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPickedCross(null)}
+                      className="shrink-0 rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
+                    >
+                      Fermer
+                    </button>
+                  </div>
                 </div>
 
-                <div className="mt-4 max-h-[60vh] overflow-auto rounded-lg border border-stone-200">
-                  <ul className="divide-y divide-stone-100">
-                    {pickedCrossMembers.rows.map((m) => (
-                      <li key={m.id} className="flex items-center justify-between gap-3 px-3 py-2">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-stone-900">{m.nom}</p>
-                          <p className="truncate text-xs text-stone-500">
-                            {[m.entreprise, m.secteur, (m as any).status, (m as any).city].filter(Boolean).join(' · ')}
-                          </p>
-                        </div>
-                        <a
-                          href={`/membres/${encodeURIComponent(m.id)}`}
-                          className="shrink-0 rounded-md bg-blue-700 px-2.5 py-1 text-xs font-semibold text-white"
-                        >
-                          Voir
-                        </a>
+                <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
+                  <div className="min-w-0">
+                    <div className="max-h-[60vh] overflow-auto rounded-lg border border-stone-200">
+                      <ul className="divide-y divide-stone-100">
+                        {pickedCrossMembers.rows.map((m: any) => {
+                          const id = String(m.id);
+                          const isShortlisted = affinityShortlist.has(id);
+                          return (
+                            <li key={id} className="flex items-start justify-between gap-3 px-3 py-2">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-stone-900">{m.nom}</p>
+                                <p className="truncate text-xs text-stone-500">
+                                  {[m.entreprise, m.secteur, (m as any).status, (m as any).city].filter(Boolean).join(' · ')}
+                                </p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleShortlist(id)}
+                                    className={
+                                      isShortlisted
+                                        ? 'rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800'
+                                        : 'rounded-md bg-stone-100 px-2 py-1 text-xs font-semibold text-stone-700'
+                                    }
+                                    title="Ajouter à une shortlist locale (admin)"
+                                  >
+                                    {isShortlisted ? 'Shortlisté' : 'Shortlister'}
+                                  </button>
+                                  <a
+                                    href={`/membres/${encodeURIComponent(id)}`}
+                                    className="rounded-md bg-blue-700 px-2 py-1 text-xs font-semibold text-white"
+                                  >
+                                    Ouvrir profil
+                                  </a>
+                                </div>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <aside className="min-w-0 rounded-xl border border-stone-200 bg-stone-50 p-3">
+                    <p className="text-xs font-extrabold uppercase tracking-wide text-stone-600">Prochaines actions</p>
+                    <ul className="mt-2 grid gap-2 text-sm text-stone-800">
+                      <li>
+                        <strong>Intro</strong>: sélectionner 2–3 profils et envoyer une introduction courte.
                       </li>
-                    ))}
-                  </ul>
+                      <li>
+                        <strong>Shortlist</strong>: marquer 5–8 profils, puis “Copier liste” pour partager en interne.
+                      </li>
+                      <li>
+                        <strong>Invite</strong>: si un secteur/passion est sous-représenté, inviter 1–2 profils “référence”.
+                      </li>
+                      <li>
+                        <strong>Follow-up</strong>: relancer les profils shortlistés après 7 jours.
+                      </li>
+                    </ul>
+                    <div className="mt-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const ids = Array.from(affinityShortlist).filter((id) => pickedMemberIds.has(id));
+                          const lines = pickedCrossMembers.rows
+                            .filter((m: any) => ids.includes(String(m.id)))
+                            .map((m: any) => [m.nom, m.entreprise].filter(Boolean).join(' — '));
+                          void copyText(lines.join('\n'));
+                        }}
+                        className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                      >
+                        Copier shortlist (sur cette sélection)
+                      </button>
+                    </div>
+                  </aside>
                 </div>
               </div>
             </div>
