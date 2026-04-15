@@ -223,6 +223,14 @@ import { ProfileSectionTag } from '@/features/profile/components/ProfileSectionT
 import { ProfileFieldHint } from '@/features/profile/components/ProfileFieldHint';
 import { PROFILE_FIELD_LABELS } from '@/features/profile/utils/profileFieldLabels';
 import { PROFILE_FIELD_HELP } from '@/features/profile/utils/profileFieldHelp';
+import { ProfileEditFormPatchStyles } from '@/features/profile/ProfileEditFormPatchStyles';
+import {
+  ProfileEditorialMemberBioField,
+  ProfileEditorialNetworkGoalField,
+  ProfileEditorialHelpNewcomersField,
+  ProfileEditorialContactPreferenceField,
+  ProfileEditorialKeywordsField,
+} from '@/features/profile/components/ProfileEditorialRouteFields';
 import {
   memberCardBioBodyClassName,
   memberCardBioTitleAttr,
@@ -2226,6 +2234,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const isRadarRoute = location.pathname === '/radar';
   const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
   const isEditProfileRoute = location.pathname === '/profile/edit';
+  /** Libellés / aides FR raccourcis (patch UX) uniquement sur /profile/edit. */
+  const profileEditFrUx = isEditProfileRoute && lang === 'fr';
   const isMembersDirectoryRoute = location.pathname === '/membres' || isNetworkRoute;
   const isEventsAdminRoute = location.pathname === '/evenements';
 
@@ -4963,7 +4973,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </button>
             </div>
           )}
-          <div className={pageSectionPad}>
+          <div className={cn(pageSectionPad, isEditProfileRoute && 'profile-edit-page')}>
             {isEditProfileRoute && (editingProfile?.uid ?? profile?.uid) ? (
               <div className="sticky top-24 z-40 mb-4 sm:top-16">
                 {profileVisibilityBandHidden ? (
@@ -5323,6 +5333,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               onSubmit={handleSaveProfile}
                               className={cn('space-y-8', isEditProfileRoute && 'profile-edit-density space-y-6')}
                             >
+                          {isEditProfileRoute ? <ProfileEditFormPatchStyles /> : null}
                           {editingProfile && editingProfile.uid !== user.uid ? (
                             <p
                               className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium leading-relaxed text-indigo-950"
@@ -5347,7 +5358,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             ) : null}
                           </div>
 
-                          <section className="profile-card-compact space-y-4">
+                          <section
+                            className={cn(
+                              'profile-card-compact space-y-4',
+                              isEditProfileRoute && 'profile-card-soft profile-stack-md'
+                            )}
+                          >
                             <div className="profile-section-header">
                               <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
                                 {t('profileFormSectionPerson')}
@@ -5381,10 +5397,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               )}
                             </ProfileSectionHint>
 
-                            <div className="profile-form-grid-2">
+                            <div className={cn('profile-form-grid-2', isEditProfileRoute && 'profile-grid-2')}>
                               <div className="profile-form-block--dense space-y-1">
                                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {lang === 'fr' ? PROFILE_FIELD_LABELS.fullName : t('fullName')}
+                                  {profileEditFrUx ? PROFILE_FIELD_LABELS.fullName : t('fullName')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
@@ -5404,7 +5420,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                               <div className="profile-form-block--dense space-y-1">
                                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {lang === 'fr' ? PROFILE_FIELD_LABELS.email : t('email')}
+                                  {profileEditFrUx ? PROFILE_FIELD_LABELS.email : t('email')}
                                   <span className="text-red-500 font-semibold" aria-hidden>
                                     {' *'}
                                   </span>
@@ -5426,7 +5442,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                               <div className="profile-form-block--dense min-w-0 space-y-1 sm:col-span-2">
                                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {lang === 'fr' ? PROFILE_FIELD_LABELS.linkedinUrl : t('linkedin')}
+                                  {profileEditFrUx ? PROFILE_FIELD_LABELS.linkedinUrl : t('linkedin')}
                                 </label>
                                 <input
                                   name="linkedin"
@@ -5451,7 +5467,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                       className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
                                       htmlFor="whatsappDial"
                                     >
-                                      {lang === 'fr' ? PROFILE_FIELD_LABELS.countryDialCode : t('profileFormPhoneCountryLabel')}
+                                      {profileEditFrUx ? PROFILE_FIELD_LABELS.countryDialCode : t('profileFormPhoneCountryLabel')}
                                     </label>
                                     <select
                                       id="whatsappDial"
@@ -5471,7 +5487,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                       className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
                                       htmlFor="whatsappLocal"
                                     >
-                                      {lang === 'fr' ? PROFILE_FIELD_LABELS.phoneWhatsapp : t('profileFormPhoneLocalLabel')}
+                                      {profileEditFrUx ? PROFILE_FIELD_LABELS.phoneWhatsapp : t('profileFormPhoneLocalLabel')}
                                       <span className="text-red-500 font-semibold" aria-hidden>
                                         {' *'}
                                       </span>
@@ -5498,7 +5514,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               </div>
                             </div>
 
-                            <div className="mb-4 flex flex-col gap-2">
+                            <div
+                              className={cn(
+                                'mb-4',
+                                isEditProfileRoute ? 'inline-checkboxes' : 'flex flex-col gap-2'
+                              )}
+                            >
                               <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700 hover:text-stone-900">
                                 <input
                                   type="checkbox"
@@ -5531,7 +5552,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                             <div className="mb-4 space-y-1" id="profile-completion-workLanguages">
                               <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                {t('contactPrefsWorkingLangLabel')}
+                                {profileEditFrUx ? PROFILE_FIELD_LABELS.languages : t('contactPrefsWorkingLangLabel')}
                               </span>
                               <div className="flex flex-wrap gap-2">
                                 {WORKING_LANGUAGE_OPTIONS.map((opt) => {
@@ -5556,7 +5577,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   );
                                 })}
                               </div>
-                              <p className="mt-1 text-[10px] text-stone-400 leading-relaxed">{t('contactPrefsWorkingLangTip')}</p>
+                              <ProfileFieldHint>
+                                {profileEditFrUx
+                                  ? PROFILE_FIELD_HELP.languages
+                                  : t('contactPrefsWorkingLangTip')}
+                              </ProfileFieldHint>
                             </div>
 
                             {companyActivitiesDraft[0]?.id ? (
@@ -5565,7 +5590,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
                                   htmlFor="profile-arrival-year"
                                 >
-                                  {t('arrivalYear')}
+                                  {profileEditFrUx
+                                    ? PROFILE_FIELD_LABELS.arrivalYearInMexico
+                                    : t('arrivalYear')}
                                 </label>
                                 <input
                                   id="profile-arrival-year"
@@ -5581,49 +5608,64 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   }}
                                   className="h-10 w-full max-w-xs rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
-                                <p className="mt-1 text-[10px] text-stone-400">{t('profileFormArrivalRegionHint')}</p>
+                                <ProfileFieldHint>
+                                  {profileEditFrUx
+                                    ? PROFILE_FIELD_HELP.arrivalYearInMexico
+                                    : t('profileFormArrivalRegionHint')}
+                                </ProfileFieldHint>
                               </div>
                             ) : null}
 
                             <input type="hidden" name="photoURL" value={profilePhotoUrlDraft} />
-                            <div className="space-y-1">
-                              <label
-                                className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                htmlFor="profile-member-bio"
-                              >
-                                {t('memberBio')}
-                                <span className="text-red-500 font-semibold" aria-hidden>
-                                  {' *'}
-                                </span>
-                              </label>
-                              <textarea
-                                id="profile-member-bio"
-                                name="memberBio"
-                                rows={4}
-                                maxLength={4000}
-                                defaultValue={
-                                  formDraftT?.memberBio ??
-                                  (editingProfile?.memberBio ??
-                                    profile?.memberBio ??
-                                    editingProfile?.bio ??
-                                    profile?.bio) ??
-                                  ''
-                                }
-                                placeholder={pickLang(
-                                  'Qui êtes-vous, votre parcours, ce que vous apportez au réseau…',
-                                  'Quién eres, tu trayectoria, qué aportas a la red…',
-                                  'Who you are, your path, what you bring to the network…',
-                                  lang
-                                )}
-                                className="min-h-[90px] w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                            {isEditProfileRoute ? (
+                              <ProfileEditorialMemberBioField
+                                formDraftT={formDraftT}
+                                editingProfile={editingProfile}
+                                profile={profile}
+                                profileEditFrUx={profileEditFrUx}
+                                lang={lang}
+                                t={t}
                               />
-                              <ProfileFieldHint>
-                                {lang === 'fr' ? PROFILE_FIELD_HELP.bio : t('profileFormMemberBioHint')}
-                              </ProfileFieldHint>
-                            </div>
+                            ) : (
+                              <div className="space-y-1">
+                                <label
+                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                  htmlFor="profile-member-bio"
+                                >
+                                  {t('memberBio')}
+                                  <span className="text-red-500 font-semibold" aria-hidden>
+                                    {' *'}
+                                  </span>
+                                </label>
+                                <textarea
+                                  id="profile-member-bio"
+                                  name="memberBio"
+                                  rows={4}
+                                  maxLength={4000}
+                                  defaultValue={
+                                    formDraftT?.memberBio ??
+                                    (editingProfile?.memberBio ??
+                                      profile?.memberBio ??
+                                      editingProfile?.bio ??
+                                      profile?.bio) ??
+                                    ''
+                                  }
+                                  placeholder={pickLang(
+                                    'Qui êtes-vous, votre parcours, ce que vous apportez au réseau…',
+                                    'Quién eres, tu trayectoria, qué aportas a la red…',
+                                    'Who you are, your path, what you bring to the network…',
+                                    lang
+                                  )}
+                                  className="min-h-[90px] w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                />
+                                <ProfileFieldHint>
+                                  {profileEditFrUx ? PROFILE_FIELD_HELP.bio : t('profileFormMemberBioHint')}
+                                </ProfileFieldHint>
+                              </div>
+                            )}
                             <div className="space-y-1">
                               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                {lang === 'fr' ? PROFILE_FIELD_LABELS.profilePhoto : t('profileFormProfilePhotoLabel')}
+                                {profileEditFrUx ? PROFILE_FIELD_LABELS.profilePhoto : t('profileFormProfilePhotoLabel')}
                               </label>
                               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex min-h-10 items-center gap-3">
@@ -5761,7 +5803,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             />
                           </section>
 
-                          <section className="space-y-3 rounded-xl border border-stone-200 bg-stone-50/40 p-4">
+                          <section
+                            className={cn(
+                              'space-y-3 rounded-xl border border-stone-200 bg-stone-50/40 p-4',
+                              isEditProfileRoute && 'profile-card-soft profile-stack-md'
+                            )}
+                          >
                             <div className="profile-section-header">
                               <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
                                 {t('profileFormSectionCompanyActivity')}
@@ -5846,10 +5893,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                                     {!collapsed ? (
                                       <div className="space-y-4 border-t border-stone-100 pt-3">
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <div
+                                          className={cn(
+                                            'grid grid-cols-1 gap-4 md:grid-cols-2',
+                                            isEditProfileRoute && 'profile-grid-2'
+                                          )}
+                                        >
                                           <div className="space-y-1">
                                             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {t('companyName')}
+                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.companyName : t('companyName')}
                                               <span className="text-red-500 font-semibold" aria-hidden>
                                                 {' *'}
                                               </span>
@@ -5867,7 +5919,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                           </div>
                                           <div className="space-y-1">
                                             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {t('website')}
+                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.companyWebsite : t('website')}
                                               <span className="text-red-500 font-semibold" aria-hidden>
                                                 {' *'}
                                               </span>
@@ -5888,7 +5940,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                                         <div className="space-y-1">
                                           <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                            {t('activityCategory')}
+                                            {profileEditFrUx ? PROFILE_FIELD_LABELS.sector : t('activityCategory')}
                                             <span className="text-red-500 font-semibold" aria-hidden>
                                               {' *'}
                                             </span>
@@ -5913,10 +5965,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                           </select>
                                         </div>
 
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                        <div
+                                          className={cn(
+                                            'grid grid-cols-1 gap-4 md:grid-cols-3',
+                                            isEditProfileRoute && 'profile-grid-3'
+                                          )}
+                                        >
                                           <div className="space-y-1">
                                             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {t('city')}
+                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.city : t('city')}
                                               <span className="text-red-500 font-semibold" aria-hidden>
                                                 {' *'}
                                               </span>
@@ -5940,7 +5997,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                           </div>
                                           <div className="space-y-1">
                                             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {t('neighborhood')}
+                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.district : t('neighborhood')}
                                             </label>
                                             <input
                                               value={slot.neighborhood ?? ''}
@@ -5954,7 +6011,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                           </div>
                                           <div className="space-y-1">
                                             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {t('state')}
+                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.state : t('state')}
                                               <span className="text-red-500 font-semibold" aria-hidden>
                                                 {' *'}
                                               </span>
@@ -5973,7 +6030,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                           <div className="space-y-1 md:col-span-2">
                                             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {t('country')}
+                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.country : t('country')}
                                               <span className="text-red-500 font-semibold" aria-hidden>
                                                 {' *'}
                                               </span>
@@ -5986,13 +6043,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                               }
                                               className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                             />
-                                            <p className="mt-1 text-[10px] text-stone-400">
-                                              {t('profileFormCountryFootnote')}
-                                            </p>
+                                            <ProfileFieldHint>
+                                              {profileEditFrUx
+                                                ? PROFILE_FIELD_HELP.country
+                                                : t('profileFormCountryFootnote')}
+                                            </ProfileFieldHint>
                                           </div>
                                           <div className="space-y-1 md:col-span-1">
                                             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {t('workFunction')}
+                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.roleInCompany : t('workFunction')}
                                               <span className="text-red-500 font-semibold" aria-hidden>
                                                 {' *'}
                                               </span>
@@ -6013,11 +6072,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                                 </option>
                                               ))}
                                             </select>
-                                            <p className="mt-1 text-[10px] text-stone-400">{t('workFunctionHint')}</p>
+                                            <ProfileFieldHint>
+                                              {profileEditFrUx
+                                                ? PROFILE_FIELD_HELP.roleInCompany
+                                                : t('workFunctionHint')}
+                                            </ProfileFieldHint>
                                           </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <div
+                                          className={cn(
+                                            'grid grid-cols-1 gap-4 md:grid-cols-2',
+                                            isEditProfileRoute && 'profile-grid-2'
+                                          )}
+                                        >
                                           <div className="space-y-1">
                                             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                               {t('creationYear')}
@@ -6036,7 +6104,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                           </div>
                                           <div className="space-y-1">
                                             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {t('employeeCount')}{' '}
+                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.employeeRange : t('employeeCount')}{' '}
                                               <span className="text-[10px] font-normal normal-case text-stone-400">
                                                 {t('employeeCountOptional')}
                                               </span>
@@ -6067,10 +6135,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                           </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                        <div
+                                          className={cn(
+                                            'grid grid-cols-1 gap-4 md:grid-cols-3',
+                                            isEditProfileRoute && 'profile-grid-3'
+                                          )}
+                                        >
                                           <div className="space-y-1">
                                             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {t('profileFormCompanyType')}
+                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.companyType : t('profileFormCompanyType')}
                                               <span className="text-red-500 font-semibold" aria-hidden>
                                                 {' *'}
                                               </span>
@@ -6108,7 +6181,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                           </div>
                                           <div className="space-y-1">
                                             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {t('profileFormProfessionalStatus')}
+                                              {profileEditFrUx
+                                                ? PROFILE_FIELD_LABELS.professionalStatus
+                                                : t('profileFormProfessionalStatus')}
                                               <span className="text-red-500 font-semibold" aria-hidden>
                                                 {' *'}
                                               </span>
@@ -6144,7 +6219,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                               htmlFor={`typicalClientSizes-${slot.id}`}
                                               className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
                                             >
-                                              {t('contactPrefsClientSizeLabel')}
+                                              {profileEditFrUx
+                                                ? PROFILE_FIELD_LABELS.typicalClientSizes
+                                                : t('contactPrefsClientSizeLabel')}
                                             </label>
                                             <TypicalClientSizesDropdown
                                               fieldId={`typicalClientSizes-${slot.id}`}
@@ -6166,7 +6243,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                                         <div className="space-y-1">
                                           <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                            {t('profileFormActivityDescriptionLabel')}
+                                            {profileEditFrUx
+                                              ? PROFILE_FIELD_LABELS.activityDescription
+                                              : t('profileFormActivityDescriptionLabel')}
                                             <span className="text-red-500 font-semibold" aria-hidden>
                                               {' *'}
                                             </span>
@@ -6190,7 +6269,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                             className="min-h-[90px] w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                           />
                                           <ProfileFieldHint>
-                                            {lang === 'fr'
+                                            {profileEditFrUx
                                               ? PROFILE_FIELD_HELP.activityDescription
                                               : t('profileFormActivityDescriptionHint')}
                                           </ProfileFieldHint>
@@ -6215,7 +6294,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           </section>
 
 
-                          <section className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
+                          <section
+                            className={cn(
+                              'space-y-3 rounded-lg border border-amber-200 bg-amber-50/40 p-4',
+                              isEditProfileRoute && 'profile-stack-md'
+                            )}
+                          >
                             <div className="profile-section-header">
                               <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
                                 {t('profileFormSectionNeedsKeywords')}
@@ -6232,39 +6316,50 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </div>
                             <ProfileSectionHint tone="matching">{t('profileFormSectionCore')}</ProfileSectionHint>
 
-                            <div>
-                              <div className="mb-2 flex flex-wrap items-center gap-2">
-                                <label
-                                  htmlFor="networkGoal"
-                                  className="text-sm font-semibold text-stone-900"
-                                >
-                                  {t('profileNetworkGoalLabel')}
-                                </label>
-                                <FieldBadge tone="recommended">{t('commonRecommended')}</FieldBadge>
-                              </div>
-                              <input
-                                id="networkGoal"
-                                name="networkGoal"
-                                type="text"
-                                maxLength={200}
-                                defaultValue={
-                                  formDraftT?.networkGoal ??
-                                  (editingProfile?.networkGoal ?? profile?.networkGoal) ??
-                                  ''
-                                }
-                                placeholder={t('profileNetworkGoalPlaceholder')}
-                                className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none ring-0 placeholder:text-stone-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/25"
+                            {isEditProfileRoute ? (
+                              <ProfileEditorialNetworkGoalField
+                                formDraftT={formDraftT}
+                                editingProfile={editingProfile}
+                                profile={profile}
+                                profileEditFrUx={profileEditFrUx}
+                                lang={lang}
+                                t={t}
                               />
-                              <ProfileFieldHint>
-                                {lang === 'fr'
-                                  ? PROFILE_FIELD_HELP.lookingForText
-                                  : t('profileNetworkGoalHint')}
-                              </ProfileFieldHint>
-                            </div>
+                            ) : (
+                              <div>
+                                <div className="mb-2 flex flex-wrap items-center gap-2">
+                                  <label
+                                    htmlFor="networkGoal"
+                                    className="text-sm font-semibold text-stone-900"
+                                  >
+                                    {profileEditFrUx ? PROFILE_FIELD_LABELS.lookingForText : t('profileNetworkGoalLabel')}
+                                  </label>
+                                  <FieldBadge tone="recommended">{t('commonRecommended')}</FieldBadge>
+                                </div>
+                                <input
+                                  id="networkGoal"
+                                  name="networkGoal"
+                                  type="text"
+                                  maxLength={200}
+                                  defaultValue={
+                                    formDraftT?.networkGoal ??
+                                    (editingProfile?.networkGoal ?? profile?.networkGoal) ??
+                                    ''
+                                  }
+                                  placeholder={t('profileNetworkGoalPlaceholder')}
+                                  className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none ring-0 placeholder:text-stone-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/25"
+                                />
+                                <ProfileFieldHint>
+                                  {profileEditFrUx
+                                    ? PROFILE_FIELD_HELP.lookingForText
+                                    : t('profileNetworkGoalHint')}
+                                </ProfileFieldHint>
+                              </div>
+                            )}
 
                             <div id="profile-completion-highlightedNeeds">
                               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                {t('highlightedNeedsTitle')}{' '}
+                                {profileEditFrUx ? PROFILE_FIELD_LABELS.currentNeeds : t('highlightedNeedsTitle')}{' '}
                                 <span className="text-[10px] font-normal normal-case text-stone-400">
                                   {t('highlightedNeedsOptional')}
                                 </span>
@@ -6302,93 +6397,138 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 ))}
                               </div>
                               <ProfileFieldHint>
-                                {lang === 'fr' ? PROFILE_FIELD_HELP.currentNeeds : t('highlightedNeedsHint')}
+                                {profileEditFrUx ? PROFILE_FIELD_HELP.currentNeeds : t('highlightedNeedsHint')}
                               </ProfileFieldHint>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                              <div className="space-y-1">
-                                <label
-                                  htmlFor="helpNewcomers"
-                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                >
-                                  {t('profileHelpNewcomersLabel')}
-                                </label>
-                                <textarea
-                                  id="helpNewcomers"
-                                  name="helpNewcomers"
-                                  rows={3}
-                                  maxLength={800}
-                                  defaultValue={
-                                    formDraftT?.helpNewcomers ??
-                                    (editingProfile?.helpNewcomers ?? profile?.helpNewcomers) ??
-                                    ''
-                                  }
-                                  placeholder={t('profileHelpNewcomersPlaceholder')}
-                                  className="w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                            <div
+                              className={cn(
+                                'grid grid-cols-1 gap-4 md:grid-cols-2',
+                                isEditProfileRoute && 'profile-grid-2'
+                              )}
+                            >
+                              {isEditProfileRoute ? (
+                                <ProfileEditorialHelpNewcomersField
+                                  formDraftT={formDraftT}
+                                  editingProfile={editingProfile}
+                                  profile={profile}
+                                  profileEditFrUx={profileEditFrUx}
+                                  lang={lang}
+                                  t={t}
                                 />
-                                <ProfileFieldHint>
-                                  {lang === 'fr' ? PROFILE_FIELD_HELP.helpOfferText : t('profileHelpNewcomersHint')}
-                                </ProfileFieldHint>
-                              </div>
+                              ) : (
+                                <div className="space-y-1">
+                                  <label
+                                    htmlFor="helpNewcomers"
+                                    className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                  >
+                                    {profileEditFrUx ? PROFILE_FIELD_LABELS.helpOfferText : t('profileHelpNewcomersLabel')}
+                                  </label>
+                                  <textarea
+                                    id="helpNewcomers"
+                                    name="helpNewcomers"
+                                    rows={3}
+                                    maxLength={800}
+                                    defaultValue={
+                                      formDraftT?.helpNewcomers ??
+                                      (editingProfile?.helpNewcomers ?? profile?.helpNewcomers) ??
+                                      ''
+                                    }
+                                    placeholder={t('profileHelpNewcomersPlaceholder')}
+                                    className="w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                                  />
+                                  <ProfileFieldHint>
+                                    {profileEditFrUx ? PROFILE_FIELD_HELP.helpOfferText : t('profileHelpNewcomersHint')}
+                                  </ProfileFieldHint>
+                                </div>
+                              )}
 
-                              <div className="space-y-1">
-                                <label
-                                  htmlFor="contactPreferenceCta"
-                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                >
-                                  {t('contactPrefsCtaLabel')}
-                                </label>
-                                <textarea
-                                  id="contactPreferenceCta"
-                                  name="contactPreferenceCta"
-                                  rows={3}
-                                  maxLength={200}
-                                  defaultValue={
-                                    formDraftT?.contactPreferenceCta ??
-                                    (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta) ??
-                                    ''
-                                  }
-                                  placeholder={t('contactPrefsCtaPlaceholder')}
-                                  className="w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                              {isEditProfileRoute ? (
+                                <ProfileEditorialContactPreferenceField
+                                  formDraftT={formDraftT}
+                                  editingProfile={editingProfile}
+                                  profile={profile}
+                                  profileEditFrUx={profileEditFrUx}
+                                  lang={lang}
+                                  t={t}
                                 />
-                                <ProfileFieldHint>
-                                  {lang === 'fr'
-                                    ? PROFILE_FIELD_HELP.preferredContactText
-                                    : t('contactPrefsCtaHint')}
-                                </ProfileFieldHint>
-                              </div>
+                              ) : (
+                                <div className="space-y-1">
+                                  <label
+                                    htmlFor="contactPreferenceCta"
+                                    className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                  >
+                                    {profileEditFrUx
+                                      ? PROFILE_FIELD_LABELS.preferredContactText
+                                      : t('contactPrefsCtaLabel')}
+                                  </label>
+                                  <textarea
+                                    id="contactPreferenceCta"
+                                    name="contactPreferenceCta"
+                                    rows={3}
+                                    maxLength={200}
+                                    defaultValue={
+                                      formDraftT?.contactPreferenceCta ??
+                                      (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta) ??
+                                      ''
+                                    }
+                                    placeholder={t('contactPrefsCtaPlaceholder')}
+                                    className="w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                                  />
+                                  <ProfileFieldHint>
+                                    {profileEditFrUx
+                                      ? PROFILE_FIELD_HELP.preferredContactText
+                                      : t('contactPrefsCtaHint')}
+                                  </ProfileFieldHint>
+                                </div>
+                              )}
                             </div>
 
-                            <div className="space-y-1">
-                              <label
-                                htmlFor="targetSectors-needs"
-                                className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                              >
-                                {t('profileFormAboutKeywordsLabel')}{' '}
-                                <span className="text-[10px] font-normal normal-case text-stone-400">
-                                  {t('targetSectorsOptional')}
-                                </span>
-                              </label>
-                              <input
-                                id="targetSectors-needs"
-                                name="targetSectors"
-                                defaultValue={
-                                  formDraftT?.targetSectors ??
-                                  (editingProfile?.targetSectors || profile?.targetSectors || []).join(', ')
-                                }
-                                placeholder={t('needKeywordsPlaceholder')}
-                                className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                            {isEditProfileRoute ? (
+                              <ProfileEditorialKeywordsField
+                                formDraftT={formDraftT}
+                                editingProfile={editingProfile}
+                                profile={profile}
+                                profileEditFrUx={profileEditFrUx}
+                                lang={lang}
+                                t={t}
                               />
-                              <ProfileFieldHint>
-                                {lang === 'fr' ? PROFILE_FIELD_HELP.keywords : t('needKeywordsHint')}
-                              </ProfileFieldHint>
-                            </div>
+                            ) : (
+                              <div className="space-y-1">
+                                <label
+                                  htmlFor="targetSectors-needs"
+                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                >
+                                  {profileEditFrUx ? PROFILE_FIELD_LABELS.keywords : t('profileFormAboutKeywordsLabel')}{' '}
+                                  <span className="text-[10px] font-normal normal-case text-stone-400">
+                                    {t('targetSectorsOptional')}
+                                  </span>
+                                </label>
+                                <input
+                                  id="targetSectors-needs"
+                                  name="targetSectors"
+                                  defaultValue={
+                                    formDraftT?.targetSectors ??
+                                    (editingProfile?.targetSectors || profile?.targetSectors || []).join(', ')
+                                  }
+                                  placeholder={t('needKeywordsPlaceholder')}
+                                  className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+                                />
+                                <ProfileFieldHint>
+                                  {profileEditFrUx ? PROFILE_FIELD_HELP.keywords : t('needKeywordsHint')}
+                                </ProfileFieldHint>
+                              </div>
+                            )}
 
                           </section>
 
 
-                          <section className="space-y-3">
+                          <section
+                            className={cn(
+                              'space-y-3',
+                              isEditProfileRoute && 'profile-card-soft profile-stack-md'
+                            )}
+                          >
                             <div className="profile-section-header">
                               <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
                                 {t('profileFormSectionVisibility')}
@@ -6413,9 +6553,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             </ProfileSectionHint>
                             <div className="space-y-1">
                               <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                {t('contactPrefsOpenToLabel')}
+                                {profileEditFrUx ? PROFILE_FIELD_LABELS.openness : t('contactPrefsOpenToLabel')}
                               </span>
-                              <div className="mt-0 space-y-2">
+                              <div
+                                className={cn(
+                                  'mt-0',
+                                  isEditProfileRoute ? 'inline-checkboxes' : 'space-y-2'
+                                )}
+                              >
                                 <label className="flex cursor-pointer items-start gap-3 rounded-lg p-1 hover:bg-stone-50">
                                   <input
                                     type="checkbox"
@@ -6453,30 +6598,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   />
                                   <span className="text-sm text-stone-700">{t('contactPrefsOpenEvents')}</span>
                                 </label>
-                                {formAdminPrivateReady && formAdminPrivate !== null && (
-                                  <label className="flex cursor-pointer items-start gap-3 rounded-lg p-1 hover:bg-stone-50">
-                                    <input
-                                      type="checkbox"
-                                      name="openToEventSponsoring"
-                                      defaultChecked={
-                                        formDraftC?.openToEventSponsoring ??
-                                        formAdminPrivate.openToEventSponsoring === true
-                                      }
-                                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                    />
-                                    <span className="min-w-0">
-                                      <span className="block text-sm text-stone-700">
-                                        {t('contactPrefsOpenEventSponsoring')}
-                                      </span>
-                                      <span className="mt-0.5 block text-[10px] text-stone-400 leading-snug">
-                                        {t('contactPrefsOpenEventSponsoringPrivateHint')}
-                                      </span>
-                                    </span>
-                                  </label>
-                                )}
                               </div>
                               <ProfileFieldHint>
-                                {lang === 'fr' ? PROFILE_FIELD_HELP.openness : t('contactPrefsOpenToHint')}
+                                {profileEditFrUx ? PROFILE_FIELD_HELP.openness : t('contactPrefsOpenToHint')}
                               </ProfileFieldHint>
                             </div>
                           </section>
@@ -6484,7 +6608,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           {formAdminPrivateReady && formAdminPrivate !== null ? (
                             <section
                               key={`unpublished-admin-${editingProfile?.uid ?? profile?.uid}`}
-                              className="profile-card-compact space-y-4 border-t border-stone-200 pt-4"
+                              className={cn(
+                                'profile-card-compact space-y-4 border-t border-stone-200 pt-4',
+                                isEditProfileRoute && 'profile-card-soft profile-stack-md'
+                              )}
                             >
                               <div className="profile-section-header">
                                 <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
@@ -6505,10 +6632,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 )}
                               </ProfileSectionHint>
 
-                              <div className="profile-form-grid-2">
+                              <div className={cn('profile-form-grid-2', isEditProfileRoute && 'profile-grid-2')}>
                                 <div className="profile-form-block--dense space-y-1">
                                   <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                    {lang === 'fr' ? PROFILE_FIELD_LABELS.gender : t('genderStatLabel')}
+                                    {profileEditFrUx ? PROFILE_FIELD_LABELS.gender : t('genderStatLabel')}
                                   </label>
                                   <select
                                     name="genderStat"
@@ -6533,7 +6660,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                                 <div className="profile-form-block--dense space-y-1">
                                   <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                    {lang === 'fr' ? PROFILE_FIELD_LABELS.nationality : t('nationalityLabel')}
+                                    {profileEditFrUx ? PROFILE_FIELD_LABELS.nationality : t('nationalityLabel')}
                                   </label>
                                   <select
                                     name="nationality"
@@ -6550,6 +6677,30 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   <ProfileFieldHint>{t('nationalityHint')}</ProfileFieldHint>
                                 </div>
 
+                                <div className="profile-form-block--dense space-y-1 sm:col-span-2">
+                                  <label className="flex cursor-pointer items-start gap-3 rounded-lg p-1 hover:bg-stone-50">
+                                    <input
+                                      type="checkbox"
+                                      name="openToEventSponsoring"
+                                      defaultChecked={
+                                        formDraftC?.openToEventSponsoring ??
+                                        formAdminPrivate.openToEventSponsoring === true
+                                      }
+                                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                    />
+                                    <span className="min-w-0">
+                                      <span className="block text-sm text-stone-700">
+                                        {t('contactPrefsOpenEventSponsoring')}
+                                      </span>
+                                      <span className="mt-0.5 block text-[10px] text-stone-400 leading-snug">
+                                        {profileEditFrUx
+                                          ? 'Réservé à l’équipe d’administration.'
+                                          : t('contactPrefsOpenEventSponsoringPrivateHint')}
+                                      </span>
+                                    </span>
+                                  </label>
+                                </div>
+
                                 <div className="profile-form-block--dense space-y-2 sm:col-span-2">
                                   <label className="flex cursor-pointer items-start gap-2 rounded-lg p-1 text-sm text-stone-700 hover:bg-stone-50 hover:text-stone-900">
                                     <input
@@ -6562,7 +6713,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                       className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
                                     />
                                     <span className="min-w-0 font-medium">
-                                      {lang === 'fr'
+                                      {profileEditFrUx
                                         ? PROFILE_FIELD_LABELS.hostDelegations
                                         : t('acceptsDelegationVisitsLabel')}
                                     </span>
@@ -7458,6 +7609,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               bio={memberListingBioSource(p)}
                               photoUrl={p.photoURL}
                               needs={needLabels}
+                              contactPreferenceCta={p.contactPreferenceCta}
                               onOpen={() => setSelectedProfile(p)}
                             />
                           ) : (

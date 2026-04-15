@@ -1,6 +1,6 @@
 import type { ProfileFieldLabelKey } from './profileFieldLabels';
 
-/** Textes d’aide FR (sous-labels, tooltips) — sous-ensemble des champs. */
+/** Textes d’aide FR (sous-labels) — sous-ensemble des champs. */
 export const PROFILE_FIELD_HELP = {
   fullName: 'Comme sur votre fiche publique.',
   email: 'Pour connexion et échanges ; visibilité réglable plus bas.',
@@ -10,19 +10,21 @@ export const PROFILE_FIELD_HELP = {
   arrivalYearInMexico: 'Permet d’estimer votre ancienneté locale.',
   gender: 'Statistique interne uniquement.',
   nationality: 'Non affichée sur la fiche publique.',
-  bio: '15 caractères minimum. Présentez-vous : parcours, valeur pour le réseau.',
+  bio: 'Privilégiez une présentation claire, concrète et orientée business. Évitez les textes trop personnels ou trop longs.',
   profilePhoto: 'Avatar annuaire ; une photo lisible améliore les mises en relation.',
   passions: 'Centres d’intérêt hors cœur de métier : humanisent la fiche et le matching.',
   companyName: 'Raison sociale ou nom commercial principal.',
   sector: 'Secteur principal pour filtres et suggestions.',
+  country: 'Pays d’implantation ou de résidence.',
+  roleInCompany: 'Décrivez votre rôle réel, pas seulement votre titre.',
   activityDescription: '2 à 4 phrases concrètes sur l’activité sur ce marché.',
-  lookingForText: 'Une phrase : ce que vous attendez du réseau.',
+  lookingForText: 'Expliquez en une phrase ce que vous attendez concrètement du réseau.',
   currentNeeds: 'Jusqu’à 3 besoins affichés sur votre fiche publique.',
-  helpOfferText: 'Sur quoi vous pouvez aider concrètement d’autres membres.',
-  preferredContactText: 'Canal le plus simple pour un premier échange.',
-  keywords: '4 à 8 termes séparés par des virgules (zones, expertises…).',
+  helpOfferText: 'Décrivez de façon concrète comment vous pouvez être utile à d’autres membres.',
+  preferredContactText: 'Indiquez le canal de contact le plus simple et le plus naturel pour vous.',
+  keywords: 'Ajoutez 4 à 8 mots-clés utiles pour la recherche et le matching.',
   openness: 'Aide à proposer des mises en relation pertinentes.',
-  hostDelegations: 'Réservé à l’équipe d’administration, non affiché publiquement.',
+  hostDelegations: 'Réservé à l’équipe d’administration.',
 } as const satisfies Partial<Record<ProfileFieldLabelKey, string>>;
 
 export type ProfileFieldHelpKey = keyof typeof PROFILE_FIELD_HELP;

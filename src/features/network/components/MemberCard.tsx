@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import ProfileAvatar from '@/components/ProfileAvatar';
 import { cn } from '@/lib/cn';
-import { getMemberBioPreview } from '@/features/network/utils/memberContent';
 import { pickLang } from '@/lib/uiLocale';
 import { getVisibleNeeds, normalizeCompanyName, normalizeSectorName } from '../utils/memberCard';
+import { getCleanPreviewText, getPreferredContactPreview } from '@/features/network/utils/memberProfilePreview';
 import '../network.css';
 
 type MemberCardProps = {
@@ -17,6 +17,8 @@ type MemberCardProps = {
   bio?: string;
   photoUrl?: string;
   needs?: string[];
+  /** Préférence de contact courte (optionnel) — affichée en second plan si présente. */
+  contactPreferenceCta?: string;
   /** Ouvre la fiche en modal (ex. `setSelectedProfile` dans l’app). */
   onOpen?: () => void;
 };
@@ -29,6 +31,7 @@ export function MemberCard({
   bio,
   photoUrl,
   needs = [],
+  contactPreferenceCta,
   onOpen,
 }: MemberCardProps) {
   const { lang } = useLanguage();
@@ -54,7 +57,15 @@ export function MemberCard({
   const profilPath = `/profil/${encodeURIComponent(profileUid)}`;
   const cardLabel = pickLang(`Profil de ${fullName}`, `Perfil de ${fullName}`, `Profile: ${fullName}`, lang);
   const bioFull = (bio ?? '').replace(/\s+/g, ' ').trim();
-  const bioPreview = getMemberBioPreview(bio, lang, 210);
+  const bioFallback = pickLang(
+    'Présentation à compléter.',
+    'Presentación por completar.',
+    'Profile presentation to be completed.',
+    lang
+  );
+  const bioPreview = getCleanPreviewText(bio, bioFallback, 210);
+  const contactPreview =
+    contactPreferenceCta?.trim() ? getPreferredContactPreview(contactPreferenceCta) : null;
 
   const activate = () => {
     onOpen?.();
@@ -113,6 +124,12 @@ export function MemberCard({
           ))}
         </div>
       </div>
+
+      {contactPreview ? (
+        <p className="member-card__contactPref" title={contactPreferenceCta}>
+          {contactPreview}
+        </p>
+      ) : null}
 
       <div className="member-card__footer">
         <Link

@@ -1,24 +1,22 @@
 /**
- * Libellés FR des champs fiche profil (référence unique pour formulaires, exports, IA).
- * Les clés décrivent l’intention UX ; le mapping vers `UserProfile` peut différer
- * (ex. `sector` → `activityCategory`, `district` → `neighborhood`).
+ * Libellés FR courts pour /profile/edit (référence unique, sens conservé).
+ * Les clés décrivent l’intention UX ; le mapping vers `UserProfile` peut différer.
  */
-/** Libellés courts FR (formulaire profil) — sens conservé, charge cognitive réduite. */
 export const PROFILE_FIELD_LABELS = {
-  fullName: 'Nom affiché',
-  email: 'E-mail',
-  linkedinUrl: 'LinkedIn',
+  fullName: 'Nom complet',
+  email: 'Email',
+  linkedinUrl: 'Lien LinkedIn',
   countryDialCode: 'Indicatif',
-  phoneWhatsapp: 'Mobile / WhatsApp',
-  languages: 'Langues pro',
+  phoneWhatsapp: 'Téléphone / WhatsApp',
+  languages: 'Langues de travail',
   arrivalYearInMexico: 'Arrivée au Mexique',
   gender: 'Genre',
   nationality: 'Nationalité',
   bio: 'Bio membre',
-  profilePhoto: 'Photo',
+  profilePhoto: 'Photo de profil',
   passions: 'Passions',
 
-  companyName: 'Société',
+  companyName: 'Nom de la société',
   companyWebsite: 'Site web',
   sector: 'Secteur',
   city: 'Ville',
@@ -26,20 +24,20 @@ export const PROFILE_FIELD_LABELS = {
   state: 'État',
   country: 'Pays',
   roleInCompany: 'Fonction',
-  foundedYear: 'Création',
-  employeeRange: 'Effectif',
+  foundedYear: 'Année de création',
+  employeeRange: 'Employés',
   companyType: 'Type d’entreprise',
-  professionalStatus: 'Statut pro',
-  typicalClientSizes: 'Taille clients',
-  activityDescription: 'Activité',
+  professionalStatus: 'Statut',
+  typicalClientSizes: 'Clients habituels',
+  activityDescription: 'Description de l’activité',
 
-  lookingForText: 'Objectif réseau',
-  currentNeeds: 'Besoins (≤3)',
-  helpOfferText: 'Aide proposée',
-  preferredContactText: '1er contact',
+  lookingForText: 'Je recherche',
+  currentNeeds: 'Besoins actuels',
+  helpOfferText: 'Je peux aider sur',
+  preferredContactText: 'Canal de contact préféré',
   keywords: 'Mots-clés',
-  openness: 'Ouvertures',
-  hostDelegations: 'Délégations',
+  openness: 'Ouvert à',
+  hostDelegations: 'Accueil de délégations',
 } as const;
 
 export type ProfileFieldLabelKey = keyof typeof PROFILE_FIELD_LABELS;

@@ -1,0 +1,201 @@
+/* Patch UX réservé à .profile-edit-page (route /profile/edit uniquement). */
+
+.profile-edit-page .form-section,
+.profile-edit-page .profile-section,
+.profile-edit-page section {
+  scroll-margin-top: 100px;
+}
+
+.profile-edit-page .section-title,
+.profile-edit-page h2 {
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.profile-edit-page .section-description,
+.profile-edit-page .profile-section-hint {
+  margin-top: 0;
+  margin-bottom: 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #6b7280;
+  max-width: 72ch;
+}
+
+.profile-edit-page label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #374151;
+  text-transform: uppercase;
+}
+
+.profile-edit-page input[type='text'],
+.profile-edit-page input[type='email'],
+.profile-edit-page input[type='number'],
+.profile-edit-page input[type='url'],
+.profile-edit-page input[type='tel'],
+.profile-edit-page select,
+.profile-edit-page textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: #fff;
+  color: #111827;
+  padding: 10px 12px;
+  min-height: 44px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.profile-edit-page textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.profile-edit-page .field-help,
+.profile-edit-page small,
+.profile-edit-page .helper-text,
+.profile-edit-page .profile-field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #6b7280;
+}
+
+.profile-edit-page .profile-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.profile-edit-page .profile-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.profile-edit-page .profile-stack-sm > * + * {
+  margin-top: 10px;
+}
+
+.profile-edit-page .profile-stack-md > * + * {
+  margin-top: 16px;
+}
+
+.profile-edit-page .profile-card-soft {
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.profile-edit-page .profile-card-soft + .profile-card-soft {
+  margin-top: 18px;
+}
+
+.profile-edit-page .inline-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: center;
+}
+
+.profile-edit-page .inline-checkboxes label {
+  margin-bottom: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  color: #374151;
+}
+
+.profile-edit-page .field-compact textarea {
+  min-height: 84px;
+}
+
+.profile-edit-page .field-priority textarea,
+.profile-edit-page .field-priority input {
+  border-color: #cbd5e1;
+  background: #fcfcfd;
+}
+
+.profile-edit-page .field-secondary {
+  opacity: 0.96;
+}
+
+.profile-edit-page .section-divider {
+  height: 1px;
+  border: 0;
+  background: #eef2f7;
+  margin: 20px 0;
+}
+
+.profile-edit-page .section-subtle-note {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+@media (max-width: 900px) {
+  .profile-edit-page .profile-grid-2,
+  .profile-edit-page .profile-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.profile-edit-page .soft-counter {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: right;
+  color: #6b7280;
+}
+
+.profile-edit-page .soft-counter--ok {
+  color: #6b7280;
+}
+
+.profile-edit-page .soft-counter--warning {
+  color: #b45309;
+}
+
+.profile-edit-page .soft-counter--danger {
+  color: #b91c1c;
+}
+
+.profile-edit-page .editorial-note {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #6b7280;
+}
+
+.profile-edit-page .editorial-note strong {
+  color: #374151;
+}
+
+.profile-edit-page .field-preview {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.profile-edit-page .field-preview__label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #64748b;
+}
