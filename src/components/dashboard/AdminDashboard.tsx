@@ -601,7 +601,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                 <div className="admin-chart-card__body">
                   <div className="admin-chart-frame">
                     <MiniErrorBoundary label="InscriptionAreaChart">
-                      <InscriptionAreaChart members={stats.profilesCreatedAt} height={320} />
+                      <InscriptionAreaChart members={stats.profilesCreatedAt} height={280} />
                     </MiniErrorBoundary>
                   </div>
                 </div>
