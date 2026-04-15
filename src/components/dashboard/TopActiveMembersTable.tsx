@@ -3,13 +3,22 @@ import type { Language } from '@/types';
 import { calculateEngagementScore, type MemberWithStats } from '@/components/dashboard/EngagementLeaderboard';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
 
-function dedupeActiveMembers<T extends { id: string; score: number }>(members: T[]): T[] {
-  const byId = new Map<string, T>();
+function activeMemberKey(m: { id?: string; nom?: string; entreprise?: string }): string {
+  const id = String(m.id ?? '').trim();
+  if (id) return `id:${id}`;
+  const name = formatPersonName(m.nom).trim().toLowerCase();
+  const company = String(m.entreprise ?? '').trim().toLowerCase();
+  return `fallback:${name}|${company}`;
+}
+
+function dedupeActiveMembers<T extends { id: string; score: number; nom?: string; entreprise?: string }>(members: T[]): T[] {
+  const byKey = new Map<string, T>();
   for (const m of members) {
-    const existing = byId.get(m.id);
-    if (!existing || m.score > existing.score) byId.set(m.id, m);
+    const key = activeMemberKey(m);
+    const existing = byKey.get(key);
+    if (!existing || m.score > existing.score) byKey.set(key, m);
   }
-  return Array.from(byId.values());
+  return Array.from(byKey.values());
 }
 
 function badgeClass(secteur?: string) {
@@ -72,13 +81,14 @@ export default function TopActiveMembersTable({
           <thead className="bg-stone-50 text-stone-600">
             <tr className="text-[11px] font-semibold uppercase tracking-wide">
               <th className="px-3 py-2">Membre</th>
+              <th className="px-3 py-2">Entreprise</th>
               <th className="px-3 py-2">Secteur</th>
               <th className="px-3 py-2 text-right">Score</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-100">
             {rows.map((m) => (
-              <tr key={m.id} className="hover:bg-stone-50">
+              <tr key={activeMemberKey(m)} className="hover:bg-stone-50">
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2.5">
                     <div className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-blue-50 text-blue-700">
@@ -99,9 +109,13 @@ export default function TopActiveMembersTable({
                       <p className="truncate text-sm font-semibold text-stone-900">
                         {formatPersonName(m.nom)}
                       </p>
-                      <p className="truncate text-xs text-stone-500">{m.entreprise ?? '—'}</p>
                     </div>
                   </div>
+                </td>
+                <td className="px-3 py-2">
+                  <p className="max-w-[240px] truncate text-sm font-semibold text-stone-800" title={m.entreprise ?? '—'}>
+                    {m.entreprise ?? '—'}
+                  </p>
                 </td>
                 <td className="px-3 py-2">
                   <span
