@@ -44,10 +44,26 @@ class RootErrorBoundary extends React.Component<
             <button
               type="button"
               className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
-              onClick={() => {
+              onClick={async () => {
                 try {
                   window.sessionStorage.clear();
                   window.localStorage.clear();
+                } catch {
+                  // ignore
+                }
+                try {
+                  if ('caches' in window) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map((k) => caches.delete(k)));
+                  }
+                } catch {
+                  // ignore
+                }
+                try {
+                  if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map((r) => r.unregister()));
+                  }
                 } catch {
                   // ignore
                 }
@@ -76,14 +92,29 @@ function maybeReloadOnChunkError(reason: unknown) {
   // Avoid infinite reload loops if the asset truly cannot be fetched.
   const key = 'did_reload_after_chunk_error_v1';
   try {
-    if (sessionStorage.getItem(key) === '1') return;
-    sessionStorage.setItem(key, '1');
+    const did = sessionStorage.getItem(key) === '1';
+    if (!did) {
+      sessionStorage.setItem(key, '1');
+      window.location.reload();
+      return;
+    }
   } catch {
     // Fallback if sessionStorage is unavailable (privacy modes).
-    if ((window as any).__didReloadAfterChunkErrorV1) return;
-    (window as any).__didReloadAfterChunkErrorV1 = true;
+    if (!(window as any).__didReloadAfterChunkErrorV1) {
+      (window as any).__didReloadAfterChunkErrorV1 = true;
+      window.location.reload();
+      return;
+    }
   }
-  window.location.reload();
+
+  // Second time: force a cache-busting navigation (common after deploy + stale chunks).
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('__reload', String(Date.now()));
+    window.location.replace(url.toString());
+  } catch {
+    window.location.reload();
+  }
 }
 
 // Vite-specific preload error event.
