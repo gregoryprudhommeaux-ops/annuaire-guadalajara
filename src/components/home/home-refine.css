@@ -1,0 +1,49 @@
+/* Homepage-only refinement (scoped) */
+
+.fn-homepage {
+  /* More breathing room between major blocks */
+  gap: 2.5rem; /* 40px */
+}
+
+.fn-homepage section {
+  scroll-margin-top: 96px;
+}
+
+/* Make hero zone feel more curated and less “stacked MVP” */
+.fn-homepage .home-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.fn-homepage .home-cta-row__primary {
+  flex: 0 0 auto;
+}
+
+.fn-homepage .home-cta-row__secondary {
+  flex: 0 0 auto;
+}
+
+.fn-homepage .home-cta-row__tertiary {
+  margin-left: auto;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgb(71 85 105); /* slate-600 */
+  text-decoration: none;
+}
+
+.fn-homepage .home-cta-row__tertiary:hover {
+  color: rgb(15 23 42); /* slate-900 */
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .fn-homepage .home-cta-row__tertiary {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
+

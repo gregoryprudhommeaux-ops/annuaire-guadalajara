@@ -9,6 +9,7 @@ import { getSignupJoinUrl } from '@/lib/siteUrls';
 import { cn } from '@/lib/cn';
 import { pageStack } from '@/lib/pageLayout';
 import { useTranslation } from '@/i18n/useTranslation';
+import './home-refine.css';
 
 /** Source optionnelle pour déduire les pastilles secteurs (ex. profils annuaire). */
 export type HomePageMemberSectorSource = {
@@ -248,7 +249,7 @@ export function HomePage({
   );
 
   return (
-    <div className={cn('flex w-full min-w-0 flex-col gap-8', className)}>
+    <div className={cn('fn-homepage flex w-full min-w-0 flex-col gap-10', className)}>
       <AdminOnly isAdmin={isAdmin}>
         {adminQuickActions ? (
           <div className="flex flex-wrap gap-3">{adminQuickActions}</div>
@@ -256,7 +257,7 @@ export function HomePage({
       </AdminOnly>
 
       {/* ZONE A — conversion / 1 colonne */}
-      <section className={pageStack}>
+      <section className="flex flex-col gap-8">
         {heroSearch ?? defaultConversion}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
@@ -278,11 +279,11 @@ export function HomePage({
 
       {/* ZONE B — produit / 2 colonnes */}
       <section className="grid gap-6 lg:grid-cols-12">
-        <div className={cn(pageStack, 'lg:col-span-8')}>{mainColumn ?? defaultMainColumn}</div>
-        <aside className={cn(pageStack, 'lg:col-span-4')}>{sidebarColumn ?? defaultSidebar}</aside>
+        <div className={cn('flex flex-col gap-8', 'lg:col-span-8')}>{mainColumn ?? defaultMainColumn}</div>
+        <aside className={cn('flex flex-col gap-8', 'lg:col-span-4')}>{sidebarColumn ?? defaultSidebar}</aside>
       </section>
 
-      {children ? <div className={pageStack}>{children}</div> : null}
+      {children ? <div className="flex flex-col gap-8">{children}</div> : null}
     </div>
   );
 }

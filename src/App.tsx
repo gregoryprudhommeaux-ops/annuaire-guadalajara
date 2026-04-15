@@ -6841,6 +6841,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             membersForSectors={allProfiles.map((p) => ({ id: p.uid, sector: p.activityCategory ?? null }))}
             exploreMembersHref="/network"
             postRequestHref="/requests"
+            className="w-full"
             heroSearch={
               <HeroSearchSection
                 welcome={
@@ -6893,23 +6894,18 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 }
                 // Homepage-safe: no directory search here, only orientation CTAs.
                 search={
-                  <div
-                    className={cn(
-                      'grid grid-cols-1 gap-3',
-                      user ? 'sm:grid-cols-2' : 'sm:grid-cols-3'
-                    )}
-                  >
+                  <div className="home-cta-row">
                     {user ? (
                       <Link
                         to="/profile/edit"
-                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
+                        className="home-cta-row__primary inline-flex min-h-[44px] items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
                       >
                         Modifier mon profil
                       </Link>
                     ) : (
                       <Link
                         to="/inscription"
-                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
+                        className="home-cta-row__primary inline-flex min-h-[44px] items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
                       >
                         {t('home.marketing.ctaCreateProfile')}
                       </Link>
@@ -6917,15 +6913,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     {!user ? (
                       <Link
                         to="/network"
-                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                        className="home-cta-row__secondary inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                       >
                         {t('home.marketing.ctaExploreMembers')}
                       </Link>
                     ) : null}
-                    <Link
-                      to="/requests"
-                      className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                    >
+                    <Link to="/requests" className="home-cta-row__tertiary">
                       Voir les demandes
                     </Link>
                   </div>
