@@ -692,29 +692,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
           <div className="admin-decision-grid">
             <article className="admin-chart-card admin-chart-card--compact">
-              <p className="admin-chart-card__title">Champs profil manquants</p>
-              <p className="admin-chart-card__subtitle">Priorise les efforts de complétion.</p>
-              <div className="admin-chart-card__body">
-                <div className="admin-chart-frame admin-chart-frame--sm">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={missingFieldRows} layout="vertical" margin={{ top: 6, right: 12, bottom: 6, left: 84 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
-                      <YAxis
-                        type="category"
-                        dataKey="field"
-                        tick={{ fontSize: 11, fill: '#475569' }}
-                        width={84}
-                      />
-                      <Tooltip contentStyle={{ fontSize: 12 }} />
-                      <Bar dataKey="missing" name="Manquants" fill="#f59e0b" radius={[6, 6, 6, 6]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </article>
-
-            <article className="admin-chart-card admin-chart-card--compact">
               <p className="admin-chart-card__title">Attention vs conversion</p>
               <p className="admin-chart-card__subtitle">Distingue visibilité et engagement.</p>
               <div className="admin-chart-card__body">

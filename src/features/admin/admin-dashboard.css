@@ -301,7 +301,7 @@
 
 .admin-dashboard-page .admin-decision-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
   margin-bottom: 24px;
 }
@@ -818,7 +818,7 @@
     grid-template-columns: 1fr;
   }
   .admin-dashboard-page .admin-decision-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -849,6 +849,9 @@
     font-size: 2rem;
   }
   .admin-dashboard-page .admin-split {
+    grid-template-columns: 1fr;
+  }
+  .admin-dashboard-page .admin-decision-grid {
     grid-template-columns: 1fr;
   }
 }
