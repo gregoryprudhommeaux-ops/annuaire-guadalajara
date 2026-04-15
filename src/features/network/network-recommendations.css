@@ -1,70 +1,146 @@
-/* Recommandations /network — scopé pour ne pas croiser .recommended-section (accueil) */
+/* Recommandations /network — typo & rythme alignés sur `network.css` (sidebar, member-card, en-tête annuaire) */
 
 .fn-network-page .recommended-section {
-  margin-bottom: 20px;
-  padding: 18px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  margin-bottom: 0;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid rgb(226 232 240);
   border-radius: 18px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
 }
 
 .fn-network-page .recommended-section__header {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .fn-network-page .recommended-section__eyebrow {
-  margin: 0 0 6px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #6b7280;
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(100 116 139);
 }
 
 .fn-network-page .recommended-section__title {
-  margin: 0 0 6px;
-  font-size: 22px;
-  line-height: 1.15;
-  color: #111827;
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: rgb(28 25 23);
+}
+
+@media (min-width: 640px) {
+  .fn-network-page .recommended-section__title {
+    font-size: 1.5rem;
+  }
 }
 
 .fn-network-page .recommended-section__text {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.375;
+  font-weight: 400;
+  color: rgb(87 83 78);
 }
 
 .fn-network-page .recommended-section__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 1.5rem;
 }
 
 .fn-network-page .recommended-card {
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  padding: 16px;
-  border-radius: 16px;
-  border: 1px solid #e5e7eb;
-  background: #fcfcfd;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.fn-network-page .recommended-card:hover {
+  border-color: rgb(203 213 225);
+  box-shadow:
+    0 10px 28px -18px rgba(15, 23, 42, 0.12),
+    0 1px 2px rgba(16, 24, 40, 0.06);
 }
 
 .fn-network-page .recommended-card__top {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+}
+
+.fn-network-page .recommended-card__identity {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.fn-network-page .recommended-card__avatar {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgb(226 232 240);
+}
+
+.fn-network-page .recommended-card__avatarInner {
+  border-radius: 13px;
+}
+
+.fn-network-page .recommended-card__avatarImg {
+  object-fit: cover;
+}
+
+.fn-network-page .recommended-card__topMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+  text-align: right;
 }
 
 .fn-network-page .recommended-card__level {
   display: inline-flex;
   align-items: center;
-  min-height: 26px;
-  padding: 0 10px;
+  min-height: 1.75rem;
+  padding: 0 0.625rem;
   border-radius: 999px;
-  background: #eff6ff;
-  color: #1d4ed8;
-  font-size: 12px;
-  font-weight: 700;
+  background: rgb(239 246 255);
+  color: rgb(29 78 216);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.fn-network-page .recommended-card__stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.fn-network-page .recommended-card__star {
+  flex-shrink: 0;
+}
+
+.fn-network-page .recommended-card__star--on {
+  fill: #f59e0b;
+  stroke: #f59e0b;
+  color: #f59e0b;
+}
+
+.fn-network-page .recommended-card__star--off {
+  fill: none;
+  stroke: rgb(203 213 225);
+  color: rgb(203 213 225);
 }
 
 .fn-network-page .recommended-card__content {
@@ -72,23 +148,44 @@
 }
 
 .fn-network-page .recommended-card__name {
-  margin: 0 0 4px;
-  font-size: 18px;
-  line-height: 1.2;
-  color: #111827;
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: rgb(28 25 23);
+  word-break: break-word;
+}
+
+@media (min-width: 640px) {
+  .fn-network-page .recommended-card__name {
+    font-size: 1.25rem;
+  }
 }
 
 .fn-network-page .recommended-card__company {
-  margin: 0 0 2px;
-  font-size: 14px;
+  margin: 0.25rem 0 0.125rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  line-height: 1.35;
+  color: rgb(68 64 60);
 }
 
 .fn-network-page .recommended-card__sector {
   margin: 0 0 12px;
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 0.75rem;
+  color: rgb(120 113 108);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .fn-network-page .recommended-card__sector {
+    font-size: 0.875rem;
+  }
 }
 
 .fn-network-page .recommended-card__reasons {
@@ -97,39 +194,92 @@
   gap: 8px;
 }
 
+/* Même échelle que `.member-card__chip` (annuaire /network) */
 .fn-network-page .recommended-card__reasonChip {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
+  min-height: 1.75rem;
+  padding: 0 0.625rem;
   border-radius: 999px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #475569;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
+  line-height: 1.25;
+  color: rgb(120 53 15);
+  background: rgb(255 251 235);
+  border: 1px solid rgb(253 230 138);
+}
+
+.fn-network-page .recommended-card__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.fn-network-page .recommended-card__toolBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: rgb(51 65 85);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.fn-network-page .recommended-card__toolBtn:hover {
+  background: rgb(248 250 252);
+  border-color: rgb(203 213 225);
+  color: rgb(15 23 42);
+}
+
+.fn-network-page .recommended-card__toolBtn--active {
+  border-color: rgb(191 219 254);
+  background: rgb(239 246 255);
+  color: rgb(29 78 216);
+}
+
+.fn-network-page .recommended-card__toolBtn--muted {
+  border-style: dashed;
+}
+
+.fn-network-page .recommended-card__toolIcon {
+  flex-shrink: 0;
 }
 
 .fn-network-page .recommended-card__footer {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid #eef2f7;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgb(241 245 249);
 }
 
 .fn-network-page .recommended-card__link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #1d4ed8;
+  color: rgb(29 78 216);
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.fn-network-page .recommended-card__link:hover {
+  text-decoration: underline;
 }
 
 .fn-network-page .recommended-card__link::after {
   content: '›';
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1;
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {

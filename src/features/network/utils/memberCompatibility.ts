@@ -7,6 +7,8 @@ export type CompatibilityMember = {
   companyName?: string;
   sector?: string;
   city?: string;
+  /** Photo de profil si disponible (même source que `UserProfile.photoURL`). */
+  photoURL?: string;
   currentNeeds?: string[];
   helpOfferText?: string;
   lookingForText?: string;
@@ -176,4 +178,12 @@ export function getCompatibilityLevel(score: number): string | null {
   if (score >= 45) return 'Pertinent';
   if (score >= 25) return 'À explorer';
   return null;
+}
+
+/** Nombre d’étoiles pleines (0–5) à partir du score heuristique. */
+export function compatibilityStarCount(score: number): number {
+  if (score >= 70) return 5;
+  if (score >= 45) return 4;
+  if (score >= 25) return 3;
+  return 0;
 }

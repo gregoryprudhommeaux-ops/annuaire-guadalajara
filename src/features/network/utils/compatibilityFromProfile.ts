@@ -28,6 +28,7 @@ export function userProfileToCompatibilityMember(p: UserProfile, lang: Language)
     companyName: p.companyName,
     sector: p.activityCategory,
     city: p.city,
+    photoURL: p.photoURL?.trim() || undefined,
     currentNeeds: currentNeedsLabels,
     helpOfferText: p.helpNewcomers,
     lookingForText: p.networkGoal ?? p.lookingFor,
