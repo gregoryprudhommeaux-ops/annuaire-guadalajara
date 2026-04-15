@@ -14,6 +14,28 @@ function dedupeActiveMembersById<T extends { id: string; score: number }>(member
   return Array.from(byId.values());
 }
 
+function displayKey(m: { nom?: string; entreprise?: string }): string {
+  const name = formatPersonName(m.nom).trim().toLowerCase();
+  const company = String(m.entreprise ?? '').trim().toLowerCase();
+  if (name && company) return `${name}||${company}`;
+  if (name) return name;
+  return '';
+}
+
+function dedupeActiveMembersVisually<T extends { score: number; nom?: string; entreprise?: string }>(members: T[]): T[] {
+  const byKey = new Map<string, T>();
+  for (const m of members) {
+    const key = displayKey(m);
+    if (!key) continue;
+    const existing = byKey.get(key);
+    if (!existing || m.score > existing.score) byKey.set(key, m);
+  }
+  // Keep any rows we couldn't key (should be rare)
+  const keyed = new Set(byKey.values());
+  const unkeyed = members.filter((m) => !displayKey(m) || !keyed.has(m));
+  return [...Array.from(byKey.values()), ...unkeyed];
+}
+
 function badgeClass(secteur?: string) {
   const s = String(secteur ?? '').toLowerCase();
   if (s.includes('tech')) return 'bg-blue-50 text-blue-700 border-blue-200';
@@ -44,9 +66,10 @@ export default function TopActiveMembersTable({
 }) {
   const rows = useMemo(() => {
     const list = (members ?? []).map((m) => ({ ...m, score: calculateEngagementScore(m) }));
-    const deduped = dedupeActiveMembersById(list);
-    deduped.sort((a, b) => b.score - a.score);
-    return deduped.slice(0, 8);
+    const dedupedById = dedupeActiveMembersById(list);
+    const dedupedVisible = dedupeActiveMembersVisually(dedupedById);
+    dedupedVisible.sort((a, b) => b.score - a.score);
+    return dedupedVisible.slice(0, 8);
   }, [members]);
 
   if ((members?.length ?? 0) < 2) {
