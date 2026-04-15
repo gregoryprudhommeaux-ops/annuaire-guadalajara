@@ -404,6 +404,123 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     };
   }, [affinityRows, lang]);
 
+  const missingFieldRows = useMemo(() => {
+    const profiles = stats.profilesForDashboard ?? [];
+    const counts = {
+      photo: 0,
+      description: 0,
+      sector: 0,
+      company: 0,
+      city: 0,
+    };
+    for (const p of profiles as any[]) {
+      if (!String(p.photo ?? '').trim()) counts.photo += 1;
+      if (String(p.description ?? '').trim().length < 30) counts.description += 1;
+      if (!String(p.secteur ?? '').trim()) counts.sector += 1;
+      if (!String(p.entreprise ?? '').trim()) counts.company += 1;
+      if (!String(p.city ?? '').trim()) counts.city += 1;
+    }
+    const rows = [
+      { field: 'Photo', missing: counts.photo },
+      { field: 'Description', missing: counts.description },
+      { field: 'Secteur', missing: counts.sector },
+      { field: 'Société', missing: counts.company },
+      { field: 'Ville', missing: counts.city },
+    ].sort((a, b) => b.missing - a.missing);
+    return rows;
+  }, [stats.profilesForDashboard]);
+
+  const sectorCoverageRows = useMemo(() => {
+    const rows = Object.entries(stats.profilesBySector ?? {})
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+    return rows.slice(0, 10);
+  }, [stats.profilesBySector]);
+
+  const cityCoverageRows = useMemo(() => {
+    const rows = Object.entries(stats.profilesByCity ?? {})
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+    return rows.slice(0, 10);
+  }, [stats.profilesByCity]);
+
+  const gapInsights = useMemo(() => {
+    const sectors = Object.entries(stats.profilesBySector ?? {})
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => a.value - b.value);
+    const cities = Object.entries(stats.profilesByCity ?? {})
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => a.value - b.value);
+    return {
+      weakSectors: sectors.filter((s) => s.value <= 1).slice(0, 5),
+      weakCities: cities.filter((c) => c.value <= 1).slice(0, 5),
+    };
+  }, [stats.profilesBySector, stats.profilesByCity]);
+
+  const attentionConversion = useMemo(() => {
+    const profiles = stats.profilesForDashboard ?? [];
+    const byId = new Map<string, any>(profiles.map((p: any) => [String(p.id), p]));
+    const topViewed = (stats.topViewedProfiles ?? []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      views: r.clickCount,
+      clicks: byId.get(String(r.id))?.contactClicks ?? 0,
+    }));
+    const topContacted = (stats.topContactedProfiles ?? []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      clicks: r.clickCount,
+      views: (stats.profileViewsByUid ?? {})[String(r.id)] ?? 0,
+    }));
+    return { topViewed, topContacted };
+  }, [stats.profilesForDashboard, stats.topViewedProfiles, stats.topContactedProfiles, stats.profileViewsByUid]);
+
+  const relationshipPotential = useMemo(() => {
+    const profiles = (stats.profilesForDashboard ?? []) as any[];
+    const passionToMembers = new Map<string, Set<string>>();
+    const memberToPassions = new Map<string, string[]>();
+    const passionToSectors = new Map<string, Set<string>>();
+
+    for (const p of profiles) {
+      const id = String(p.id);
+      const sector = String(p.secteur ?? '').trim() || '—';
+      const passions = sanitizePassionIds(p.passionIds);
+      memberToPassions.set(id, passions);
+      for (const pid of passions) {
+        if (!passionToMembers.has(pid)) passionToMembers.set(pid, new Set());
+        passionToMembers.get(pid)!.add(id);
+        if (!passionToSectors.has(pid)) passionToSectors.set(pid, new Set());
+        passionToSectors.get(pid)!.add(sector);
+      }
+    }
+
+    const memberScores = profiles
+      .map((p) => {
+        const id = String(p.id);
+        const passions = memberToPassions.get(id) ?? [];
+        const overlap = new Set<string>();
+        passions.forEach((pid) => {
+          passionToMembers.get(pid)?.forEach((otherId) => {
+            if (otherId !== id) overlap.add(otherId);
+          });
+        });
+        return { id, nom: p.nom, entreprise: p.entreprise, secteur: p.secteur, city: p.city, score: overlap.size };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6);
+
+    const topOverlapPassions = Array.from(passionToSectors.entries())
+      .map(([pid, sectors]) => ({ pid, sectors: sectors.size }))
+      .sort((a, b) => b.sectors - a.sectors)
+      .slice(0, 6)
+      .map((r) => ({
+        label: `${getPassionEmoji(r.pid)} ${getPassionLabel(r.pid, lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr')}`,
+        sectors: r.sectors,
+      }));
+
+    return { memberScores, topOverlapPassions };
+  }, [stats.profilesForDashboard, lang]);
+
   function activationSuggestion(row: { members: number; passionId: string; sector: string }, rankIndex: number): string {
     // Keep it deterministic and sparse; avoid repeating "dîner" everywhere.
     if (row.members >= 6) return 'Afterwork transversal (gros potentiel)';
@@ -523,6 +640,138 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                     data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))}
                     height={280}
                   />
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div className="admin-decision-grid">
+            <article className="admin-chart-card admin-chart-card--compact">
+              <p className="admin-chart-card__title">Champs profil manquants</p>
+              <p className="admin-chart-card__subtitle">Priorise les efforts de complétion.</p>
+              <div className="admin-chart-card__body">
+                <div className="admin-chart-frame admin-chart-frame--sm">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={missingFieldRows} layout="vertical" margin={{ top: 6, right: 12, bottom: 6, left: 84 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <YAxis
+                        type="category"
+                        dataKey="field"
+                        tick={{ fontSize: 11, fill: '#475569' }}
+                        width={84}
+                      />
+                      <Tooltip contentStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="missing" name="Manquants" fill="#f59e0b" radius={[6, 6, 6, 6]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </article>
+
+            <article className="admin-chart-card admin-chart-card--compact">
+              <p className="admin-chart-card__title">Attention vs conversion</p>
+              <p className="admin-chart-card__subtitle">Distingue visibilité et engagement.</p>
+              <div className="admin-chart-card__body">
+                <div className="admin-split">
+                  <div className="admin-mini-table">
+                    <p className="admin-mini-table__title">Top vues</p>
+                    <ul className="admin-mini-table__rows">
+                      {attentionConversion.topViewed.length === 0 ? (
+                        <li className="admin-mini-table__row">—</li>
+                      ) : (
+                        attentionConversion.topViewed.map((r) => (
+                          <li key={r.id} className="admin-mini-table__row">
+                            <span className="admin-mini-table__name">{r.name}</span>
+                            <span className="admin-mini-table__metric">{r.views} vues</span>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
+                  <div className="admin-mini-table">
+                    <p className="admin-mini-table__title">Top contacts</p>
+                    <ul className="admin-mini-table__rows">
+                      {attentionConversion.topContacted.length === 0 ? (
+                        <li className="admin-mini-table__row">—</li>
+                      ) : (
+                        attentionConversion.topContacted.map((r) => (
+                          <li key={r.id} className="admin-mini-table__row">
+                            <span className="admin-mini-table__name">{r.name}</span>
+                            <span className="admin-mini-table__metric">{r.clicks} clics</span>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article className="admin-chart-card admin-chart-card--compact">
+              <p className="admin-chart-card__title">Couverture secteurs / villes</p>
+              <p className="admin-chart-card__subtitle">Identifier forces & zones faibles.</p>
+              <div className="admin-chart-card__body">
+                <div className="admin-chart-frame admin-chart-frame--sm">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={sectorCoverageRows} margin={{ top: 6, right: 10, bottom: 30, left: 6 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" tick={xTickCardAngled as any} interval={0} height={52} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <Tooltip contentStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="value" name="Membres" fill="#1d4ed8" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="admin-gaps">
+                  <p className="admin-gaps__title">Gaps (≤ 1 membre)</p>
+                  <ul className="admin-gaps__list">
+                    {gapInsights.weakSectors.slice(0, 3).map((s) => (
+                      <li key={`s-${s.name}`}>{s.name}</li>
+                    ))}
+                    {gapInsights.weakCities.slice(0, 2).map((c) => (
+                      <li key={`c-${c.name}`}>{c.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </article>
+
+            <article className="admin-chart-card admin-chart-card--compact">
+              <p className="admin-chart-card__title">Potentiel d’opportunité</p>
+              <p className="admin-chart-card__subtitle">Qui / quoi peut créer le plus de connexions.</p>
+              <div className="admin-chart-card__body">
+                <div className="admin-split">
+                  <div className="admin-mini-table">
+                    <p className="admin-mini-table__title">Membres à fort potentiel</p>
+                    <ul className="admin-mini-table__rows">
+                      {relationshipPotential.memberScores.length === 0 ? (
+                        <li className="admin-mini-table__row">—</li>
+                      ) : (
+                        relationshipPotential.memberScores.map((m) => (
+                          <li key={m.id} className="admin-mini-table__row">
+                            <span className="admin-mini-table__name">{String(m.nom ?? '').trim()}</span>
+                            <span className="admin-mini-table__metric">{m.score} matchs</span>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
+                  <div className="admin-mini-table">
+                    <p className="admin-mini-table__title">Passions transverses</p>
+                    <ul className="admin-mini-table__rows">
+                      {relationshipPotential.topOverlapPassions.length === 0 ? (
+                        <li className="admin-mini-table__row">—</li>
+                      ) : (
+                        relationshipPotential.topOverlapPassions.map((p) => (
+                          <li key={p.label} className="admin-mini-table__row">
+                            <span className="admin-mini-table__name">{p.label}</span>
+                            <span className="admin-mini-table__metric">{p.sectors} secteurs</span>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
                 </div>
               </div>
             </article>

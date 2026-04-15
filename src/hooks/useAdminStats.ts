@@ -65,6 +65,8 @@ export interface AdminStats {
   activeMembersWithContactClicks: number;
   topViewedProfiles: ProfileStat[];
   topContactedProfiles: ProfileStat[];
+  /** Profile view events per member id (period). */
+  profileViewsByUid: Record<string, number>;
   profilesNeverUpdated: number;
   /** Score 0–100 (champs profil / matching IA). */
   avgProfileCompletionPct: number;
@@ -145,6 +147,7 @@ export function useAdminStats(period: PeriodKey): AdminStats {
     activeMembersWithContactClicks: 0,
     topViewedProfiles: [],
     topContactedProfiles: [],
+    profileViewsByUid: {},
     profilesNeverUpdated: 0,
     avgProfileCompletionPct: 0,
     medianProfileCompletionPct: 0,
@@ -497,6 +500,7 @@ export function useAdminStats(period: PeriodKey): AdminStats {
             ],
             topViewedProfiles: topViewed,
             topContactedProfiles: topContacted,
+            profileViewsByUid: Object.fromEntries(Object.entries(viewCount).map(([id, v]) => [id, v.count])),
             activeMembersWithContactClicks,
             profilesNeverUpdated: neverUpdated,
             avgProfileCompletionPct,

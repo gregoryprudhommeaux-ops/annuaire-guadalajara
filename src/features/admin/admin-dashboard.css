@@ -286,6 +286,101 @@
   min-width: 0;
 }
 
+.admin-dashboard-page .admin-decision-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.admin-dashboard-page .admin-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-dashboard-page .admin-mini-table__title {
+  margin: 0 0 10px;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.admin-dashboard-page .admin-mini-table__rows {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-dashboard-page .admin-mini-table__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid #eef2f7;
+  background: #fff;
+}
+
+.admin-dashboard-page .admin-mini-table__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.admin-dashboard-page .admin-mini-table__metric {
+  font-size: 0.86rem;
+  font-weight: 900;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.admin-dashboard-page .admin-gaps {
+  margin-top: 14px;
+  border-top: 1px solid #eef2f7;
+  padding-top: 12px;
+}
+
+.admin-dashboard-page .admin-gaps__title {
+  margin: 0 0 8px;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.admin-dashboard-page .admin-gaps__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-dashboard-page .admin-gaps__list li {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
 .admin-dashboard-page .admin-stack {
   display: grid;
   gap: 24px;
@@ -706,6 +801,9 @@
   .admin-dashboard-page .admin-analytics-grid {
     grid-template-columns: 1fr;
   }
+  .admin-dashboard-page .admin-decision-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
@@ -733,6 +831,9 @@
 
   .admin-dashboard-page .admin-highlight-number {
     font-size: 2rem;
+  }
+  .admin-dashboard-page .admin-split {
+    grid-template-columns: 1fr;
   }
 }
 
