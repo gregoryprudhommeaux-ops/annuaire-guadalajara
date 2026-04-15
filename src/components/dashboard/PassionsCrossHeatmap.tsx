@@ -52,10 +52,13 @@ export default function PassionsCrossHeatmap({
   members,
   lang,
   onPickCell,
+  embedded = false,
 }: {
   members: CrossMember[];
   lang: Language;
   onPickCell?: (pick: CrossPick) => void;
+  /** Quand rendu dans une carte parente (ex. /admin), on évite la “double carte”. */
+  embedded?: boolean;
 }) {
   const [dimension, setDimension] = useState<DimensionKey>('sector');
   const locale = normalizeLang(lang);
@@ -138,9 +141,12 @@ export default function PassionsCrossHeatmap({
   }, [members, dimension, locale]);
 
   const isNarrow = wrapWidth > 0 ? wrapWidth < 520 : false;
+  const rootClassName = embedded
+    ? 'w-full min-w-0'
+    : 'rounded-xl border border-stone-200 bg-white p-4 shadow-sm';
 
   return (
-    <section ref={wrapRef} className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+    <section ref={wrapRef} className={rootClassName}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-sm font-semibold text-stone-900">Croisement passions × {dimLabel}</h3>
@@ -162,10 +168,18 @@ export default function PassionsCrossHeatmap({
           Pas assez de données passions pour afficher la heatmap.
         </div>
       ) : (
-        <div className="mt-3 w-full min-w-0">
+        <div className={embedded ? 'mt-3 w-full min-w-0' : 'mt-3 w-full min-w-0'}>
           <div
-            className="h-[340px] w-full min-w-0 overflow-x-auto overflow-y-visible"
-            style={{ WebkitOverflowScrolling: 'touch' as any }}
+            className={
+              embedded
+                ? 'w-full min-w-0 overflow-x-auto overflow-y-visible'
+                : 'h-[340px] w-full min-w-0 overflow-x-auto overflow-y-visible'
+            }
+            style={
+              embedded
+                ? ({ height: '100%', WebkitOverflowScrolling: 'touch' as any } as any)
+                : ({ WebkitOverflowScrolling: 'touch' as any } as any)
+            }
           >
             <div className={isNarrow ? 'min-w-[680px] h-full' : 'h-full'}>
               <ResponsiveHeatMap

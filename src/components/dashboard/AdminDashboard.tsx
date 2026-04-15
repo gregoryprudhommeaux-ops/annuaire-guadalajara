@@ -405,6 +405,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                         passionIds: (m as any).passionIds,
                       }))}
                       lang={lang}
+                      embedded
                       onPickCell={(pick) => setPickedCross(pick)}
                     />
                   </MiniErrorBoundary>
