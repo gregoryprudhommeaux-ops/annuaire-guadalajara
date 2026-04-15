@@ -415,13 +415,13 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                 <p className="admin-chart-card__title">Complétion des profils</p>
                 <p className="admin-chart-card__subtitle">Vue “strict” (nom, secteur, description, photo)</p>
                 <div className="admin-chart-card__body">
-                  <div className="admin-chart-frame admin-chart-frame--sm">
+                  <div className="admin-chart-frame">
                     <MiniErrorBoundary label="ProfileCompletionGauge">
                       <ProfileCompletionGauge
                         totalMembers={stats.totalProfiles}
                         completedProfiles={stats.completedProfilesStrict}
-                        compact
                         embedded
+                        showHeader={false}
                       />
                     </MiniErrorBoundary>
                   </div>
