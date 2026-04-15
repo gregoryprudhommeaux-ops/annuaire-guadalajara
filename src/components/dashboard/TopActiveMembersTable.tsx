@@ -3,6 +3,34 @@ import type { Language } from '@/types';
 import { calculateEngagementScore, type MemberWithStats } from '@/components/dashboard/EngagementLeaderboard';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
 
+function formatCompanyName(input?: string | null): string {
+  const raw = String(input ?? '').trim();
+  if (!raw) return '';
+
+  // Normalize common separators spacing (keep it display-only).
+  const normalized = raw
+    .replace(/\s+/g, ' ')
+    .replace(/\s*\/\s*/g, ' / ')
+    .replace(/\s*&\s*/g, ' & ')
+    .replace(/\s*-\s*/g, ' - ')
+    .trim();
+
+  const tokens = normalized.split(/(\s+|\/|&|-)/g);
+  const out = tokens.map((t) => {
+    // Keep separators/spaces as-is.
+    if (!t || /^\s+$/.test(t) || t === '/' || t === '&' || t === '-') return t;
+
+    // Preserve existing CamelCase or acronyms.
+    if (/[A-Z].*[A-Z]/.test(t) && /[a-z]/.test(t)) return t;
+    if (/^[A-Z0-9]{2,5}$/.test(t)) return t;
+
+    const lower = t.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  });
+
+  return out.join('').replace(/\s+/g, ' ').trim();
+}
+
 function dedupeActiveMembersById<T extends { id: string; score: number }>(members: T[]): T[] {
   const byId = new Map<string, T>();
   for (const m of members) {
@@ -129,8 +157,11 @@ export default function TopActiveMembersTable({
                   </div>
                 </td>
                 <td className="px-3 py-2">
-                  <p className="max-w-[240px] truncate text-sm font-semibold text-stone-800" title={m.entreprise ?? '—'}>
-                    {String(m.entreprise ?? '').trim() || '—'}
+                  <p
+                    className="max-w-[240px] truncate text-sm font-semibold text-stone-800"
+                    title={formatCompanyName(m.entreprise) || '—'}
+                  >
+                    {formatCompanyName(m.entreprise) || '—'}
                   </p>
                 </td>
                 <td className="px-3 py-2">
