@@ -330,6 +330,26 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     }
   };
 
+  const memberCompleteness = (m: any): { label: string; tone: 'good' | 'warn' } => {
+    const nameOk = Boolean(String(m.nom ?? '').trim());
+    const sectorOk = Boolean(String(m.secteur ?? '').trim());
+    const photoOk = Boolean(String(m.photo ?? '').trim());
+    const descOk = String(m.description ?? '').trim().length >= 30;
+    const ok = nameOk && sectorOk && photoOk && descOk;
+    return { label: ok ? 'Profil complet' : 'Profil à compléter', tone: ok ? 'good' : 'warn' };
+  };
+
+  const matchReason = (m: any): string => {
+    if (!pickedCross) return '';
+    const passionLabel = `${getPassionEmoji(pickedCross.passionId)} ${getPassionLabel(
+      pickedCross.passionId,
+      lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr'
+    )}`;
+    if (pickedCross.dimension === 'sector') return `${passionLabel} + secteur “${pickedCross.dimValue}”`;
+    if (pickedCross.dimension === 'poste') return `${passionLabel} + fonction “${pickedCross.dimValue}”`;
+    return `${passionLabel} + industrie “${pickedCross.dimValue}”`;
+  };
+
   const affinityRows = useMemo(() => {
     const locale = lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr';
     const map = new Map<
@@ -699,16 +719,16 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           </div>
 
           {pickedCross ? (
-            <div className="fixed inset-0 z-[410] flex items-center justify-center bg-stone-900/50 p-4">
-              <div className="w-full max-w-4xl rounded-2xl border border-stone-200 bg-white p-4 shadow-2xl sm:p-6">
+            <div className="fixed inset-0 z-[410] flex items-stretch justify-end bg-stone-900/30">
+              <div className="absolute inset-0" onClick={() => setPickedCross(null)} aria-hidden />
+              <div className="relative h-full w-full max-w-[560px] border-l border-stone-200 bg-white shadow-2xl">
+                <div className="flex h-full flex-col">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+                  <div className="min-w-0 px-4 pt-4">
                     <h3 className="text-base font-semibold text-stone-900">{pickedCrossMembers.title}</h3>
-                    <p className="mt-1 text-xs text-stone-500">
-                      {pickedCrossMembers.rows.length} membre(s) · shortlist: {shortlistCountInPick}
-                    </p>
+                    <p className="mt-1 text-xs text-stone-500">{pickedCrossMembers.rows.length} membre(s) · shortlist: {shortlistCountInPick}</p>
                   </div>
-                  <div className="flex flex-wrap items-center justify-end gap-2">
+                  <div className="flex flex-wrap items-center justify-end gap-2 px-4 pt-4">
                     <button
                       type="button"
                       onClick={() => {
@@ -746,49 +766,8 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
-                  <div className="min-w-0">
-                    <div className="max-h-[60vh] overflow-auto rounded-lg border border-stone-200">
-                      <ul className="divide-y divide-stone-100">
-                        {pickedCrossMembers.rows.map((m: any) => {
-                          const id = String(m.id);
-                          const isShortlisted = affinityShortlist.has(id);
-                          return (
-                            <li key={id} className="flex items-start justify-between gap-3 px-3 py-2">
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-stone-900">{m.nom}</p>
-                                <p className="truncate text-xs text-stone-500">
-                                  {[m.entreprise, m.secteur, (m as any).status, (m as any).city].filter(Boolean).join(' · ')}
-                                </p>
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleShortlist(id)}
-                                    className={
-                                      isShortlisted
-                                        ? 'rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800'
-                                        : 'rounded-md bg-stone-100 px-2 py-1 text-xs font-semibold text-stone-700'
-                                    }
-                                    title="Ajouter à une shortlist locale (admin)"
-                                  >
-                                    {isShortlisted ? 'Shortlisté' : 'Shortlister'}
-                                  </button>
-                                  <a
-                                    href={`/membres/${encodeURIComponent(id)}`}
-                                    className="rounded-md bg-blue-700 px-2 py-1 text-xs font-semibold text-white"
-                                  >
-                                    Ouvrir profil
-                                  </a>
-                                </div>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <aside className="min-w-0 rounded-xl border border-stone-200 bg-stone-50 p-3">
+                <div className="mt-3 flex-1 overflow-hidden px-4 pb-4">
+                  <aside className="rounded-xl border border-stone-200 bg-stone-50 p-3">
                     <p className="text-xs font-extrabold uppercase tracking-wide text-stone-600">Prochaines actions</p>
                     <ul className="mt-2 grid gap-2 text-sm text-stone-800">
                       <li>
@@ -821,6 +800,78 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                     </div>
                   </aside>
                 </div>
+
+                <div className="flex-1 overflow-auto px-4 pb-4">
+                  <ul className="divide-y divide-stone-100 rounded-xl border border-stone-200 bg-white">
+                    {pickedCrossMembers.rows.map((m: any) => {
+                      const id = String(m.id);
+                      const isShortlisted = affinityShortlist.has(id);
+                      const ctx = [m.entreprise, m.secteur, (m as any).city].filter(Boolean).join(' · ');
+                      const c = memberCompleteness(m);
+                      return (
+                        <li key={id} className="px-3 py-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-stone-900">{m.nom}</p>
+                              <p className="truncate text-xs text-stone-500">{ctx || '—'}</p>
+                              <p className="mt-2 text-xs font-semibold text-stone-700">{matchReason(m)}</p>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                <span
+                                  className={
+                                    c.tone === 'good'
+                                      ? 'rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-extrabold text-emerald-800'
+                                      : 'rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-extrabold text-amber-900'
+                                  }
+                                >
+                                  {c.label}
+                                </span>
+                                {(m as any).city ? (
+                                  <span className="rounded-full bg-slate-50 px-2 py-0.5 text-[11px] font-extrabold text-slate-700">
+                                    {(m as any).city}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="flex shrink-0 flex-col items-end gap-2">
+                              <a
+                                href={`/membres/${encodeURIComponent(id)}`}
+                                className="rounded-md bg-blue-700 px-2.5 py-1 text-xs font-semibold text-white"
+                              >
+                                Voir le profil
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => toggleShortlist(id)}
+                                className={
+                                  isShortlisted
+                                    ? 'rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800'
+                                    : 'rounded-md bg-stone-100 px-2.5 py-1 text-xs font-semibold text-stone-700'
+                                }
+                              >
+                                {isShortlisted ? 'Shortlisté' : 'Shortlister'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const msg =
+                                    `Bonjour ${String(m.nom ?? '').trim()},\n\n` +
+                                    `Je vous contacte via l’annuaire (admin) car votre profil semble pertinent pour: ${pickedCrossMembers.title}.\n` +
+                                    `Seriez-vous ouvert(e) à une introduction / échange rapide ?\n\nMerci,\n`;
+                                  void copyText(msg);
+                                }}
+                                className="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                              >
+                                Préparer une intro
+                              </button>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
               </div>
             </div>
           ) : null}
