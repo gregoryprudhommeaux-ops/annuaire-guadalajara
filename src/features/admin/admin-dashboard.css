@@ -158,6 +158,18 @@
   align-items: stretch;
 }
 
+/* Priority zone: keep both cards balanced and breathable */
+.admin-dashboard-page .admin-priority-grid .admin-card {
+  height: 100%;
+  min-height: 520px;
+}
+
+@media (max-width: 1180px) {
+  .admin-dashboard-page .admin-priority-grid .admin-card {
+    min-height: 0;
+  }
+}
+
 .admin-dashboard-page .admin-recommended-actions {
   margin-bottom: 28px;
   border-color: #e7e5e4;

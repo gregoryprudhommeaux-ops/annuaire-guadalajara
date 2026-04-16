@@ -58,6 +58,9 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
   const [recentRequests, setRecentRequests] = useState<MemberNetworkRequest[] | null>(null);
   const [unansweredNeeds, setUnansweredNeeds] = useState<UnansweredNeedRow[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const PAGE_SIZE = 5;
+  const [needsPage, setNeedsPage] = useState(0);
+  const [requestsPage, setRequestsPage] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,6 +69,8 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
         setLoadError(null);
         setRecentRequests(null);
         setUnansweredNeeds(null);
+        setNeedsPage(0);
+        setRequestsPage(0);
 
         const requestsSnap = await getDocs(
           query(
@@ -121,7 +126,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
           setUnansweredNeeds(
             unanswered
               .sort((a, b) => b.needsCount - a.needsCount)
-              .slice(0, 20)
+              .slice(0, 50)
           );
         }
       } catch (e) {
@@ -145,6 +150,10 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
 
   const recentRequestsUi = useMemo(() => {
     if (!recentRequests) return null;
+    const maxPage = Math.max(0, Math.ceil(recentRequests.length / PAGE_SIZE) - 1);
+    const page = Math.min(requestsPage, maxPage);
+    const start = page * PAGE_SIZE;
+    const pageRows = recentRequests.slice(start, start + PAGE_SIZE);
     return (
       <article className="admin-card">
         <div className="flex items-start justify-between gap-3">
@@ -154,16 +163,40 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
               Dernières {Math.min(12, recentRequests.length)} demandes publiées.
             </p>
           </div>
-          <a href="/requests" className="admin-pill" style={{ textDecoration: 'none' }}>
-            Ouvrir
-          </a>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="admin-pill"
+              onClick={() => setRequestsPage((p) => Math.max(0, p - 1))}
+              disabled={page <= 0}
+              aria-label="Demandes précédentes"
+              title="Demandes précédentes"
+              style={{ minHeight: 32, padding: '0 10px', opacity: page <= 0 ? 0.5 : 1 }}
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              className="admin-pill"
+              onClick={() => setRequestsPage((p) => Math.min(maxPage, p + 1))}
+              disabled={page >= maxPage}
+              aria-label="Demandes suivantes"
+              title="Demandes suivantes"
+              style={{ minHeight: 32, padding: '0 10px', opacity: page >= maxPage ? 0.5 : 1 }}
+            >
+              →
+            </button>
+            <a href="/requests" className="admin-pill" style={{ textDecoration: 'none', minHeight: 32 }}>
+              Ouvrir
+            </a>
+          </div>
         </div>
         <div className="admin-card__body">
           <div className="admin-list">
             {recentRequests.length === 0 ? (
               <p className="text-sm text-slate-600">Aucune demande.</p>
             ) : (
-              recentRequests.map((r) => (
+              pageRows.map((r) => (
                 <a
                   key={r.id}
                   href="/requests"
@@ -184,24 +217,56 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
         </div>
       </article>
     );
-  }, [recentRequests]);
+  }, [PAGE_SIZE, recentRequests, requestsPage]);
 
   const unansweredNeedsUi = useMemo(() => {
     if (!unansweredNeeds) return null;
+    const maxPage = Math.max(0, Math.ceil(unansweredNeeds.length / PAGE_SIZE) - 1);
+    const page = Math.min(needsPage, maxPage);
+    const start = page * PAGE_SIZE;
+    const pageRows = unansweredNeeds.slice(start, start + PAGE_SIZE);
     return (
       <article className="admin-card admin-card--featured">
-        <p className="admin-card__eyebrow">PRIORITÉ</p>
-        <h2 className="admin-card__title">Besoins sans réponse</h2>
-        <p className="admin-card__text">
-          Profils avec besoins mis en avant et 0 commentaire.
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="admin-card__eyebrow">PRIORITÉ</p>
+            <h2 className="admin-card__title">Besoins sans réponse</h2>
+            <p className="admin-card__text">
+              Profils avec besoins mis en avant et 0 commentaire.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="admin-pill"
+              onClick={() => setNeedsPage((p) => Math.max(0, p - 1))}
+              disabled={page <= 0}
+              aria-label="Besoins précédents"
+              title="Besoins précédents"
+              style={{ minHeight: 32, padding: '0 10px', opacity: page <= 0 ? 0.5 : 1 }}
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              className="admin-pill"
+              onClick={() => setNeedsPage((p) => Math.min(maxPage, p + 1))}
+              disabled={page >= maxPage}
+              aria-label="Besoins suivants"
+              title="Besoins suivants"
+              style={{ minHeight: 32, padding: '0 10px', opacity: page >= maxPage ? 0.5 : 1 }}
+            >
+              →
+            </button>
+          </div>
+        </div>
         <div className="admin-card__body">
           <div className="admin-highlight-number">{unansweredCount}</div>
           <div className="admin-list">
             {unansweredNeeds.length === 0 ? (
               <p className="text-sm text-slate-600">Aucun besoin en attente.</p>
             ) : (
-              unansweredNeeds.map((row) => (
+              pageRows.map((row) => (
                 <a
                   key={row.uid}
                   href={`/profil/${encodeURIComponent(row.uid)}`}
@@ -220,7 +285,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
         </div>
       </article>
     );
-  }, [unansweredNeeds, unansweredCount]);
+  }, [PAGE_SIZE, needsPage, unansweredNeeds, unansweredCount]);
 
   return (
     <div className="admin-dashboard-page">
