@@ -35,7 +35,6 @@ import {
 
 /** Besoins interprétés comme « networking » pour le Venn F&B / Networking. */
 const NETWORKING_NEED_IDS = new Set([
-  'NEED_CLIENTS',
   'NEED_DISTRIB',
   'NEED_PARTNERS',
   'NEED_SUPPLIERS',

@@ -85,6 +85,17 @@
     0 1px 2px rgba(16, 24, 40, 0.06);
 }
 
+.fn-network-page .recommended-card--evident {
+  border-color: rgb(167 243 208);
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 0 0 1px rgb(134 239 172 / 0.35);
+}
+
+.fn-network-page .recommended-card--evident:hover {
+  border-color: rgb(110 231 183);
+}
+
 .fn-network-page .recommended-card__top {
   margin-bottom: 14px;
 }
@@ -133,6 +144,16 @@
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.25;
+}
+
+.fn-network-page .recommended-card__level--evident {
+  background: rgb(236 253 245);
+  color: rgb(6 95 70);
+  border: 1px solid rgb(167 243 208);
+}
+
+.fn-network-page .recommended-card__evidentWrap {
+  margin-top: 0;
 }
 
 .fn-network-page .recommended-card__stars {
@@ -286,6 +307,7 @@
 
 .fn-network-page .recommended-card__top,
 .fn-network-page .recommended-card__content,
+.fn-network-page .recommended-card__evidentWrap,
 .fn-network-page .recommended-card__toolbar,
 .fn-network-page .recommended-card__footer {
   position: relative;

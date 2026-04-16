@@ -9,19 +9,28 @@ import {
 } from '../utils/memberCompatibility';
 import { localizeCompatibilityReason } from '../utils/localizeCompatibilityReason';
 import type { RecommendedCompatibilityMember } from '../utils/compatibilityFromProfile';
+import { computeMemberMatch } from '../utils/memberSignalMatch';
 import { loadRecommendationPrefs, saveRecommendationPrefs } from '../utils/recommendationPreferences';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { activityCategoryLabel } from '@/constants';
-import type { Language } from '@/types';
+import type { UserProfile } from '@/types';
+import { normalizedTargetKeywords } from '@/types';
 import '../network-recommendations.css';
 
 type RecommendedMembersSectionProps = {
   currentUser?: CompatibilityMember | null;
   members: RecommendedCompatibilityMember[];
+  /** Profil session — bio / mots-clés pour le matching « évident » (encart vert). */
+  viewerProfile?: UserProfile | null;
 };
 
 function memberUid(m: Pick<CompatibilityMember, 'id' | 'slug'>): string {
   return (m.id ?? m.slug ?? '').trim();
+}
+
+function viewerBioForMatch(p: UserProfile | null | undefined): string {
+  if (!p) return '';
+  return (p.bio ?? '').trim() || (p.memberBio ?? '').trim();
 }
 
 function localizedCompatibilityLevel(level: string, t: (k: string) => string): string {
@@ -39,7 +48,11 @@ function localizedCompatibilityLevel(level: string, t: (k: string) => string): s
 
 type RecoPrefsState = { known: Set<string>; saved: Set<string> };
 
-export function RecommendedMembersSection({ currentUser, members }: RecommendedMembersSectionProps) {
+export function RecommendedMembersSection({
+  currentUser,
+  members,
+  viewerProfile,
+}: RecommendedMembersSectionProps) {
   const { lang: L, t } = useLanguage();
   const viewerUid = (currentUser?.id ?? currentUser?.slug ?? '').trim();
 
@@ -98,11 +111,24 @@ export function RecommendedMembersSection({ currentUser, members }: RecommendedM
   const recommended = useMemo(() => {
     if (!currentUser) return [];
 
+    const viewerBio = viewerBioForMatch(viewerProfile);
+    const viewerKw = viewerProfile ? normalizedTargetKeywords(viewerProfile) : [];
+
     return members
       .map((member) => {
         const uid = memberUid(member);
         const score = computeCompatibilityScore(currentUser, member);
         const level = getCompatibilityLevel(score);
+        const evident =
+          viewerProfile?.uid && uid !== viewerProfile.uid
+            ? computeMemberMatch(viewerBio, viewerKw, member.currentNeeds ?? [])
+            : {
+                isRelevant: false,
+                score: 0,
+                matchedNeeds: [] as string[],
+                matchedSignals: [] as string[],
+                reason: '',
+              };
 
         return {
           member,
@@ -110,6 +136,7 @@ export function RecommendedMembersSection({ currentUser, members }: RecommendedM
           score,
           level,
           reasons: getCompatibilityReasons(currentUser, member),
+          evident,
         };
       })
       .filter(
@@ -119,9 +146,17 @@ export function RecommendedMembersSection({ currentUser, members }: RecommendedM
           item.member.slug &&
           !recoPrefs.known.has(item.uid)
       )
-      .sort((a, b) => b.score - a.score)
+      .sort((a, b) => {
+        const ea = a.evident.isRelevant ? 1 : 0;
+        const eb = b.evident.isRelevant ? 1 : 0;
+        if (eb !== ea) return eb - ea;
+        if (a.evident.isRelevant && b.evident.isRelevant && b.evident.score !== a.evident.score) {
+          return b.evident.score - a.evident.score;
+        }
+        return b.score - a.score;
+      })
       .slice(0, 4);
-  }, [currentUser, members, recoPrefs.known]);
+  }, [currentUser, members, recoPrefs.known, viewerProfile]);
 
   if (!currentUser || !viewerUid) return null;
 
@@ -148,22 +183,48 @@ export function RecommendedMembersSection({ currentUser, members }: RecommendedM
       </div>
 
       <div className="recommended-section__grid">
-        {recommended.map(({ member, uid, score, level, reasons }) => (
-          <RecommendedMemberCard
-            key={uid}
-            slug={member.slug!}
-            fullName={member.fullName ?? t('network.profileFallback')}
-            companyName={member.companyName}
-            sector={member.sector ? activityCategoryLabel(member.sector, L) : undefined}
-            photoURL={member.photoURL}
-            compatibilityLevel={localizedCompatibilityLevel(level!, t)}
-            starCount={compatibilityStarCount(score)}
-            reasons={reasons.map((r) => localizeCompatibilityReason(r, t))}
-            isSaved={recoPrefs.saved.has(uid)}
-            onToggleSave={() => toggleSave(uid)}
-            onMarkKnown={() => markKnown(uid)}
-          />
-        ))}
+        {recommended.map(({ member, uid, score, level, reasons, evident }) => {
+          const isEvident = evident.isRelevant;
+          const compatStars = compatibilityStarCount(score);
+          const starCount = isEvident
+            ? evident.score >= 80
+              ? 5
+              : Math.max(4, compatStars)
+            : compatStars;
+          const compatibilityLevel = isEvident
+            ? t('network.compatLevel.evidentClient')
+            : localizedCompatibilityLevel(level!, t);
+          const evidentMatch = isEvident
+            ? {
+                title:
+                  evident.score >= 80
+                    ? t('network.memberCard.matchTitleStrong')
+                    : t('network.memberCard.matchTitleSoft'),
+                matchedNeeds: evident.matchedNeeds,
+                reason: t('network.memberCard.matchReasonForNeeds', {
+                  needs: evident.matchedNeeds.join(', '),
+                }),
+              }
+            : null;
+
+          return (
+            <RecommendedMemberCard
+              key={uid}
+              slug={member.slug!}
+              fullName={member.fullName ?? t('network.profileFallback')}
+              companyName={member.companyName}
+              sector={member.sector ? activityCategoryLabel(member.sector, L) : undefined}
+              photoURL={member.photoURL}
+              compatibilityLevel={compatibilityLevel}
+              starCount={starCount}
+              reasons={reasons.map((r) => localizeCompatibilityReason(r, t))}
+              isSaved={recoPrefs.saved.has(uid)}
+              onToggleSave={() => toggleSave(uid)}
+              onMarkKnown={() => markKnown(uid)}
+              evidentMatch={evidentMatch}
+            />
+          );
+        })}
       </div>
     </section>
   );

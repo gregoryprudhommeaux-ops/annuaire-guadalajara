@@ -5,6 +5,13 @@ import { useLanguage } from '@/i18n/LanguageProvider';
 import ProfileAvatar from '@/components/ProfileAvatar';
 import { cn } from '@/lib/cn';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
+import { ProfileMatchBox } from './ProfileMatchBox';
+
+export type EvidentMatchDisplay = {
+  title: string;
+  matchedNeeds: string[];
+  reason: string;
+};
 
 export type RecommendedMemberCardProps = {
   slug: string;
@@ -19,6 +26,8 @@ export type RecommendedMemberCardProps = {
   isSaved: boolean;
   onToggleSave: () => void;
   onMarkKnown: () => void;
+  /** Matching signaux / besoins (même bloc vert que l’annuaire). */
+  evidentMatch?: EvidentMatchDisplay | null;
 };
 
 function CompatibilityStars({ count, label }: { count: number; label: string }) {
@@ -52,6 +61,7 @@ export function RecommendedMemberCard({
   isSaved,
   onToggleSave,
   onMarkKnown,
+  evidentMatch,
 }: RecommendedMemberCardProps) {
   const { t } = useLanguage();
   const displayName = formatPersonName(fullName);
@@ -64,7 +74,9 @@ export function RecommendedMemberCard({
   };
 
   return (
-    <article className="recommended-card">
+    <article
+      className={cn('recommended-card', evidentMatch && 'recommended-card--evident')}
+    >
       <Link
         to={profilPath}
         className="recommended-card__overlayLink"
@@ -82,7 +94,14 @@ export function RecommendedMemberCard({
             />
           </div>
           <div className="recommended-card__topMeta">
-            <span className="recommended-card__level">{compatibilityLevel}</span>
+            <span
+              className={cn(
+                'recommended-card__level',
+                evidentMatch && 'recommended-card__level--evident'
+              )}
+            >
+              {compatibilityLevel}
+            </span>
             <CompatibilityStars count={starCount} label={starsLabel} />
           </div>
         </div>
@@ -108,6 +127,16 @@ export function RecommendedMemberCard({
                 {reason}
               </span>
             ))}
+          </div>
+        ) : null}
+
+        {evidentMatch ? (
+          <div className="recommended-card__evidentWrap">
+            <ProfileMatchBox
+              title={evidentMatch.title}
+              matchedNeeds={evidentMatch.matchedNeeds}
+              reason={evidentMatch.reason}
+            />
           </div>
         ) : null}
       </div>

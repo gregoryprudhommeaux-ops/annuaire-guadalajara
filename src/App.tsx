@@ -74,6 +74,7 @@ import {
   type EmployeeCountRange,
   getProfileAiRecommendationReadiness,
   normalizedTargetKeywords,
+  parseCommaSeparatedTargetKeywords,
   type AdminEvent,
   type CompanyActivitySlot,
 } from './types';
@@ -3566,8 +3567,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       ? companySizeFromEmployeeRange(employeeCountVal)
       : baseProfileProbe?.companySize;
 
-    const targetSectorListProbe =
-      (formData.get('targetSectors') as string)?.split(',').map((s) => s.trim()).filter(Boolean) || [];
+    const targetSectorListProbe = parseCommaSeparatedTargetKeywords(
+      formData.get('targetSectors') as string | null
+    );
 
     const publicationProbe: Partial<UserProfile> = {
       fullName: getTrimmed('fullName'),
@@ -3586,7 +3588,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       companyActivities: slotsWithName,
       employeeCount: employeeCountVal,
       companySize: computedCompanySizeProbe,
-      highlightedNeeds: highlightedNeedsDraft,
+      highlightedNeeds: sanitizeHighlightedNeeds(highlightedNeedsDraft),
       passionIds: passionIdsDraft,
       targetSectors: targetSectorListProbe,
     };
@@ -3863,7 +3865,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       bioTranslations: deleteField(),
       highlightedNeeds: sanitizeHighlightedNeeds(highlightedNeedsDraft),
       passionIds: sanitizePassionIds(passionIdsDraft),
-      targetSectors: (formData.get('targetSectors') as string)?.split(',').map(s => s.trim()).filter(Boolean) || [],
+      targetSectors: parseCommaSeparatedTargetKeywords(formData.get('targetSectors') as string | null),
       helpNewcomers: helpNewcomersVal !== undefined ? helpNewcomersVal : deleteField(),
       networkGoal: networkGoalVal !== undefined ? networkGoalVal : deleteField(),
       contactPreferenceCta: nextContactCta ?? deleteField(),
@@ -5686,8 +5688,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     setProfilePhotoUrlDraft((prev) => {
                                       const trimmed = String(prev ?? '').trim();
                                       if (!trimmed) return '';
-                                      if (!/licdn\.com|media\.linkedin\.com/i.test(trimmed)) return trimmed;
-                                      return trimmed.split('#')[0].split('?')[0];
+                                      /* LinkedIn CDN : ne pas retirer la query (?e= &t= souvent requis) — seulement le #fragment. */
+                                      if (/licdn\.com|media\.linkedin\.com/i.test(trimmed)) {
+                                        return trimmed.split('#')[0];
+                                      }
+                                      return trimmed;
                                     });
                                   }}
                                   onPaste={(e) => {
@@ -5697,13 +5702,18 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     const trimmed = text.trim();
                                     setProfilePhotoUrlDraft(
                                       /licdn\.com|media\.linkedin\.com/i.test(trimmed)
-                                        ? trimmed.split('#')[0].split('?')[0]
+                                        ? trimmed.split('#')[0]
                                         : trimmed
                                     );
                                   }}
                                   placeholder="https://..."
                                   className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
+                                {/licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft) ? (
+                                  <p className="mt-1 text-[11px] leading-snug text-stone-500">
+                                    {t('profileFormPhotoLinkedInUrlHint')}
+                                  </p>
+                                ) : null}
                               </div>
                             </div>
                           </section>
@@ -7359,6 +7369,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   members={membersDirectoryList
                     .filter((p) => p.uid !== profile?.uid)
                     .map((p) => userProfileToRecommendedMember(p, lang))}
+                  viewerProfile={profile}
                 />
               )}
 
@@ -7871,15 +7882,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
             >
               <div className="min-h-0 flex-1 overflow-y-auto p-6 sm:p-8">
-                <button
-                  type="button"
-                  onClick={() => setIsShareProfileModalOpen(true)}
-                  className="absolute top-6 right-[3.25rem] inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-stone-700 shadow-sm transition-colors hover:bg-stone-50"
-                  title={pickLang('Partager le profil', 'Compartir perfil', 'Share profile', lang)}
-                >
-                  <Share2 size={18} aria-hidden />
-                  {pickLang('Partager', 'Compartir', 'Share', lang)}
-                </button>
                 <button 
                   onClick={() => setSelectedProfile(null)}
                   className="absolute top-6 right-6 p-2 hover:bg-stone-100 rounded-full transition-colors text-stone-400 hover:text-stone-900"
@@ -7950,7 +7952,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       iconSize={48}
                     />
                   </div>
-                  <div className="min-w-0 flex-1 pr-10 sm:pr-12">
+                  <div className="min-w-0 flex-1 pr-14 sm:pr-16">
                     <h2
                       id="profile-modal-title"
                       className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl"
@@ -8022,13 +8024,32 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       })()}
                       <span className={profileNeutralPillClass}>{selectedProfile.city}</span>
                     </div>
-                    {viewerIsAdmin ? (
-                      <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
-                        <span className="font-semibold text-slate-900">{t('adminLastSeenLabel')}</span>
-                        {': '}
-                        {formatProfileLastSeen(selectedProfile.lastSeen, lang) ?? t('adminLastSeenUnknown')}
-                      </p>
-                    ) : null}
+                    <div
+                      className={cn(
+                        'mt-3 flex flex-wrap items-center gap-3',
+                        viewerIsAdmin ? 'justify-between' : 'justify-end'
+                      )}
+                    >
+                      {viewerIsAdmin ? (
+                        <p className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
+                          <span className="font-semibold text-slate-900">{t('adminLastSeenLabel')}</span>
+                          {': '}
+                          {formatProfileLastSeen(selectedProfile.lastSeen, lang) ?? t('adminLastSeenUnknown')}
+                        </p>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsShareProfileModalOpen(true);
+                        }}
+                        className="inline-flex shrink-0 items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-stone-700 shadow-sm transition-colors hover:bg-stone-50"
+                        title={pickLang('Partager le profil', 'Compartir perfil', 'Share profile', lang)}
+                      >
+                        <Share2 size={18} aria-hidden />
+                        {pickLang('Partager', 'Compartir', 'Share', lang)}
+                      </button>
+                    </div>
                     {viewerIsAdmin &&
                       (selectedProfile.needsAdminReview === true || selectedProfile.isValidated === false) && (
                       <div className="mt-4 flex flex-wrap gap-2">

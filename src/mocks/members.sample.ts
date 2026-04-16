@@ -37,15 +37,6 @@ export const SAMPLE_MEMBERS: Member[] = [
       helpOfferText: 'Mise en relation avec l’écosystème business local.',
       currentNeeds: [
         {
-          id: 'NEED_CLIENTS',
-          memberId: 'member_001',
-          title: 'Nouveaux clients / comptes finaux',
-          categories: ['new_clients'],
-          visibility: 'members',
-          status: 'active',
-          highlighted: true,
-        },
-        {
           id: 'NEED_PARTNERS',
           memberId: 'member_001',
           title: 'Partenaires commerciaux / stratégiques',

@@ -237,7 +237,11 @@ export function NetworkPage({
 
       <section className="network-main">
         {currentUser && compatibleMembers.length > 0 ? (
-          <RecommendedMembersSection currentUser={currentUser} members={compatibleMembers} />
+          <RecommendedMembersSection
+            currentUser={currentUser}
+            members={compatibleMembers}
+            viewerProfile={profile}
+          />
         ) : null}
 
         <header className="network-directory-header">

@@ -1,3 +1,5 @@
+import { PROFILE_TARGET_KEYWORDS_MAX } from '@/types';
+
 export function normalizeInlineText(value: string | undefined): string {
   return (value ?? '')
     .replace(/<br\s*\/?>/gi, ' ')
@@ -29,7 +31,7 @@ export function splitKeywords(value: string | undefined): string[] {
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean)
-    .slice(0, 8);
+    .slice(0, PROFILE_TARGET_KEYWORDS_MAX);
 }
 
 export function rebuildKeywords(value: string | undefined): string {

@@ -99,7 +99,6 @@ export const PROFILE_ROLES: TaxonomyOption<ProfileRoleKey>[] = [
 ];
 
 export const NEED_CATEGORIES: TaxonomyOption<NeedCategoryKey>[] = [
-  { key: 'new_clients', label: 'Nouveaux clients / comptes finaux', group: 'PARTENAIRES & MARCHÉ' },
   {
     key: 'distributors_resellers_agents',
     label: 'Distributeurs / revendeurs / agents',

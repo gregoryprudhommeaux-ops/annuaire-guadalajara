@@ -801,6 +801,11 @@ export const TRANSLATIONS: Translations = {
     fr: "Coller l'URL de la photo :",
     es: 'Pega la URL de la foto:',
   },
+  /** Après correction du formulaire (ne plus tronquer ?… sur les URLs LinkedIn). */
+  profileFormPhotoLinkedInUrlHint: {
+    fr: 'Pour LinkedIn : collez l’URL telle quelle, avec la partie après « ? » si le navigateur l’affiche — elle est souvent nécessaire pour charger l’image.',
+    es: 'Para LinkedIn: pega la URL tal cual, con lo que va tras « ? » si el navegador lo muestra; suele ser necesario para cargar la imagen.',
+  },
   profileFormProfilePhotoLabel: { fr: 'Photo de profil', es: 'Foto de perfil' },
   profileFormPhotoPlaceholder: { fr: 'Photo', es: 'Foto' },
   profileFormSectionVisibility: {
@@ -1068,8 +1073,8 @@ export const TRANSLATIONS: Translations = {
   },
   targetSectorsOptional: { fr: "(facultatif)", es: "(opcional)" },
   needKeywordsHint: {
-    fr: 'Ajoutez 4 à 8 mots-clés utiles pour la recherche et le matching.',
-    es: "Separados por comas: sector, tipo de cliente, zona geográfica…",
+    fr: 'Jusqu’à 20 mots-clés, séparés par des virgules. Ils servent à croiser les recommandations avec les besoins des autres membres pour des propositions de contact plus pertinentes.',
+    es: 'Hasta 20 palabras clave, separadas por comas. Permiten alinear las recomendaciones con las necesidades de otros miembros para optimizar las propuestas de contacto.',
   },
   /** Libellé court du champ mots-clés (formulaire « À propos »). */
   profileFormAboutKeywordsLabel: { fr: 'Mots-clés', es: 'Palabras clave' },

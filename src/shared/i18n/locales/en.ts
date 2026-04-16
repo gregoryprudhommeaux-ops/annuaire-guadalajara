@@ -18,7 +18,8 @@ const shell = {
     recommendations: {
       eyebrow: 'RECOMMENDATIONS',
       title: 'Recommended profiles for you',
-      subtitle: 'Based on your current needs, your activity, and your interests.',
+      subtitle:
+        'Profiles whose needs clearly overlap your activity (green callout) are listed first, then other affinities.',
       aria: 'Recommended profiles for you',
     },
     profileFallback: 'Profile',
@@ -26,6 +27,7 @@ const shell = {
       veryRelevant: 'Highly relevant',
       relevant: 'Relevant',
       explore: 'Worth exploring',
+      evidentClient: 'Strong lead match',
     },
     compatReason: {
       needMatch: 'Aligned need',

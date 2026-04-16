@@ -73,17 +73,26 @@ export interface OptimizationSuggestion {
   generatedBy: string;
 }
 
+/** Nombre maximal de mots-clés (champ Firestore `targetSectors`, saisis séparés par des virgules). */
+export const PROFILE_TARGET_KEYWORDS_MAX = 20;
+
+function cappedTargetKeywordList(parts: string[]): string[] {
+  return parts.map((s) => String(s).trim()).filter(Boolean).slice(0, PROFILE_TARGET_KEYWORDS_MAX);
+}
+
+/** Parse une valeur de formulaire « mots-clés » (chaîne séparée par des virgules). */
+export function parseCommaSeparatedTargetKeywords(raw: string | null | undefined): string[] {
+  return cappedTargetKeywordList(String(raw ?? '').split(','));
+}
+
 /** Liste de mots-clés / secteurs cibles (tolère d’anciennes valeurs string côté Firestore). */
 export function normalizedTargetKeywords(p: UserProfile): string[] {
   const raw = p.targetSectors as unknown;
   if (Array.isArray(raw)) {
-    return raw.map((s) => String(s).trim()).filter(Boolean);
+    return cappedTargetKeywordList(raw as string[]);
   }
   if (typeof raw === 'string' && raw.trim()) {
-    return raw
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
+    return cappedTargetKeywordList(raw.split(','));
   }
   return [];
 }

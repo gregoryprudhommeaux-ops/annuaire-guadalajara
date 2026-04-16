@@ -5,7 +5,8 @@ import type { Need, NetworkRequest } from './need.types';
 
 /** Maps legacy highlighted need codes (`NEED_*`) to canonical {@link NeedCategoryKey}. */
 const LEGACY_HIGHLIGHTED_NEED_ID_TO_CATEGORY: Record<string, NeedCategoryKey> = {
-  NEED_CLIENTS: 'new_clients',
+  /** Retiré du produit : anciens profils → agrégé « autre ». */
+  NEED_CLIENTS: 'other',
   NEED_DISTRIB: 'distributors_resellers_agents',
   NEED_PARTNERS: 'strategic_partners',
   NEED_SUPPLIERS: 'suppliers_manufacturers',
@@ -53,7 +54,6 @@ type LegacyNeedInput = {
 };
 
 const CATEGORY_MAP: Record<string, NeedCategoryKey> = {
-  'Nouveaux clients / comptes finaux': 'new_clients',
   'Distributeurs / revendeurs / agents': 'distributors_resellers_agents',
   'Partenaires commerciaux / stratégiques': 'strategic_partners',
   'Fournisseurs / fabricants / sous-traitants': 'suppliers_manufacturers',

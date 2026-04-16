@@ -20,7 +20,7 @@ const shell = {
       eyebrow: 'RECOMMANDATIONS',
       title: 'Profils recommandés pour vous',
       subtitle:
-        'Basé sur vos besoins actuels, votre activité et vos centres d’intérêt.',
+        'Les profils dont les besoins recoupent clairement votre activité (encart vert) sont proposés en premier, puis les autres affinités.',
       aria: 'Profils recommandés pour vous',
     },
     profileFallback: 'Profil',
@@ -28,6 +28,8 @@ const shell = {
       veryRelevant: 'Très pertinent',
       relevant: 'Pertinent',
       explore: 'À explorer',
+      /** Aligné sur le matching signaux (même logique que l’encart vert annuaire). */
+      evidentClient: 'Client potentiel évident',
     },
     compatReason: {
       needMatch: 'Besoin compatible',

@@ -11,14 +11,6 @@ export const NEED_OPTIONS: {
     label: { fr: 'Partenaires & marché', es: 'Socios y mercado', en: 'Partners & market' },
     options: [
       {
-        value: 'NEED_CLIENTS',
-        label: {
-          fr: 'Nouveaux clients / comptes finaux',
-          es: 'Nuevos clientes / cuentas finales',
-          en: 'New clients / end customers',
-        },
-      },
-      {
         value: 'NEED_DISTRIB',
         label: {
           fr: 'Distributeurs / revendeurs / agents',

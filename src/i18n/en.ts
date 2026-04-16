@@ -323,6 +323,8 @@ export const EN_STRINGS: Record<string, string> = {
   profileFormPhotoDefined: "Profile photo set",
   profileFormEditPhotoUrlManually: "Edit URL manually",
   profileFormPhotoUrlPrompt: "Paste the photo URL:",
+  profileFormPhotoLinkedInUrlHint:
+    "For LinkedIn: paste the URL as shown, including anything after “?” if present — it’s often required for the image to load.",
   profileFormProfilePhotoLabel: "Profile photo",
   profileFormPhotoPlaceholder: "Photo",
   profileFormSectionVisibility: "Visibility & network",
@@ -435,7 +437,8 @@ export const EN_STRINGS: Record<string, string> = {
   memberCardEmptyGeneric: "Profile being enriched.",
   targetSectors: "Keywords (industry, field, area…)",
   targetSectorsOptional: "(optional)",
-  needKeywordsHint: "Comma-separated: sector, customer type, geography…",
+  needKeywordsHint:
+    "Up to 20 comma-separated keywords. They align recommendations with other members’ needs for more relevant contact suggestions.",
   profileFormAboutKeywordsLabel: "Keywords",
   needKeywordsPlaceholder: "e.g. automotive suppliers, Jalisco, export France",
   profilePublicCurrentNeeds: "Current needs",

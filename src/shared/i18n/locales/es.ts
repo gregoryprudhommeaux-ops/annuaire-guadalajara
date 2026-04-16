@@ -19,7 +19,7 @@ const shell = {
       eyebrow: 'RECOMENDACIONES',
       title: 'Perfiles recomendados para ti',
       subtitle:
-        'Basado en tus necesidades actuales, tu actividad y tus intereses.',
+        'Los perfiles cuyas necesidades encajan claramente con tu actividad (recuadro verde) aparecen primero; luego el resto de afinidades.',
       aria: 'Perfiles recomendados para ti',
     },
     profileFallback: 'Perfil',
@@ -27,6 +27,7 @@ const shell = {
       veryRelevant: 'Muy pertinente',
       relevant: 'Pertinente',
       explore: 'Para explorar',
+      evidentClient: 'Cliente potencial evidente',
     },
     compatReason: {
       needMatch: 'Necesidad afín',

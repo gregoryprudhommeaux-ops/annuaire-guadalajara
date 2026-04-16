@@ -33,10 +33,10 @@ export const PROFILE_EDITORIAL_RULES = {
   },
   keywords: {
     min: 0,
-    max: 180,
-    softMax: 120,
+    max: 600,
+    softMax: 400,
     placeholder:
       'Ex. développement international, sourcing, Mexique, B2B, investissements',
-    help: 'Ajoutez 4 à 8 mots-clés utiles pour la recherche et le matching.',
+    help: 'Jusqu’à 20 mots-clés, séparés par des virgules. Ils servent à croiser les recommandations avec les besoins des autres membres pour des propositions de contact plus pertinentes.',
   },
 };

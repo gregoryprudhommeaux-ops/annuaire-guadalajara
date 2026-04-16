@@ -36,7 +36,6 @@ export const MEMBER_SIGNAL_MAP: Record<string, string[]> = {
 
 /** Besoins structurés (codes NEED_*) → signaux actifs requis côté membre affiché. */
 export const NEED_CODE_TO_SIGNALS: Record<string, string[]> = {
-  NEED_CLIENTS: ['strategie', 'international', 'structuration'],
   NEED_PARTNERS: ['strategie', 'international', 'structuration'],
   NEED_INVESTORS: ['investisseurs', 'strategie'],
   NEED_MENTOR: ['strategie', 'structuration', 'investisseurs'],

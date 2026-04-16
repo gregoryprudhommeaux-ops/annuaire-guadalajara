@@ -22,7 +22,8 @@ export const PROFILE_FIELD_HELP = {
   currentNeeds: 'Jusqu’à 3 besoins affichés sur votre fiche publique.',
   helpOfferText: 'Décrivez de façon concrète comment vous pouvez être utile à d’autres membres.',
   preferredContactText: 'Indiquez le canal de contact le plus simple et le plus naturel pour vous.',
-  keywords: 'Ajoutez 4 à 8 mots-clés utiles pour la recherche et le matching.',
+  keywords:
+    'Jusqu’à 20 mots-clés, séparés par des virgules. Ils servent à croiser les recommandations avec les besoins des autres membres pour des propositions de contact plus pertinentes.',
   openness: 'Aide à proposer des mises en relation pertinentes.',
   hostDelegations: 'Réservé à l’équipe d’administration.',
 } as const satisfies Partial<Record<ProfileFieldLabelKey, string>>;

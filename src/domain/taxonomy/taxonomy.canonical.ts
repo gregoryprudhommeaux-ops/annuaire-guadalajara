@@ -80,7 +80,6 @@ export type ProfileRoleKey =
   | 'legal_compliance_risk';
 
 export type NeedCategoryKey =
-  | 'new_clients'
   | 'distributors_resellers_agents'
   | 'strategic_partners'
   | 'suppliers_manufacturers'
