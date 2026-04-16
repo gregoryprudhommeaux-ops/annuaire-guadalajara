@@ -18,6 +18,8 @@ export type ProfileCompletionCardProps = {
   rightActions?: React.ReactNode;
   /** Lien ou texte secondaire sous les actions (ex. masquer le bandeau), aligné à droite. */
   discreetRightFooter?: React.ReactNode;
+  /** Nuance « complétion » vs « utile pour les recommandations » (ex. formulaire profil). */
+  matchingRecommendationsNote?: string;
 };
 
 export function ProfileCompletionCard({
@@ -28,6 +30,7 @@ export function ProfileCompletionCard({
   onEditField,
   rightActions,
   discreetRightFooter,
+  matchingRecommendationsNote,
 }: ProfileCompletionCardProps) {
   const labels = useMemo(() => profileCompletionDefaultLabels(lang), [lang]);
   const percent = getProfileCompletionPercentFromDomain(profile);
@@ -87,6 +90,12 @@ export function ProfileCompletionCard({
           style={{ width: `${percent}%` }}
         />
       </div>
+
+      {matchingRecommendationsNote ? (
+        <p className="mt-4 border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-600">
+          {matchingRecommendationsNote}
+        </p>
+      ) : null}
 
       {missing.length > 0 ? (
         <div className="mt-5">

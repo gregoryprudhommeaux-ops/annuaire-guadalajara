@@ -371,20 +371,11 @@ export const TRANSLATIONS: Translations = {
   adminDelegationNo: { fr: "Non", es: "No" },
   adminDelegationUnknown: { fr: "Non renseigné", es: "Sin indicar" },
   linkedin: { fr: "Lien LinkedIn", es: "Enlace LinkedIn" },
-  fetchPhoto: { fr: "Récupérer la photo LinkedIn", es: "Importar foto de LinkedIn" },
-  linkedinPhotoHelperTitle: { fr: "Comment récupérer votre photo LinkedIn ?", es: "¿Cómo importar tu foto de LinkedIn?" },
-  linkedinPhotoHelperStep1: { fr: "1. Ouvrez votre profil LinkedIn dans un nouvel onglet.", es: "1. Abre tu perfil de LinkedIn en una nueva pestaña." },
-  linkedinPhotoHelperStep2: { fr: "2. Faites un clic droit sur votre photo de profil.", es: "2. Haz clic derecho en tu foto de perfil." },
-  linkedinPhotoHelperStep3: { fr: "3. Choisissez 'Copier l'adresse de l'image'.", es: "3. Elige « Copiar dirección de la imagen »." },
-  linkedinPhotoHelperStep4: {
-    fr: "4. Collez ce lien dans le champ « URL de la photo » ci-dessous et enregistrez votre fiche.",
-    es: "4. Pega ese enlace en el campo « URL de la foto » de abajo y guarda tu ficha.",
-  },
   openLinkedin: { fr: "Ouvrir LinkedIn", es: "Abrir LinkedIn" },
   photoURL: { fr: "URL de la photo", es: "URL de la foto" },
   photoUrlHint: {
-    fr: "Collez l’adresse de l’image de votre photo LinkedIn (bouton « Récupérer la photo LinkedIn » pour la marche à suivre). Pas d’envoi de fichier depuis l’appareil.",
-    es: "Pega la dirección de la imagen de tu foto de LinkedIn (el botón « Importar foto de LinkedIn » explica los pasos). No se admite subir archivo desde el dispositivo.",
+    fr: "URL HTTPS d’une image déjà hébergée publiquement (la plateforme ne stocke pas de fichier). Collez l’adresse directe de l’image, pas une page web.",
+    es: "URL HTTPS de una imagen ya alojada públicamente (la plataforma no guarda archivos). Pega la dirección directa de la imagen, no una página web.",
   },
   save: { fr: "Enregistrer", es: "Guardar" },
   cancel: { fr: "Annuler", es: "Cancelar" },
@@ -699,6 +690,29 @@ export const TRANSLATIONS: Translations = {
     es: 'Recursos humanos',
   },
   profileFormSectionIdentity: { fr: 'Identité', es: 'Identidad' },
+  profileFormSubContact: { fr: 'Contact', es: 'Contacto' },
+  profileFormSubLanguages: { fr: 'Langues', es: 'Idiomas' },
+  profileFormSubBio: { fr: 'Bio', es: 'Bio' },
+  profileFormSectionPhotoVisual: {
+    fr: 'Photo et présence visuelle',
+    es: 'Foto y presencia visual',
+  },
+  profileFormPhotoVisualIntro: {
+    fr: 'Ajoutez votre lien LinkedIn pour renforcer la crédibilité de votre fiche. Si vous disposez d’une URL directe d’image publique, vous pouvez aussi l’utiliser comme photo. Sinon, votre profil sera affiché avec un avatar professionnel basé sur vos initiales.',
+    es: 'Añade tu enlace de LinkedIn para reforzar la credibilidad de tu ficha. Si tienes una URL directa de imagen pública, también puedes usarla como foto. Si no, tu perfil se mostrará con un avatar profesional basado en tus iniciales.',
+  },
+  profileFormPhotoNoHostingNote: {
+    fr: 'Les photos LinkedIn ne sont pas toujours accessibles en dehors de LinkedIn. La plateforme n’héberge pas d’image.',
+    es: 'Las fotos de LinkedIn no siempre son accesibles fuera de LinkedIn. La plataforma no aloja imágenes.',
+  },
+  profileFormPhotoCredibilityNote: {
+    fr: 'Votre lien LinkedIn reste le principal signal de crédibilité. La photo est optionnelle.',
+    es: 'Tu enlace de LinkedIn sigue siendo la principal señal de credibilidad. La foto es opcional.',
+  },
+  profileFormPhotoPublicUrlLabel: {
+    fr: 'URL directe de photo publique (optionnel)',
+    es: 'URL directa de foto pública (opcional)',
+  },
   /** Regroupement formulaire profil : la personne (contact, langues, etc.). */
   profileFormSectionPerson: {
     fr: 'Vous et vos coordonnées',
@@ -713,8 +727,8 @@ export const TRANSLATIONS: Translations = {
     es: 'Empresa e implantación',
   },
   profileFormSectionNeedsKeywords: {
-    fr: 'Besoins, secteur et présentation',
-    es: 'Necesidades, sector y presentación',
+    fr: 'Besoins, canal, mots-clés',
+    es: 'Necesidades, canal, palabras clave',
   },
   profileFormPhoneCountryLabel: { fr: 'Indicatif', es: 'Prefijo país' },
   profileFormPhoneLocalLabel: { fr: 'Téléphone / WhatsApp', es: 'Teléfono / WhatsApp' },
@@ -761,6 +775,24 @@ export const TRANSLATIONS: Translations = {
     fr: 'Ce que vous cherchez et ce que vous pouvez apporter',
     es: 'Lo que buscas y lo que puedes aportar',
   },
+  profileFormRecommendPriorityBannerTitle: {
+    fr: 'Section prioritaire pour être recommandé',
+    es: 'Sección prioritaria para aparecer en recomendaciones',
+  },
+  profileFormRecommendPriorityBannerBody: {
+    fr: 'Ces informations sont les plus importantes pour faire apparaître votre profil lorsqu’un autre membre exprime un besoin. Plus vos besoins, votre aide possible et vos mots-clés sont précis, plus la plateforme peut générer des mises en relation utiles et des leads sérieux.',
+    es: 'Esta información es clave para que tu perfil aparezca cuando otro miembro expresa una necesidad. Cuanto más precisos sean tus necesidades, tu oferta de ayuda y tus palabras clave, más útiles serán los contactos y oportunidades generadas.',
+  },
+  /** Pied de section matching (formulaire profil). */
+  profileFormMatchingFieldsFooter: {
+    fr: 'Ces champs renforcent votre visibilité dans les recommandations automatiques.',
+    es: 'Estos campos refuerzan tu visibilidad en las recomendaciones automáticas.',
+  },
+  /** Bandeau complétion : nuance « utile pour les reco » vs simple complétion. */
+  profileFormMatchingRecommendationsNote: {
+    fr: 'Compléter votre profil est une chose ; renseigner la section ci-dessous le rend surtout utile pour les recommandations automatiques et les sollicitations pertinentes.',
+    es: 'Completar el perfil es un paso; la sección de oportunidades y matching es la que más ayuda a activar recomendaciones y contactos pertinentes.',
+  },
   profileFormSectionCompanyDetails: {
     fr: "Détails de l'entreprise",
     es: 'Detalles de la empresa',
@@ -781,33 +813,10 @@ export const TRANSLATIONS: Translations = {
     es: 'Sirve para estimar la antigüedad en la región.',
   },
   profileFormSectionAbout: { fr: 'À propos de vous', es: 'Sobre ti' },
-  profileFormAboutPhotoEmpty: {
-    fr: 'Renseignez le lien LinkedIn sur la ligne ci-dessus, puis « Récupérer la photo LinkedIn » (ou collez l’URL de la photo ci-dessous).',
-    es: 'Indica tu enlace de LinkedIn en la fila de arriba; luego « Importar foto de LinkedIn » (o pega la URL de la foto abajo).',
+  profileFormProfilePhotoLabel: {
+    fr: 'URL directe de photo publique (optionnel)',
+    es: 'URL directa de foto pública (opcional)',
   },
-  profileFormPhotoLinkedInOk: {
-    fr: 'Photo récupérée depuis LinkedIn',
-    es: 'Foto obtenida desde LinkedIn',
-  },
-  profileFormPhotoDefined: {
-    fr: 'Photo de profil définie',
-    es: 'Foto de perfil definida',
-  },
-  profileFormEditPhotoUrlManually: {
-    fr: "Modifier l'URL manuellement",
-    es: 'Editar la URL manualmente',
-  },
-  profileFormPhotoUrlPrompt: {
-    fr: "Coller l'URL de la photo :",
-    es: 'Pega la URL de la foto:',
-  },
-  /** Après correction du formulaire (ne plus tronquer ?… sur les URLs LinkedIn). */
-  profileFormPhotoLinkedInUrlHint: {
-    fr: 'Pour LinkedIn : collez l’URL telle quelle, avec la partie après « ? » si le navigateur l’affiche — elle est souvent nécessaire pour charger l’image.',
-    es: 'Para LinkedIn: pega la URL tal cual, con lo que va tras « ? » si el navegador lo muestra; suele ser necesario para cargar la imagen.',
-  },
-  profileFormProfilePhotoLabel: { fr: 'Photo de profil', es: 'Foto de perfil' },
-  profileFormPhotoPlaceholder: { fr: 'Photo', es: 'Foto' },
   profileFormSectionVisibility: {
     fr: 'Visibilité & réseau',
     es: 'Visibilidad y red',
@@ -1073,8 +1082,8 @@ export const TRANSLATIONS: Translations = {
   },
   targetSectorsOptional: { fr: "(facultatif)", es: "(opcional)" },
   needKeywordsHint: {
-    fr: 'Jusqu’à 20 mots-clés, séparés par des virgules. Ils servent à croiser les recommandations avec les besoins des autres membres pour des propositions de contact plus pertinentes.',
-    es: 'Hasta 20 palabras clave, separadas por comas. Permiten alinear las recomendaciones con las necesidades de otros miembros para optimizar las propuestas de contacto.',
+    fr: 'Ajoutez des mots-clés précis pour être trouvé plus facilement et apparaître dans les bons matchs (jusqu’à 20, séparés par des virgules).',
+    es: 'Añade palabras clave precisas para que te encuentren y aparezcas en los mejores emparejamientos (hasta 20, separadas por comas).',
   },
   /** Libellé court du champ mots-clés (formulaire « À propos »). */
   profileFormAboutKeywordsLabel: { fr: 'Mots-clés', es: 'Palabras clave' },
@@ -1087,8 +1096,8 @@ export const TRANSLATIONS: Translations = {
     es: "Puedo ayudar en…",
   },
   profileHelpNewcomersHint: {
-    fr: 'Décrivez de façon concrète comment vous pouvez être utile à d’autres membres.',
-    es: 'Explica en qué puedes ser útil para otros miembros de la comunidad.',
+    fr: 'Expliquez concrètement ce que vous pouvez apporter à d’autres membres : expertise, réseau, accès marché, partenaires, financement, conseil.',
+    es: 'Explica de forma concreta qué puedes aportar: experiencia, red, acceso al mercado, socios, financiamiento, asesoría.',
   },
   profileHelpNewcomersPlaceholder: {
     fr: 'Ex : installation à Guadalajara, réseau F&B, mise en relation locale...',
@@ -1099,8 +1108,8 @@ export const TRANSLATIONS: Translations = {
     es: 'Lo que busco a través de esta red',
   },
   profileNetworkGoalHint: {
-    fr: 'Expliquez en une phrase ce que vous attendez concrètement du réseau.',
-    es: 'Esta frase ayuda a los demás a entender rápidamente cómo pueden ayudarte.',
+    fr: 'Décrivez en une phrase le type d’opportunité, de contact ou de soutien que vous cherchez réellement dans le réseau.',
+    es: 'Describe en una frase el tipo de oportunidad, contacto o apoyo que buscas realmente en la red.',
   },
   profileNetworkGoalPlaceholder: {
     fr: 'Ex : Développer ma clientèle B2B à Guadalajara, trouver un partenaire local...',
@@ -1329,11 +1338,11 @@ export const TRANSLATIONS: Translations = {
   },
   contactPrefsCtaLabel: {
     fr: 'Canal de contact préféré',
-    es: 'Contactarme preferentemente por…',
+    es: 'Canal de contacto preferido',
   },
   contactPrefsCtaHint: {
-    fr: 'Indiquez le canal de contact le plus simple et le plus naturel pour vous.',
-    es: 'Indica el canal más simple para un primer contacto.',
+    fr: 'Indiquez le canal le plus simple et le plus naturel pour vous joindre rapidement.',
+    es: 'Indica el canal más simple y natural para localizarte con rapidez.',
   },
   contactPrefsCtaPlaceholder: {
     fr: 'Ex : WhatsApp, Email, LinkedIn',
@@ -1407,8 +1416,8 @@ export const TRANSLATIONS: Translations = {
   },
   highlightedNeedsOptional: { fr: "(facultatif)", es: "(opcional)" },
   highlightedNeedsHint: {
-    fr: "S’ils sont renseignés, ils apparaîtront en évidence sur votre fiche publique.",
-    es: "Si los indicas, aparecerán destacados en tu ficha pública.",
+    fr: 'Choisissez jusqu’à 3 besoins prioritaires : ce sont eux qui déclenchent les mises en relation les plus pertinentes.',
+    es: 'Elige hasta 3 necesidades prioritarias: son las que disparan las conexiones más pertinentes.',
   },
   highlightedNeedsCount: {
     fr: "sélectionné(s)",

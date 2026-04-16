@@ -108,17 +108,10 @@ export const EN_STRINGS: Record<string, string> = {
   adminDelegationNo: "No",
   adminDelegationUnknown: "Not specified",
   linkedin: "LinkedIn link",
-  fetchPhoto: "Import LinkedIn photo",
-  linkedinPhotoHelperTitle: "How do I import my LinkedIn photo?",
-  linkedinPhotoHelperStep1: "1. Open your LinkedIn profile in a new tab.",
-  linkedinPhotoHelperStep2: "2. Right-click your profile photo.",
-  linkedinPhotoHelperStep3: "3. Choose “Copy image address”.",
-  linkedinPhotoHelperStep4:
-    "4. Paste that link into the “Photo URL” field below and save your profile.",
   openLinkedin: "Open LinkedIn",
   photoURL: "Photo URL",
   photoUrlHint:
-    "Paste your LinkedIn profile photo image address (use “Import LinkedIn photo” for step-by-step). Uploading a file from your device is not available.",
+    "HTTPS URL of an image that is already publicly hosted (the platform does not store files). Paste the direct image address, not a web page.",
   save: "Save",
   cancel: "Cancel",
   commonRecommended: "Recommended",
@@ -295,10 +288,21 @@ export const EN_STRINGS: Record<string, string> = {
   profileFormSubsectionEntreprise: "Company",
   profileFormSubsectionRH: "Human resources",
   profileFormSectionIdentity: "Identity",
+  profileFormSubContact: "Contact",
+  profileFormSubLanguages: "Languages",
+  profileFormSubBio: "Bio",
+  profileFormSectionPhotoVisual: "Photo & visual presence",
+  profileFormPhotoVisualIntro:
+    "Add your LinkedIn link to strengthen your profile. If you have a direct URL to a public image, you can use it as your photo. Otherwise, your profile will show a professional avatar based on your initials.",
+  profileFormPhotoNoHostingNote:
+    "LinkedIn photos are not always accessible outside LinkedIn. The platform does not host images.",
+  profileFormPhotoCredibilityNote:
+    "Your LinkedIn link remains the main credibility signal. The photo is optional.",
+  profileFormPhotoPublicUrlLabel: "Direct public photo URL (optional)",
   profileFormSectionPerson: "You & contact details",
   profileFormSectionPassions: "Hobbies & interests",
   profileFormSectionCompanyActivity: "Company & location",
-  profileFormSectionNeedsKeywords: "Needs, sector & profile text",
+  profileFormSectionNeedsKeywords: "Needs, channel & keywords",
   profileFormPhoneCountryLabel: "Country code",
   profileFormPhoneLocalLabel: "Phone / WhatsApp",
   profileFormPhoneLocalHint: "Number without the country prefix (digits only).",
@@ -310,6 +314,13 @@ export const EN_STRINGS: Record<string, string> = {
   profileActivityToggleCollapse: "Hide details",
   profileFormCountryFootnote: "Country of operation or residence.",
   profileFormSectionCore: "What you’re looking for and what you can offer",
+  profileFormRecommendPriorityBannerTitle: "Priority section to be recommended",
+  profileFormRecommendPriorityBannerBody:
+    "This information matters most for surfacing your profile when another member expresses a need. The more precise your needs, how you can help, and your keywords, the more useful the introductions and serious leads we can generate.",
+  profileFormMatchingFieldsFooter:
+    "These fields strengthen your visibility in automatic recommendations.",
+  profileFormMatchingRecommendationsNote:
+    "A complete profile is one thing; filling in the matching section below is what makes it most useful for automatic recommendations and relevant inbound requests.",
   profileFormSectionCompanyDetails: "Company details",
   profileFormCompanyDetailsIntro:
     "This information is only used for our internal statistics.",
@@ -317,16 +328,7 @@ export const EN_STRINGS: Record<string, string> = {
   profileFormProfessionalStatus: "Professional status",
   profileFormArrivalRegionHint: "Used to estimate how long you’ve been in the region.",
   profileFormSectionAbout: "About you",
-  profileFormAboutPhotoEmpty:
-    'Enter your LinkedIn URL on the row above, then use “Import LinkedIn photo” or “Edit URL manually” beside it.',
-  profileFormPhotoLinkedInOk: "Photo retrieved from LinkedIn",
-  profileFormPhotoDefined: "Profile photo set",
-  profileFormEditPhotoUrlManually: "Edit URL manually",
-  profileFormPhotoUrlPrompt: "Paste the photo URL:",
-  profileFormPhotoLinkedInUrlHint:
-    "For LinkedIn: paste the URL as shown, including anything after “?” if present — it’s often required for the image to load.",
-  profileFormProfilePhotoLabel: "Profile photo",
-  profileFormPhotoPlaceholder: "Photo",
+  profileFormProfilePhotoLabel: "Direct public photo URL (optional)",
   profileFormSectionVisibility: "Visibility & network",
   profileFormSectionUnpublished: "Unpublished data",
   profileFormUnpublishedIntro:
@@ -438,19 +440,19 @@ export const EN_STRINGS: Record<string, string> = {
   targetSectors: "Keywords (industry, field, area…)",
   targetSectorsOptional: "(optional)",
   needKeywordsHint:
-    "Up to 20 comma-separated keywords. They align recommendations with other members’ needs for more relevant contact suggestions.",
+    "Add precise keywords to be found more easily and show up in the right matches (up to 20, comma-separated).",
   profileFormAboutKeywordsLabel: "Keywords",
   needKeywordsPlaceholder: "e.g. automotive suppliers, Jalisco, export France",
   profilePublicCurrentNeeds: "Current needs",
   profilePublicAboutTitle: "About",
   profileHelpNewcomersLabel: "I can help with",
   profileHelpNewcomersHint:
-    "Explain how you can be useful to other members of the network.",
+    "Explain concretely what you can bring: expertise, network, market access, partners, funding, advice.",
   profileHelpNewcomersPlaceholder:
     "Ex: settling in Guadalajara, F&B network, local introductions...",
   profileNetworkGoalLabel: "What I’m looking for",
   profileNetworkGoalHint:
-    "This sentence helps others quickly understand how they can help you.",
+    "In one sentence, describe the opportunity, contact, or support you are actually looking for in the network.",
   profileNetworkGoalPlaceholder:
     "Ex: Grow my B2B client base in Guadalajara, find a local partner...",
   keywordsTopRadar: "Most cited keywords",
@@ -548,8 +550,9 @@ export const EN_STRINGS: Record<string, string> = {
   contact: "Contact",
   contactLinks: "Contact & links",
   contactPrefsTitle: "Contact & collaboration preferences",
-  contactPrefsCtaLabel: "Preferred first contact channel",
-  contactPrefsCtaHint: "Indicate the easiest channel for a first conversation.",
+  contactPrefsCtaLabel: "Preferred contact channel",
+  contactPrefsCtaHint:
+    "Indicate the simplest, most natural channel for people to reach you quickly.",
   contactPrefsCtaPlaceholder: "Ex: WhatsApp, Email, LinkedIn",
   contactPrefsWorkingLangLabel: "Working languages (max. 3)",
   contactPrefsWorkingLangHint: "Select your priority business languages in the region.",
@@ -569,7 +572,7 @@ export const EN_STRINGS: Record<string, string> = {
   highlightedNeedsTitle: "Current needs",
   highlightedNeedsOptional: "(optional)",
   highlightedNeedsHint:
-    "If filled in, they will stand out on your public profile.",
+    "Pick up to 3 priority needs — they drive the most relevant introductions.",
   highlightedNeedsCount: "selected",
   typedNeedsRadar: "Structured needs (network)",
   typedNeedsRadarEmpty: "No structured needs yet (optional field, up to 3).",

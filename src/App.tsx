@@ -146,7 +146,6 @@ import {
   mapMemberRequestDoc,
 } from './lib/memberRequests';
 import {
-  NEED_OPTIONS,
   formatHighlightedNeedsForText,
   needOptionLabel,
   sanitizeHighlightedNeeds,
@@ -186,7 +185,6 @@ import { getGeminiApiKey } from './lib/geminiEnv';
 import IceBreakerInterests from './components/profile/IceBreakerInterests';
 import { TypicalClientSizesDropdown } from './components/profile/TypicalClientSizesDropdown';
 import ProfileCompletionCard from './components/profile/ProfileCompletionCard';
-import { FieldBadge } from './components/ui/FieldBadge';
 import HeroSection from './components/home/HeroSection';
 import WelcomeContextCard from './components/home/WelcomeContextCard';
 import SearchBlock from './components/home/SearchBlock';
@@ -204,6 +202,7 @@ import TermsPage from './pages/TermsPage';
 import { NewMembersSection } from './components/home/NewMembersSection';
 import AiTranslatedFreeText from './components/AiTranslatedFreeText';
 import ProfileAvatar from './components/ProfileAvatar';
+import ProfileIdentityVisual from './components/profile/ProfileIdentityVisual';
 import {
   ProfileCardEmailContact,
   ProfileCardWhatsappContactFooter,
@@ -230,18 +229,13 @@ import {
 } from './features/network/utils/recommendationPreferences';
 import { ProfileSectionHint } from '@/features/profile/components/ProfileSectionHint';
 import { ProfileSectionTag } from '@/features/profile/components/ProfileSectionTag';
+import { ProfileMatchingSection } from '@/features/profile/components/ProfileMatchingSection';
 import { ProfileFieldHint } from '@/features/profile/components/ProfileFieldHint';
 import { PROFILE_FIELD_LABELS } from '@/features/profile/utils/profileFieldLabels';
 import { PROFILE_FIELD_HELP } from '@/features/profile/utils/profileFieldHelp';
 import { ProfileEditFormPatchStyles } from '@/features/profile/ProfileEditFormPatchStyles';
 import '@/features/profile/profile-detail.css';
-import {
-  ProfileEditorialMemberBioField,
-  ProfileEditorialNetworkGoalField,
-  ProfileEditorialHelpNewcomersField,
-  ProfileEditorialContactPreferenceField,
-  ProfileEditorialKeywordsField,
-} from '@/features/profile/components/ProfileEditorialRouteFields';
+import { ProfileEditorialMemberBioField } from '@/features/profile/components/ProfileEditorialRouteFields';
 import {
   memberCardBioBodyClassName,
   memberCardBioTitleAttr,
@@ -287,7 +281,6 @@ import {
   ChevronDown,
   ChevronUp,
   Languages,
-  ExternalLink,
   Heart,
   Zap,
   Share2,
@@ -2043,7 +2036,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const lastProfileViewLoggedRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
   /** URL photo profil (formulaire édition) — synchronisée avec le champ masqué `photoURL` à l’enregistrement. */
   const [profilePhotoUrlDraft, setProfilePhotoUrlDraft] = useState('');
   const directoryMainRef = useRef<HTMLDivElement>(null);
@@ -3390,12 +3382,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       const v = getTrimmed(key);
       return v.length > 0 ? v : undefined;
     };
-    const normalizeLinkedInPhotoUrl = (url: string) => {
+    const normalizeProfilePhotoUrl = (url: string) => {
       const trimmed = String(url ?? '').trim();
       if (!trimmed) return '';
-      if (!/licdn\.com|media\.linkedin\.com/i.test(trimmed)) return trimmed;
-      // LinkedIn URLs often carry expiring query params (e=...&t=...). Keep the stable path.
-      return trimmed.split('#')[0].split('?')[0];
+      return trimmed.split('#')[0];
     };
     const optionalNumber = (key: string) => {
       const raw = getTrimmed(key);
@@ -3843,8 +3833,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const networkGoalVal = optionalString('networkGoal');
 
     const companySlotsPayload = slotsToFirestoreList(slotsWithName);
-    const photoUrlRaw = optionalString('photoURL');
-    const photoUrlNormalized = photoUrlRaw ? normalizeLinkedInPhotoUrl(photoUrlRaw) : undefined;
+    const photoUrlRaw =
+      String(profilePhotoUrlDraft ?? '').trim() || String(formData.get('photoURL') ?? '').trim();
+    const photoUrlNormalized = photoUrlRaw ? normalizeProfilePhotoUrl(photoUrlRaw) : undefined;
 
     const newProfile = {
       uid: targetUid,
@@ -4920,6 +4911,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         lang={lang}
                         onEditField={scrollToProfileCompletionField}
                         className="border-0 bg-transparent p-0 shadow-none"
+                        matchingRecommendationsNote={t('profileFormMatchingRecommendationsNote')}
                         rightActions={
                           <button
                             type="button"
@@ -5338,13 +5330,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
                             <ProfileSectionHint tone="public">
                               {pickLang(
-                                'Identité affichée, moyens de contact et langues d’échange.',
-                                'Identidad mostrada, contacto e idiomas de intercambio.',
-                                'Display identity, contact channels and languages you use.',
+                                'Identité, moyens de contact, langues, présentation personnelle et photo.',
+                                'Identidad, contacto, idiomas, bio personal y foto.',
+                                'Identity, contact, languages, personal intro and photo.',
                                 lang
                               )}
                             </ProfileSectionHint>
 
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                              {t('profileFormSectionIdentity')}
+                            </p>
                             <div className={cn('profile-form-grid-2', isEditProfileRoute && 'profile-grid-2')}>
                               <div className="profile-form-block--dense space-y-1">
                                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
@@ -5388,6 +5383,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 />
                               </div>
 
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 sm:col-span-2">
+                                {t('profileFormSubContact')}
+                              </p>
                               <div className="profile-form-block--dense min-w-0 space-y-1 sm:col-span-2">
                                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                   {profileEditFrUx ? PROFILE_FIELD_LABELS.linkedinUrl : t('linkedin')}
@@ -5498,6 +5496,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               </label>
                             </div>
 
+                            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                              {t('profileFormSubLanguages')}
+                            </p>
                             <div className="mb-4 space-y-1" id="profile-completion-workLanguages">
                               <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                                 {profileEditFrUx ? PROFILE_FIELD_LABELS.languages : t('contactPrefsWorkingLangLabel')}
@@ -5532,38 +5533,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               </ProfileFieldHint>
                             </div>
 
-                            {companyActivitiesDraft[0]?.id ? (
-                              <div className="mb-4 space-y-1">
-                                <label
-                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                  htmlFor="profile-arrival-year"
-                                >
-                                  {profileEditFrUx
-                                    ? PROFILE_FIELD_LABELS.arrivalYearInMexico
-                                    : t('arrivalYear')}
-                                </label>
-                                <input
-                                  id="profile-arrival-year"
-                                  type="number"
-                                  value={companyActivitiesDraft[0]?.arrivalYear ?? ''}
-                                  onChange={(e) => {
-                                    const id = companyActivitiesDraft[0]?.id;
-                                    if (!id) return;
-                                    const v = e.target.value;
-                                    updateCompanyActivitySlot(id, {
-                                      arrivalYear: v === '' ? undefined : Number(v),
-                                    });
-                                  }}
-                                  className="h-10 w-full max-w-xs rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                                <ProfileFieldHint>
-                                  {profileEditFrUx
-                                    ? PROFILE_FIELD_HELP.arrivalYearInMexico
-                                    : t('profileFormArrivalRegionHint')}
-                                </ProfileFieldHint>
-                              </div>
-                            ) : null}
-
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                              {t('profileFormSubBio')}
+                            </p>
                             <input type="hidden" name="photoURL" value={profilePhotoUrlDraft} />
                             {isEditProfileRoute ? (
                               <ProfileEditorialMemberBioField
@@ -5611,71 +5583,50 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 </ProfileFieldHint>
                               </div>
                             )}
-                            <div className="space-y-1">
-                              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                {profileEditFrUx ? PROFILE_FIELD_LABELS.profilePhoto : t('profileFormProfilePhotoLabel')}
-                              </label>
-                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                <div className="flex min-h-10 items-center gap-3">
-                                  {profilePhotoUrlDraft.trim() ? (
-                                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-stone-200">
-                                      <ProfileAvatar
-                                        photoURL={profilePhotoUrlDraft}
-                                        fullName={
-                                          editingProfile?.fullName ??
-                                          profile?.fullName ??
-                                          user?.displayName ??
-                                          ''
-                                        }
-                                        className="h-full w-full bg-stone-100"
-                                        iconSize={20}
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-stone-300 bg-stone-100 text-[10px] text-stone-400">
-                                      {t('profileFormPhotoPlaceholder')}
-                                    </div>
-                                  )}
-                                  <div className="flex min-w-0 flex-col justify-center gap-0.5 leading-tight">
-                                    {profilePhotoUrlDraft ? (
-                                      <span
-                                        className={cn(
-                                          'text-xs font-medium',
-                                          /licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft)
-                                            ? 'text-emerald-600'
-                                            : 'text-stone-700'
-                                        )}
-                                      >
-                                        {/licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft)
-                                          ? `✓ ${t('profileFormPhotoLinkedInOk')}`
-                                          : `✓ ${t('profileFormPhotoDefined')}`}
-                                      </span>
-                                    ) : (
-                                      <span className="block text-[11px] text-stone-400">
-                                        {t('profileFormAboutPhotoEmpty')}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => setIsLinkedInModalOpen(true)}
-                                  className="inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-stone-300 px-3 text-xs font-medium text-stone-700 transition-colors hover:bg-stone-50"
-                                >
-                                  <span className="inline-flex items-center gap-1.5">
-                                    <Linkedin size={14} aria-hidden />
-                                    {t('fetchPhoto')}
-                                  </span>
-                                </button>
-                              </div>
-
-                              <div className="mt-2 space-y-1">
+                            <div className="space-y-3 rounded-xl border border-stone-200 bg-white/70 p-4 shadow-sm">
+                              <h3 className="text-sm font-semibold text-stone-900">
+                                {t('profileFormSectionPhotoVisual')}
+                              </h3>
+                              <p className="text-xs leading-relaxed text-stone-600">
+                                {t('profileFormPhotoVisualIntro')}
+                              </p>
+                              <p className="border-l-2 border-stone-300 pl-3 text-xs leading-relaxed text-stone-500">
+                                {t('profileFormPhotoNoHostingNote')}
+                              </p>
+                              <ProfileIdentityVisual
+                                fullName={
+                                  editingProfile?.fullName ??
+                                  profile?.fullName ??
+                                  user?.displayName ??
+                                  ''
+                                }
+                                photoUrl={profilePhotoUrlDraft}
+                                linkedinUrl={
+                                  editingProfile?.linkedin ?? profile?.linkedin ?? undefined
+                                }
+                                size="lg"
+                                imageAlt={
+                                  profilePhotoUrlDraft.trim()
+                                    ? pickLang(
+                                        'Photo de profil — aperçu',
+                                        'Foto de perfil — vista previa',
+                                        'Profile photo — preview',
+                                        lang
+                                      )
+                                    : undefined
+                                }
+                              />
+                              <p className="text-xs font-medium text-stone-800">
+                                {t('profileFormPhotoCredibilityNote')}
+                              </p>
+                              <div className="space-y-1">
                                 <label
                                   className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
                                   htmlFor="profilePhotoUrl"
                                 >
-                                  {t('profileFormPhotoUrlPrompt')}
+                                  {profileEditFrUx
+                                    ? PROFILE_FIELD_LABELS.profilePhoto
+                                    : t('profileFormPhotoPublicUrlLabel')}
                                 </label>
                                 <input
                                   id="profilePhotoUrl"
@@ -5688,82 +5639,34 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                     setProfilePhotoUrlDraft((prev) => {
                                       const trimmed = String(prev ?? '').trim();
                                       if (!trimmed) return '';
-                                      /* LinkedIn CDN : ne pas retirer la query (?e= &t= souvent requis) — seulement le #fragment. */
-                                      if (/licdn\.com|media\.linkedin\.com/i.test(trimmed)) {
-                                        return trimmed.split('#')[0];
-                                      }
-                                      return trimmed;
+                                      return trimmed.split('#')[0];
                                     });
                                   }}
                                   onPaste={(e) => {
                                     const text = e.clipboardData?.getData('text') ?? '';
                                     if (!text) return;
                                     e.preventDefault();
-                                    const trimmed = text.trim();
-                                    setProfilePhotoUrlDraft(
-                                      /licdn\.com|media\.linkedin\.com/i.test(trimmed)
-                                        ? trimmed.split('#')[0]
-                                        : trimmed
-                                    );
+                                    setProfilePhotoUrlDraft(text.trim().split('#')[0]);
                                   }}
-                                  placeholder="https://..."
+                                  placeholder="https://…"
                                   className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
                                 />
-                                {/licdn\.com|media\.linkedin\.com/i.test(profilePhotoUrlDraft) ? (
-                                  <p className="mt-1 text-[11px] leading-snug text-stone-500">
-                                    {t('profileFormPhotoLinkedInUrlHint')}
-                                  </p>
-                                ) : null}
                               </div>
                             </div>
                           </section>
 
-                          <section
-                            id="profile-completion-passions"
-                            className={cn(
-                              'space-y-3 rounded-xl border border-stone-200 bg-white p-4',
-                              isEditProfileRoute && 'profile-card-compact'
-                            )}
-                          >
-                            <div className="profile-section-header">
-                              <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
-                                {t('profileFormSectionPassions')}
-                              </h2>
-                              <ProfileSectionTag
-                                tone="public"
-                                label={pickLang(
-                                  'Visible publiquement',
-                                  'Visible públicamente',
-                                  'Shown on your public profile',
-                                  lang
-                                )}
-                              />
-                              <ProfileSectionTag
-                                tone="matching"
-                                label={pickLang(
-                                  'Important pour le matching',
-                                  'Importante para el emparejamiento',
-                                  'Used for matching',
-                                  lang
-                                )}
-                              />
-                            </div>
-                            <ProfileSectionHint tone="public">
-                              {pickLang(
-                                PROFILE_FIELD_HELP.passions,
-                                'Intereses fuera de tu actividad principal: humanizan tu ficha y el matching.',
-                                'Interests outside your core work humanize your profile and matching.',
-                                lang
-                              )}
-                            </ProfileSectionHint>
-                            <IceBreakerInterests
-                              lang={lang}
-                              value={passionIdsDraft}
-                              onChange={(ids) => setPassionIdsDraft(sanitizePassionIds(ids))}
-                              markRequired
-                            />
-                          </section>
-
+                          <ProfileMatchingSection
+                            lang={lang}
+                            t={t}
+                            pickLang={pickLang}
+                            profileEditFrUx={profileEditFrUx}
+                            isEditProfileRoute={isEditProfileRoute}
+                            formDraftT={formDraftT}
+                            editingProfile={editingProfile}
+                            profile={profile}
+                            highlightedNeedsDraft={highlightedNeedsDraft}
+                            onToggleHighlightedNeed={toggleHighlightedNeedDraft}
+                          />
                           <section
                             className={cn(
                               'space-y-3 rounded-xl border border-stone-200 bg-stone-50/40 p-4',
@@ -6041,6 +5944,36 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                           </div>
                                         </div>
 
+                                        {idx === 0 ? (
+                                          <div className="space-y-1">
+                                            <label
+                                              className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
+                                              htmlFor="profile-arrival-year"
+                                            >
+                                              {profileEditFrUx
+                                                ? PROFILE_FIELD_LABELS.arrivalYearInMexico
+                                                : t('arrivalYear')}
+                                            </label>
+                                            <input
+                                              id="profile-arrival-year"
+                                              type="number"
+                                              value={slot.arrivalYear ?? ''}
+                                              onChange={(e) => {
+                                                const v = e.target.value;
+                                                updateCompanyActivitySlot(slot.id, {
+                                                  arrivalYear: v === '' ? undefined : Number(v),
+                                                });
+                                              }}
+                                              className="h-10 w-full max-w-xs rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
+                                            />
+                                            <ProfileFieldHint>
+                                              {profileEditFrUx
+                                                ? PROFILE_FIELD_HELP.arrivalYearInMexico
+                                                : t('profileFormArrivalRegionHint')}
+                                            </ProfileFieldHint>
+                                          </div>
+                                        ) : null}
+
                                         <div
                                           className={cn(
                                             'grid grid-cols-1 gap-4 md:grid-cols-2',
@@ -6253,18 +6186,26 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               {t('profileFormAddCompanyActivity')}
                             </button>
                           </section>
-
-
                           <section
+                            id="profile-completion-passions"
                             className={cn(
-                              'space-y-3 rounded-lg border border-amber-200 bg-amber-50/40 p-4',
-                              isEditProfileRoute && 'profile-stack-md'
+                              'space-y-3 rounded-xl border border-stone-200 bg-white p-4',
+                              isEditProfileRoute && 'profile-card-compact'
                             )}
                           >
                             <div className="profile-section-header">
                               <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
-                                {t('profileFormSectionNeedsKeywords')}
+                                {t('profileFormSectionPassions')}
                               </h2>
+                              <ProfileSectionTag
+                                tone="public"
+                                label={pickLang(
+                                  'Visible publiquement',
+                                  'Visible públicamente',
+                                  'Shown on your public profile',
+                                  lang
+                                )}
+                              />
                               <ProfileSectionTag
                                 tone="matching"
                                 label={pickLang(
@@ -6275,212 +6216,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 )}
                               />
                             </div>
-                            <ProfileSectionHint tone="matching">{t('profileFormSectionCore')}</ProfileSectionHint>
-
-                            {isEditProfileRoute ? (
-                              <ProfileEditorialNetworkGoalField
-                                formDraftT={formDraftT}
-                                editingProfile={editingProfile}
-                                profile={profile}
-                                profileEditFrUx={profileEditFrUx}
-                                lang={lang}
-                                t={t}
-                              />
-                            ) : (
-                              <div>
-                                <div className="mb-2 flex flex-wrap items-center gap-2">
-                                  <label
-                                    htmlFor="networkGoal"
-                                    className="text-sm font-semibold text-stone-900"
-                                  >
-                                    {profileEditFrUx ? PROFILE_FIELD_LABELS.lookingForText : t('profileNetworkGoalLabel')}
-                                  </label>
-                                  <FieldBadge tone="recommended">{t('commonRecommended')}</FieldBadge>
-                                </div>
-                                <input
-                                  id="networkGoal"
-                                  name="networkGoal"
-                                  type="text"
-                                  maxLength={200}
-                                  defaultValue={
-                                    formDraftT?.networkGoal ??
-                                    (editingProfile?.networkGoal ?? profile?.networkGoal) ??
-                                    ''
-                                  }
-                                  placeholder={t('profileNetworkGoalPlaceholder')}
-                                  className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm outline-none ring-0 placeholder:text-stone-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/25"
-                                />
-                                <ProfileFieldHint>
-                                  {profileEditFrUx
-                                    ? PROFILE_FIELD_HELP.lookingForText
-                                    : t('profileNetworkGoalHint')}
-                                </ProfileFieldHint>
-                              </div>
-                            )}
-
-                            <div id="profile-completion-highlightedNeeds">
-                              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                {profileEditFrUx ? PROFILE_FIELD_LABELS.currentNeeds : t('highlightedNeedsTitle')}{' '}
-                                <span className="text-[10px] font-normal normal-case text-stone-400">
-                                  {t('highlightedNeedsOptional')}
-                                </span>
-                              </label>
-                              <div className="space-y-2">
-                                {NEED_OPTIONS.map((group) => (
-                                  <div key={group.label.fr} className="space-y-2">
-                                    <p className="text-[10px] font-black uppercase tracking-wider text-stone-400">
-                                      {group.label[lang]}
-                                    </p>
-                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                      {group.options.map((opt) => {
-                                        const selected = highlightedNeedsDraft.includes(opt.value);
-                                        const disabled = !selected && highlightedNeedsDraft.length >= 3;
-                                        return (
-                                          <button
-                                            key={opt.value}
-                                            type="button"
-                                            onClick={() => toggleHighlightedNeedDraft(opt.value)}
-                                            disabled={disabled}
-                                            className={cn(
-                                              'w-full rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-all',
-                                              selected
-                                                ? 'border-amber-600 bg-amber-700 text-white shadow-sm'
-                                                : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300',
-                                              disabled && !selected && 'cursor-not-allowed opacity-40 hover:border-stone-200'
-                                            )}
-                                          >
-                                            {opt.label[lang]}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                              <ProfileFieldHint>
-                                {profileEditFrUx ? PROFILE_FIELD_HELP.currentNeeds : t('highlightedNeedsHint')}
-                              </ProfileFieldHint>
-                            </div>
-
-                            <div
-                              className={cn(
-                                'grid grid-cols-1 gap-4 md:grid-cols-2',
-                                isEditProfileRoute && 'profile-grid-2'
+                            <ProfileSectionHint tone="public">
+                              {pickLang(
+                                `${PROFILE_FIELD_HELP.passions} Ils font aussi office d’ice breakers relationnels.`,
+                                'Intereses fuera de tu actividad principal: humanizan tu ficha y el matching. También sirven como rompehielos.',
+                                'Interests outside your core work humanize your profile and matching. They also work as conversational ice-breakers.',
+                                lang
                               )}
-                            >
-                              {isEditProfileRoute ? (
-                                <ProfileEditorialHelpNewcomersField
-                                  formDraftT={formDraftT}
-                                  editingProfile={editingProfile}
-                                  profile={profile}
-                                  profileEditFrUx={profileEditFrUx}
-                                  lang={lang}
-                                  t={t}
-                                />
-                              ) : (
-                                <div className="space-y-1">
-                                  <label
-                                    htmlFor="helpNewcomers"
-                                    className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                  >
-                                    {profileEditFrUx ? PROFILE_FIELD_LABELS.helpOfferText : t('profileHelpNewcomersLabel')}
-                                  </label>
-                                  <textarea
-                                    id="helpNewcomers"
-                                    name="helpNewcomers"
-                                    rows={3}
-                                    maxLength={800}
-                                    defaultValue={
-                                      formDraftT?.helpNewcomers ??
-                                      (editingProfile?.helpNewcomers ?? profile?.helpNewcomers) ??
-                                      ''
-                                    }
-                                    placeholder={t('profileHelpNewcomersPlaceholder')}
-                                    className="w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
-                                  />
-                                  <ProfileFieldHint>
-                                    {profileEditFrUx ? PROFILE_FIELD_HELP.helpOfferText : t('profileHelpNewcomersHint')}
-                                  </ProfileFieldHint>
-                                </div>
-                              )}
-
-                              {isEditProfileRoute ? (
-                                <ProfileEditorialContactPreferenceField
-                                  formDraftT={formDraftT}
-                                  editingProfile={editingProfile}
-                                  profile={profile}
-                                  profileEditFrUx={profileEditFrUx}
-                                  lang={lang}
-                                  t={t}
-                                />
-                              ) : (
-                                <div className="space-y-1">
-                                  <label
-                                    htmlFor="contactPreferenceCta"
-                                    className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                  >
-                                    {profileEditFrUx
-                                      ? PROFILE_FIELD_LABELS.preferredContactText
-                                      : t('contactPrefsCtaLabel')}
-                                  </label>
-                                  <textarea
-                                    id="contactPreferenceCta"
-                                    name="contactPreferenceCta"
-                                    rows={3}
-                                    maxLength={200}
-                                    defaultValue={
-                                      formDraftT?.contactPreferenceCta ??
-                                      (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta) ??
-                                      ''
-                                    }
-                                    placeholder={t('contactPrefsCtaPlaceholder')}
-                                    className="w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
-                                  />
-                                  <ProfileFieldHint>
-                                    {profileEditFrUx
-                                      ? PROFILE_FIELD_HELP.preferredContactText
-                                      : t('contactPrefsCtaHint')}
-                                  </ProfileFieldHint>
-                                </div>
-                              )}
-                            </div>
-
-                            {isEditProfileRoute ? (
-                              <ProfileEditorialKeywordsField
-                                formDraftT={formDraftT}
-                                editingProfile={editingProfile}
-                                profile={profile}
-                                profileEditFrUx={profileEditFrUx}
-                                lang={lang}
-                                t={t}
-                              />
-                            ) : (
-                              <div className="space-y-1">
-                                <label
-                                  htmlFor="targetSectors-needs"
-                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                >
-                                  {profileEditFrUx ? PROFILE_FIELD_LABELS.keywords : t('profileFormAboutKeywordsLabel')}{' '}
-                                  <span className="text-[10px] font-normal normal-case text-stone-400">
-                                    {t('targetSectorsOptional')}
-                                  </span>
-                                </label>
-                                <input
-                                  id="targetSectors-needs"
-                                  name="targetSectors"
-                                  defaultValue={
-                                    formDraftT?.targetSectors ??
-                                    (editingProfile?.targetSectors || profile?.targetSectors || []).join(', ')
-                                  }
-                                  placeholder={t('needKeywordsPlaceholder')}
-                                  className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
-                                />
-                                <ProfileFieldHint>
-                                  {profileEditFrUx ? PROFILE_FIELD_HELP.keywords : t('needKeywordsHint')}
-                                </ProfileFieldHint>
-                              </div>
-                            )}
-
+                            </ProfileSectionHint>
+                            <IceBreakerInterests
+                              lang={lang}
+                              value={passionIdsDraft}
+                              onChange={(ids) => setPassionIdsDraft(sanitizePassionIds(ids))}
+                              markRequired
+                            />
                           </section>
 
 
@@ -8788,65 +8537,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       </AnimatePresence>
 
       {/* Opportunités retirées du produit */}
-
-      <AnimatePresence>
-        {isLinkedInModalOpen && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsLinkedInModalOpen(false)}
-              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8"
-            >
-              <button 
-                onClick={() => setIsLinkedInModalOpen(false)}
-                className="absolute top-6 right-6 p-2 hover:bg-stone-100 rounded-full transition-colors text-stone-400 hover:text-stone-900"
-              >
-                <Plus size={20} className="rotate-45" />
-              </button>
-
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-700">
-                  <Linkedin size={24} />
-                </div>
-                <h3 className="text-xl font-bold text-stone-900">{t('linkedinPhotoHelperTitle')}</h3>
-              </div>
-
-              <div className="space-y-4 mb-8">
-                <p className="text-sm text-stone-600 leading-relaxed">{t('linkedinPhotoHelperStep1')}</p>
-                <p className="text-sm text-stone-600 leading-relaxed">{t('linkedinPhotoHelperStep2')}</p>
-                <p className="text-sm text-stone-600 leading-relaxed">{t('linkedinPhotoHelperStep3')}</p>
-                <p className="text-sm text-stone-600 leading-relaxed font-medium text-stone-900">{t('linkedinPhotoHelperStep4')}</p>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <a 
-                  href={(document.getElementById('linkedin-input') as HTMLInputElement)?.value || "https://linkedin.com"} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="w-full py-3 bg-stone-900 text-white rounded-xl font-bold text-center hover:bg-stone-800 transition-all flex items-center justify-center gap-2"
-                >
-                  <ExternalLink size={18} />
-                  {t('openLinkedin')}
-                </a>
-                <button 
-                  onClick={() => setIsLinkedInModalOpen(false)}
-                  className="w-full py-3 bg-stone-100 text-stone-600 rounded-xl font-bold hover:bg-stone-200 transition-all"
-                >
-                  {t('cancel')}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>

@@ -11,19 +11,24 @@ export const PROFILE_FIELD_HELP = {
   gender: 'Statistique interne uniquement.',
   nationality: 'Non affichée sur la fiche publique.',
   bio: 'Privilégiez une présentation claire, concrète et orientée business. Évitez les textes trop personnels ou trop longs.',
-  profilePhoto: 'Avatar annuaire ; une photo lisible améliore les mises en relation.',
+  profilePhoto:
+    'URL HTTPS d’image déjà publique (pas d’upload). Sinon, initiales automatiques — fiable et homogène.',
   passions: 'Centres d’intérêt hors cœur de métier : humanisent la fiche et le matching.',
   companyName: 'Raison sociale ou nom commercial principal.',
   sector: 'Secteur principal pour filtres et suggestions.',
   country: 'Pays d’implantation ou de résidence.',
   roleInCompany: 'Décrivez votre rôle réel, pas seulement votre titre.',
   activityDescription: '2 à 4 phrases concrètes sur l’activité sur ce marché.',
-  lookingForText: 'Expliquez en une phrase ce que vous attendez concrètement du réseau.',
-  currentNeeds: 'Jusqu’à 3 besoins affichés sur votre fiche publique.',
-  helpOfferText: 'Décrivez de façon concrète comment vous pouvez être utile à d’autres membres.',
-  preferredContactText: 'Indiquez le canal de contact le plus simple et le plus naturel pour vous.',
+  lookingForText:
+    'Décrivez en une phrase le type d’opportunité, de contact ou de soutien que vous cherchez réellement dans le réseau.',
+  currentNeeds:
+    'Choisissez jusqu’à 3 besoins prioritaires : ce sont eux qui déclenchent les mises en relation les plus pertinentes.',
+  helpOfferText:
+    'Expliquez concrètement ce que vous pouvez apporter à d’autres membres : expertise, réseau, accès marché, partenaires, financement, conseil.',
+  preferredContactText:
+    'Indiquez le canal le plus simple et le plus naturel pour vous joindre rapidement.',
   keywords:
-    'Jusqu’à 20 mots-clés, séparés par des virgules. Ils servent à croiser les recommandations avec les besoins des autres membres pour des propositions de contact plus pertinentes.',
+    'Ajoutez des mots-clés précis pour être trouvé plus facilement et apparaître dans les bons matchs (jusqu’à 20, séparés par des virgules).',
   openness: 'Aide à proposer des mises en relation pertinentes.',
   hostDelegations: 'Réservé à l’équipe d’administration.',
 } as const satisfies Partial<Record<ProfileFieldLabelKey, string>>;

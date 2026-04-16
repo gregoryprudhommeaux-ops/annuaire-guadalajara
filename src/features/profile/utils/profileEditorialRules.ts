@@ -13,7 +13,7 @@ export const PROFILE_EDITORIAL_RULES = {
     softMax: 140,
     placeholder:
       'Ex. Développer des partenariats B2B au Mexique et rencontrer des décideurs pertinents dans mon secteur.',
-    help: 'Expliquez en une phrase ce que vous attendez concrètement du réseau.',
+    help: 'Décrivez en une phrase le type d’opportunité, de contact ou de soutien que vous cherchez réellement dans le réseau.',
   },
   helpOfferText: {
     min: 20,
@@ -21,7 +21,7 @@ export const PROFILE_EDITORIAL_RULES = {
     softMax: 180,
     placeholder:
       'Ex. Je peux aider sur le développement commercial, les mises en relation locales et la structuration de partenariats.',
-    help: 'Décrivez de façon concrète comment vous pouvez être utile à d’autres membres.',
+    help: 'Expliquez concrètement ce que vous pouvez apporter à d’autres membres : expertise, réseau, accès marché, partenaires, financement, conseil.',
   },
   preferredContactText: {
     min: 6,
@@ -29,7 +29,7 @@ export const PROFILE_EDITORIAL_RULES = {
     softMax: 70,
     placeholder:
       'Ex. Premier contact par WhatsApp ou email, puis échange visio ou café.',
-    help: 'Indiquez le canal de contact le plus simple et le plus naturel pour vous.',
+    help: 'Indiquez le canal le plus simple et le plus naturel pour vous joindre rapidement.',
   },
   keywords: {
     min: 0,
@@ -37,6 +37,6 @@ export const PROFILE_EDITORIAL_RULES = {
     softMax: 400,
     placeholder:
       'Ex. développement international, sourcing, Mexique, B2B, investissements',
-    help: 'Jusqu’à 20 mots-clés, séparés par des virgules. Ils servent à croiser les recommandations avec les besoins des autres membres pour des propositions de contact plus pertinentes.',
+    help: 'Ajoutez des mots-clés précis pour être trouvé plus facilement et apparaître dans les bons matchs (jusqu’à 20, séparés par des virgules).',
   },
 };
