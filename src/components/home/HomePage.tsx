@@ -238,12 +238,22 @@ export function HomePage({
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold text-slate-900">{t('home.marketing.sidebarInviteTitle')}</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">{t('home.marketing.sidebarInviteLead')}</p>
-        <Link
-          to={joinHref}
-          className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-        >
-          {t('home.marketing.sidebarInviteCta')}
-        </Link>
+        {onInviteClick ? (
+          <button
+            type="button"
+            onClick={onInviteClick}
+            className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            {t('home.marketing.sidebarInviteCta')}
+          </button>
+        ) : (
+          <Link
+            to={joinHref}
+            className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            {t('home.marketing.sidebarInviteCta')}
+          </Link>
+        )}
       </section>
     </>
   );

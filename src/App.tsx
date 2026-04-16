@@ -6873,6 +6873,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             isAdmin={viewerIsAdmin}
             visibleMemberCount={stats.total}
             membersForSectors={allProfiles.map((p) => ({ id: p.uid, sector: p.activityCategory ?? null }))}
+            signupHref={user ? '/profile/edit' : '/inscription'}
+            onInviteClick={() => setShowInviteNetworkModal(true)}
             exploreMembersHref="/network"
             postRequestHref="/requests"
             className="w-full"
