@@ -324,6 +324,14 @@ import { getPrimaryNav } from '@/routes/primaryNav';
 import { canAccessRoute, getAppRole } from '@/auth/roleModel';
 import { HeroTopActions } from '@/components/hero/HeroTopActions';
 
+/** Même style que la navigation principale (pilules grises / actif noir). */
+function primaryNavPillClass(active: boolean) {
+  return cn(
+    'inline-flex min-h-[40px] min-w-0 max-w-full shrink-0 items-center justify-center rounded-lg px-3 py-2 text-center text-xs font-semibold transition-colors sm:text-sm',
+    active ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+  );
+}
+
 const loadNetworkRadarSection = () => import('./components/home/NetworkRadarSection');
 const loadDashboardPage = () => import('./components/dashboard/DashboardPage');
 const loadAdminPage = () => import('@/screens/AdminPage');
@@ -3553,7 +3561,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     }
 
     const firstSlot = slotsWithName[0];
-    let employeeCountVal = employeeCountFromSlotField(firstSlot.employeeCount);
+    const employeeCountVal = employeeCountFromSlotField(firstSlot.employeeCount);
     if (firstSlot.employeeCount !== '' && firstSlot.employeeCount != null && employeeCountVal === undefined) {
       setProfileSaveError(
         pickLang(
@@ -4656,122 +4664,141 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         }
         fullWidthRow={
           headerAdminLayout ? (
-            <div className="flex w-full min-w-0 flex-row items-stretch gap-1 sm:gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowValidationPanel(true)}
-                  className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-slate-100 px-1 py-1.5 text-slate-800 transition-colors hover:bg-slate-200 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
-                >
-                  <Users className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                  <span className="hidden max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
-                    {t('newProfiles')}
+            <nav
+              className="flex w-full min-w-0 flex-wrap items-center gap-2"
+              aria-label={pickLang(
+                'Navigation du site et outils admin',
+                'Navegación del sitio y herramientas admin',
+                'Site navigation and admin tools',
+                lang
+              )}
+            >
+              <Link
+                to="/"
+                className={primaryNavPillClass(isHomeRoute)}
+              >
+                {t('nav.home')}
+              </Link>
+              <Link
+                to="/network"
+                className={primaryNavPillClass(isNetworkRoute)}
+              >
+                {t('nav.network')}
+              </Link>
+              <Link
+                to="/requests"
+                className={primaryNavPillClass(isRequestsRoute)}
+              >
+                {t('nav.requests')}
+              </Link>
+              <Link
+                to="/radar"
+                className={primaryNavPillClass(isRadarRoute)}
+              >
+                {t('nav.radar')}
+              </Link>
+              <Link
+                to="/admin"
+                className={primaryNavPillClass(isAdminRoute)}
+              >
+                {t('nav.admin')}
+              </Link>
+              <span
+                className="mx-0.5 hidden h-6 w-px shrink-0 bg-stone-900/10 sm:inline-block"
+                aria-hidden
+              />
+              <button
+                type="button"
+                onClick={() => setShowValidationPanel(true)}
+                className={cn('relative', primaryNavPillClass(false))}
+                title={t('newProfiles')}
+              >
+                <span className="truncate">{t('newProfiles')}</span>
+                {pendingProfiles.length > 0 ? (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-bold text-white">
+                    {pendingProfiles.length > 99 ? '99+' : pendingProfiles.length}
                   </span>
-                  {pendingProfiles.length > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-red-500 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:w-5 sm:text-[10px]">
-                      {pendingProfiles.length}
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={exportAuthLeadsToExcel}
-                  className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-blue-50 px-1 py-1.5 text-blue-900 transition-colors hover:bg-blue-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
-                  title={pickLang(
-                    'Télécharger la liste des connexions OAuth (.xlsx)',
-                    'Descargar la lista de conexiones OAuth (.xlsx)',
-                    'Download OAuth sign-ins list (.xlsx)',
-                    lang
-                  )}
-                >
-                  <LogIn className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                  <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
-                    {t('adminOAuthLeadsTitle')}
+                ) : null}
+              </button>
+              <button
+                type="button"
+                onClick={exportAuthLeadsToExcel}
+                className={cn('relative', primaryNavPillClass(false))}
+                title={pickLang(
+                  'Télécharger la liste des connexions OAuth (.xlsx)',
+                  'Descargar la lista de conexiones OAuth (.xlsx)',
+                  'Download OAuth sign-ins list (.xlsx)',
+                  lang
+                )}
+              >
+                <span className="truncate">{t('adminOAuthLeadsTitle')}</span>
+                {oauthLeadsWithoutProfileCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-blue-700 px-1 text-[10px] font-bold text-white">
+                    {oauthLeadsWithoutProfileCount > 99 ? '99+' : oauthLeadsWithoutProfileCount}
                   </span>
-                  {oauthLeadsWithoutProfileCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-blue-700 px-0.5 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:min-w-5 sm:text-[10px]">
-                      {oauthLeadsWithoutProfileCount > 99 ? '99+' : oauthLeadsWithoutProfileCount}
-                    </span>
-                  )}
-                </button>
-                {/* Opportunités retirées du produit */}
-                <button
-                  type="button"
-                  onClick={exportToExcel}
-                  className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-50 px-1 py-1.5 text-emerald-800 transition-colors hover:bg-emerald-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
-                >
-                  <Download className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                  <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
-                    {t('exportData')}
-                  </span>
-                </button>
+                ) : null}
+              </button>
+              <button type="button" onClick={exportToExcel} className={primaryNavPillClass(false)} title={t('exportData')}>
+                <span className="truncate">{t('exportData')}</span>
+              </button>
+              <Link
+                to="/dashboard"
+                onClick={() => {
+                  setSelectedProfile(null);
+                  setShowValidationPanel(false);
+                  setDirectoryDiscoveryStripsHidden(true);
+                }}
+                className={primaryNavPillClass(isDashboardRoute)}
+                title={pickLang(
+                  'Ouvrir le tableau de bord',
+                  'Abrir el panel',
+                  'Open dashboard',
+                  lang
+                )}
+              >
+                {t('dashboardTab')}
+              </Link>
+              <Link
+                to="/evenements"
+                onClick={() => setDashboardInitialAdminTab('events')}
+                className={primaryNavPillClass(isEventsAdminRoute)}
+                title={pickLang(
+                  'Ouvrir la page Événements',
+                  'Abrir la página de Eventos',
+                  'Open Events page',
+                  lang
+                )}
+              >
+                {t('adminTabEvents')}
+              </Link>
+              {isAdminEmail(user?.email) && !adminUserDocExists ? (
                 <button
                   type="button"
                   onClick={() => {
                     setSelectedProfile(null);
-                    setShowValidationPanel(false);
-                    setDirectoryDiscoveryStripsHidden(true);
-                    window.location.assign('/dashboard');
-                  }}
-                  className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-slate-100 px-1 py-1.5 text-slate-800 transition-colors hover:bg-slate-200 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
-                  title={pickLang(
-                    'Ouvrir le tableau de bord',
-                    'Abrir el panel',
-                    'Open dashboard',
-                    lang
-                  )}
-                >
-                  <LayoutDashboard className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                  <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
-                    {t('dashboardTab')}
-                  </span>
-                </button>
-                <Link
-                  to="/evenements"
-                  onClick={() => setDashboardInitialAdminTab('events')}
-                  className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-white px-1 py-1.5 text-slate-800 transition-colors hover:bg-slate-50 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2 border border-slate-200"
-                  title={pickLang(
-                    'Ouvrir la page Événements',
-                    'Abrir la página de Eventos',
-                    'Open Events page',
-                    lang
-                  )}
-                >
-                  <Calendar className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                  <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
-                    {t('adminTabEvents')}
-                  </span>
-                </Link>
-                {isAdminEmail(user?.email) && !adminUserDocExists ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedProfile(null);
-                      setEditingProfile(null);
-                      setAdminSelfProfileOptIn(true);
-                      setIsEditing(true);
-                      setIsProfileExpanded(true);
-                      window.requestAnimationFrame(() => {
-                        profileFormLayoutRef.current?.scrollIntoView({
-                          behavior: 'smooth',
-                          block: 'start',
-                        });
+                    setEditingProfile(null);
+                    setAdminSelfProfileOptIn(true);
+                    setIsEditing(true);
+                    setIsProfileExpanded(true);
+                    window.requestAnimationFrame(() => {
+                      profileFormLayoutRef.current?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
                       });
-                    }}
-                    className="relative flex min-h-[52px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-violet-50 px-1 py-1.5 text-violet-900 transition-colors hover:bg-violet-100 sm:min-h-[44px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2"
-                    title={pickLang(
-                      "Créer votre fiche annuaire (optionnel)",
-                      'Crear tu ficha del directorio (opcional)',
-                      'Create your directory profile (optional)',
-                      lang
-                    )}
-                  >
-                    <Edit2 className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" strokeWidth={2} aria-hidden />
-                    <span className="hidden line-clamp-3 max-w-full hyphens-auto break-words text-center text-[9px] font-semibold leading-tight sm:block sm:line-clamp-none sm:min-w-0 sm:truncate sm:text-sm sm:font-medium">
-                      {pickLang('Créer mon profil', 'Crear mi perfil', 'Create my profile', lang)}
-                    </span>
-                  </button>
-                ) : null}
-            </div>
+                    });
+                  }}
+                  className={primaryNavPillClass(false)}
+                  title={pickLang(
+                    "Créer votre fiche annuaire (optionnel)",
+                    'Crear tu ficha del directorio (opcional)',
+                    'Create your directory profile (optional)',
+                    lang
+                  )}
+                >
+                  {pickLang('Créer mon profil', 'Crear mi perfil', 'Create my profile', lang)}
+                </button>
+              ) : null}
+            </nav>
           ) : (
             <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <nav className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto">
@@ -4780,16 +4807,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   const active =
                     location.pathname === href || (href !== '/' && location.pathname.startsWith(href));
                   return (
-                    <Link
-                      key={href}
-                      to={href}
-                      className={cn(
-                        'rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:text-sm',
-                        active
-                          ? 'bg-stone-900 text-white'
-                          : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                      )}
-                    >
+                    <Link key={href} to={href} className={primaryNavPillClass(active)}>
                       {t(item.labelKey)}
                     </Link>
                   );

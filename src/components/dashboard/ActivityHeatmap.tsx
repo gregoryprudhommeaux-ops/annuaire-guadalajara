@@ -53,7 +53,7 @@ export default function ActivityHeatmap({ members }: { members: HeatmapMember[] 
   if ((members?.length ?? 0) < 5) {
     return (
       <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-        <h3 className="text-sm font-semibold text-stone-900">Activité d'inscription</h3>
+        <h3 className="text-sm font-semibold text-stone-900">{"Activité d'inscription"}</h3>
         <p className="mt-1 text-xs text-stone-500">52 dernières semaines</p>
         <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-900">
           La heatmap sera plus lisible avec davantage de membres
@@ -64,7 +64,7 @@ export default function ActivityHeatmap({ members }: { members: HeatmapMember[] 
 
   return (
     <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-stone-900">Activité d'inscription</h3>
+      <h3 className="text-sm font-semibold text-stone-900">{"Activité d'inscription"}</h3>
       <p className="mt-1 text-xs text-stone-500">52 dernières semaines</p>
       <div className="mt-3">
         <ActivityCalendar

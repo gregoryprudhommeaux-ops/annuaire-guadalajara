@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -822,7 +822,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
   // STEP 1 (today): focus on a clean decision-oriented overview. Keep other tabs intact for later.
   useEffect(() => {
     if (insightTab !== 'overview') setInsightTab('overview');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
