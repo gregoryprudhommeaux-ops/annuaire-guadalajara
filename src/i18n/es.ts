@@ -139,11 +139,6 @@ export const ES = {
           'Ej: instalación en Guadalajara, red F&B, conexiones locales...',
         help: 'Explica en qué puedes ser útil para otros miembros de la comunidad.',
       },
-      preferredContact: {
-        label: 'Contactarme preferentemente por…',
-        placeholder: 'Ej: WhatsApp, Email, LinkedIn',
-        help: 'Indica el canal más simple para un primer contacto.',
-      },
     },
   },
 } as const;

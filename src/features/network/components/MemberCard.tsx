@@ -22,7 +22,6 @@ type MemberCardProps = {
   bio?: string;
   photoUrl?: string;
   needs?: string[];
-  contactPreferenceCta?: string;
   onOpen?: () => void;
   /** Profil session : sert au `computeMemberMatch(bio, keywords, needs)` (champ `bio` Firestore). */
   viewerProfile?: UserProfile | null;
@@ -36,11 +35,9 @@ export function MemberCard({
   bio,
   photoUrl,
   needs = [],
-  contactPreferenceCta: _cta,
   onOpen,
   viewerProfile,
 }: MemberCardProps) {
-  void _cta;
   const { t } = useLanguage();
   const displayName = formatPersonName(fullName);
   const cardLabel = t('network.memberCard.cardAria', { name: displayName || fullName });

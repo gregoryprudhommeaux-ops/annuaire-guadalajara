@@ -17,8 +17,7 @@ export const SAMPLE_MEMBERS: Member[] = [
       email: 'camille@example.com',
       phoneWhatsapp: '+5213312345678',
       linkedinUrl: 'https://www.linkedin.com/in/camille-dupont/',
-      preferredContactText: 'WhatsApp',
-      preferredContactChannels: ['whatsapp'],
+      preferredContactChannels: [],
     },
     company: {
       id: 'company_001',

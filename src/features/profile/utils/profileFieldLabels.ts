@@ -34,10 +34,9 @@ export const PROFILE_FIELD_LABELS = {
   lookingForText: 'Je recherche',
   currentNeeds: 'Besoins actuels',
   helpOfferText: 'Je peux aider sur',
-  preferredContactText: 'Canal de contact préféré',
   keywords: 'Mots-clés',
   openness: 'Ouvert à',
-  hostDelegations: 'Accueil de délégations',
+  hostDelegations: "Visites de l'entreprise possible",
 } as const;
 
 export type ProfileFieldLabelKey = keyof typeof PROFILE_FIELD_LABELS;

@@ -140,11 +140,6 @@ export const FR = {
           'Ex : installation à Guadalajara, réseau F&B, mise en relation locale...',
         help: 'Explique en quoi tu peux être utile à d’autres membres du réseau.',
       },
-      preferredContact: {
-        label: 'Le contacter de préférence par…',
-        placeholder: 'Ex : WhatsApp, Email, LinkedIn',
-        help: 'Précise le canal le plus simple pour un premier échange.',
-      },
     },
   },
 } as const;

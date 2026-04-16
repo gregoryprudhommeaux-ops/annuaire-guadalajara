@@ -97,7 +97,7 @@ export const EN_STRINGS: Record<string, string> = {
   nationalityLabel: "Nationality",
   nationalityHint: "Not shown on the public profile.",
   nationalitySelectPlaceholder: "— Select —",
-  acceptsDelegationVisitsLabel: "The company can host delegation visits",
+  acceptsDelegationVisitsLabel: "Company visits possible",
   acceptsDelegationVisitsHint: "For the admin team only (not public).",
   adminInternalDataTitle: "Internal data (administrator)",
   adminFieldGender: "Gender (stats)",
@@ -290,7 +290,6 @@ export const EN_STRINGS: Record<string, string> = {
   profileFormSectionIdentity: "Identity",
   profileFormSubContact: "Contact",
   profileFormSubLanguages: "Languages",
-  profileFormSubBio: "Bio",
   profileFormSectionPhotoVisual: "Photo & visual presence",
   profileFormPhotoVisualIntro:
     "Add your LinkedIn link to strengthen your profile. If you have a direct URL to a public image, you can use it as your photo. Otherwise, your profile will show a professional avatar based on your initials.",
@@ -550,10 +549,6 @@ export const EN_STRINGS: Record<string, string> = {
   contact: "Contact",
   contactLinks: "Contact & links",
   contactPrefsTitle: "Contact & collaboration preferences",
-  contactPrefsCtaLabel: "Preferred contact channel",
-  contactPrefsCtaHint:
-    "Indicate the simplest, most natural channel for people to reach you quickly.",
-  contactPrefsCtaPlaceholder: "Ex: WhatsApp, Email, LinkedIn",
   contactPrefsWorkingLangLabel: "Working languages (max. 3)",
   contactPrefsWorkingLangHint: "Select your priority business languages in the region.",
   contactPrefsWorkingLangTip: "Tip: keep only your 2–3 most-used business languages.",
@@ -757,11 +752,6 @@ export const EN = {
         placeholder:
           "Ex: settling in Guadalajara, F&B network, local introductions...",
         help: "Explain how you can be useful to other members of the network.",
-      },
-      preferredContact: {
-        label: "Preferred first contact channel",
-        placeholder: "Ex: WhatsApp, Email, LinkedIn",
-        help: "Indicate the easiest channel for a first conversation.",
       },
     },
   },

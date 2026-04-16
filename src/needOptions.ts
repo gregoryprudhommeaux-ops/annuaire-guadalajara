@@ -140,14 +140,6 @@ export const NEED_OPTIONS: {
           en: 'Local partners (chambers, clusters…)',
         },
       },
-      {
-        value: 'NEED_OTHER',
-        label: {
-          fr: 'Autre besoin / non précisé',
-          es: 'Otra necesidad / no especificado',
-          en: 'Other need / unspecified',
-        },
-      },
     ],
   },
 ];

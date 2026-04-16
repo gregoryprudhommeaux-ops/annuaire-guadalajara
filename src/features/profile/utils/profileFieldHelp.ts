@@ -25,12 +25,9 @@ export const PROFILE_FIELD_HELP = {
     'Choisissez jusqu’à 3 besoins prioritaires : ce sont eux qui déclenchent les mises en relation les plus pertinentes.',
   helpOfferText:
     'Expliquez concrètement ce que vous pouvez apporter à d’autres membres : expertise, réseau, accès marché, partenaires, financement, conseil.',
-  preferredContactText:
-    'Indiquez le canal le plus simple et le plus naturel pour vous joindre rapidement.',
   keywords:
     'Ajoutez des mots-clés précis pour être trouvé plus facilement et apparaître dans les bons matchs (jusqu’à 20, séparés par des virgules).',
   openness: 'Aide à proposer des mises en relation pertinentes.',
-  hostDelegations: 'Réservé à l’équipe d’administration.',
 } as const satisfies Partial<Record<ProfileFieldLabelKey, string>>;
 
 export type ProfileFieldHelpKey = keyof typeof PROFILE_FIELD_HELP;

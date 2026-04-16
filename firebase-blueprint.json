@@ -30,7 +30,7 @@
         "bio": { "type": "string", "description": "Biographie courte" },
         "lookingFor": { "type": "string", "description": "Obsolète (doublon des besoins structurés) — peut rester sur d'anciens documents" },
         "targetSectors": { "type": "array", "items": { "type": "string" }, "description": "Secteurs cibles" },
-        "contactPreferenceCta": { "type": "string", "description": "Canal privilégié pour un premier contact (texte libre)" },
+        "contactPreferenceCta": { "type": "string", "description": "Obsolète — retiré du produit ; peut rester sur d'anciens documents jusqu'au prochain enregistrement" },
         "workingLanguageCodes": { "type": "array", "items": { "type": "string" }, "description": "Jusqu'à 3 codes langue (FR, ES, EN, PT, DE, IT, ZH)" },
         "typicalClientSizes": { "type": "array", "items": { "type": "string", "enum": ["independant", "pme", "corporate", "mixte"] }, "description": "Jusqu'à 3 tailles de clients habituels (distinct de companySize)" },
         "typicalClientSize": { "type": "string", "enum": ["independant", "pme", "corporate", "mixte"], "description": "Obsolète — migrer vers typicalClientSizes[]" },

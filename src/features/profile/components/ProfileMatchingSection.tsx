@@ -6,13 +6,13 @@ import { ProfileSectionTag } from '@/features/profile/components/ProfileSectionT
 import { ProfileFieldHint } from '@/features/profile/components/ProfileFieldHint';
 import { FieldBadge } from '@/components/ui/FieldBadge';
 import {
-  ProfileEditorialContactPreferenceField,
   ProfileEditorialHelpNewcomersField,
   ProfileEditorialKeywordsField,
   ProfileEditorialNetworkGoalField,
 } from '@/features/profile/components/ProfileEditorialRouteFields';
 import { PROFILE_FIELD_LABELS } from '@/features/profile/utils/profileFieldLabels';
 import { PROFILE_FIELD_HELP } from '@/features/profile/utils/profileFieldHelp';
+import { PROFILE_EDITORIAL_RULES } from '@/features/profile/utils/profileEditorialRules';
 
 type DraftTexts = Record<string, string> | undefined;
 type TFn = (key: string) => string;
@@ -201,42 +201,6 @@ export function ProfileMatchingSection({
         )}
 
         {isEditProfileRoute ? (
-          <ProfileEditorialContactPreferenceField
-            formDraftT={formDraftT}
-            editingProfile={editingProfile}
-            profile={profile}
-            profileEditFrUx={profileEditFrUx}
-            lang={lang}
-            t={t}
-          />
-        ) : (
-          <div className="space-y-1">
-            <label
-              htmlFor="contactPreferenceCta"
-              className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600"
-            >
-              {profileEditFrUx ? PROFILE_FIELD_LABELS.preferredContactText : t('contactPrefsCtaLabel')}
-            </label>
-            <textarea
-              id="contactPreferenceCta"
-              name="contactPreferenceCta"
-              rows={3}
-              maxLength={200}
-              defaultValue={
-                formDraftT?.contactPreferenceCta ??
-                (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta) ??
-                ''
-              }
-              placeholder={t('contactPrefsCtaPlaceholder')}
-              className="w-full min-h-[80px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition-all focus:ring-2 focus:ring-slate-400/40"
-            />
-            <ProfileFieldHint>
-              {profileEditFrUx ? PROFILE_FIELD_HELP.preferredContactText : t('contactPrefsCtaHint')}
-            </ProfileFieldHint>
-          </div>
-        )}
-
-        {isEditProfileRoute ? (
           <ProfileEditorialKeywordsField
             formDraftT={formDraftT}
             editingProfile={editingProfile}
@@ -254,15 +218,17 @@ export function ProfileMatchingSection({
               {profileEditFrUx ? PROFILE_FIELD_LABELS.keywords : t('profileFormAboutKeywordsLabel')}{' '}
               <span className="text-[10px] font-normal normal-case text-slate-400">{t('targetSectorsOptional')}</span>
             </label>
-            <input
+            <textarea
               id="targetSectors-needs"
               name="targetSectors"
+              rows={2}
+              maxLength={PROFILE_EDITORIAL_RULES.keywords.max}
               defaultValue={
                 formDraftT?.targetSectors ??
                 (editingProfile?.targetSectors || profile?.targetSectors || []).join(', ')
               }
               placeholder={t('needKeywordsPlaceholder')}
-              className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-all focus:ring-2 focus:ring-slate-400/40"
+              className="min-h-[3.5rem] w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-snug text-slate-900 outline-none transition-all focus:ring-2 focus:ring-slate-400/40"
             />
             <ProfileFieldHint>
               {profileEditFrUx ? PROFILE_FIELD_HELP.keywords : t('needKeywordsHint')}

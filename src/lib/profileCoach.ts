@@ -73,7 +73,6 @@ export function profileCoachFingerprint(p: UserProfile): string {
     normalizedTargetKeywords(p).join(','),
     p.linkedin ?? '',
     p.photoURL ?? '',
-    p.contactPreferenceCta ?? '',
     (p.workingLanguageCodes ?? []).join(','),
     tcs.join(','),
   ].join('|');
@@ -98,7 +97,6 @@ export function collectProfileCoachGapKeys(p: UserProfile): string[] {
   if (keys.length === 0) {
     if (!(p.linkedin?.trim())) keys.push('linkedin');
     if (!(p.photoURL?.trim())) keys.push('photoURL');
-    if (!(p.contactPreferenceCta?.trim())) keys.push('contactPrefsCtaLabel');
     if (!(p.workingLanguageCodes?.length)) keys.push('contactPrefsWorkingLangLabel');
     if (effectiveTypicalClientSizesForProfile(p).length === 0) {
       keys.push('contactPrefsClientSizeLabel');
@@ -132,7 +130,6 @@ export function getProfileCoachCompletionFraction(p: UserProfile): number {
   const secondaryChecks = [
     !!(p.linkedin?.trim()),
     !!(p.photoURL?.trim()),
-    !!(p.contactPreferenceCta?.trim()),
     (p.workingLanguageCodes?.length ?? 0) > 0,
     tcs.length > 0,
   ];
@@ -196,7 +193,6 @@ function summarizeProfileForPrompt(p: UserProfile): string {
     `target_keywords:${normalizedTargetKeywords(p).length}`,
     `linkedin:${p.linkedin?.trim() ? 'yes' : 'no'}`,
     `photo:${p.photoURL?.trim() ? 'yes' : 'no'}`,
-    `contact_cta:${p.contactPreferenceCta?.trim() ? 'yes' : 'no'}`,
     `work_langs:${(p.workingLanguageCodes ?? []).length}`,
     `typical_client_sizes:${tcs.length ? tcs.join(',') : '—'}`,
     `open_to:${[p.openToMentoring && 'mentor', p.openToTalks && 'talks', p.openToEvents && 'events'].filter(Boolean).join(',') || 'none'}`,

@@ -352,8 +352,8 @@ export const TRANSLATIONS: Translations = {
   },
   nationalitySelectPlaceholder: { fr: "— Sélectionner —", es: "— Seleccionar —" },
   acceptsDelegationVisitsLabel: {
-    fr: 'Accueil de délégations',
-    es: "La empresa puede recibir visitas de delegaciones",
+    fr: "Visites de l'entreprise possible",
+    es: 'Visitas a la empresa posibles',
   },
   acceptsDelegationVisitsHint: {
     fr: "Réservé à l’équipe d’administration (non affiché publiquement).",
@@ -692,7 +692,6 @@ export const TRANSLATIONS: Translations = {
   profileFormSectionIdentity: { fr: 'Identité', es: 'Identidad' },
   profileFormSubContact: { fr: 'Contact', es: 'Contacto' },
   profileFormSubLanguages: { fr: 'Langues', es: 'Idiomas' },
-  profileFormSubBio: { fr: 'Bio', es: 'Bio' },
   profileFormSectionPhotoVisual: {
     fr: 'Photo et présence visuelle',
     es: 'Foto y presencia visual',
@@ -1335,18 +1334,6 @@ export const TRANSLATIONS: Translations = {
   contactPrefsTitle: {
     fr: 'Préférences de contact & collaboration',
     es: 'Preferencias de contacto y colaboración',
-  },
-  contactPrefsCtaLabel: {
-    fr: 'Canal de contact préféré',
-    es: 'Canal de contacto preferido',
-  },
-  contactPrefsCtaHint: {
-    fr: 'Indiquez le canal le plus simple et le plus naturel pour vous joindre rapidement.',
-    es: 'Indica el canal más simple y natural para localizarte con rapidez.',
-  },
-  contactPrefsCtaPlaceholder: {
-    fr: 'Ex : WhatsApp, Email, LinkedIn',
-    es: 'Ej: WhatsApp, Email, LinkedIn',
   },
   contactPrefsWorkingLangLabel: {
     fr: 'Langues de travail',

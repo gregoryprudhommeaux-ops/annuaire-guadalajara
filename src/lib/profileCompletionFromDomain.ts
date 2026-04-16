@@ -15,7 +15,7 @@ const DOMAIN_MISSING_TO_PROFILE_KEY: Partial<Record<string, ProfileCompletionKey
   fullName: 'fullName',
   email: 'email',
   linkedin: 'linkedinUrl',
-  phoneWhatsapp: 'preferredContact',
+  phoneWhatsapp: 'phoneWhatsapp',
   languages: 'workLanguages',
   bio: 'memberBio',
   companyName: 'companyName',

@@ -205,60 +205,6 @@ export function ProfileEditorialHelpNewcomersField({
   );
 }
 
-export function ProfileEditorialContactPreferenceField({
-  formDraftT,
-  editingProfile,
-  profile,
-  profileEditFrUx,
-  t,
-}: Common) {
-  const rules = PROFILE_EDITORIAL_RULES.preferredContactText;
-  const initial = useMemo(
-    () =>
-      formDraftT?.contactPreferenceCta ??
-      (editingProfile?.contactPreferenceCta ?? profile?.contactPreferenceCta ?? ''),
-    [formDraftT?.contactPreferenceCta, editingProfile?.contactPreferenceCta, profile?.contactPreferenceCta]
-  );
-  const [value, setValue] = useState(initial);
-  useEffect(() => {
-    setValue(initial);
-  }, [initial]);
-
-  const placeholder = profileEditFrUx ? rules.placeholder : t('contactPrefsCtaPlaceholder');
-  const help = profileEditFrUx ? rules.help : t('contactPrefsCtaHint');
-
-  return (
-    <div className="space-y-1">
-      <label
-        htmlFor="contactPreferenceCta"
-        className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-      >
-        {profileEditFrUx ? PROFILE_FIELD_LABELS.preferredContactText : t('contactPrefsCtaLabel')}
-      </label>
-      <textarea
-        id="contactPreferenceCta"
-        name="contactPreferenceCta"
-        rows={3}
-        maxLength={rules.max}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onBlur={(e) => {
-          const raw = e.target.value;
-          const next = normalizeTextareaText(raw);
-          if (next !== raw) setValue(next);
-        }}
-        placeholder={placeholder}
-        className={cn(
-          'w-full min-h-[80px] rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600',
-          'field-priority'
-        )}
-      />
-      <small className="field-help">{help}</small>
-      <SoftCharacterCounter value={value} softMax={rules.softMax} hardMax={rules.max} />
-    </div>
-  );
-}
-
 export function ProfileEditorialKeywordsField({
   formDraftT,
   editingProfile,
@@ -293,10 +239,10 @@ export function ProfileEditorialKeywordsField({
           {t('targetSectorsOptional')}
         </span>
       </label>
-      <input
+      <textarea
         id="targetSectors-needs"
         name="targetSectors"
-        type="text"
+        rows={2}
         maxLength={rules.max}
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -306,7 +252,7 @@ export function ProfileEditorialKeywordsField({
           if (next !== raw) setValue(next);
         }}
         placeholder={placeholder}
-        className="h-10 w-full rounded-lg border border-amber-200/80 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-amber-600"
+        className="min-h-[3.5rem] w-full resize-y rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-sm leading-snug outline-none transition-all focus:ring-2 focus:ring-amber-600"
       />
       <small className="field-help">{help}</small>
       <SoftCharacterCounter value={value} softMax={rules.softMax} hardMax={rules.max} />

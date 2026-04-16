@@ -179,9 +179,8 @@ export interface UserProfile {
   helpNewcomers?: string;
   /** Objectif réseau en une phrase (ce que le membre cherche via la communauté). */
   networkGoal?: string;
-  /** Canal privilégié pour un premier contact (texte libre) */
+  /** @deprecated Retiré du formulaire ; effacé au prochain enregistrement. Peut subsister sur d’anciens documents. */
   contactPreferenceCta?: string;
-  /** Pré-traductions du CTA de contact (clé = langue UI). */
   contactPreferenceCtaTranslations?: Partial<Record<Language, string>>;
   /** Jusqu’à 3 codes langue (FR, ES, EN, …) — voir `WORKING_LANGUAGE_OPTIONS` */
   workingLanguageCodes?: string[];

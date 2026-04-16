@@ -19,7 +19,7 @@ export type ProfileCompletionKey =
   | 'companyName'
   | 'networkGoal'
   | 'helpNewcomers'
-  | 'preferredContact'
+  | 'phoneWhatsapp'
   | 'linkedinUrl'
   | 'passions'
   | 'highlightedNeeds'
@@ -59,10 +59,10 @@ export function profileCompletionDefaultLabels(lang: Language): Record<ProfileCo
       lang
     ),
     helpNewcomers: pickLang('Je peux aider sur…', 'Puedo ayudar en…', 'I can help with…', lang),
-    preferredContact: pickLang(
-      'Canal de contact privilégié',
-      'Canal de contacto preferido',
-      'Preferred contact channel',
+    phoneWhatsapp: pickLang(
+      'Téléphone / WhatsApp',
+      'Teléfono / WhatsApp',
+      'Phone / WhatsApp',
       lang
     ),
     linkedinUrl: pickLang('Lien LinkedIn', 'Enlace de LinkedIn', 'LinkedIn link', lang),
@@ -135,9 +135,9 @@ export function getProfileCompletionItems(
       weight: 6,
     },
     {
-      key: 'preferredContact',
-      label: defs.preferredContact ?? 'Canal de contact',
-      done: hasText(p.contactPreferenceCta, 3),
+      key: 'phoneWhatsapp',
+      label: defs.phoneWhatsapp ?? 'Téléphone / WhatsApp',
+      done: hasText(p.whatsapp, 8),
       weight: 4,
     },
     {
@@ -192,7 +192,7 @@ export const PROFILE_COMPLETION_FOCUS_IDS: Record<ProfileCompletionKey, string> 
   companyName: 'profile-completion-companyName',
   networkGoal: 'networkGoal',
   helpNewcomers: 'helpNewcomers',
-  preferredContact: 'contactPreferenceCta',
+  phoneWhatsapp: 'whatsappLocal',
   linkedinUrl: 'linkedin-input',
   passions: 'profile-completion-passions',
   highlightedNeeds: 'profile-completion-highlightedNeeds',

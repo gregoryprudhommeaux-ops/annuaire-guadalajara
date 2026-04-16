@@ -14,7 +14,7 @@ import type {
   ProfileRoleKey,
   SectorKey,
 } from '../taxonomy/taxonomy.types';
-import type { ContactPreference, Member, MemberContact, MemberIdentity } from './member.types';
+import type { Member, MemberContact, MemberIdentity } from './member.types';
 import { sanitizeHighlightedNeeds } from '../../needOptions';
 import { sanitizePassionIds } from '../../lib/passionConfig';
 import { calculateProfileCompletion } from './profile-completion';
@@ -126,25 +126,13 @@ function mapOpennessKeys(p: UserProfile): CommunityOpennessKey[] {
   return o;
 }
 
-function inferPreferredContactChannels(text?: string): ContactPreference[] | undefined {
-  const t = text?.trim().toLowerCase();
-  if (!t) return undefined;
-  const out: ContactPreference[] = [];
-  if (t.includes('whatsapp') || t.includes('whats')) out.push('whatsapp');
-  if (t.includes('linkedin')) out.push('linkedin');
-  if (t.includes('mail') || t.includes('email') || t.includes('courriel')) out.push('email');
-  if (t.includes('tél') || t.includes('tel') || t.includes('phone')) out.push('phone');
-  return out.length ? out : ['other'];
-}
-
 function memberContactFromProfile(p: UserProfile): MemberContact {
-  const cta = p.contactPreferenceCta?.trim();
   return {
     email: p.email?.trim() || undefined,
     linkedinUrl: p.linkedin?.trim() || undefined,
     phoneWhatsapp: p.whatsapp?.trim() || undefined,
-    preferredContactText: cta || undefined,
-    preferredContactChannels: inferPreferredContactChannels(cta),
+    preferredContactText: undefined,
+    preferredContactChannels: [],
   };
 }
 

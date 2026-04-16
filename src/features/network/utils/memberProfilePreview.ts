@@ -1,5 +1,3 @@
-import { normalizeContactChannelText } from '@/features/network/utils/normalizeContactChannel';
-
 export function getCleanPreviewText(
   value: string | undefined,
   fallback: string,
@@ -13,12 +11,4 @@ export function getCleanPreviewText(
   if (!clean) return fallback;
   if (clean.length <= maxLength) return clean;
   return `${clean.slice(0, maxLength).trim()}…`;
-}
-
-export function getPreferredContactPreview(value: string | undefined): string {
-  const clean = normalizeContactChannelText((value ?? '').replace(/\s+/g, ' ').trim());
-
-  if (!clean) return 'Contact non précisé.';
-  if (clean.length <= 80) return clean;
-  return `${clean.slice(0, 80).trim()}…`;
 }

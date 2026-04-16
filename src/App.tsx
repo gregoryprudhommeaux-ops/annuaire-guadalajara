@@ -3793,42 +3793,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
           Object.keys(generated).length > 0 ? generated : deleteField();
       }
     }
-    const previousContactCta = String((baseProfile?.contactPreferenceCta ?? '')).trim();
-    const nextContactCta = optionalString('contactPreferenceCta');
-    const previousContactCtaTranslations = baseProfile?.contactPreferenceCtaTranslations;
-    const sameContactCtaAsBefore =
-      !!nextContactCta && nextContactCta.trim() === previousContactCta;
-    let nextContactCtaTranslations:
-      | Partial<Record<Language, string>>
-      | ReturnType<typeof deleteField> = deleteField();
-    if (nextContactCta) {
-      if (
-        sameContactCtaAsBefore &&
-        previousContactCtaTranslations &&
-        Object.keys(previousContactCtaTranslations).length > 0
-      ) {
-        nextContactCtaTranslations = previousContactCtaTranslations;
-      } else {
-        const generated: Partial<Record<Language, string>> = { [lang]: nextContactCta };
-        if (getGeminiApiKey()) {
-          const targets: Language[] = ['fr', 'es', 'en'];
-          const jobs = targets
-            .filter((target) => target !== lang)
-            .map(async (target) => {
-              try {
-                const out = await translateFreeTextToUiLang(nextContactCta, target);
-                if (out.trim()) generated[target] = out.trim();
-              } catch {
-                // Keep graceful fallback to source text.
-              }
-            });
-          await Promise.all(jobs);
-        }
-        nextContactCtaTranslations =
-          Object.keys(generated).length > 0 ? generated : deleteField();
-      }
-    }
-
     const helpNewcomersVal = optionalString('helpNewcomers');
     const networkGoalVal = optionalString('networkGoal');
 
@@ -3859,8 +3823,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       targetSectors: parseCommaSeparatedTargetKeywords(formData.get('targetSectors') as string | null),
       helpNewcomers: helpNewcomersVal !== undefined ? helpNewcomersVal : deleteField(),
       networkGoal: networkGoalVal !== undefined ? networkGoalVal : deleteField(),
-      contactPreferenceCta: nextContactCta ?? deleteField(),
-      contactPreferenceCtaTranslations: nextContactCtaTranslations,
+      contactPreferenceCta: deleteField(),
+      contactPreferenceCtaTranslations: deleteField(),
       workingLanguageCodes: sanitizeWorkingLanguageCodes(workingLanguagesDraft),
       typicalClientSizes: typicalClientSizesField,
       typicalClientSize: typicalClientSizeLegacy,
@@ -5533,9 +5497,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               </ProfileFieldHint>
                             </div>
 
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
-                              {t('profileFormSubBio')}
-                            </p>
                             <input type="hidden" name="photoURL" value={profilePhotoUrlDraft} />
                             {isEditProfileRoute ? (
                               <ProfileEditorialMemberBioField
@@ -6387,55 +6348,46 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                   <ProfileFieldHint>{t('nationalityHint')}</ProfileFieldHint>
                                 </div>
 
-                                <div className="profile-form-block--dense space-y-1 sm:col-span-2">
-                                  <label className="flex cursor-pointer items-start gap-3 rounded-lg p-1 hover:bg-stone-50">
-                                    <input
-                                      type="checkbox"
-                                      name="openToEventSponsoring"
-                                      defaultChecked={
-                                        formDraftC?.openToEventSponsoring ??
-                                        formAdminPrivate.openToEventSponsoring === true
-                                      }
-                                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                    />
-                                    <span className="min-w-0">
-                                      <span className="block text-sm text-stone-700">
-                                        {t('contactPrefsOpenEventSponsoring')}
-                                      </span>
-                                      <span className="mt-0.5 block text-[10px] text-stone-400 leading-snug">
-                                        {profileEditFrUx
-                                          ? 'Réservé à l’équipe d’administration.'
-                                          : t('contactPrefsOpenEventSponsoringPrivateHint')}
-                                      </span>
-                                    </span>
-                                  </label>
-                                </div>
-
-                                <div className="profile-form-block--dense space-y-2 sm:col-span-2">
-                                  <label className="flex cursor-pointer items-start gap-2 rounded-lg p-1 text-sm text-stone-700 hover:bg-stone-50 hover:text-stone-900">
-                                    <input
-                                      type="checkbox"
-                                      name="acceptsDelegationVisits"
-                                      defaultChecked={
-                                        formDraftC?.acceptsDelegationVisits ??
-                                        formAdminPrivate.acceptsDelegationVisits === true
-                                      }
-                                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                    />
-                                    <span className="min-w-0 font-medium">
-                                      {profileEditFrUx
-                                        ? PROFILE_FIELD_LABELS.hostDelegations
-                                        : t('acceptsDelegationVisitsLabel')}
-                                    </span>
-                                  </label>
-                                  <ProfileFieldHint>
-                                    {pickLang(
-                                      PROFILE_FIELD_HELP.hostDelegations,
-                                      'Solo para el equipo de administración (no es público).',
-                                      'For the admin team only (not shown publicly).',
-                                      lang
-                                    )}
-                                  </ProfileFieldHint>
+                                <div className="profile-form-block--dense sm:col-span-2">
+                                  <div className="rounded-xl border border-stone-200 bg-stone-50/60 px-3 py-3 sm:px-4 sm:py-3">
+                                    <div
+                                      className={cn(
+                                        'flex flex-wrap items-center gap-x-5 gap-y-2 sm:gap-x-8',
+                                        isEditProfileRoute && 'inline-checkboxes'
+                                      )}
+                                    >
+                                      <label className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded-lg py-0.5 pr-1 hover:bg-stone-100/80">
+                                        <input
+                                          type="checkbox"
+                                          name="openToEventSponsoring"
+                                          defaultChecked={
+                                            formDraftC?.openToEventSponsoring ??
+                                            formAdminPrivate.openToEventSponsoring === true
+                                          }
+                                          className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                        />
+                                        <span className="text-sm font-medium text-stone-800">
+                                          {t('contactPrefsOpenEventSponsoring')}
+                                        </span>
+                                      </label>
+                                      <label className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded-lg py-0.5 pr-1 hover:bg-stone-100/80">
+                                        <input
+                                          type="checkbox"
+                                          name="acceptsDelegationVisits"
+                                          defaultChecked={
+                                            formDraftC?.acceptsDelegationVisits ??
+                                            formAdminPrivate.acceptsDelegationVisits === true
+                                          }
+                                          className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
+                                        />
+                                        <span className="text-sm font-medium text-stone-800">
+                                          {profileEditFrUx
+                                            ? PROFILE_FIELD_LABELS.hostDelegations
+                                            : t('acceptsDelegationVisitsLabel')}
+                                        </span>
+                                      </label>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             </section>
@@ -7341,7 +7293,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               bio={memberListingBioSource(p)}
                               photoUrl={p.photoURL}
                               needs={needLabels}
-                              contactPreferenceCta={p.contactPreferenceCta}
                               onOpen={() => setSelectedProfile(p)}
                               viewerProfile={profile}
                             />
