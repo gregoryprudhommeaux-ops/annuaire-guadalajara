@@ -230,8 +230,8 @@ function activationSuggestion(row: { members: number; passionId: string; sector:
   return 'Signal faible — à surveiller';
 }
 
-export default function AdminDashboard({ lang, t, initialTab }: AdminDashboardProps) {
-  return <AdminDashboardInner lang={lang} t={t} initialTab={initialTab} />;
+export default function AdminDashboard(props: AdminDashboardProps) {
+  return <AdminDashboardInner {...props} />;
 }
 
 class MiniErrorBoundary extends React.Component<
@@ -875,8 +875,19 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                 type="button"
                 className="admin-recommended-actions__link"
                 onClick={() => scrollAdminSectionIntoView('admin-section-priority')}
+                title={
+                  lang === 'en'
+                    ? 'Scroll to unanswered needs and latest requests (below the KPI cards).'
+                    : lang === 'es'
+                      ? 'Ir a necesidades sin respuesta y últimas solicitudes (debajo).'
+                      : 'Aller vers besoins sans réponse et dernières demandes (juste sous cette grille).'
+                }
               >
-                Zone priorité
+                {lang === 'en'
+                  ? 'View priority zone'
+                  : lang === 'es'
+                    ? 'Ver zona prioritaria'
+                    : 'Voir besoins & demandes'}
               </button>
             </div>
             <div className="admin-recommended-actions__body">

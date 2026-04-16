@@ -129,11 +129,7 @@ import {
   type UserAdminPrivateDoc,
 } from './lib/userAdminPrivate';
 import { migrateLegacyBioToMemberAndActivity } from './lib/migrateLegacyProfileBio';
-import {
-  AUTH_LEADS_COLLECTION,
-  upsertAuthLeadFromFirebaseUser,
-  type AuthLeadDoc,
-} from './lib/authLeads';
+import { upsertAuthLeadFromFirebaseUser } from './lib/authLeads';
 import {
   clearProfileFormDraft,
   initLastProfileSaveBaselineIfUnset,
@@ -2008,7 +2004,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   /** Admin: l’admin a explicitement choisi de créer sa propre fiche. */
   const [adminSelfProfileOptIn, setAdminSelfProfileOptIn] = useState(false);
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
-  const profileUidSet = useMemo(() => new Set(allProfiles.map((p) => p.uid)), [allProfiles]);
   const networkCompatibilityCurrentUser = useCurrentCompatibilityMember({ profile });
   const showEmailVerifyBanner = useMemo(
     () =>
@@ -2042,7 +2037,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const directoryMainRef = useRef<HTMLDivElement>(null);
   const [membersSortMode, setMembersSortMode] = useState<MembersSortMode>('default');
   const [showValidationPanel, setShowValidationPanel] = useState(false);
-  const [authLeads, setAuthLeads] = useState<AuthLeadDoc[]>([]);
   const [memberRequests, setMemberRequests] = useState<MemberNetworkRequest[]>([]);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<
@@ -2405,11 +2399,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const n = viewerIsAdmin ? pendingProfiles.length : 0;
     document.title = n > 0 ? `(${n > 99 ? '99+' : n}) ${base}` : base;
   }, [pendingProfiles.length, viewerIsAdmin, t]);
-
-  const oauthLeadsWithoutProfileCount = useMemo(
-    () => authLeads.filter((l) => !profileUidSet.has(l.uid)).length,
-    [authLeads, profileUidSet]
-  );
 
   const aiRecOtherMemberCount = useMemo(
     () =>
@@ -3008,26 +2997,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     );
     return () => unsub();
   }, []);
-
-  useEffect(() => {
-    if (profile?.role !== 'admin') {
-      setAuthLeads([]);
-      return;
-    }
-    const q = query(
-      collection(db, AUTH_LEADS_COLLECTION),
-      orderBy('lastConnectedAt', 'desc'),
-      limit(400)
-    );
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
-        setAuthLeads(snapshot.docs.map((d) => d.data() as AuthLeadDoc));
-      },
-      (error) => handleFirestoreError(error, OperationType.LIST, AUTH_LEADS_COLLECTION)
-    );
-    return () => unsub();
-  }, [profile?.role]);
 
   const fetchMatches = useCallback(async (u: UserProfile, profiles: UserProfile[]) => {
     if (!u.uid) return;
@@ -4088,50 +4057,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     XLSX.writeFile(workbook, "Annuaire_Guadalajara.xlsx");
   };
 
-  /** Export des pistes OAuth (`auth_leads`) en .xlsx — remplace l’ancienne modale liste. */
-  const exportAuthLeadsToExcel = () => {
-    if (profile?.role !== 'admin') return;
-    if (authLeads.length === 0) {
-      alert(t('adminOAuthLeadsEmpty'));
-      return;
-    }
-    void (async () => {
-      const XLSX = await import('xlsx');
-    const h = {
-      uid: pickLang('UID', 'UID', 'UID', lang),
-      email: pickLang('E-mail', 'Correo', 'Email', lang),
-      displayName: pickLang('Nom affiché', 'Nombre mostrado', 'Display name', lang),
-      provider: pickLang('Fournisseur', 'Proveedor', 'Provider', lang),
-      emailVerified: pickLang('E-mail vérifié', 'Correo verificado', 'Email verified', lang),
-      first: pickLang('Première connexion (UTC)', 'Primera conexión (UTC)', 'First sign-in (UTC)', lang),
-      last: pickLang('Dernière connexion (UTC)', 'Última conexión (UTC)', 'Last sign-in (UTC)', lang),
-      hasProfile: pickLang('Fiche annuaire', 'Ficha directorio', 'Directory profile', lang),
-    };
-    const yes = pickLang('Oui', 'Sí', 'Yes', lang);
-    const no = pickLang('Non', 'No', 'No', lang);
-    const tsIso = (ts: AuthLeadDoc['lastConnectedAt'] | undefined) =>
-      ts && typeof ts.toDate === 'function' ? ts.toDate().toISOString() : '';
-    const rows = authLeads.map((lead) => ({
-      [h.uid]: lead.uid,
-      [h.email]: lead.email ?? '',
-      [h.displayName]: lead.displayName?.trim() ?? '',
-      [h.provider]: lead.primaryProvider ?? '',
-      [h.emailVerified]: lead.emailVerified ? yes : no,
-      [h.first]: tsIso(lead.firstConnectedAt),
-      [h.last]: tsIso(lead.lastConnectedAt),
-      [h.hasProfile]: profileUidSet.has(lead.uid) ? yes : no,
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'OAuth');
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    XLSX.writeFile(workbook, `OAuth_connexions_${y}-${m}-${d}.xlsx`);
-    })();
-  };
-
   const filteredProfiles = useMemo(() => {
     return allProfiles.filter(p => {
       // Only show validated profiles to non-admins
@@ -4720,44 +4645,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   </span>
                 ) : null}
               </button>
-              <button
-                type="button"
-                onClick={exportAuthLeadsToExcel}
-                className={cn('relative', primaryNavPillClass(false))}
-                title={pickLang(
-                  'Télécharger la liste des connexions OAuth (.xlsx)',
-                  'Descargar la lista de conexiones OAuth (.xlsx)',
-                  'Download OAuth sign-ins list (.xlsx)',
-                  lang
-                )}
-              >
-                <span className="truncate">{t('adminOAuthLeadsTitle')}</span>
-                {oauthLeadsWithoutProfileCount > 0 ? (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-blue-700 px-1 text-[10px] font-bold text-white">
-                    {oauthLeadsWithoutProfileCount > 99 ? '99+' : oauthLeadsWithoutProfileCount}
-                  </span>
-                ) : null}
-              </button>
               <button type="button" onClick={exportToExcel} className={primaryNavPillClass(false)} title={t('exportData')}>
                 <span className="truncate">{t('exportData')}</span>
               </button>
-              <Link
-                to="/dashboard"
-                onClick={() => {
-                  setSelectedProfile(null);
-                  setShowValidationPanel(false);
-                  setDirectoryDiscoveryStripsHidden(true);
-                }}
-                className={primaryNavPillClass(isDashboardRoute)}
-                title={pickLang(
-                  'Ouvrir le tableau de bord',
-                  'Abrir el panel',
-                  'Open dashboard',
-                  lang
-                )}
-              >
-                {t('dashboardTab')}
-              </Link>
               <Link
                 to="/evenements"
                 onClick={() => setDashboardInitialAdminTab('events')}
