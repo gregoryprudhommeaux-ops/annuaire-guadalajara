@@ -10,6 +10,7 @@ import React, {
   useMemo,
   useCallback,
   useRef,
+  useSyncExternalStore,
 } from 'react';
 import { 
   BrowserRouter, 
@@ -218,6 +219,14 @@ import { RecommendedMembersSection } from './features/network/components/Recomme
 import { useCurrentCompatibilityMember } from './features/network/hooks/useCurrentCompatibilityMember';
 import { userProfileToRecommendedMember } from './features/network/utils/compatibilityFromProfile';
 import { NetworkSidebar } from './features/network/components/NetworkSidebar';
+import { NetworkToolbar } from './features/network/components/NetworkToolbar';
+import { SortPanel } from './features/network/components/SortPanel';
+import { SortSelect } from './features/network/components/SortSelect';
+import { SavedMembersPanel } from './features/network/components/SavedMembersPanel';
+import {
+  loadRecommendationPrefs,
+  subscribeRecommendationPrefs,
+} from './features/network/utils/recommendationPreferences';
 import { ProfileSectionHint } from '@/features/profile/components/ProfileSectionHint';
 import { ProfileSectionTag } from '@/features/profile/components/ProfileSectionTag';
 import { ProfileFieldHint } from '@/features/profile/components/ProfileFieldHint';
@@ -2037,7 +2046,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   /** URL photo profil (formulaire édition) — synchronisée avec le champ masqué `photoURL` à l’enregistrement. */
   const [profilePhotoUrlDraft, setProfilePhotoUrlDraft] = useState('');
   const directoryMainRef = useRef<HTMLDivElement>(null);
+  const membersDirectoryGridRef = useRef<HTMLDivElement>(null);
   const [membersSortMode, setMembersSortMode] = useState<MembersSortMode>('default');
+  const [showSavedMembersOnly, setShowSavedMembersOnly] = useState(false);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   const [memberRequests, setMemberRequests] = useState<MemberNetworkRequest[]>([]);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
@@ -2213,6 +2224,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const profileEditFrUx = isEditProfileRoute && lang === 'fr';
   const isMembersDirectoryRoute = location.pathname === '/membres' || isNetworkRoute;
   const isEventsAdminRoute = location.pathname === '/evenements';
+
+  useEffect(() => {
+    if (!isNetworkRoute) setShowSavedMembersOnly(false);
+  }, [isNetworkRoute]);
 
   const role = getAppRole({ user, profile, viewerIsAdmin });
 
@@ -4293,6 +4308,37 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     if (!guestDirectoryRestricted) return membersDisplayList;
     return membersDisplayList.slice(0, GUEST_DIRECTORY_PREVIEW_LIMIT);
   }, [guestDirectoryRestricted, membersDisplayList]);
+
+  const viewerUidForReco = (profile?.uid ?? '').trim();
+  const savedMemberUidsKey = useSyncExternalStore(
+    subscribeRecommendationPrefs,
+    () => loadRecommendationPrefs(viewerUidForReco).savedUids.slice().sort().join('|'),
+    () => ''
+  );
+  const savedMemberUidsSet = useMemo(
+    () => new Set(savedMemberUidsKey.split('|').filter(Boolean)),
+    [savedMemberUidsKey]
+  );
+  const savedMembersCount = savedMemberUidsSet.size;
+
+  useEffect(() => {
+    if (savedMembersCount === 0) setShowSavedMembersOnly(false);
+  }, [savedMembersCount]);
+
+  const membersDirectoryListDisplayed = useMemo(() => {
+    if (!isNetworkRoute || !showSavedMembersOnly || !profile?.uid) {
+      return membersDirectoryList;
+    }
+    return membersDirectoryList.filter((p) => savedMemberUidsSet.has(p.uid));
+  }, [isNetworkRoute, showSavedMembersOnly, profile?.uid, membersDirectoryList, savedMemberUidsSet]);
+
+  const openSavedMembersDirectoryView = useCallback(() => {
+    if (savedMembersCount === 0) return;
+    setShowSavedMembersOnly((prev) => !prev);
+    window.requestAnimationFrame(() => {
+      membersDirectoryGridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [savedMembersCount]);
 
   const membersDirectoryHiddenCount = guestDirectoryRestricted
     ? Math.max(0, membersDisplayList.length - GUEST_DIRECTORY_PREVIEW_LIMIT)
@@ -7403,65 +7449,74 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     isNetworkRoute ? 'flex min-w-0 flex-col gap-6' : 'space-y-6'
                   )}
                 >
-                  {isMembersDirectoryRoute && (
-                    <div
-                      className={cn(
-                        isNetworkRoute
-                          ? 'network-sort-panel'
-                          : 'flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:gap-6'
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          'min-w-0 flex-1',
-                          !isNetworkRoute && 'space-y-1'
-                        )}
-                      >
-                        <label
-                          htmlFor="members-directory-sort"
-                          className={cn(
-                            'block',
-                            !isNetworkRoute &&
-                              'text-xs font-semibold uppercase tracking-wider text-stone-500'
-                          )}
-                        >
-                          {t('membersSortLabel')}
-                        </label>
-                        <select
-                          id="members-directory-sort"
-                          data-testid="members-directory-sort"
-                          value={membersSortMode}
-                          onChange={(e) => {
-                            const mode = e.target.value as MembersSortMode;
-                            const sortParam =
-                              mode === 'recent'
-                                ? 'recent'
-                                : mode === 'alphabetical'
-                                  ? 'alpha'
-                                  : 'default';
-                            const p = new URLSearchParams(location.search);
-                            p.set('sort', sortParam);
-                            navigate(
-                              {
-                                pathname: isNetworkRoute ? '/network' : '/membres',
-                                search: `?${p.toString()}`,
-                              },
-                              { replace: true }
-                            );
-                          }}
-                          className={cn(
-                            isNetworkRoute
-                              ? 'network-select'
-                              : 'w-full max-w-md rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-medium text-stone-800 outline-none transition-all focus:ring-2 focus:ring-blue-600'
-                          )}
-                        >
-                          <option value="recent">{t('membersSortOptionRecent')}</option>
-                          <option value="alphabetical">{t('membersSortOptionAlphabetical')}</option>
-                          <option value="default">{t('membersSortOptionDefault')}</option>
-                        </select>
+                  {isMembersDirectoryRoute &&
+                    (isNetworkRoute ? (
+                      <NetworkToolbar>
+                        <SortPanel title={t('membersSortLabel')} htmlFor="members-directory-sort">
+                          <SortSelect
+                            id="members-directory-sort"
+                            value={membersSortMode}
+                            onChange={(mode) => {
+                              const sortParam =
+                                mode === 'recent'
+                                  ? 'recent'
+                                  : mode === 'alphabetical'
+                                    ? 'alpha'
+                                    : 'default';
+                              const p = new URLSearchParams(location.search);
+                              p.set('sort', sortParam);
+                              navigate(
+                                { pathname: '/network', search: `?${p.toString()}` },
+                                { replace: true }
+                              );
+                            }}
+                          />
+                        </SortPanel>
+                        <SavedMembersPanel
+                          title={t('network.savedPanel.title')}
+                          count={savedMembersCount}
+                          description={t('network.savedPanel.description')}
+                          onClick={openSavedMembersDirectoryView}
+                          active={showSavedMembersOnly}
+                        />
+                      </NetworkToolbar>
+                    ) : (
+                      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <label
+                            htmlFor="members-directory-sort"
+                            className="block text-xs font-semibold uppercase tracking-wider text-stone-500"
+                          >
+                            {t('membersSortLabel')}
+                          </label>
+                          <select
+                            id="members-directory-sort"
+                            data-testid="members-directory-sort"
+                            value={membersSortMode}
+                            onChange={(e) => {
+                              const mode = e.target.value as MembersSortMode;
+                              const sortParam =
+                                mode === 'recent'
+                                  ? 'recent'
+                                  : mode === 'alphabetical'
+                                    ? 'alpha'
+                                    : 'default';
+                              const p = new URLSearchParams(location.search);
+                              p.set('sort', sortParam);
+                              navigate(
+                                { pathname: '/membres', search: `?${p.toString()}` },
+                                { replace: true }
+                              );
+                            }}
+                            className="w-full max-w-md rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-medium text-stone-800 outline-none transition-all focus:ring-2 focus:ring-blue-600"
+                          >
+                            <option value="recent">{t('membersSortOptionRecent')}</option>
+                            <option value="alphabetical">{t('membersSortOptionAlphabetical')}</option>
+                            <option value="default">{t('membersSortOptionDefault')}</option>
+                          </select>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ))}
                   {highlightedNeedFilter && (
                     <div className="flex flex-col gap-3 rounded-2xl border border-violet-100 bg-violet-50 p-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex min-w-0 items-start gap-3 sm:items-center">
@@ -7500,13 +7555,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     </div>
                   )}
                   <div
+                    ref={membersDirectoryGridRef}
                     className={cn(
                       isNetworkRoute
                         ? 'member-grid'
                         : 'grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch'
                     )}
                   >
-                    {membersDirectoryList.map((p) => {
+                    {membersDirectoryListDisplayed.map((p) => {
                       const cats = profileDistinctActivityCategories(p);
                       const sectorLine = cats.length
                         ? cats.map((c) => activityCategoryLabel(c, lang)).join(' · ')
