@@ -255,7 +255,7 @@ function scrollAdminSectionIntoView(id: string) {
 function activationSuggestion(row: { members: number; passionId: string; sector: string }, rankIndex: number): string {
   if (row.members >= 6) return 'Afterwork transversal (gros potentiel)';
   if (row.members >= 4) return 'Rencontres ciblées (petit groupe)';
-  if (row.members >= 2) return rankIndex === 0 ? 'Mise en relation éditoriale' : 'Intro 1:1 (test rapide)';
+  if (row.members >= 2) return rankIndex === 0 ? 'Mise en relation pertinente' : 'Introduction ciblée';
   return 'Signal faible — à surveiller';
 }
 
@@ -1447,11 +1447,9 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                         <p className="admin-mini-kpi__meta">{affinityInsights.strongest.members} membre(s)</p>
                       </div>
                       <div className="admin-mini-kpi">
-                        <p className="admin-mini-kpi__label">Format recommandé</p>
-                        <p className="admin-mini-kpi__value">
-                          {activationSuggestion(affinityInsights.strongest, 0)}
-                        </p>
-                        <p className="admin-mini-kpi__meta">Suggestion indicative (données actuelles)</p>
+                        <p className="admin-mini-kpi__label">Mise en relation prioritaire</p>
+                        <p className="admin-mini-kpi__value">Identifier les membres à connecter</p>
+                        <p className="admin-mini-kpi__meta">Priorité basée sur les signaux observés</p>
                       </div>
                     </div>
                   ) : (

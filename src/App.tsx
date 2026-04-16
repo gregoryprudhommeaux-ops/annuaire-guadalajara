@@ -256,6 +256,7 @@ import {
   isGuestDirectoryRestricted,
 } from './lib/guestDirectory';
 import { GuestDirectoryInterstitial } from './components/guest/GuestDirectoryInterstitial';
+import ShareProfileModal from './components/profile/ShareProfileModal';
 import { 
   Search, 
   Globe, 
@@ -2016,6 +2017,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   );
   const [isEditing, setIsEditing] = useState(false);
   const [isShareNeedsModalOpen, setIsShareNeedsModalOpen] = useState(false);
+  const [isShareProfileModalOpen, setIsShareProfileModalOpen] = useState(false);
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
   /** Champs genre / nationalité / délégations (collection `user_admin_private`). */
@@ -7812,6 +7814,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
             >
               <div className="min-h-0 flex-1 overflow-y-auto p-6 sm:p-8">
+                <button
+                  type="button"
+                  onClick={() => setIsShareProfileModalOpen(true)}
+                  className="absolute top-6 right-[3.25rem] inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-stone-700 shadow-sm transition-colors hover:bg-stone-50"
+                  title={pickLang('Partager le profil', 'Compartir perfil', 'Share profile', lang)}
+                >
+                  <Share2 size={18} aria-hidden />
+                  {pickLang('Partager', 'Compartir', 'Share', lang)}
+                </button>
                 <button 
                   onClick={() => setSelectedProfile(null)}
                   className="absolute top-6 right-6 p-2 hover:bg-stone-100 rounded-full transition-colors text-stone-400 hover:text-stone-900"
@@ -8480,6 +8491,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           </div>
         )}
       </AnimatePresence>
+
+      {selectedProfile ? (
+        <ShareProfileModal
+          open={isShareProfileModalOpen}
+          onClose={() => setIsShareProfileModalOpen(false)}
+          lang={lang}
+          t={t}
+          profile={selectedProfile}
+        />
+      ) : null}
 
       {/* Validation Panel Modal */}
       <AnimatePresence>
