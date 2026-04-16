@@ -51,6 +51,9 @@ const shell = {
       cardAria: 'Profile: {name}',
       bioIncomplete: 'Profile presentation to be completed.',
       currentNeedsLabel: 'CURRENT NEEDS',
+      matchTitleStrong: 'They could use your help',
+      matchTitleSoft: 'You can probably help',
+      matchReasonForNeeds: 'Your profile looks relevant for: {needs}',
     },
     scoreLabel: 'Relevance: {score} of 5',
     recommendedCard: {
@@ -62,6 +65,12 @@ const shell = {
       hideRecoAria: 'Stop recommending this profile',
       alreadyKnow: 'I already know them',
       viewProfile: 'View profile',
+    },
+    savedPanel: {
+      title: 'Saved contacts',
+      description: 'See profiles you saved and your suggested approach',
+      titleEmpty: 'No saved contacts yet',
+      openAria: 'Show {count} saved contacts in the directory',
     },
   },
   footer: {

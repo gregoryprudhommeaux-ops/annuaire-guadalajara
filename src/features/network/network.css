@@ -51,8 +51,7 @@
 .fn-network-page .network-panel,
 .fn-network-page .launch-card,
 .fn-network-page .network-directory-header,
-.fn-network-page .network-sort-panel,
-.fn-network-page .member-card {
+.fn-network-page .network-sort-panel {
   background: #fff;
   border: 1px solid rgb(226 232 240); /* slate-200 — comme SearchBlock */
   border-radius: 18px;
@@ -385,6 +384,136 @@
   max-width: 380px;
 }
 
+.fn-network-page .network-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (min-width: 720px) {
+  .fn-network-page .network-toolbar {
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+.fn-network-page .network-toolbar__sort {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fn-network-page .network-saved-panel {
+  flex: 0 1 320px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  margin: 0;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+  background: #fff;
+  border: 1px solid rgb(226 232 240);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.fn-network-page .network-saved-panel:hover:not(:disabled) {
+  border-color: rgb(203 213 225);
+  box-shadow:
+    0 10px 28px -18px rgba(15, 23, 42, 0.12),
+    0 1px 2px rgba(16, 24, 40, 0.06);
+}
+
+.fn-network-page .network-saved-panel:focus-visible {
+  outline: 2px solid rgb(29 78 216);
+  outline-offset: 2px;
+}
+
+.fn-network-page .network-saved-panel:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.fn-network-page .network-saved-panel--active:not(:disabled) {
+  border-color: rgb(96 165 250);
+  background: rgb(239 246 255);
+  box-shadow: 0 0 0 1px rgb(59 130 246);
+}
+
+.fn-network-page .network-saved-panel__iconWrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: rgb(239 246 255);
+  color: rgb(29 78 216);
+}
+
+.fn-network-page .network-saved-panel--active:not(:disabled) .network-saved-panel__iconWrap {
+  background: rgb(219 234 254);
+}
+
+.fn-network-page .network-saved-panel__icon--active {
+  fill: rgb(29 78 216);
+}
+
+.fn-network-page .network-saved-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fn-network-page .network-saved-panel__titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.fn-network-page .network-saved-panel__title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: rgb(30 41 59);
+}
+
+.fn-network-page .network-saved-panel__count {
+  flex-shrink: 0;
+  min-width: 1.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  background: rgb(241 245 249);
+  color: rgb(51 65 85);
+}
+
+.fn-network-page .network-saved-panel--active:not(:disabled) .network-saved-panel__count {
+  background: rgb(219 234 254);
+  color: rgb(30 64 175);
+}
+
+.fn-network-page .network-saved-panel__description {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgb(100 116 139);
+}
+
 .fn-network-page .member-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -392,10 +521,10 @@
 }
 
 .fn-network-page .member-card {
-  padding: 18px;
   display: flex;
   flex-direction: column;
   min-height: 100%;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { activityCategoryLabel } from '@/constants';
@@ -8,11 +8,19 @@ import {
   type NetworkOption,
   type NetworkSidebarLaunchProgress,
 } from './components/NetworkSidebar';
+import { NetworkToolbar } from './components/NetworkToolbar';
+import { SortPanel } from './components/SortPanel';
+import { SortSelect, type NetworkSortMode } from './components/SortSelect';
+import { SavedMembersPanel } from './components/SavedMembersPanel';
 import { MemberCard } from './components/MemberCard';
 import { RecommendedMembersSection } from './components/RecommendedMembersSection';
 import type { UserProfile } from '@/types';
 import { useCurrentCompatibilityMember } from './hooks/useCurrentCompatibilityMember';
 import { mapGridDirectoryMemberToRecommendedCompatibilityMember } from './utils/mapGridDirectoryMemberToRecommendedCompatibilityMember';
+import {
+  loadRecommendationPrefs,
+  subscribeRecommendationPrefs,
+} from './utils/recommendationPreferences';
 import './network.css';
 import './network-recommendations.css';
 
@@ -34,8 +42,6 @@ export type DirectoryMember = {
   /** Filtre type de profil : `company` | `member`. */
   profileKind?: 'company' | 'member';
 };
-
-type SortMode = 'recent' | 'alphabetical' | 'default';
 
 const DEFAULT_SECTOR_OPTIONS: NetworkOption[] = [
   { label: 'Secteur', value: 'all' },
@@ -115,6 +121,19 @@ export function NetworkPage({
   );
 
   const currentUser = useCurrentCompatibilityMember({ profile });
+  const viewerUid = (profile?.uid ?? '').trim();
+
+  const savedUidsKey = useSyncExternalStore(
+    subscribeRecommendationPrefs,
+    () => loadRecommendationPrefs(viewerUid).savedUids.slice().sort().join('|'),
+    () => ''
+  );
+
+  const savedUidsSet = useMemo(
+    () => new Set(savedUidsKey.split('|').filter(Boolean)),
+    [savedUidsKey]
+  );
+  const savedCount = savedUidsSet.size;
 
   const compatibleMembers = useMemo(
     () => members.map(mapGridDirectoryMemberToRecommendedCompatibilityMember),
@@ -125,7 +144,12 @@ export function NetworkPage({
   const [selectedSector, setSelectedSector] = useState('all');
   const [selectedProfile, setSelectedProfile] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
-  const [sortBy, setSortBy] = useState<SortMode>('recent');
+  const [sortBy, setSortBy] = useState<NetworkSortMode>('recent');
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
+
+  useEffect(() => {
+    if (savedCount === 0) setShowSavedOnly(false);
+  }, [savedCount]);
 
   const filteredMembers = useMemo(() => {
     let result = [...members];
@@ -168,6 +192,19 @@ export function NetworkPage({
     return result;
   }, [members, query, selectedSector, selectedProfile, selectedLocation, sortBy]);
 
+  const displayedMembers = useMemo(() => {
+    if (!showSavedOnly) return filteredMembers;
+    return filteredMembers.filter((m) => savedUidsSet.has(m.profileUid));
+  }, [filteredMembers, showSavedOnly, savedUidsSet]);
+
+  const openSavedMembersView = useCallback(() => {
+    if (savedCount === 0) return;
+    setShowSavedOnly((prev) => !prev);
+    window.requestAnimationFrame(() => {
+      memberGridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [savedCount]);
+
   const handleSuggestContact = () => {
     if (!filteredMembers.length) return;
     const randomMember = filteredMembers[Math.floor(Math.random() * filteredMembers.length)];
@@ -208,22 +245,21 @@ export function NetworkPage({
           <p>{t('membersPageSubtitle')}</p>
         </header>
 
-        <div className="network-sort-panel">
-          <label htmlFor="sort-members">{t('membersSortLabel')}</label>
-          <select
-            id="sort-members"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortMode)}
-            className="network-select"
-          >
-            <option value="recent">{t('membersSortOptionRecent')}</option>
-            <option value="alphabetical">{t('membersSortOptionAlphabetical')}</option>
-            <option value="default">{t('membersSortOptionDefault')}</option>
-          </select>
-        </div>
+        <NetworkToolbar>
+          <SortPanel title={t('membersSortLabel')}>
+            <SortSelect value={sortBy} onChange={setSortBy} />
+          </SortPanel>
+          <SavedMembersPanel
+            title={t('network.savedPanel.title')}
+            count={savedCount}
+            description={t('network.savedPanel.description')}
+            onClick={openSavedMembersView}
+            active={showSavedOnly}
+          />
+        </NetworkToolbar>
 
         <div ref={memberGridRef} className="member-grid">
-          {filteredMembers.map((member) => (
+          {displayedMembers.map((member) => (
             <MemberCard
               key={member.profileUid}
               profileUid={member.profileUid}
@@ -233,6 +269,7 @@ export function NetworkPage({
               bio={member.bio}
               photoUrl={member.photoUrl}
               needs={member.needs}
+              viewerProfile={profile}
             />
           ))}
         </div>

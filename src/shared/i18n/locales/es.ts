@@ -52,6 +52,9 @@ const shell = {
       cardAria: 'Perfil de {name}',
       bioIncomplete: 'Presentación por completar.',
       currentNeedsLabel: 'NECESIDADES ACTUALES',
+      matchTitleStrong: 'Podrían necesitarte',
+      matchTitleSoft: 'Probablemente puedas ayudar',
+      matchReasonForNeeds: 'Tu perfil parece relevante para: {needs}',
     },
     scoreLabel: 'Pertinencia: {score} de 5',
     recommendedCard: {
@@ -63,6 +66,12 @@ const shell = {
       hideRecoAria: 'No recomendar este perfil',
       alreadyKnow: 'Ya lo conozco',
       viewProfile: 'Ver perfil',
+    },
+    savedPanel: {
+      title: 'Contactos guardados',
+      description: 'Recupera tus perfiles guardados y tu enfoque sugerido',
+      titleEmpty: 'Aún no hay contactos guardados',
+      openAria: 'Mostrar {count} contactos guardados en el directorio',
     },
   },
   footer: {

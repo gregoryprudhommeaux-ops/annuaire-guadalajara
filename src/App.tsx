@@ -7527,6 +7527,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               needs={needLabels}
                               contactPreferenceCta={p.contactPreferenceCta}
                               onOpen={() => setSelectedProfile(p)}
+                              viewerProfile={profile}
                             />
                           ) : (
                             <ProfileCard

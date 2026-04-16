@@ -65,6 +65,14 @@ function hasNeedSignal(currentUser: CompatibilityMember, other: CompatibilityMem
   return hasNeedHelpOverlap(currentUser, other) || hasSharedHighlightedNeeds(currentUser, other);
 }
 
+/** Angle « besoin » pour afficher un encart type fiche annuaire (sans secteur/ville seuls). */
+export function hasNeedRelevantMatch(
+  currentUser: CompatibilityMember,
+  other: CompatibilityMember
+): boolean {
+  return hasNeedHelpOverlap(currentUser, other) || hasSharedHighlightedNeeds(currentUser, other);
+}
+
 function hasKeywordOverlap(currentUser: CompatibilityMember, other: CompatibilityMember): boolean {
   const a = normalizeKeywords(currentUser.keywords);
   const b = normalizeKeywords(other.keywords);

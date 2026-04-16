@@ -1,4 +1,29 @@
-const STORAGE_PREFIX = 'fn-network-rec:v1';
+export const RECOMMENDATION_PREFS_STORAGE_PREFIX = 'fn-network-rec:v1';
+
+const STORAGE_PREFIX = RECOMMENDATION_PREFS_STORAGE_PREFIX;
+
+const prefsListeners = new Set<() => void>();
+
+function notifyPrefsListeners(): void {
+  prefsListeners.forEach((fn) => fn());
+}
+
+/** Abonnement aux changements de préférences (même onglet + autres onglets via `storage`). */
+export function subscribeRecommendationPrefs(listener: () => void): () => void {
+  prefsListeners.add(listener);
+  const onStorage = (e: StorageEvent) => {
+    if (e.key != null && e.key.startsWith(STORAGE_PREFIX)) listener();
+  };
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', onStorage);
+  }
+  return () => {
+    prefsListeners.delete(listener);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', onStorage);
+    }
+  };
+}
 
 export type RecommendationPrefs = {
   /** Profils masqués des recommandations (« je le connais déjà »). */
@@ -35,6 +60,7 @@ export function saveRecommendationPrefs(viewerUid: string, prefs: Recommendation
   if (typeof window === 'undefined' || !viewerUid) return;
   try {
     window.localStorage.setItem(key(viewerUid), JSON.stringify(prefs));
+    notifyPrefsListeners();
   } catch {
     /* quota / private mode */
   }

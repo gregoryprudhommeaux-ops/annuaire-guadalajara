@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RecommendedMemberCard } from './RecommendedMemberCard';
-import type { CompatibilityMember, CompatibilityReason } from '../types/compatibility';
+import type { CompatibilityMember } from '../types/compatibility';
 import {
   compatibilityStarCount,
   computeCompatibilityScore,
   getCompatibilityLevel,
   getCompatibilityReasons,
 } from '../utils/memberCompatibility';
+import { localizeCompatibilityReason } from '../utils/localizeCompatibilityReason';
 import type { RecommendedCompatibilityMember } from '../utils/compatibilityFromProfile';
 import { loadRecommendationPrefs, saveRecommendationPrefs } from '../utils/recommendationPreferences';
 import { useLanguage } from '@/i18n/LanguageProvider';
@@ -33,29 +34,6 @@ function localizedCompatibilityLevel(level: string, t: (k: string) => string): s
       return t('network.compatLevel.explore');
     default:
       return level;
-  }
-}
-
-function localizedCompatibilityReason(reason: CompatibilityReason, t: (k: string) => string): string {
-  switch (reason) {
-    case 'Besoin compatible':
-      return t('network.compatReason.needMatch');
-    case 'Peut vous aider':
-      return t('network.compatReason.canHelp');
-    case 'Même secteur':
-      return t('network.compatReason.sameSector');
-    case 'Même ville':
-      return t('network.compatReason.sameCity');
-    case 'Passion commune':
-      return t('network.compatReason.passion');
-    case 'Ouvert au mentorat':
-      return t('network.compatReason.mentoring');
-    case 'Mots-clés proches':
-      return t('network.compatReason.keywords');
-    default: {
-      const _exhaustive: never = reason;
-      return _exhaustive;
-    }
   }
 }
 
@@ -152,7 +130,11 @@ export function RecommendedMembersSection({ currentUser, members }: RecommendedM
   const aria = t('network.recommendations.aria');
 
   return (
-    <section className="recommended-section" aria-label={aria}>
+    <section
+      id="network-recommendations-anchor"
+      className="recommended-section"
+      aria-label={aria}
+    >
       <div className="recommended-section__header">
         <p className="recommended-section__eyebrow">
           {t('network.recommendations.eyebrow')}
@@ -176,7 +158,7 @@ export function RecommendedMembersSection({ currentUser, members }: RecommendedM
             photoURL={member.photoURL}
             compatibilityLevel={localizedCompatibilityLevel(level!, t)}
             starCount={compatibilityStarCount(score)}
-            reasons={reasons.map((r) => localizedCompatibilityReason(r, t))}
+            reasons={reasons.map((r) => localizeCompatibilityReason(r, t))}
             isSaved={recoPrefs.saved.has(uid)}
             onToggleSave={() => toggleSave(uid)}
             onMarkKnown={() => markKnown(uid)}

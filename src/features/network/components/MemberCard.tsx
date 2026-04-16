@@ -1,17 +1,20 @@
 import type { KeyboardEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
 import { useLanguage } from '@/i18n/LanguageProvider';
-import ProfileAvatar from '@/components/ProfileAvatar';
 import { cn } from '@/lib/cn';
-import { activityCategoryLabel } from '@/constants';
-import type { Language } from '@/types';
+import type { UserProfile } from '@/types';
+import { normalizedTargetKeywords } from '@/types';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
-import { getVisibleNeeds, normalizeCompanyName, normalizeSectorName } from '../utils/memberCard';
-import { getCleanPreviewText } from '@/features/network/utils/memberProfilePreview';
+import { computeMemberMatch } from '../utils/memberSignalMatch';
+import { MemberIdentity } from './MemberIdentity';
+import { MemberDescription } from './MemberDescription';
+import { NeedsSection } from './NeedsSection';
+import { ProfileMatchBox } from './ProfileMatchBox';
+import { LinkToProfile } from './LinkToProfile';
 import '../network.css';
 
 type MemberCardProps = {
-  /** Identifiant Firestore — obligatoire : la route `/profil/:id` attend l’UID, pas un slug de nom. */
+  /** Identifiant Firestore — route `/profil/:id`. */
   profileUid: string;
   fullName: string;
   companyName?: string;
@@ -19,10 +22,10 @@ type MemberCardProps = {
   bio?: string;
   photoUrl?: string;
   needs?: string[];
-  /** Préférence de contact courte (optionnel) — affichée en second plan si présente. */
   contactPreferenceCta?: string;
-  /** Ouvre la fiche en modal (ex. `setSelectedProfile` dans l’app). */
   onOpen?: () => void;
+  /** Profil session : sert au `computeMemberMatch(bio, keywords, needs)` (champ `bio` Firestore). */
+  viewerProfile?: UserProfile | null;
 };
 
 export function MemberCard({
@@ -33,27 +36,39 @@ export function MemberCard({
   bio,
   photoUrl,
   needs = [],
-  contactPreferenceCta,
+  contactPreferenceCta: _cta,
   onOpen,
+  viewerProfile,
 }: MemberCardProps) {
-  const { lang, t } = useLanguage();
+  void _cta;
+  const { t } = useLanguage();
   const displayName = formatPersonName(fullName);
-  const visibleNeeds = getVisibleNeeds(needs, 3);
-  const chips =
-    visibleNeeds.length > 0
-      ? visibleNeeds
-      : [t('network.memberCard.noStructuredNeed')];
-
-  const companyLine =
-    normalizeCompanyName(companyName) || t('network.memberCard.companyUnknown');
-  const sectorLine =
-    (sector ? activityCategoryLabel(sector, lang as Language) : '') ||
-    t('network.memberCard.sectorUnknown');
-  const profilPath = `/profil/${encodeURIComponent(profileUid)}`;
   const cardLabel = t('network.memberCard.cardAria', { name: displayName || fullName });
-  const bioFull = (bio ?? '').replace(/\s+/g, ' ').trim();
-  const bioFallback = t('network.memberCard.bioIncomplete');
-  const bioPreview = getCleanPreviewText(bio, bioFallback, 210);
+
+  const match = useMemo(() => {
+    if (!viewerProfile?.uid || viewerProfile.uid === profileUid) {
+      return {
+        isRelevant: false,
+        score: 0,
+        matchedNeeds: [] as string[],
+        matchedSignals: [] as string[],
+        reason: '',
+      };
+    }
+    const viewerBio =
+      (viewerProfile.bio ?? '').trim() || (viewerProfile.memberBio ?? '').trim();
+    const base = computeMemberMatch(
+      viewerBio,
+      normalizedTargetKeywords(viewerProfile),
+      needs
+    );
+    return {
+      ...base,
+      reason: base.isRelevant
+        ? t('network.memberCard.matchReasonForNeeds', { needs: base.matchedNeeds.join(', ') })
+        : '',
+    };
+  }, [viewerProfile, profileUid, needs, t]);
 
   const activate = () => {
     onOpen?.();
@@ -67,66 +82,43 @@ export function MemberCard({
     }
   };
 
+  const member = {
+    fullName,
+    companyName,
+    sector,
+    photoUrl,
+    bio,
+  };
+
   return (
     <article
-      className={cn('member-card', onOpen && 'member-card--interactive')}
+      className={cn(
+        'member-card rounded-[24px] border border-slate-200 bg-white p-4',
+        onOpen && 'member-card--interactive'
+      )}
       onClick={onOpen ? () => activate() : undefined}
       onKeyDown={onKeyDownCard}
       tabIndex={onOpen ? 0 : undefined}
       role={onOpen ? 'button' : undefined}
       aria-label={onOpen ? cardLabel : undefined}
     >
-      <div className="member-card__header">
-        <div className="member-card__identity">
-          <div className="member-card__avatar">
-            <ProfileAvatar
-              photoURL={photoUrl}
-              fullName={displayName || fullName}
-              className="member-card__avatarInner"
-              imgClassName="member-card__avatarImg"
-            />
-          </div>
+      <MemberIdentity member={member} />
+      <MemberDescription member={member} />
+      <NeedsSection needs={needs} />
 
-          <div className="member-card__identityText">
-            <h3 className="member-card__name" title={displayName || fullName}>
-              {displayName || fullName}
-            </h3>
-            <p className="member-card__company" title={companyLine}>
-              {companyLine}
-            </p>
-            <p className="member-card__sector">{sectorLine}</p>
-          </div>
-        </div>
-      </div>
+      {match.isRelevant ? (
+        <ProfileMatchBox
+          title={
+            match.score >= 80
+              ? t('network.memberCard.matchTitleStrong')
+              : t('network.memberCard.matchTitleSoft')
+          }
+          matchedNeeds={match.matchedNeeds}
+          reason={match.reason}
+        />
+      ) : null}
 
-      <p className="member-card__bio" title={bioFull.length > 210 ? bioFull : undefined}>
-        {bioPreview}
-      </p>
-
-      <div className="member-card__needsBlock">
-        <p className="member-card__label">
-          {t('network.memberCard.currentNeedsLabel')}
-        </p>
-
-        <div className="member-card__chips">
-          {chips.map((need, i) => (
-            <span key={`${need}-${i}`} className="member-card__chip">
-              {need}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="member-card__footer">
-        <Link
-          to={profilPath}
-          className="member-card__link"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
-          {t('common.viewProfile')}
-        </Link>
-      </div>
+      <LinkToProfile memberId={profileUid} label={t('common.viewProfile')} />
     </article>
   );
 }
