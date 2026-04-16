@@ -70,7 +70,7 @@ export const EN_STRINGS: Record<string, string> = {
   website: "Website",
   whatsapp: "WhatsApp",
   passions: "Beyond business:",
-  passionsHint: "Choose up to 5 interests (outside your core business).",
+  passionsHint: "Choose up to 10 interests (outside your core business).",
   passionsMaxReached: "Maximum reached — uncheck one to pick another.",
   affinityWith: "Affinity with",
   affinityCommonNeedOne: "1 shared need",
@@ -576,7 +576,7 @@ export const EN_STRINGS: Record<string, string> = {
   filterByTypedNeed: "Filtered by structured need:",
   passionsRadarNetwork: "Interests across the network",
   filterByPassion: "Filtered by interest:",
-  passionsRadarEmpty: "No structured interests yet. Complete your profile (max. 5).",
+  passionsRadarEmpty: "No structured interests yet. Complete your profile (max. 10).",
   dashboardTab: "Dashboard",
   vueTitle: "Community overview",
   vueSubtitle:

@@ -302,8 +302,8 @@ export const TRANSLATIONS: Translations = {
   whatsapp: { fr: "WhatsApp", es: "WhatsApp" },
   passions: { fr: "En dehors du business :", es: "Más allá del negocio :" },
   passionsHint: {
-    fr: "Choisissez jusqu’à 5 centres d’intérêt (hors cœur de métier).",
-    es: "Elige hasta 5 intereses (fuera de tu actividad principal).",
+    fr: "Choisissez jusqu’à 10 centres d’intérêt (hors cœur de métier).",
+    es: "Elige hasta 10 intereses (fuera de tu actividad principal).",
   },
   passionsMaxReached: {
     fr: "Maximum atteint — décochez une passion pour en choisir une autre.",
@@ -1435,8 +1435,8 @@ export const TRANSLATIONS: Translations = {
     es: "Filtrado por pasión:",
   },
   passionsRadarEmpty: {
-    fr: "Aucune passion structurée renseignée pour l’instant. Complétez votre profil (max. 5).",
-    es: "Aún no hay pasiones estructuradas. Completa tu perfil (máx. 5).",
+    fr: "Aucune passion structurée renseignée pour l’instant. Complétez votre profil (max. 10).",
+    es: "Aún no hay pasiones estructuradas. Completa tu perfil (máx. 10).",
   },
   dashboardTab: { fr: "Tableau de bord", es: "Panel" },
   vueTitle: { fr: "Vue d’ensemble de la communauté", es: "Vista general de la comunidad" },

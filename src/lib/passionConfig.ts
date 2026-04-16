@@ -102,7 +102,7 @@ export const PASSIONS_CATEGORIES: PassionCategory[] = [
 /** Minimum pour une fiche publiable (aligné sur `profilePublicationRules`). */
 export const MIN_PASSIONS = 1;
 
-export const MAX_PASSIONS = 5;
+export const MAX_PASSIONS = 10;
 
 /**
  * Anciens ids encore présents en base : conservés pour l’affichage et la désélection,

@@ -146,7 +146,7 @@ export interface UserProfile {
   email: string;
   website?: string;
   whatsapp?: string;
-  /** Jusqu’à 5 passions « hors business » (ids stables, voir `passionConfig.ts`) */
+  /** Jusqu’à 10 passions « hors business » (ids stables, voir `passionConfig.ts`) */
   passionIds?: string[];
   arrivalYear?: number;
   /** Fourchette (string) ou ancien nombre saisi à la main */
