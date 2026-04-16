@@ -30,6 +30,7 @@ import { getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/pass
 import { formatPersonName } from '@/shared/utils/formatPersonName';
 import PassionsCrossHeatmap, { type CrossPick } from '@/components/dashboard/PassionsCrossHeatmap';
 import TopActiveMembersTable from '@/components/dashboard/TopActiveMembersTable';
+import { pickLang } from '@/lib/uiLocale';
 
 type TFn = (key: string) => string;
 
@@ -212,10 +213,38 @@ type AdminRecommendedItem = {
   key: string;
   priority: number;
   title: string;
-  detail: string;
+  /** Métrique ou signal clé (ligne courte, chiffres). */
+  signal: string;
+  /** Une ligne de contexte, sans paragraphe. */
+  context: string;
   ctaLabel: string;
+  /** CTA plein uniquement si l’action est critique (ex. validation, matrice). */
+  ctaEmphasis?: boolean;
   payload: AdminRecommendedPayload;
 };
+
+function clipAdminRecText(s: string, max: number): string {
+  const t = s.trim();
+  if (t.length <= max) return t;
+  return `${t.slice(0, max - 1)}…`;
+}
+
+function missingFieldRecTitle(field: string, lang: Language): string {
+  switch (field) {
+    case 'Photo':
+      return pickLang('Photo manquante', 'Foto faltante', 'Missing photo', lang);
+    case 'Description':
+      return pickLang('Bio courte', 'Bio corta', 'Short bio', lang);
+    case 'Secteur':
+      return pickLang('Secteur manquant', 'Sector faltante', 'Missing sector', lang);
+    case 'Société':
+      return pickLang('Société manquante', 'Empresa faltante', 'Missing company', lang);
+    case 'Ville':
+      return pickLang('Ville manquante', 'Ciudad faltante', 'Missing city', lang);
+    default:
+      return pickLang(`${field} manquant`, `${field} faltante`, `${field} missing`, lang);
+  }
+}
 
 function scrollAdminSectionIntoView(id: string) {
   requestAnimationFrame(() => {
@@ -666,18 +695,22 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     scrollAdminSectionIntoView(payload.id);
   }, []);
 
-  const recommendedActions = useMemo((): AdminRecommendedItem[] => {
+  const { primaryRecommended, secondaryRecommended } = useMemo(() => {
     const out: AdminRecommendedItem[] = [];
     const total = stats.totalProfiles;
-    if (total <= 0) return out;
+    const none = { primaryRecommended: [] as AdminRecommendedItem[], secondaryRecommended: [] as AdminRecommendedItem[] };
+    if (total <= 0) return none;
 
     if (stats.pendingReviewProfiles > 0) {
+      const n = stats.pendingReviewProfiles;
       out.push({
         key: 'pending-review',
         priority: 12,
-        title: 'Valider les profils en attente',
-        detail: `${stats.pendingReviewProfiles} fiche(s) encore à examiner côté validation.`,
-        ctaLabel: 'Voir les indicateurs',
+        title: pickLang('Validation en attente', 'Validaciones pendientes', 'Pending validation', lang),
+        signal: pickLang(`${n} fiche${n > 1 ? 's' : ''}`, `${n} ficha(s)`, `${n} profile(s)`, lang),
+        context: pickLang('Revue admin requise.', 'Requiere revisión.', 'Admin review needed.', lang),
+        ctaLabel: pickLang('Voir les KPI', 'Ver KPI', 'View KPIs', lang),
+        ctaEmphasis: true,
         payload: { type: 'scroll', id: 'admin-section-kpi' },
       });
     }
@@ -689,9 +722,15 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
         out.push({
           key: `missing-${topMissing.field}`,
           priority: 18,
-          title: `Prioriser le champ « ${topMissing.field} »`,
-          detail: `${topMissing.missing} profil(s) incomplet(s) sur ce point (~${pct} % du réseau).`,
-          ctaLabel: 'Voir les champs',
+          title: missingFieldRecTitle(topMissing.field, lang),
+          signal: pickLang(
+            `${topMissing.missing} profils · ${pct} %`,
+            `${topMissing.missing} perfiles · ${pct} %`,
+            `${topMissing.missing} profiles · ${pct}%`,
+            lang
+          ),
+          context: pickLang('Part du réseau concernée.', 'Parte de la red.', 'Share of network.', lang),
+          ctaLabel: pickLang('Champs à compléter', 'Campos', 'Missing fields', lang),
           payload: { type: 'scroll', id: 'admin-section-missing-fields' },
         });
       }
@@ -702,9 +741,20 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       out.push({
         key: 'strict-completion',
         priority: 22,
-        title: 'Remonter la complétion « stricte »',
-        detail: `${stats.incompleteProfilesStrict} profil(s) sans le bloc complet (nom, secteur, bio 30+, photo) — ~${pctStrict} %.`,
-        ctaLabel: 'Voir la jauge',
+        title: pickLang('Complétion stricte', 'Completitud estricta', 'Strict completion', lang),
+        signal: pickLang(
+          `${stats.incompleteProfilesStrict} profils · ${pctStrict} %`,
+          `${stats.incompleteProfilesStrict} perfiles · ${pctStrict} %`,
+          `${stats.incompleteProfilesStrict} profiles · ${pctStrict}%`,
+          lang
+        ),
+        context: pickLang(
+          'Nom, secteur, bio 30+, photo.',
+          'Nombre, sector, bio 30+, foto.',
+          'Name, sector, 30+ bio, photo.',
+          lang
+        ),
+        ctaLabel: pickLang('Voir la jauge', 'Ver medidor', 'View gauge', lang),
         payload: { type: 'scroll', id: 'admin-section-completion' },
       });
     }
@@ -716,11 +766,15 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       out.push({
         key: 'attention-low-conversion',
         priority: 28,
-        title: 'Intérêt fort, conversion faible',
-        detail: `${hnc} profil(s) vus sur la période sans aucun clic contact — opportunité de relais ou d’intro.${
-          sampleName ? ` Ex. ${sampleName}.` : ''
-        }`,
-        ctaLabel: 'Voir attention / conversion',
+        title: pickLang('Attention sans contact', 'Vistas sin contacto', 'Views, no contact', lang),
+        signal: pickLang(`${hnc} profil${hnc > 1 ? 's' : ''}`, `${hnc} perfil(es)`, `${hnc} profile(s)`, lang),
+        context: sampleName
+          ? clipAdminRecText(
+              pickLang(`Ex. ${sampleName}`, `Ej. ${sampleName}`, `e.g. ${sampleName}`, lang),
+              72
+            )
+          : pickLang('Vues sans clic contact.', 'Vistas sin clic.', 'Views without contact clicks.', lang),
+        ctaLabel: pickLang('Graphique attention', 'Gráfico', 'Attention chart', lang),
         payload: { type: 'scroll', id: 'admin-section-attention' },
       });
     }
@@ -728,12 +782,19 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     const topHub = relationshipPotential.memberScores[0];
     const hubThreshold = total < 35 ? 2 : 4;
     if (topHub && topHub.score >= hubThreshold) {
+      const name = formatPersonName(String(topHub.nom ?? '').trim());
       out.push({
         key: 'connect-hub',
         priority: 32,
-        title: 'Membre pivot pour intros',
-        detail: `${formatPersonName(String(topHub.nom ?? '').trim())} partage des passions avec ${topHub.score} autres membres — bon candidat pour accélérer le réseau.`,
-        ctaLabel: 'Préparer une intro',
+        title: pickLang('Membre pivot', 'Miembro pivote', 'Connector member', lang),
+        signal: pickLang(
+          `${topHub.score} liens passion`,
+          `${topHub.score} vínculos`,
+          `${topHub.score} passion ties`,
+          lang
+        ),
+        context: clipAdminRecText(name, 48),
+        ctaLabel: pickLang('Voir connexions', 'Ver vínculos', 'See connections', lang),
         payload: { type: 'scroll', id: 'admin-section-connect' },
       });
     }
@@ -743,36 +804,55 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       out.push({
         key: 'coverage-gaps',
         priority: 38,
-        title: 'Combler des trous de représentation',
-        detail: `${coverageGapMatrixRows.length} secteur(s) ou ville(s) très fins (≤2 membres) — ex. ${g.kind} « ${g.label} ».`,
-        ctaLabel: 'Voir les gaps',
+        title: pickLang('Gaps de couverture', 'Brechas de cobertura', 'Coverage gaps', lang),
+        signal: pickLang(
+          `${coverageGapMatrixRows.length} zones ≤ 2`,
+          `${coverageGapMatrixRows.length} zonas ≤ 2`,
+          `${coverageGapMatrixRows.length} thin zones`,
+          lang
+        ),
+        context: clipAdminRecText(`${g.kind} « ${g.label} »`, 56),
+        ctaLabel: pickLang('Carte des écarts', 'Mapa', 'Gap map', lang),
         payload: { type: 'scroll', id: 'admin-section-gaps' },
       });
     }
 
-    const aff = affinityTop3[0];
-    if (aff && aff.members >= 2) {
+    const affTop = affinityTop3[0];
+    if (affTop && affTop.members >= 2) {
       out.push({
         key: 'affinity-activate',
         priority: 42,
-        title: 'Activer une affinité forte',
-        detail: `${aff.passionLabel} × ${aff.sector} rassemble ${aff.members} membre(s) — ${activationSuggestion(aff, 0)}.`,
-        ctaLabel: 'Voir l’affinité',
+        title: pickLang('Affinité forte', 'Afinidad fuerte', 'Strong affinity', lang),
+        signal: pickLang(
+          `${affTop.members} membres`,
+          `${affTop.members} miembros`,
+          `${affTop.members} members`,
+          lang
+        ),
+        context: clipAdminRecText(`${affTop.passionLabel} × ${affTop.sector}`, 58),
+        ctaLabel: pickLang('Ouvrir la matrice', 'Abrir matriz', 'Open matrix', lang),
+        ctaEmphasis: true,
         payload: {
           type: 'affinity',
-          cross: { passionId: aff.passionId, dimValue: aff.sector, dimension: 'sector' },
+          cross: { passionId: affTop.passionId, dimValue: affTop.sector, dimension: 'sector' },
         },
       });
     }
 
     const topPassion = relationshipPotential.topOverlapPassions[0];
-    if (topPassion && topPassion.sectorCount >= 3 && (!aff || topPassion.pid !== aff.passionId)) {
+    if (topPassion && topPassion.sectorCount >= 3 && (!affTop || topPassion.pid !== affTop.passionId)) {
       out.push({
         key: 'passion-transverse',
         priority: 46,
-        title: 'Passion transversale à exploiter',
-        detail: `${topPassion.label} touche ${topPassion.sectorCount} secteurs (${topPassion.memberCount} membres) — utile pour un format collectif.`,
-        ctaLabel: 'Explorer',
+        title: pickLang('Passion transversale', 'Pasión transversal', 'Cross-cutting passion', lang),
+        signal: pickLang(
+          `${topPassion.sectorCount} secteurs`,
+          `${topPassion.sectorCount} sectores`,
+          `${topPassion.sectorCount} sectors`,
+          lang
+        ),
+        context: clipAdminRecText(topPassion.label, 52),
+        ctaLabel: pickLang('Vue passions', 'Vista', 'Passions view', lang),
         payload: { type: 'scroll', id: 'admin-section-passions' },
       });
     }
@@ -782,9 +862,10 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       out.push({
         key: 'visibility-lift',
         priority: 48,
-        title: 'Donner de la visibilité',
-        detail: `${lv} profil(s) sans vue ni contact sur la période — mise en avant, newsletter ou relance ciblée.`,
-        ctaLabel: 'Explorer',
+        title: pickLang('Visibilité basse', 'Baja visibilidad', 'Low visibility', lang),
+        signal: pickLang(`${lv} profils`, `${lv} perfiles`, `${lv} profiles`, lang),
+        context: pickLang('Aucune vue ni contact (période).', 'Sin vistas ni contactos.', 'No views or contacts.', lang),
+        ctaLabel: pickLang('Vue attention', 'Vista', 'View chart', lang),
         payload: { type: 'scroll', id: 'admin-section-attention' },
       });
     }
@@ -793,9 +874,10 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       out.push({
         key: 'active-members-follow',
         priority: 72,
-        title: 'S’appuyer sur les membres engagés',
-        detail: 'Identifier qui porte déjà le réseau sur la période pour co-animer ou coacher les autres.',
-        ctaLabel: 'Voir les profils',
+        title: pickLang('Membres engagés', 'Miembros activos', 'Engaged members', lang),
+        signal: pickLang('Période en cours', 'Periodo actual', 'Current period', lang),
+        context: pickLang('Qui porte le réseau.', 'Quién mueve la red.', 'Who drives the network.', lang),
+        ctaLabel: pickLang('Liste active', 'Lista', 'Active list', lang),
         payload: { type: 'scroll', id: 'admin-section-active-members' },
       });
     }
@@ -807,8 +889,13 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       seen.add(item.key);
       deduped.push(item);
     }
-    return deduped.slice(0, 6);
+    const all = deduped.slice(0, 6);
+    return {
+      primaryRecommended: all.slice(0, 3),
+      secondaryRecommended: all.slice(3),
+    };
   }, [
+    lang,
     stats.totalProfiles,
     stats.pendingReviewProfiles,
     stats.incompleteProfilesStrict,
@@ -866,51 +953,97 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           <article className="admin-chart-card admin-recommended-actions" id="admin-section-recommended">
             <div className="admin-recommended-actions__head">
               <div>
-                <p className="admin-chart-card__title admin-recommended-actions__title">Actions recommandées</p>
+                <p className="admin-chart-card__title admin-recommended-actions__title">
+                  {pickLang('Actions recommandées', 'Acciones recomendadas', 'Recommended actions', lang)}
+                </p>
                 <p className="admin-chart-card__subtitle admin-recommended-actions__subtitle">
-                  Priorités dérivées des indicateurs du tableau de bord — à traiter en premier.
+                  {pickLang(
+                    'Signaux forts du tableau de bord, par ordre d’impact.',
+                    'Señales claras del panel, por impacto.',
+                    'High-impact signals from your dashboard, in order.',
+                    lang
+                  )}{' '}
+                  <button
+                    type="button"
+                    className="admin-recommended-actions__inline-action"
+                    onClick={() => scrollAdminSectionIntoView('admin-section-priority')}
+                    title={pickLang(
+                      'Aller aux besoins sans réponse et dernières demandes.',
+                      'Ir a necesidades sin respuesta y últimas solicitudes.',
+                      'Jump to unanswered needs and latest requests.',
+                      lang
+                    )}
+                  >
+                    {pickLang('Besoins & demandes', 'Necesidades y solicitudes', 'Needs & requests', lang)}
+                  </button>
                 </p>
               </div>
-              <button
-                type="button"
-                className="admin-recommended-actions__link"
-                onClick={() => scrollAdminSectionIntoView('admin-section-priority')}
-                title={
-                  lang === 'en'
-                    ? 'Scroll to unanswered needs and latest requests (below the KPI cards).'
-                    : lang === 'es'
-                      ? 'Ir a necesidades sin respuesta y últimas solicitudes (debajo).'
-                      : 'Aller vers besoins sans réponse et dernières demandes (juste sous cette grille).'
-                }
-              >
-                {lang === 'en'
-                  ? 'View priority zone'
-                  : lang === 'es'
-                    ? 'Ver zona prioritaria'
-                    : 'Voir besoins & demandes'}
-              </button>
             </div>
             <div className="admin-recommended-actions__body">
-              {recommendedActions.length === 0 ? (
+              {primaryRecommended.length === 0 && secondaryRecommended.length === 0 ? (
                 <p className="admin-recommended-actions__empty">
-                  Pas assez de données pour proposer des actions sur cette période.
+                  {pickLang(
+                    'Pas assez de données pour proposer des actions sur cette période.',
+                    'Datos insuficientes para acciones en este periodo.',
+                    'Not enough data to suggest actions for this period.',
+                    lang
+                  )}
                 </p>
               ) : (
-                <ul className="admin-recommended-actions__grid">
-                  {recommendedActions.map((item) => (
-                    <li key={item.key} className="admin-rec-card">
-                      <p className="admin-rec-card__title">{item.title}</p>
-                      <p className="admin-rec-card__detail">{item.detail}</p>
-                      <button
-                        type="button"
-                        className="admin-rec-card__cta"
-                        onClick={() => runRecommendedAction(item.payload)}
-                      >
-                        {item.ctaLabel}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <div className="admin-rec-tier">
+                    <p className="admin-rec-tier__label" aria-label={pickLang('Priorité 1', 'Prioridad 1', 'Priority 1', lang)}>
+                      {pickLang('P1 — À traiter maintenant', 'P1 — Ahora', 'P1 — Address now', lang)}
+                    </p>
+                    <ul className="admin-recommended-actions__grid admin-recommended-actions__grid--primary">
+                      {primaryRecommended.map((item) => (
+                        <li key={item.key} className="admin-rec-card admin-rec-card--primary">
+                          <p className="admin-rec-card__title">{item.title}</p>
+                          <p className="admin-rec-card__signal">{item.signal}</p>
+                          <p className="admin-rec-card__context">{item.context}</p>
+                          <button
+                            type="button"
+                            className={
+                              item.ctaEmphasis
+                                ? 'admin-rec-card__action admin-rec-card__action--emphasis'
+                                : 'admin-rec-card__action'
+                            }
+                            onClick={() => runRecommendedAction(item.payload)}
+                          >
+                            {item.ctaLabel}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  {secondaryRecommended.length > 0 ? (
+                    <div className="admin-rec-tier admin-rec-tier--secondary">
+                      <p className="admin-rec-tier__label" aria-label={pickLang('Priorité 2', 'Prioridad 2', 'Priority 2', lang)}>
+                        {pickLang('P2 — Ensuite', 'P2 — Después', 'P2 — Next', lang)}
+                      </p>
+                      <ul className="admin-recommended-actions__grid admin-recommended-actions__grid--secondary">
+                        {secondaryRecommended.map((item) => (
+                          <li key={item.key} className="admin-rec-card admin-rec-card--secondary">
+                            <p className="admin-rec-card__title">{item.title}</p>
+                            <p className="admin-rec-card__signal">{item.signal}</p>
+                            <p className="admin-rec-card__context">{item.context}</p>
+                            <button
+                              type="button"
+                              className={
+                                item.ctaEmphasis
+                                  ? 'admin-rec-card__action admin-rec-card__action--emphasis'
+                                  : 'admin-rec-card__action'
+                              }
+                              onClick={() => runRecommendedAction(item.payload)}
+                            >
+                              {item.ctaLabel}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </>
               )}
             </div>
           </article>
