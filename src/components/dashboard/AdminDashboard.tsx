@@ -31,6 +31,9 @@ import { formatPersonName } from '@/shared/utils/formatPersonName';
 import PassionsCrossHeatmap, { type CrossPick } from '@/components/dashboard/PassionsCrossHeatmap';
 import TopActiveMembersTable from '@/components/dashboard/TopActiveMembersTable';
 import { pickLang } from '@/lib/uiLocale';
+import { NeedsBarChart } from '@/components/charts/NeedsBarChart';
+import { aggregateNeedsFromMembers } from '@/lib/needs';
+import { NEED_CATEGORY_LABELS } from '@/lib/needLabels';
 
 type TFn = (key: string) => string;
 
@@ -334,6 +337,13 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
         .sort((a, b) => b.value - a.value),
     [stats.profilesBySector]
   );
+
+  const needsData = useMemo(() => {
+    return aggregateNeedsFromMembers(stats.profilesForDashboard as any, NEED_CATEGORY_LABELS, {
+      limit: 8,
+    });
+  }, [stats.profilesForDashboard]);
+
   const byCityData = useMemo(
     () => Object.entries(stats.profilesByCity).map(([name, value]) => ({ name, value })),
     [stats.profilesByCity]
@@ -1119,6 +1129,15 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                 </div>
               </div>
             </article>
+
+            <div className="min-w-0">
+              <NeedsBarChart
+                data={needsData}
+                title="Opportunités actuellement recherchées"
+                subtitle="Les membres du réseau expriment activement ces besoins"
+                compact
+              />
+            </div>
 
             <article className="admin-chart-card admin-chart-card--compact">
               <p className="admin-chart-card__title">Couverture secteurs / villes</p>
