@@ -315,7 +315,7 @@ export default function NetworkRadarSection({
     <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
       <div className="space-y-6 md:space-y-8">
         {/* Hero */}
-        <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-teal-50/40 p-6 shadow-sm md:p-8">
+        <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-teal-50/40 p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             {!radarLocked ? (
@@ -325,11 +325,11 @@ export default function NetworkRadarSection({
               </div>
             ) : null}
 
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 md:text-4xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
               Radar des opportunités du réseau
             </h1>
 
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
               Visualisez les besoins les plus actifs, les signaux clés de la communauté et les opportunités qui peuvent
               correspondre à votre profil.
             </p>
@@ -339,14 +339,14 @@ export default function NetworkRadarSection({
             <button
               type="button"
               onClick={() => document.getElementById('radar-opportunities')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
             >
               Voir les besoins à fort potentiel
             </button>
             <button
               type="button"
               onClick={() => (radarLocked ? onUnlockRadar() : onCreateProfile())}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
               Compléter mon profil
             </button>
