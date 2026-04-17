@@ -42,6 +42,8 @@ export interface AdminStats {
     links?: string[];
     createdAt: Timestamp;
     contactClicks: number;
+    /** Besoins mis en avant (legacy NEED_*). */
+    highlightedNeeds?: string[];
   }>;
   /** Profils complets selon critères "dashboard" (nom + secteur + description + photo). */
   completedProfilesStrict: number;
@@ -460,6 +462,9 @@ export function useAdminStats(period: PeriodKey): AdminStats {
               links,
               createdAt: (up.createdAt as Timestamp) ?? (p.createdAt as Timestamp),
               contactClicks: contactClicksByUid[up.uid] || 0,
+              highlightedNeeds: Array.isArray((up as any).highlightedNeeds)
+                ? (((up as any).highlightedNeeds as unknown[]) ?? []).map((x) => String(x)).filter(Boolean)
+                : undefined,
             };
           })
           .filter((p) => Boolean(p.createdAt));

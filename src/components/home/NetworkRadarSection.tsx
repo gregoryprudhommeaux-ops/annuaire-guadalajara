@@ -10,9 +10,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   LabelList,
-  Legend,
 } from 'recharts';
-import { Users, Target, Factory, Maximize2 } from 'lucide-react';
+import { Users, Target, Factory, Maximize2, MessageCircle } from 'lucide-react';
 import type { UserProfile, Language } from '../../types';
 import type { User } from 'firebase/auth';
 import type { HomeLandingCopy } from '../../copy/homeLanding';
@@ -24,6 +23,7 @@ import { cardPad } from '../../lib/pageLayout';
 import { profileDistinctActivityCategories } from '../../lib/companyActivities';
 import { formatT } from '../../i18n/formatT';
 const DONUT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316', '#6B7280'];
+const NEED_BAR_COLORS = ['#1d4ed8', '#4338ca', '#0f766e', '#b45309', '#be123c', '#334155', '#7c3aed', '#0284c7'];
 
 type TFn = (key: string) => string;
 
@@ -179,6 +179,26 @@ export default function NetworkRadarSection({
   }, [profilesForStats, lang, needOptionLabel]);
 
   const maxNeedCount = needsBarData.reduce((m, d) => Math.max(m, d.count), 0) || 1;
+
+  const shareNeedsText = useMemo(() => {
+    const top = needsBarData.slice(0, 6);
+    const list = top.map((d) => `- ${d.label} (${d.count})`).join('\n');
+    const origin =
+      typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
+    const url = origin || 'https://';
+    return (
+      "Voici les besoins les plus demandés actuellement :\n" +
+      (list ? `${list}\n\n` : '\n') +
+      "Si vous pouvez y répondre, rejoignez la plateforme !\n" +
+      url
+    );
+  }, [needsBarData]);
+
+  const onShareNeedsWhatsApp = useCallback(() => {
+    const text = shareNeedsText.trim();
+    const href = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(href, '_blank', 'noopener,noreferrer');
+  }, [shareNeedsText]);
 
   const needsBarRowHeight = useMemo(() => {
     const lineH = 10;
@@ -425,6 +445,17 @@ export default function NetworkRadarSection({
           >
             <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
           </button>
+          {!radarLocked && needsBarData.length > 0 && (
+            <button
+              type="button"
+              onClick={onShareNeedsWhatsApp}
+              className="absolute right-12 top-3 z-10 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:right-14 sm:top-4"
+              title="Partager sur WhatsApp"
+            >
+              <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
+              Partager
+            </button>
+          )}
           <h3 className="mb-4 pr-10 text-[15px] font-semibold leading-snug text-slate-800 break-words">
             {t('chartNeedsTitle')}
           </h3>
@@ -451,7 +482,6 @@ export default function NetworkRadarSection({
                     tick={renderNeedsYAxisTickSmall}
                     axisLine={false}
                     tickLine={false}
-                    reversed
                   />
                   <Tooltip
                     formatter={(v: number) => [v, t('chartNeedsTitle')]}
@@ -477,7 +507,7 @@ export default function NetworkRadarSection({
                     }}
                   >
                     {needsBarData.map((_, i) => (
-                      <Cell key={i} fill="#3B82F6" fillOpacity={Math.max(0.45, 1 - i * 0.12)} />
+                      <Cell key={i} fill={NEED_BAR_COLORS[i % NEED_BAR_COLORS.length]} fillOpacity={0.95} />
                     ))}
                     <LabelList dataKey="count" position="right" fill="#64748b" fontSize={10} fontWeight={600} />
                   </Bar>
@@ -552,13 +582,26 @@ export default function NetworkRadarSection({
               <h3 className="text-base font-semibold text-stone-900">
                 {activeRadarChart === 'sectors' ? t('chartSectorsTitle') : t('chartNeedsTitle')}
               </h3>
-              <button
-                type="button"
-                onClick={() => setActiveRadarChart(null)}
-                className="rounded-md border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
-              >
-                Fermer
-              </button>
+              <div className="flex items-center gap-2">
+                {activeRadarChart === 'needs' && !radarLocked && needsBarData.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={onShareNeedsWhatsApp}
+                    className="inline-flex items-center gap-2 rounded-md border border-stone-200 bg-white px-3 py-1.5 text-sm font-semibold text-stone-700 hover:bg-stone-50"
+                    title="Partager sur WhatsApp"
+                  >
+                    <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
+                    Partager
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setActiveRadarChart(null)}
+                  className="rounded-md border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
+                >
+                  Fermer
+                </button>
+              </div>
             </div>
             <div className="h-[65vh] min-h-[420px] w-full">
               {activeRadarChart === 'sectors' ? (
@@ -582,7 +625,6 @@ export default function NetworkRadarSection({
                           ))}
                         </Pie>
                         <Tooltip contentStyle={{ fontSize: 12 }} />
-                        <Legend wrapperStyle={{ fontSize: 12 }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -618,7 +660,6 @@ export default function NetworkRadarSection({
                       tick={renderNeedsYAxisTickLarge}
                       axisLine={false}
                       tickLine={false}
-                      reversed
                     />
                     <Tooltip
                       formatter={(v: number) => [v, t('chartNeedsTitle')]}
@@ -628,10 +669,9 @@ export default function NetworkRadarSection({
                       }}
                       contentStyle={{ borderRadius: 8, border: '1px solid rgb(226 232 240)', fontSize: 12 }}
                     />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
                     <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={28} isAnimationActive={false}>
                       {needsBarData.map((_, i) => (
-                        <Cell key={i} fill="#3B82F6" fillOpacity={Math.max(0.45, 1 - i * 0.12)} />
+                        <Cell key={i} fill={NEED_BAR_COLORS[i % NEED_BAR_COLORS.length]} fillOpacity={0.95} />
                       ))}
                       <LabelList dataKey="count" position="right" fill="#64748b" fontSize={12} fontWeight={600} />
                     </Bar>

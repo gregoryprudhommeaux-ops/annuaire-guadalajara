@@ -87,6 +87,8 @@ export function NeedsBarChart({
       .slice(0, cap);
   }, [data, limit]);
 
+  const hasData = rows.length > 0;
+
   const maxCount = useMemo(
     () => rows.reduce((m, r) => Math.max(m, r.count), 0) || 1,
     [rows]
@@ -114,59 +116,69 @@ export function NeedsBarChart({
       ) : null}
 
       <div style={{ height }} className="w-full min-w-0">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={rows}
-            layout="vertical"
-            margin={{ top: 8, right: 16, left: 12, bottom: 8 }}
-            barCategoryGap={compact ? 10 : 12}
-          >
-            <XAxis
-              type="number"
-              domain={[0, maxCount]}
-              allowDecimals={false}
-              tick={{ fontSize: compact ? 11 : 12, fill: '#64748b' }}
-              stroke="#e4e4e7"
-              axisLine={{ stroke: '#e4e4e7' }}
-              tickLine={{ stroke: '#e4e4e7' }}
-            />
-            <YAxis
-              type="category"
-              dataKey="label"
-              width={compact ? 132 : 150}
-              stroke="#e4e4e7"
-              axisLine={false}
-              tickLine={false}
-              tick={(p) => (
-                <NeedsYAxisTick
-                  {...p}
-                  maxChars={yTickChars}
-                  fontSize={yTickFontSize}
-                />
-              )}
-            />
-            <Tooltip
-              cursor={{ fill: 'rgba(15,118,110,0.06)' }}
-              formatter={(value: unknown) => [Number(value ?? 0), 'Membres']}
-              contentStyle={{
-                borderRadius: 12,
-                border: '1px solid #e4e4e7',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-                fontSize: 12,
-              }}
-              labelStyle={{ color: '#0f172a', fontWeight: 700 }}
-            />
-            <Bar dataKey="count" radius={[0, compact ? 8 : 10, compact ? 8 : 10, 0]} maxBarSize={compact ? 22 : 26}>
-              {rows.map((entry, index) => (
-                <Cell
-                  key={entry.key}
-                  fill={COLORS[index % COLORS.length]}
-                  fillOpacity={0.95}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        {!hasData ? (
+          <div className="flex h-full w-full items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 text-sm text-zinc-500">
+            Aucune donnée de besoins à afficher.
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={rows}
+              layout="vertical"
+              margin={{ top: 8, right: 16, left: 12, bottom: 8 }}
+              barCategoryGap={compact ? 10 : 12}
+            >
+              <XAxis
+                type="number"
+                domain={[0, maxCount]}
+                allowDecimals={false}
+                tick={{ fontSize: compact ? 11 : 12, fill: '#64748b' }}
+                stroke="#e4e4e7"
+                axisLine={{ stroke: '#e4e4e7' }}
+                tickLine={{ stroke: '#e4e4e7' }}
+              />
+              <YAxis
+                type="category"
+                dataKey="label"
+                width={compact ? 132 : 150}
+                stroke="#e4e4e7"
+                axisLine={false}
+                tickLine={false}
+                tick={(p) => (
+                  <NeedsYAxisTick
+                    {...p}
+                    maxChars={yTickChars}
+                    fontSize={yTickFontSize}
+                  />
+                )}
+              />
+              <Tooltip
+                cursor={{ fill: 'rgba(15,118,110,0.06)' }}
+                formatter={(value: unknown) => [Number(value ?? 0), 'Membres']}
+                contentStyle={{
+                  borderRadius: 12,
+                  border: '1px solid #e4e4e7',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                  fontSize: 12,
+                }}
+                labelStyle={{ color: '#0f172a', fontWeight: 700 }}
+              />
+              <Bar
+                dataKey="count"
+                radius={[0, compact ? 8 : 10, compact ? 8 : 10, 0]}
+                maxBarSize={compact ? 22 : 26}
+              >
+                {rows.map((entry, index) => (
+                  <Cell
+                    key={entry.key}
+                    fill={COLORS[index % COLORS.length]}
+                    fillOpacity={0.95}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </section>
   );

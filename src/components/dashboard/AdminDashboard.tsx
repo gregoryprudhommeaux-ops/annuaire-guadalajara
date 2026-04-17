@@ -339,9 +339,30 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
   );
 
   const needsData = useMemo(() => {
-    return aggregateNeedsFromMembers(stats.profilesForDashboard as any, NEED_CATEGORY_LABELS, {
-      limit: 8,
+    const highlightedToCategory = (id: string): string | null => {
+      const key = String(id ?? '').trim().toUpperCase();
+      if (!key) return null;
+      if (key === 'NEED_PARTNERS') return 'partners';
+      if (key === 'NEED_CLIENTS') return 'clients';
+      if (key === 'NEED_DISTRIB') return 'distributors';
+      if (key === 'NEED_SUPPLIERS') return 'suppliers';
+      if (key === 'NEED_INVESTORS') return 'investors';
+      if (key === 'NEED_HR') return 'talent';
+      if (key === 'NEED_VISIBILITY') return 'visibility';
+      if (key === 'NEED_MENTOR' || key === 'NEED_ECOSYSTEM' || key === 'NEED_RESEARCH') return 'experts';
+      return 'other';
+    };
+
+    const members = (stats.profilesForDashboard ?? []).map((p: any) => {
+      const ids: string[] = Array.isArray(p?.highlightedNeeds) ? p.highlightedNeeds : [];
+      const needs = ids
+        .map((id) => highlightedToCategory(id))
+        .filter((c): c is string => Boolean(c))
+        .map((category) => ({ category, isActive: true }));
+      return { needs };
     });
+
+    return aggregateNeedsFromMembers(members, NEED_CATEGORY_LABELS, { limit: 8 });
   }, [stats.profilesForDashboard]);
 
   const byCityData = useMemo(
