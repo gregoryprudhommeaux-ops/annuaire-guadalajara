@@ -28,41 +28,76 @@ const COLORS = [
   '#4338ca', // indigo-700
 ] as const;
 
-function compactLabel(label: string, max = 26): string {
+function compactLabel(label: string, max: number): string {
   const s = String(label ?? '').trim();
   if (!s) return '';
   if (s.length <= max) return s;
   return `${s.slice(0, Math.max(0, max - 1))}…`;
 }
 
+/** Split long labels on " / " so each line stays readable; keeps tooltip full text via <title>. */
+function splitLabelForTick(full: string, maxSingleLine: number): string[] | null {
+  const s = String(full ?? '').trim();
+  if (!s || s.length <= maxSingleLine) return null;
+  const idx = s.indexOf(' / ');
+  if (idx <= 0) return null;
+  const a = s.slice(0, idx).trim();
+  const b = s.slice(idx + 3).trim();
+  if (!a || !b) return null;
+  const line1 = `${a} /`;
+  if (line1.length > maxSingleLine + 8 || b.length > maxSingleLine + 8) {
+    return [compactLabel(line1, maxSingleLine + 4), compactLabel(b, maxSingleLine + 4)];
+  }
+  return [line1, b];
+}
+
 function NeedsYAxisTick({
   x,
   y,
   payload,
-  maxChars,
+  maxSingleLine,
   fontSize,
 }: {
   x?: number | string;
   y?: number | string;
   payload?: { value?: string };
-  maxChars: number;
+  /** Approx. max characters per line before wrap or ellipsis. */
+  maxSingleLine: number;
   fontSize: number;
 }) {
   const nx = typeof x === 'number' ? x : Number(x ?? 0);
   const ny = typeof y === 'number' ? y : Number(y ?? 0);
   const full = String(payload?.value ?? '');
-  const short = compactLabel(full, maxChars);
+  const lines = splitLabelForTick(full, maxSingleLine);
+  const single =
+    lines == null
+      ? full.length > maxSingleLine
+        ? compactLabel(full, maxSingleLine)
+        : full
+      : null;
+
   return (
     <g transform={`translate(${nx},${ny})`}>
       <title>{full}</title>
-      <text
-        textAnchor="end"
-        dominantBaseline="middle"
-        fill="#334155"
-        fontSize={fontSize}
-      >
-        {short}
-      </text>
+      {lines ? (
+        <text textAnchor="end" fill="#334155" fontSize={fontSize}>
+          <tspan x={0} dy="-0.55em" dominantBaseline="middle">
+            {lines[0]}
+          </tspan>
+          <tspan x={0} dy="1.15em" dominantBaseline="middle">
+            {lines[1]}
+          </tspan>
+        </text>
+      ) : (
+        <text
+          textAnchor="end"
+          dominantBaseline="middle"
+          fill="#334155"
+          fontSize={fontSize}
+        >
+          {single}
+        </text>
+      )}
     </g>
   );
 }
@@ -94,11 +129,13 @@ export function NeedsBarChart({
     [rows]
   );
 
-  const height = compact ? 260 : 360;
+  const height = compact ? 280 : 420;
   const titleSize = compact ? 'text-[13px]' : 'text-base md:text-lg';
   const subtitleSize = compact ? 'text-[11px]' : 'text-sm';
-  const yTickFontSize = compact ? 11 : 12;
-  const yTickChars = compact ? 18 : 26;
+  const yTickFontSize = compact ? 11 : 11;
+  /** Wider axis + more chars per line so labels stay readable (Recharts clips if width is too small). */
+  const yAxisWidth = compact ? 200 : 300;
+  const yTickMaxLine = compact ? 28 : 40;
 
   return (
     <section className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm md:p-6">
@@ -127,8 +164,8 @@ export function NeedsBarChart({
             <BarChart
               data={rows}
               layout="vertical"
-              margin={{ top: 8, right: 16, left: 12, bottom: 8 }}
-              barCategoryGap={compact ? 10 : 12}
+              margin={{ top: 8, right: 16, left: 20, bottom: 8 }}
+              barCategoryGap={compact ? 12 : 16}
             >
               <XAxis
                 type="number"
@@ -142,14 +179,15 @@ export function NeedsBarChart({
               <YAxis
                 type="category"
                 dataKey="label"
-                width={compact ? 132 : 150}
+                width={yAxisWidth}
+                interval={0}
                 stroke="#e4e4e7"
                 axisLine={false}
                 tickLine={false}
                 tick={(p) => (
                   <NeedsYAxisTick
                     {...p}
-                    maxChars={yTickChars}
+                    maxSingleLine={yTickMaxLine}
                     fontSize={yTickFontSize}
                   />
                 )}

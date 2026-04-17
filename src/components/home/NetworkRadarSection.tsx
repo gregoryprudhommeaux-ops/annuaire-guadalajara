@@ -404,11 +404,8 @@ export default function NetworkRadarSection({
             ))}
             </section>
 
-            {/* Main zone */}
-            <section
-              id="radar-opportunities"
-              className="grid scroll-mt-6 grid-cols-1 gap-6 xl:grid-cols-[1.65fr_0.95fr]"
-            >
+            {/* Main zone — opportunités (pleine largeur) */}
+            <section id="radar-opportunities" className="scroll-mt-6">
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="mb-5 flex items-start justify-between gap-4">
                   <div>
@@ -431,139 +428,147 @@ export default function NetworkRadarSection({
 
                 <NeedsBarChart data={needsData} compact={false} />
               </div>
+            </section>
 
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-                <h3 className="text-base font-semibold text-slate-900">Où agir maintenant</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Les catégories ci-contre représentent les demandes les plus visibles du moment.
-                </p>
+            {/* Actions rapides + tendances secteurs : 50 / 50, même hauteur */}
+            <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="flex min-h-0">
+                <div className="flex w-full flex-1 flex-col rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+                  <h3 className="text-base font-semibold text-slate-900">Où agir maintenant</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Les catégories ci-dessous représentent les demandes les plus visibles du moment.
+                  </p>
 
-                <div className="mt-5 space-y-3">
-                  {topNeedsForAction.length === 0 ? (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                      <p className="text-sm text-slate-600">—</p>
-                    </div>
-                  ) : (
-                    topNeedsForAction.map((row, idx) => (
-                      <div key={row.id} className="rounded-2xl border border-slate-200 bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-slate-900">{row.label}</p>
-                            <p className="mt-1 text-sm text-slate-500">{actionHintForNeedRank(idx)}</p>
-                          </div>
-                          <div className="flex shrink-0 flex-col items-end gap-2">
-                            <span className="rounded-full bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
-                              {row.count}
-                            </span>
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => onNeedClick(row.id)}
-                                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                              >
-                                Voir
-                              </button>
-                              <button
-                                type="button"
-                                onClick={onShareNeedsWhatsApp}
-                                className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
-                                title="Partager sur WhatsApp"
-                              >
-                                Partager
-                              </button>
+                  <div className="mt-5 flex flex-1 flex-col space-y-3">
+                    {topNeedsForAction.length === 0 ? (
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p className="text-sm text-slate-600">—</p>
+                      </div>
+                    ) : (
+                      topNeedsForAction.map((row, idx) => (
+                        <div key={row.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-slate-900">{row.label}</p>
+                              <p className="mt-1 text-sm text-slate-500">{actionHintForNeedRank(idx)}</p>
+                            </div>
+                            <div className="flex shrink-0 flex-col items-end gap-2">
+                              <span className="rounded-full bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                                {row.count}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => onNeedClick(row.id)}
+                                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                                >
+                                  Voir
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={onShareNeedsWhatsApp}
+                                  className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                                  title="Partager sur WhatsApp"
+                                >
+                                  Partager
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex min-h-0">
+                <div className="relative flex w-full flex-1 flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setActiveRadarChart('sectors')}
+                    className="absolute right-3 top-3 z-10 rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:right-4 sm:top-4"
+                    aria-label={expandChartLabel}
+                    title={expandChartLabel}
+                  >
+                    <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  </button>
+                  <h3 className="mb-1 pr-10 text-base font-semibold leading-snug text-slate-900 break-words">
+                    Où le réseau est le plus présent
+                  </h3>
+                  <p className="mb-4 text-sm leading-6 text-slate-600">
+                    Vue simplifiée secteurs / activité
+                  </p>
+                  {sectorPieData.length === 0 ? (
+                    <p className="text-sm text-slate-500">{t('chartSectorsEmpty')}</p>
+                  ) : (
+                    <div className="flex min-h-0 flex-1 flex-col items-stretch gap-6 md:flex-row md:items-center">
+                      <div className="relative mx-auto h-[200px] w-[200px] shrink-0 md:mx-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={sectorPieData}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={92}
+                              paddingAngle={sectorPieData.length > 1 ? 2 : 0}
+                            >
+                              {sectorPieData.map((_, idx) => (
+                                <Cell
+                                  key={idx}
+                                  fill={DONUT_COLORS[idx % DONUT_COLORS.length]}
+                                  stroke="#fff"
+                                  strokeWidth={1}
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              formatter={(value: number, _n, item) => {
+                                const payload = item?.payload as { name?: string; value?: number };
+                                const v = Number(value);
+                                const pct = sectorTotalMembers
+                                  ? Math.round((v / sectorTotalMembers) * 100)
+                                  : 0;
+                                return [`${v} (${pct}%)`, payload?.name ?? ''];
+                              }}
+                              contentStyle={{ fontSize: 11 }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center pr-1 pt-1">
+                          <div className="text-center">
+                            <p className="text-2xl font-semibold text-slate-800">{sectorTotalMembers}</p>
+                            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                              {t('chartCenter')}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    ))
+                      <ul className="min-w-0 flex-1 space-y-2 text-[13px]">
+                        {sectorPieData.slice(0, 8).map((row, idx) => (
+                          <li key={row.raw} className="flex items-center gap-2">
+                            <span
+                              className="h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: DONUT_COLORS[idx % DONUT_COLORS.length] }}
+                              aria-hidden
+                            />
+                            <span className="min-w-0 flex-1 truncate text-slate-700">
+                              {row.name} · {row.value}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
                 </div>
               </div>
             </section>
 
             {/* Secondary zone */}
-            <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-              {/* NETWORK TRENDS */}
-              <div className="relative rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <button
-              type="button"
-              onClick={() => setActiveRadarChart('sectors')}
-              className="absolute right-3 top-3 z-10 rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:right-4 sm:top-4"
-              aria-label={expandChartLabel}
-              title={expandChartLabel}
-            >
-              <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
-            </button>
-            <h3 className="mb-1 pr-10 text-base font-semibold leading-snug text-slate-900 break-words">
-              Où le réseau est le plus présent
-            </h3>
-            <p className="mb-4 text-sm leading-6 text-slate-600">
-              Vue simplifiée secteurs / activité
-            </p>
-            {sectorPieData.length === 0 ? (
-              <p className="text-sm text-slate-500">{t('chartSectorsEmpty')}</p>
-            ) : (
-              <div className="flex flex-col items-stretch gap-6 md:flex-row md:items-center">
-                <div className="relative mx-auto h-[200px] w-[200px] shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={sectorPieData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={92}
-                        paddingAngle={sectorPieData.length > 1 ? 2 : 0}
-                      >
-                        {sectorPieData.map((_, idx) => (
-                          <Cell
-                            key={idx}
-                            fill={DONUT_COLORS[idx % DONUT_COLORS.length]}
-                            stroke="#fff"
-                            strokeWidth={1}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value: number, _n, item) => {
-                          const payload = item?.payload as { name?: string; value?: number };
-                          const v = Number(value);
-                          const pct = sectorTotalMembers ? Math.round((v / sectorTotalMembers) * 100) : 0;
-                          return [`${v} (${pct}%)`, payload?.name ?? ''];
-                        }}
-                        contentStyle={{ fontSize: 11 }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center pr-1 pt-1">
-                    <div className="text-center">
-                      <p className="text-2xl font-semibold text-slate-800">{sectorTotalMembers}</p>
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                        {t('chartCenter')}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <ul className="min-w-0 flex-1 space-y-2 text-[13px]">
-                  {sectorPieData.slice(0, 8).map((row, idx) => (
-                    <li key={row.raw} className="flex items-center gap-2">
-                      <span
-                        className="h-2.5 w-2.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: DONUT_COLORS[idx % DONUT_COLORS.length] }}
-                        aria-hidden
-                      />
-                      <span className="min-w-0 flex-1 truncate text-slate-700">
-                        {row.name} · {row.value}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-              </div>
-
+            <section>
               {/* PERSONALIZED OPPORTUNITIES (placeholder UI) */}
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
                 <h3 className="text-base font-semibold text-slate-900">Le réseau a besoin de vous</h3>
