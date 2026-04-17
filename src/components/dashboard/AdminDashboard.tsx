@@ -34,6 +34,7 @@ import { pickLang } from '@/lib/uiLocale';
 import { NeedsBarChart } from '@/components/charts/NeedsBarChart';
 import { aggregateNeedsFromMembers } from '@/lib/needs';
 import { NEED_CATEGORY_LABELS } from '@/lib/needLabels';
+import { NEED_OPTION_VALUE_SET, sanitizeHighlightedNeeds } from '@/needOptions';
 
 type TFn = (key: string) => string;
 
@@ -353,14 +354,18 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       return 'other';
     };
 
-    const members = (stats.profilesForDashboard ?? []).map((p: any) => {
-      const ids: string[] = Array.isArray(p?.highlightedNeeds) ? p.highlightedNeeds : [];
+    const members = (stats.profilesForDashboard ?? [])
+      .map((p: any) => {
+        const ids = sanitizeHighlightedNeeds(p?.highlightedNeeds).filter((id) =>
+          NEED_OPTION_VALUE_SET.has(id)
+        );
       const needs = ids
         .map((id) => highlightedToCategory(id))
         .filter((c): c is string => Boolean(c))
         .map((category) => ({ category, isActive: true }));
-      return { needs };
-    });
+        return { needs };
+      })
+      .filter((m) => (m.needs?.length ?? 0) > 0);
 
     return aggregateNeedsFromMembers(members, NEED_CATEGORY_LABELS, { limit: 8 });
   }, [stats.profilesForDashboard]);

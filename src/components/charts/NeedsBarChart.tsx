@@ -118,7 +118,9 @@ export function NeedsBarChart({
       <div style={{ height }} className="w-full min-w-0">
         {!hasData ? (
           <div className="flex h-full w-full items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 text-sm text-zinc-500">
-            Aucune donnée de besoins à afficher.
+            <p className="px-4 text-center font-semibold text-zinc-600">
+              Aucune donnée de besoins à afficher.
+            </p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">

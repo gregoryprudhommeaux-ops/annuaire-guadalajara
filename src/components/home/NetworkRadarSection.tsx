@@ -22,6 +22,7 @@ import { cn } from '../../cn';
 import { cardPad } from '../../lib/pageLayout';
 import { profileDistinctActivityCategories } from '../../lib/companyActivities';
 import { formatT } from '../../i18n/formatT';
+import { NeedsBarChart } from '../charts/NeedsBarChart';
 const DONUT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316', '#6B7280'];
 const NEED_BAR_COLORS = ['#1d4ed8', '#4338ca', '#0f766e', '#b45309', '#be123c', '#334155', '#7c3aed', '#0284c7'];
 
@@ -112,6 +113,13 @@ export default function NetworkRadarSection({
 
   const totalMembersCount = profilesForStats.length;
 
+  const activeMembers30d = useMemo(() => {
+    const since = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const withLastSeen = profilesForStats.filter((p) => typeof (p as any)?.lastSeen === 'number');
+    if (withLastSeen.length === 0) return totalMembersCount;
+    return withLastSeen.filter((p) => Number((p as any).lastSeen) >= since).length;
+  }, [profilesForStats, totalMembersCount]);
+
   const newMembersLast7d = useMemo(() => {
     const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
     return profilesForStats.filter((p) => {
@@ -199,6 +207,22 @@ export default function NetworkRadarSection({
     const href = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(href, '_blank', 'noopener,noreferrer');
   }, [shareNeedsText]);
+
+  const needsData = useMemo(() => {
+    return needsBarData.map((d) => ({
+      key: d.id,
+      label: d.label,
+      count: d.count,
+    }));
+  }, [needsBarData]);
+
+  const topNeedsForAction = useMemo(() => needsBarData.slice(0, 3), [needsBarData]);
+
+  const actionHintForNeedRank = (rank: number): string => {
+    if (rank === 0) return 'Catégorie la plus active actuellement.';
+    if (rank === 1) return 'Forte opportunité pour les profils orientés développement commercial.';
+    return 'Demandes à fort potentiel relationnel et stratégique.';
+  };
 
   const needsBarRowHeight = useMemo(() => {
     const lineH = 10;
@@ -288,92 +312,197 @@ export default function NetworkRadarSection({
         : 'Agrandir le graphique';
 
   return (
-    <div className={cn('min-w-0 space-y-4 rounded-xl border border-slate-200 bg-slate-50 md:space-y-4', cardPad)}>
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight text-slate-800 break-words hyphens-auto sm:text-xl">
-            <span className="mr-1.5" aria-hidden>
-              📡
-            </span>
-            {t('radarTitle')}
-          </h2>
-          <p className="mt-1 text-[13px] leading-snug text-slate-500 break-words hyphens-auto">
-            {t('radarSubtitle')}
-          </p>
-        </div>
-        {!radarLocked && (
-          <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-            </span>
-            <span className="max-w-[min(100%,12rem)] text-right text-[11px] font-medium leading-snug text-slate-500 break-words sm:max-w-none sm:text-left">
-              {t('radarLive')}
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="relative min-h-[240px]">
-        <div
-          className={
-            radarLocked
-              ? 'pointer-events-none select-none blur-lg saturate-50 transition-[filter]'
-              : undefined
-          }
-          aria-hidden={radarLocked}
-        >
-      {/* KPI bar */}
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 shadow-sm md:grid-cols-3">
-        {(
-          [
-            {
-              icon: Users,
-              value: totalMembersCount,
-              labelKey: 'kpiMembers',
-              subLabel: formatT(t, 'radarMembersThisWeek', { count: newMembersLast7d }),
-            },
-            { icon: Target, value: structuredNeedsTotal, labelKey: 'kpiNeeds' },
-            { icon: Factory, value: sectorCount, labelKey: 'kpiSectors' },
-          ] as const
-        ).map(({ icon: Icon, value, labelKey, subLabel }) => (
-          <div
-            key={labelKey}
-            className="flex min-w-0 flex-col items-center justify-center bg-white px-2 py-4 text-center md:px-3 md:py-5"
-          >
-            <Icon className="h-6 w-6 shrink-0 text-slate-500" strokeWidth={1.75} aria-hidden />
-            <p className="mt-2 text-[32px] font-semibold leading-none text-slate-800">{value}</p>
-            <p className="mt-1 max-w-full hyphens-auto text-[10px] font-normal uppercase leading-tight tracking-wide text-slate-500 break-words sm:text-xs">
-              {t(labelKey)}
-            </p>
-            {subLabel ? (
-              <p className="mt-1 text-[11px] font-medium leading-tight text-slate-400">{subLabel}</p>
+    <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
+      <div className="space-y-6 md:space-y-8">
+        {/* Hero */}
+        <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-teal-50/40 p-6 shadow-sm md:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            {!radarLocked ? (
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Mis à jour en temps réel
+              </div>
             ) : null}
-          </div>
-        ))}
-      </div>
 
-      {/* Charts grid */}
-      <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
-        {/* Donut — Secteurs */}
-        <div className={cn('relative rounded-xl border border-slate-200 bg-white shadow-sm', cardPad)}>
-          <button
-            type="button"
-            onClick={() => setActiveRadarChart('sectors')}
-            className="absolute right-3 top-3 z-10 rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:right-4 sm:top-4"
-            aria-label={expandChartLabel}
-            title={expandChartLabel}
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 md:text-4xl">
+              Radar des opportunités du réseau
+            </h1>
+
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
+              Visualisez les besoins les plus actifs, les signaux clés de la communauté et les opportunités qui peuvent
+              correspondre à votre profil.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => document.getElementById('radar-opportunities')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+            >
+              Voir les besoins à fort potentiel
+            </button>
+            <button
+              type="button"
+              onClick={() => (radarLocked ? onUnlockRadar() : onCreateProfile())}
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              Compléter mon profil
+            </button>
+          </div>
+        </div>
+        </section>
+
+        <div className="relative">
+          <div
+            className={
+              radarLocked
+                ? 'pointer-events-none select-none blur-lg saturate-50 transition-[filter]'
+                : undefined
+            }
+            aria-hidden={radarLocked}
           >
-            <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
-          </button>
-          <h3 className="mb-4 pr-10 text-[15px] font-semibold leading-snug text-slate-800 break-words">
-            {t('chartSectorsTitle')}
-          </h3>
-          {sectorPieData.length === 0 ? (
-            <p className="text-[13px] text-slate-500">{t('chartSectorsEmpty')}</p>
-          ) : (
-            <>
+            {/* KPI */}
+            <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {(
+              [
+                {
+                  label: 'Membres actifs',
+                  value: activeMembers30d,
+                  detail: 'dans le réseau',
+                },
+                {
+                  label: 'Besoins exprimés',
+                  value: structuredNeedsTotal,
+                  detail: 'opportunités identifiées',
+                },
+                {
+                  label: 'Secteurs représentés',
+                  value: sectorCount,
+                  detail: 'écosystème diversifié',
+                },
+                {
+                  label: 'Nouveaux cette semaine',
+                  value: newMembersLast7d,
+                  detail: 'croissance récente',
+                },
+              ] as const
+            ).map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+                <div className="mt-3 flex items-end gap-2">
+                  <span className="text-3xl font-semibold tracking-tight text-slate-900">
+                    {stat.value}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-slate-500">{stat.detail}</p>
+              </div>
+            ))}
+            </section>
+
+            {/* Main zone */}
+            <section
+              id="radar-opportunities"
+              className="grid scroll-mt-6 grid-cols-1 gap-6 xl:grid-cols-[1.65fr_0.95fr]"
+            >
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+                      Opportunités les plus recherchées
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      Les besoins les plus exprimés actuellement dans la communauté.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveRadarChart('needs')}
+                    className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                    title={expandChartLabel}
+                  >
+                    Voir tout
+                  </button>
+                </div>
+
+                <NeedsBarChart data={needsData} compact={false} />
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+                <h3 className="text-base font-semibold text-slate-900">Où agir maintenant</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Les catégories ci-contre représentent les demandes les plus visibles du moment.
+                </p>
+
+                <div className="mt-5 space-y-3">
+                  {topNeedsForAction.length === 0 ? (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                      <p className="text-sm text-slate-600">—</p>
+                    </div>
+                  ) : (
+                    topNeedsForAction.map((row, idx) => (
+                      <div key={row.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900">{row.label}</p>
+                            <p className="mt-1 text-sm text-slate-500">{actionHintForNeedRank(idx)}</p>
+                          </div>
+                          <div className="flex shrink-0 flex-col items-end gap-2">
+                            <span className="rounded-full bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                              {row.count}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => onNeedClick(row.id)}
+                                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                              >
+                                Voir
+                              </button>
+                              <button
+                                type="button"
+                                onClick={onShareNeedsWhatsApp}
+                                className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                                title="Partager sur WhatsApp"
+                              >
+                                Partager
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* Secondary zone */}
+            <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              {/* NETWORK TRENDS */}
+              <div className="relative rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setActiveRadarChart('sectors')}
+              className="absolute right-3 top-3 z-10 rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:right-4 sm:top-4"
+              aria-label={expandChartLabel}
+              title={expandChartLabel}
+            >
+              <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </button>
+            <h3 className="mb-1 pr-10 text-base font-semibold leading-snug text-slate-900 break-words">
+              Où le réseau est le plus présent
+            </h3>
+            <p className="mb-4 text-sm leading-6 text-slate-600">
+              Vue simplifiée secteurs / activité
+            </p>
+            {sectorPieData.length === 0 ? (
+              <p className="text-sm text-slate-500">{t('chartSectorsEmpty')}</p>
+            ) : (
               <div className="flex flex-col items-stretch gap-6 md:flex-row md:items-center">
                 <div className="relative mx-auto h-[200px] w-[200px] shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
@@ -389,7 +518,12 @@ export default function NetworkRadarSection({
                         paddingAngle={sectorPieData.length > 1 ? 2 : 0}
                       >
                         {sectorPieData.map((_, idx) => (
-                          <Cell key={idx} fill={DONUT_COLORS[idx % DONUT_COLORS.length]} stroke="#fff" strokeWidth={1} />
+                          <Cell
+                            key={idx}
+                            fill={DONUT_COLORS[idx % DONUT_COLORS.length]}
+                            stroke="#fff"
+                            strokeWidth={1}
+                          />
                         ))}
                       </Pie>
                       <Tooltip
@@ -427,107 +561,28 @@ export default function NetworkRadarSection({
                   ))}
                 </ul>
               </div>
-              {sectorPieData.length === 1 && (
-                <p className="mt-4 text-center text-[12px] text-slate-500">{t('chartSectorsEmpty')}</p>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Bar — Top besoins */}
-        <div className={cn('relative rounded-xl border border-slate-200 bg-white shadow-sm', cardPad)}>
-          <button
-            type="button"
-            onClick={() => setActiveRadarChart('needs')}
-            className="absolute right-3 top-3 z-10 rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:right-4 sm:top-4"
-            aria-label={expandChartLabel}
-            title={expandChartLabel}
-          >
-            <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
-          </button>
-          {!radarLocked && needsBarData.length > 0 && (
-            <button
-              type="button"
-              onClick={onShareNeedsWhatsApp}
-              className="absolute right-12 top-3 z-10 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 sm:right-14 sm:top-4"
-              title="Partager sur WhatsApp"
-            >
-              <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
-              Partager
-            </button>
-          )}
-          <h3 className="mb-4 pr-10 text-[15px] font-semibold leading-snug text-slate-800 break-words">
-            {t('chartNeedsTitle')}
-          </h3>
-          {needsBarData.length === 0 ? (
-            <p className="text-[13px] text-slate-500">{t('typedNeedsRadarEmpty')}</p>
-          ) : (
-            <div
-              className="min-w-0 w-full overflow-x-auto"
-              style={{ height: Math.min(380, 28 + needsBarData.length * needsBarRowHeight) }}
-            >
-              <div className="h-full w-full min-w-0">
-                <ResponsiveContainer width="100%" height="100%" debounce={150}>
-                  <BarChart
-                    layout="vertical"
-                    data={needsBarData}
-                    margin={{ top: 6, right: 40, left: 10, bottom: 6 }}
-                  barCategoryGap={10}
-                >
-                  <XAxis type="number" hide domain={[0, maxNeedCount]} />
-                  <YAxis
-                    type="category"
-                    dataKey="label"
-                    width={192}
-                    tick={renderNeedsYAxisTickSmall}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    formatter={(v: number) => [v, t('chartNeedsTitle')]}
-                    labelFormatter={(_, payload) => {
-                      const p = payload?.[0]?.payload as { label?: string };
-                      return p?.label ?? '';
-                    }}
-                    contentStyle={{
-                      borderRadius: 8,
-                      border: '1px solid rgb(226 232 240)',
-                      fontSize: 11,
-                    }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    radius={[0, 4, 4, 0]}
-                    maxBarSize={26}
-                    isAnimationActive={false}
-                    cursor="pointer"
-                    onClick={(data: { payload?: { id?: string } }) => {
-                      const id = data?.payload?.id;
-                      if (id) onNeedClick(id);
-                    }}
-                  >
-                    {needsBarData.map((_, i) => (
-                      <Cell key={i} fill={NEED_BAR_COLORS[i % NEED_BAR_COLORS.length]} fillOpacity={0.95} />
-                    ))}
-                    <LabelList dataKey="count" position="right" fill="#64748b" fontSize={10} fontWeight={600} />
-                  </Bar>
-                </BarChart>
-                </ResponsiveContainer>
+            )}
               </div>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Passions */}
-      <div className={cn('rounded-xl border border-slate-200 bg-white shadow-sm', cardPad)}>
-        <h3 className="mb-4 text-[15px] font-semibold leading-snug text-slate-800 break-words">
-          {t('chartPassionsTitle')}
-        </h3>
-        {passionEntries.length === 0 ? (
-          <p className="text-[13px] text-slate-500">{t('chartPassionsEmpty')}</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
+              {/* PERSONALIZED OPPORTUNITIES (placeholder UI) */}
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+                <h3 className="text-base font-semibold text-slate-900">Le réseau a besoin de vous</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Suggestions personnalisées à partir de votre profil (secteur, besoins, passions).
+                </p>
+                <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-600">
+                  Créez votre profil pour recevoir des mises en relation ciblées.
+                </div>
+              </div>
+            </section>
+
+            {/* Relational zone */}
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-base font-semibold text-slate-900">Affinités pour briser la glace</h3>
+              {passionEntries.length === 0 ? (
+                <p className="mt-2 text-sm text-slate-500">{t('chartPassionsEmpty')}</p>
+              ) : (
+                <div className="mt-4 flex flex-wrap gap-2">
             {passionEntries.map(([id, count]) => (
               <button
                 key={id}
@@ -542,9 +597,9 @@ export default function NetworkRadarSection({
                 </span>
               </button>
             ))}
-          </div>
-        )}
-      </div>
+                </div>
+              )}
+            </section>
 
       {/* Opportunités retirées du produit */}
         </div>
@@ -682,6 +737,7 @@ export default function NetworkRadarSection({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </main>
   );
 }
