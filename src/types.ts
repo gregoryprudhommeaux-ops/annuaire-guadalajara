@@ -285,6 +285,24 @@ export interface AdminEvent {
   createdByUid?: string;
 }
 
+export type EventRespondentAttendance = 'yes' | 'no' | 'maybe';
+
+/** Réponse au formulaire public /e/:slug (sans compte Firebase). */
+export interface EventRespondent {
+  id: string;
+  eventId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  whatsapp: string;
+  jobTitle: string;
+  companyName: string;
+  comments: string;
+  /** Présence prévue (pour prioriser l’orga). */
+  attendance: EventRespondentAttendance;
+  createdAt: Timestamp;
+}
+
 export interface AdminEventParticipation {
   id: string;
   eventId: string;

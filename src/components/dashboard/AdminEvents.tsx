@@ -13,7 +13,16 @@ import {
   where,
 } from 'firebase/firestore';
 import { Copy, Plus, Save, Search, Trash2, X } from 'lucide-react';
-import type { Language, AdminEvent, AdminEventParticipation, EventParticipationStatus, EventStatusSource, UserProfile } from '@/types';
+import type {
+  Language,
+  AdminEvent,
+  AdminEventParticipation,
+  EventParticipationStatus,
+  EventRespondent,
+  EventRespondentAttendance,
+  EventStatusSource,
+  UserProfile,
+} from '@/types';
 import { db } from '@/firebase';
 import { PASSIONS_CATEGORIES, getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/passionConfig';
 import { profileDistinctActivityCategories } from '@/lib/companyActivities';
@@ -65,6 +74,12 @@ function statusBadge(status: EventParticipationStatus) {
   return 'bg-stone-100 text-stone-700 border-stone-200';
 }
 
+function respondentAttendanceBadge(att: EventRespondentAttendance) {
+  if (att === 'yes') return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+  if (att === 'no') return 'bg-rose-100 text-rose-800 border-rose-200';
+  return 'bg-amber-100 text-amber-900 border-amber-200';
+}
+
 async function safeCopy(text: string) {
   try {
     await navigator.clipboard.writeText(text);
@@ -104,12 +119,11 @@ function buildWhatsappTemplate(e: AdminEvent, url: string) {
   // Toujours en espagnol mexicain pour les invitations (même si l’admin UI est en FR/EN).
   const when = e.startsAt ? fmtDateTime(e.startsAt, 'es') : '';
   const where = e.address?.trim() || '';
-  const parts = [
+  return [
     `¡Hola! Invitación: ${title}${when ? ` — ${when}` : ''}${where ? ` @ ${where}` : ''}.`,
     `Confirmación/rechazo + perfil en el directorio: ${url}`,
     `(la info se integrará al directorio para matching y próximos eventos)`,
-  ];
-  return parts.join('\n');
+  ].join('\n');
 }
 
 function mapDoc<T extends Record<string, unknown>>(id: string, data: T): T & { id: string } {
@@ -152,6 +166,10 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
   const [participantsLoading, setParticipantsLoading] = useState(false);
   const [participantsError, setParticipantsError] = useState<string | null>(null);
   const [participantsFilter, setParticipantsFilter] = useState<EventParticipationStatus>('invited');
+
+  const [respondents, setRespondents] = useState<EventRespondent[]>([]);
+  const [respondentsLoading, setRespondentsLoading] = useState(false);
+  const [respondentsError, setRespondentsError] = useState<string | null>(null);
 
   const [memberIndex, setMemberIndex] = useState<UserProfile[]>([]);
   const [memberIndexLoading, setMemberIndexLoading] = useState(false);
@@ -248,6 +266,36 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       }
     }
     void loadParticipants();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeEventId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadPublic() {
+      if (!activeEventId) {
+        setRespondents([]);
+        setRespondentsError(null);
+        return;
+      }
+      setRespondentsLoading(true);
+      setRespondentsError(null);
+      try {
+        const q = query(collection(db, 'event_respondents'), where('eventId', '==', activeEventId), limit(500));
+        const snap = await getDocs(q);
+        const rows = snap.docs.map((d) =>
+          mapDoc(d.id, d.data() as Record<string, unknown>)
+        ) as unknown as EventRespondent[];
+        rows.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+        if (!cancelled) setRespondents(rows);
+      } catch (e) {
+        if (!cancelled) setRespondentsError(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (!cancelled) setRespondentsLoading(false);
+      }
+    }
+    void loadPublic();
     return () => {
       cancelled = true;
     };
@@ -509,6 +557,10 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
         query(collection(db, 'event_participations'), where('eventId', '==', activeEvent.id))
       );
       await Promise.all(partSnap.docs.map((d) => deleteDoc(d.ref)));
+      const pubSnap = await getDocs(
+        query(collection(db, 'event_respondents'), where('eventId', '==', activeEvent.id))
+      );
+      await Promise.all(pubSnap.docs.map((d) => deleteDoc(d.ref)));
       await deleteDoc(doc(db, 'events', activeEvent.id));
       const removedId = activeEvent.id;
       setEvents((prev) => prev.filter((e) => e.id !== removedId));
@@ -539,7 +591,18 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       updatedAt: Timestamp.now(),
       ...(adminUid ? { createdByUid: adminUid } : {}),
     };
-  }, [titleDraft, introDraft, addressDraft, startsAtDateDraft, startsAtTimeDraft, capacityDraft, statusDraft, editId, lang, adminUid]);
+  }, [
+    titleDraft,
+    introDraft,
+    addressDraft,
+    startsAtDateDraft,
+    startsAtTimeDraft,
+    capacityDraft,
+    statusDraft,
+    editId,
+    lang,
+    adminUid,
+  ]);
 
   const previewDraftUrl = useMemo(() => eventPublicUrl(baseUrl, previewEventDraft.slug), [baseUrl, previewEventDraft.slug]);
 
@@ -1138,6 +1201,70 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                   {!participantsLoading && filteredParticipants.length === 0 ? (
                     <div className="p-4 text-sm text-stone-500">
                       {uiLabel(lang, 'Aucune entrée pour ce filtre.', 'No hay entradas para este filtro.', 'No entries for this filter.')}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                  {uiLabel(
+                    lang,
+                    'Répondants (formulaire public /e/…)',
+                    'Respondientes (formulario público /e/…)',
+                    'Respondents (public /e/… form)'
+                  )}
+                </p>
+                {respondentsError ? (
+                  <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+                    {respondentsError}
+                  </p>
+                ) : null}
+                {respondentsLoading ? (
+                  <p className="text-sm text-stone-500">{uiLabel(lang, 'Chargement…', 'Cargando…', 'Loading…')}</p>
+                ) : null}
+                <div className="divide-y divide-stone-100 overflow-hidden rounded-xl border border-stone-200">
+                  {respondents.map((r) => (
+                    <div key={r.id} className="p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-stone-900">
+                          {r.firstName} {r.lastName}
+                        </p>
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${respondentAttendanceBadge(r.attendance)}`}
+                        >
+                          {r.attendance === 'yes'
+                            ? uiLabel(lang, 'Présent', 'Presente', 'Attending')
+                            : r.attendance === 'no'
+                              ? uiLabel(lang, 'Absent', 'Ausente', 'Not attending')
+                              : uiLabel(lang, 'Peut-être', 'Quizás', 'Maybe')}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-stone-600">
+                        {r.email} · WhatsApp {r.whatsapp}
+                      </p>
+                      <p className="text-xs text-stone-600">
+                        {r.jobTitle} · {r.companyName}
+                      </p>
+                      {r.comments?.trim() ? (
+                        <p className="mt-2 whitespace-pre-wrap text-xs text-stone-700">
+                          <span className="font-semibold text-stone-500">
+                            {uiLabel(lang, 'Commentaire :', 'Comentario:', 'Comment:')}
+                          </span>{' '}
+                          {r.comments}
+                        </p>
+                      ) : null}
+                      <p className="mt-1 text-[11px] text-stone-400">{fmtDateTime(r.createdAt, lang)}</p>
+                    </div>
+                  ))}
+                  {!respondentsLoading && respondents.length === 0 ? (
+                    <div className="p-4 text-sm text-stone-500">
+                      {uiLabel(
+                        lang,
+                        'Aucun répondant pour l’instant.',
+                        'Aún no hay respondientes.',
+                        'No respondents yet.'
+                      )}
                     </div>
                   ) : null}
                 </div>

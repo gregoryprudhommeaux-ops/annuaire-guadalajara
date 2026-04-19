@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { format, startOfDay, subDays } from 'date-fns';
-import { fr as frLocale } from 'date-fns/locale';
+import { fr as frLocale, es as esLocale, enUS } from 'date-fns/locale';
+import type { Language } from '@/types';
 
 export type TimePeriod = 'today' | '7d' | '30d' | '90d' | 'all';
 
@@ -9,18 +10,27 @@ export interface TimePeriodContextType {
   setPeriod: (p: TimePeriod) => void;
   /** null => all time */
   getDateFilter: () => Date | null;
-  /** Ex: "15 mars 2026 → 14 avril 2026" */
+  /** Plage affichée selon la locale UI (FR / ES / EN). */
   getPeriodLabel: () => string;
 }
 
 const Ctx = createContext<TimePeriodContextType | null>(null);
 
+function dateFnsLocaleForUi(lang: Language | undefined) {
+  if (lang === 'es') return esLocale;
+  if (lang === 'en') return enUS;
+  return frLocale;
+}
+
 export function TimePeriodProvider({
   children,
   defaultPeriod = '30d',
+  uiLang,
 }: {
   children: React.ReactNode;
   defaultPeriod?: TimePeriod;
+  /** Langue de l’interface pour les libellés de dates (pills admin). */
+  uiLang?: Language;
 }) {
   const [period, setPeriod] = useState<TimePeriod>(defaultPeriod);
 
@@ -34,11 +44,12 @@ export function TimePeriodProvider({
   }, [period]);
 
   const getPeriodLabel = useCallback((): string => {
+    const loc = dateFnsLocaleForUi(uiLang);
     const now = new Date();
     const start = getDateFilter();
-    if (!start) return format(now, 'd MMMM yyyy', { locale: frLocale });
-    return `${format(start, 'd MMMM yyyy', { locale: frLocale })} → ${format(now, 'd MMMM yyyy', { locale: frLocale })}`;
-  }, [getDateFilter]);
+    if (!start) return format(now, 'd MMMM yyyy', { locale: loc });
+    return `${format(start, 'd MMMM yyyy', { locale: loc })} → ${format(now, 'd MMMM yyyy', { locale: loc })}`;
+  }, [getDateFilter, uiLang]);
 
   const value = useMemo<TimePeriodContextType>(
     () => ({ period, setPeriod, getDateFilter, getPeriodLabel }),

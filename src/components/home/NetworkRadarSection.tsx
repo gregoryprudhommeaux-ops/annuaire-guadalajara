@@ -195,12 +195,12 @@ export default function NetworkRadarSection({
       typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
     const url = origin || 'https://';
     return (
-      "Voici les besoins les plus demandés actuellement :\n" +
+      `${t('radarShareNeedsIntro')}\n` +
       (list ? `${list}\n\n` : '\n') +
-      "Si vous pouvez y répondre, rejoignez la plateforme !\n" +
+      `${t('radarShareNeedsOutro')}\n` +
       url
     );
-  }, [needsBarData]);
+  }, [needsBarData, t]);
 
   const onShareNeedsWhatsApp = useCallback(() => {
     const text = shareNeedsText.trim();
@@ -218,11 +218,14 @@ export default function NetworkRadarSection({
 
   const topNeedsForAction = useMemo(() => needsBarData.slice(0, 3), [needsBarData]);
 
-  const actionHintForNeedRank = (rank: number): string => {
-    if (rank === 0) return 'Catégorie la plus active actuellement.';
-    if (rank === 1) return 'Forte opportunité pour les profils orientés développement commercial.';
-    return 'Demandes à fort potentiel relationnel et stratégique.';
-  };
+  const actionHintForNeedRank = useCallback(
+    (rank: number): string => {
+      if (rank === 0) return t('radarActionHint0');
+      if (rank === 1) return t('radarActionHint1');
+      return t('radarActionHint2');
+    },
+    [t]
+  );
 
   const needsBarRowHeight = useMemo(() => {
     const lineH = 10;
@@ -304,12 +307,40 @@ export default function NetworkRadarSection({
 
   // Opportunités supprimées du produit : KPI reste à 0.
 
-  const expandChartLabel =
-    lang === 'en'
-      ? 'Open chart in large view'
-      : lang === 'es'
-        ? 'Ampliar el gráfico'
-        : 'Agrandir le graphique';
+  const expandChartLabel = t('chartExpandLarge');
+
+  const kpiStats = useMemo(
+    () =>
+      [
+        {
+          label: t('radarKpiActiveMembers'),
+          value: activeMembers30d,
+          detail: t('radarKpiActiveMembersDetail'),
+        },
+        {
+          label: t('radarKpiNeedsExpressed'),
+          value: structuredNeedsTotal,
+          detail: t('radarKpiNeedsDetail'),
+        },
+        {
+          label: t('radarKpiSectorsRepresented'),
+          value: sectorCount,
+          detail: t('radarKpiSectorsDetail'),
+        },
+        {
+          label: t('radarKpiNewThisWeek'),
+          value: newMembersLast7d,
+          detail: t('radarKpiNewDetail'),
+        },
+      ] as const,
+    [
+      t,
+      activeMembers30d,
+      structuredNeedsTotal,
+      sectorCount,
+      newMembersLast7d,
+    ]
+  );
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
@@ -321,18 +352,15 @@ export default function NetworkRadarSection({
             {!radarLocked ? (
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Mis à jour en temps réel
+                {t('radarLive')}
               </div>
             ) : null}
 
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-              Radar des opportunités du réseau
+              {t('radarPageHeroTitle')}
             </h1>
 
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Visualisez les besoins les plus actifs, les signaux clés de la communauté et les opportunités qui peuvent
-              correspondre à votre profil.
-            </p>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{t('radarPageHeroLead')}</p>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -341,14 +369,14 @@ export default function NetworkRadarSection({
               onClick={() => document.getElementById('radar-opportunities')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
             >
-              Voir les besoins à fort potentiel
+              {t('radarCtaHighPotential')}
             </button>
             <button
               type="button"
               onClick={() => (radarLocked ? onUnlockRadar() : onCreateProfile())}
               className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Compléter mon profil
+              {t('radarCtaCompleteProfileShort')}
             </button>
           </div>
         </div>
@@ -365,30 +393,7 @@ export default function NetworkRadarSection({
           >
             {/* KPI */}
             <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {(
-              [
-                {
-                  label: 'Membres actifs',
-                  value: activeMembers30d,
-                  detail: 'dans le réseau',
-                },
-                {
-                  label: 'Besoins exprimés',
-                  value: structuredNeedsTotal,
-                  detail: 'opportunités identifiées',
-                },
-                {
-                  label: 'Secteurs représentés',
-                  value: sectorCount,
-                  detail: 'écosystème diversifié',
-                },
-                {
-                  label: 'Nouveaux cette semaine',
-                  value: newMembersLast7d,
-                  detail: 'croissance récente',
-                },
-              ] as const
-            ).map((stat) => (
+            {kpiStats.map((stat) => (
               <div
                 key={stat.label}
                 className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
@@ -410,11 +415,9 @@ export default function NetworkRadarSection({
                 <div className="mb-5 flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-                      Opportunités les plus recherchées
+                      {t('radarOpportunitiesHeading')}
                     </h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      Les besoins les plus exprimés actuellement dans la communauté.
-                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{t('radarOpportunitiesSub')}</p>
                   </div>
                   <button
                     type="button"
@@ -422,7 +425,7 @@ export default function NetworkRadarSection({
                     className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
                     title={expandChartLabel}
                   >
-                    Voir tout
+                    {t('radarSeeAll')}
                   </button>
                 </div>
 
@@ -434,10 +437,8 @@ export default function NetworkRadarSection({
             <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div className="flex min-h-0">
                 <div className="flex w-full flex-1 flex-col rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-                  <h3 className="text-base font-semibold text-slate-900">Où agir maintenant</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Les catégories ci-dessous représentent les demandes les plus visibles du moment.
-                  </p>
+                  <h3 className="text-base font-semibold text-slate-900">{t('radarWhereToActTitle')}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{t('radarWhereToActLead')}</p>
 
                   <div className="mt-5 flex flex-1 flex-col space-y-3">
                     {topNeedsForAction.length === 0 ? (
@@ -462,15 +463,15 @@ export default function NetworkRadarSection({
                                   onClick={() => onNeedClick(row.id)}
                                   className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
                                 >
-                                  Voir
+                                  {t('radarView')}
                                 </button>
                                 <button
                                   type="button"
                                   onClick={onShareNeedsWhatsApp}
                                   className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
-                                  title="Partager sur WhatsApp"
+                                  title={t('radarShareWhatsAppTitle')}
                                 >
-                                  Partager
+                                  {t('radarShare')}
                                 </button>
                               </div>
                             </div>
@@ -494,11 +495,9 @@ export default function NetworkRadarSection({
                     <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
                   </button>
                   <h3 className="mb-1 pr-10 text-base font-semibold leading-snug text-slate-900 break-words">
-                    Où le réseau est le plus présent
+                    {t('radarSectorsPresenceTitle')}
                   </h3>
-                  <p className="mb-4 text-sm leading-6 text-slate-600">
-                    Vue simplifiée secteurs / activité
-                  </p>
+                  <p className="mb-4 text-sm leading-6 text-slate-600">{t('radarSectorsPresenceLead')}</p>
                   {sectorPieData.length === 0 ? (
                     <p className="text-sm text-slate-500">{t('chartSectorsEmpty')}</p>
                   ) : (
@@ -571,19 +570,17 @@ export default function NetworkRadarSection({
             <section>
               {/* PERSONALIZED OPPORTUNITIES (placeholder UI) */}
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-                <h3 className="text-base font-semibold text-slate-900">Le réseau a besoin de vous</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Suggestions personnalisées à partir de votre profil (secteur, besoins, passions).
-                </p>
+                <h3 className="text-base font-semibold text-slate-900">{t('radarNetworkNeedsYouTitle')}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{t('radarNetworkNeedsYouLead')}</p>
                 <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-600">
-                  Créez votre profil pour recevoir des mises en relation ciblées.
+                  {t('radarNetworkNeedsYouPlaceholder')}
                 </div>
               </div>
             </section>
 
             {/* Relational zone */}
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-base font-semibold text-slate-900">Affinités pour briser la glace</h3>
+              <h3 className="text-base font-semibold text-slate-900">{t('radarIcebreakerTitle')}</h3>
               {passionEntries.length === 0 ? (
                 <p className="mt-2 text-sm text-slate-500">{t('chartPassionsEmpty')}</p>
               ) : (
@@ -648,10 +645,10 @@ export default function NetworkRadarSection({
                     type="button"
                     onClick={onShareNeedsWhatsApp}
                     className="inline-flex items-center gap-2 rounded-md border border-stone-200 bg-white px-3 py-1.5 text-sm font-semibold text-stone-700 hover:bg-stone-50"
-                    title="Partager sur WhatsApp"
+                    title={t('radarShareWhatsAppTitle')}
                   >
                     <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden />
-                    Partager
+                    {t('radarShare')}
                   </button>
                 ) : null}
                 <button
@@ -659,7 +656,7 @@ export default function NetworkRadarSection({
                   onClick={() => setActiveRadarChart(null)}
                   className="rounded-md border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
                 >
-                  Fermer
+                  {t('footerLegalClose')}
                 </button>
               </div>
             </div>

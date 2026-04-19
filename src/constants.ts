@@ -488,6 +488,40 @@ export const TRANSLATIONS: Translations = {
     es: "Las fichas del directorio solo son visibles tras iniciar sesión. Conéctate desde el inicio para ver este contenido.",
   },
   adminPanel: { fr: "Panneau Admin", es: "Panel de Admin" },
+  adminPageLead: {
+    fr: "Pilotage du réseau : croissance, qualité des profils, demandes, gaps secteurs/ville et stats d’usage.",
+    es: "Gestión de la red: crecimiento, calidad de perfiles, solicitudes, brechas sector/ciudad y estadísticas de uso.",
+  },
+  adminTimePeriodToday: { fr: "Aujourd'hui", es: "Hoy" },
+  adminTimePeriod7d: { fr: "7 jours", es: "7 días" },
+  adminTimePeriod30d: { fr: "30 jours", es: "30 días" },
+  adminTimePeriod90d: { fr: "90 jours", es: "90 días" },
+  adminTimePeriodAll: { fr: "Tout", es: "Todo" },
+  adminTimeToolbarAria: { fr: "Période", es: "Periodo" },
+  adminTimePeriodGroupAria: { fr: "Périodes", es: "Periodos" },
+  adminTimeSelectedAria: { fr: "Période sélectionnée", es: "Periodo seleccionado" },
+  adminRecentRequestsTitle: { fr: "Dernières demandes", es: "Últimas solicitudes" },
+  adminRecentRequestsLead: {
+    fr: "Dernières {{count}} demandes publiées.",
+    es: "Últimas {{count}} solicitudes publicadas.",
+  },
+  adminRequestsPrev: { fr: "Demandes précédentes", es: "Solicitudes anteriores" },
+  adminRequestsNext: { fr: "Demandes suivantes", es: "Solicitudes siguientes" },
+  adminOpen: { fr: "Ouvrir", es: "Abrir" },
+  adminNoRequests: { fr: "Aucune demande.", es: "Ninguna solicitud." },
+  adminPriorityEyebrow: { fr: "PRIORITÉ", es: "PRIORIDAD" },
+  adminUnansweredNeedsTitle: { fr: "Besoins sans réponse", es: "Necesidades sin respuesta" },
+  adminUnansweredNeedsLead: {
+    fr: "Profils avec besoins mis en avant et 0 commentaire.",
+    es: "Perfiles con necesidades destacadas y 0 comentarios.",
+  },
+  adminNoUnansweredNeeds: { fr: "Aucun besoin en attente.", es: "Ninguna necesidad pendiente." },
+  adminNeedsPrev: { fr: "Besoins précédents", es: "Necesidades anteriores" },
+  adminNeedsNext: { fr: "Besoins suivants", es: "Necesidades siguientes" },
+  adminWidgetError: {
+    fr: "Widget en erreur : {{label}}",
+    es: "Widget con error: {{label}}",
+  },
   exportData: { fr: "Exporter la base de données", es: "Exportar base de datos" },
   signature: { fr: "Produit et managé par NextStep Services", es: "Producido y gestionado por NextStep Services" },
   /** Ligne de copyright sous le © (nom du service / communauté). */
@@ -1131,6 +1165,88 @@ export const TRANSLATIONS: Translations = {
     fr: 'Traduction générée automatiquement par IA.',
     es: 'Traducción generada automáticamente por IA.',
   },
+  radarPageHeroTitle: {
+    fr: "Radar des opportunités du réseau",
+    es: "Radar de oportunidades de la red",
+  },
+  radarPageHeroLead: {
+    fr: "Visualisez les besoins les plus actifs, les signaux clés de la communauté et les opportunités qui peuvent correspondre à votre profil.",
+    es: "Visualiza las necesidades más activas, las señales clave de la comunidad y las oportunidades que pueden encajar con tu perfil.",
+  },
+  radarCtaHighPotential: {
+    fr: "Voir les besoins à fort potentiel",
+    es: "Ver necesidades de alto potencial",
+  },
+  radarCtaCompleteProfileShort: {
+    fr: "Compléter mon profil",
+    es: "Completar mi perfil",
+  },
+  radarKpiActiveMembers: { fr: "Membres actifs", es: "Miembros activos" },
+  radarKpiActiveMembersDetail: { fr: "dans le réseau", es: "en la red" },
+  radarKpiNeedsExpressed: { fr: "Besoins exprimés", es: "Necesidades expresadas" },
+  radarKpiNeedsDetail: { fr: "opportunités identifiées", es: "oportunidades identificadas" },
+  radarKpiSectorsRepresented: { fr: "Secteurs représentés", es: "Sectores representados" },
+  radarKpiSectorsDetail: { fr: "écosystème diversifié", es: "ecosistema diverso" },
+  radarKpiNewThisWeek: { fr: "Nouveaux cette semaine", es: "Nuevos esta semana" },
+  radarKpiNewDetail: { fr: "croissance récente", es: "crecimiento reciente" },
+  radarOpportunitiesHeading: {
+    fr: "Opportunités les plus recherchées",
+    es: "Oportunidades más buscadas",
+  },
+  radarOpportunitiesSub: {
+    fr: "Les besoins les plus exprimés actuellement dans la communauté.",
+    es: "Las necesidades más expresadas actualmente en la comunidad.",
+  },
+  radarSeeAll: { fr: "Voir tout", es: "Ver todo" },
+  radarWhereToActTitle: { fr: "Où agir maintenant", es: "Dónde actuar ahora" },
+  radarWhereToActLead: {
+    fr: "Les catégories ci-dessous représentent les demandes les plus visibles du moment.",
+    es: "Las categorías siguientes son las solicitudes más visibles ahora.",
+  },
+  radarView: { fr: "Voir", es: "Ver" },
+  radarShare: { fr: "Partager", es: "Compartir" },
+  radarShareWhatsAppTitle: { fr: "Partager sur WhatsApp", es: "Compartir en WhatsApp" },
+  radarSectorsPresenceTitle: {
+    fr: "Où le réseau est le plus présent",
+    es: "Dónde la red está más presente",
+  },
+  radarSectorsPresenceLead: {
+    fr: "Vue simplifiée secteurs / activité",
+    es: "Vista simplificada sectores / actividad",
+  },
+  radarNetworkNeedsYouTitle: { fr: "Le réseau a besoin de vous", es: "La red te necesita" },
+  radarNetworkNeedsYouLead: {
+    fr: "Suggestions personnalisées à partir de votre profil (secteur, besoins, passions).",
+    es: "Sugerencias personalizadas según tu perfil (sector, necesidades, pasiones).",
+  },
+  radarNetworkNeedsYouPlaceholder: {
+    fr: "Créez votre profil pour recevoir des mises en relation ciblées.",
+    es: "Crea tu perfil para recibir conexiones dirigidas.",
+  },
+  radarIcebreakerTitle: {
+    fr: "Affinités pour briser la glace",
+    es: "Afinidades para romper el hielo",
+  },
+  radarShareNeedsIntro: {
+    fr: "Voici les besoins les plus demandés actuellement :",
+    es: "Estas son las necesidades más solicitadas ahora:",
+  },
+  radarShareNeedsOutro: {
+    fr: "Si vous pouvez y répondre, rejoignez la plateforme !",
+    es: "Si puedes responder, ¡únete a la plataforma!",
+  },
+  radarActionHint0: {
+    fr: "Catégorie la plus active actuellement.",
+    es: "Categoría más activa ahora.",
+  },
+  radarActionHint1: {
+    fr: "Forte opportunité pour les profils orientés développement commercial.",
+    es: "Gran oportunidad para perfiles de desarrollo comercial.",
+  },
+  radarActionHint2: {
+    fr: "Demandes à fort potentiel relationnel et stratégique.",
+    es: "Solicitudes con alto potencial relacional y estratégico.",
+  },
   radar: { fr: "Radar Guadalajara", es: "Radar Guadalajara" },
   radarTitle: {
     fr: "Radar du réseau",
@@ -1156,6 +1272,7 @@ export const TRANSLATIONS: Translations = {
   },
   kpiNeeds: { fr: "Besoins", es: "Necesidades" },
   kpiSectors: { fr: "Secteurs", es: "Sectores" },
+  chartExpandLarge: { fr: "Agrandir le graphique", es: "Ampliar el gráfico" },
   chartSectorsTitle: { fr: "Secteurs représentés", es: "Sectores representados" },
   chartSectorsEmpty: {
     fr: "Le graphique s'enrichira avec de nouveaux membres.",

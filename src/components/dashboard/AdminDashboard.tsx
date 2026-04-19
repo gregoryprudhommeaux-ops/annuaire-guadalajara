@@ -35,8 +35,15 @@ import { NeedsBarChart } from '@/components/charts/NeedsBarChart';
 import { aggregateNeedsFromMembers } from '@/lib/needs';
 import { NEED_CATEGORY_LABELS } from '@/lib/needLabels';
 import { NEED_OPTION_VALUE_SET, sanitizeHighlightedNeeds } from '@/needOptions';
+import {
+  getAdminDashboardCopy,
+  adminScatterTooltipLine,
+  adminActivationSuggestion,
+  adminAffinityViewMembers,
+  adminPluralProfiles,
+} from '@/lib/adminDashboardLocale';
 
-type TFn = (key: string) => string;
+type TFn = (key: string, params?: Record<string, string | number>) => string;
 
 type AdminDashboardProps = {
   lang: Language;
@@ -88,12 +95,14 @@ function scatterJitter(id: string): { dx: number; dy: number } {
   return { dx: (u - 0.5) * 0.42, dy: (v - 0.5) * 0.42 };
 }
 
-function AttentionScatterTooltip({
+function ScatterTooltipBody({
   active,
   payload,
+  lang,
 }: {
   active?: boolean;
   payload?: Array<{ payload?: { name: string; views: number; clicks: number } }>;
+  lang: Language;
 }) {
   if (!active || !payload?.length) return null;
   const p = payload[0]?.payload;
@@ -102,7 +111,7 @@ function AttentionScatterTooltip({
     <div className="admin-scatter-tooltip rounded-lg border border-stone-200 bg-white px-3 py-2 text-left shadow-lg">
       <p className="text-[13px] font-semibold leading-snug text-stone-900">{p.name}</p>
       <p className="mt-1 text-[11px] tabular-nums text-stone-600">
-        {p.views} vue{p.views > 1 ? 's' : ''} · {p.clicks} contact{p.clicks > 1 ? 's' : ''}
+        {adminScatterTooltipLine(p.views, p.clicks, lang)}
       </p>
     </div>
   );
@@ -256,23 +265,16 @@ function scrollAdminSectionIntoView(id: string) {
   });
 }
 
-function activationSuggestion(row: { members: number; passionId: string; sector: string }, rankIndex: number): string {
-  if (row.members >= 6) return 'Afterwork transversal (gros potentiel)';
-  if (row.members >= 4) return 'Rencontres ciblées (petit groupe)';
-  if (row.members >= 2) return rankIndex === 0 ? 'Mise en relation pertinente' : 'Introduction ciblée';
-  return 'Signal faible — à surveiller';
-}
-
 export default function AdminDashboard(props: AdminDashboardProps) {
   return <AdminDashboardInner {...props} />;
 }
 
 class MiniErrorBoundary extends React.Component<
-  { children: React.ReactNode; label: string },
+  { children: React.ReactNode; label: string; t: TFn },
   { hasError: boolean; msg: string }
 > {
   // See note in `src/App.tsx` SectionErrorBoundary.
-  declare props: { children: React.ReactNode; label: string };
+  declare props: { children: React.ReactNode; label: string; t: TFn };
   declare setState: (s: Partial<{ hasError: boolean; msg: string }>) => void;
   state: { hasError: boolean; msg: string } = { hasError: false, msg: '' };
   static getDerivedStateFromError() {
@@ -287,7 +289,7 @@ class MiniErrorBoundary extends React.Component<
     if (!this.state.hasError) return this.props.children;
     return (
       <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
-        <p className="font-semibold">Widget en erreur: {this.props.label}</p>
+        <p className="font-semibold">{this.props.t('adminWidgetError', { label: this.props.label })}</p>
         {this.state.msg ? <p className="mt-1 text-xs text-rose-800">{this.state.msg}</p> : null}
       </div>
     );
@@ -295,6 +297,7 @@ class MiniErrorBoundary extends React.Component<
 }
 
 function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight }: AdminDashboardProps) {
+  const ad = useMemo(() => getAdminDashboardCopy(lang), [lang]);
   const [insightTab, setInsightTab] = useState<AdminInsightTab>('overview');
   const { period, setPeriod } = useTimePeriod();
   const [activeChart, setActiveChart] = useState<
@@ -307,7 +310,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     | 'clicks'
   >(null);
   const stats = useAdminStats(period as PeriodKey);
-  const loadingLabel = lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
+  const loadingLabel = t('loading');
   const [pickedCross, setPickedCross] = useState<CrossPick | null>(null);
   const [crossDimension, setCrossDimension] = useState<'sector' | 'poste' | 'industrie'>('sector');
   const [affinityExplore, setAffinityExplore] = useState<AffinityExploreKey>('detail');
@@ -378,10 +381,13 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     () => Object.entries(stats.profilesByStatus).map(([name, value]) => ({ name, value })),
     [stats.profilesByStatus]
   );
-  const byTypeData = [
-    { name: 'Entreprise', value: stats.profilesByType.entreprise },
-    { name: 'Membre', value: stats.profilesByType.membre },
-  ];
+  const byTypeData = useMemo(
+    () => [
+      { name: ad.profileTypeCompany, value: stats.profilesByType.entreprise },
+      { name: ad.profileTypeMember, value: stats.profilesByType.membre },
+    ],
+    [ad.profileTypeCompany, ad.profileTypeMember, stats.profilesByType.entreprise, stats.profilesByType.membre]
+  );
   const COLORS = ['#1d4ed8', '#16a34a', '#0284c7', '#7c3aed', '#ea580c', '#334155'];
   const SECTOR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
   const sectorColorByName = useMemo(() => {
@@ -405,12 +411,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
   const xTickModalFlat = (props: { x: number; y: number; payload?: { value?: string | number } }) => (
     <AdminXAxisTickCompactFlat {...props} maxChars={18} fontSize={12} fill="#475569" />
   );
-  const expandChartLabel =
-    lang === 'en'
-      ? 'Open chart in large view'
-      : lang === 'es'
-        ? 'Ampliar el gráfico'
-        : 'Agrandir le graphique';
+  const expandChartLabel = t('chartExpandLarge');
 
   useEffect(() => {
     if (!initialTab) return;
@@ -422,7 +423,11 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     const locale = lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr';
     const passionLabel = `${getPassionEmoji(pickedCross.passionId)} ${getPassionLabel(pickedCross.passionId, locale)}`;
     const dimLabel =
-      pickedCross.dimension === 'sector' ? 'Secteur' : pickedCross.dimension === 'status' ? 'Statut' : 'Ville';
+      pickedCross.dimension === 'sector'
+        ? ad.dimSector
+        : pickedCross.dimension === 'poste'
+          ? ad.dimPoste
+          : ad.dimIndustrie;
     const title = `${passionLabel} × ${dimLabel}: ${pickedCross.dimValue}`;
     const rows = (stats.profilesForDashboard ?? []).filter((m) => {
       const hasPassion = sanitizePassionIds((m as any).passionIds).includes(pickedCross.passionId);
@@ -430,13 +435,13 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       const dimValue =
         pickedCross.dimension === 'sector'
           ? String(m.secteur ?? '').trim() || '—'
-          : pickedCross.dimension === 'status'
-            ? String((m as any).status ?? '').trim() || '—'
-            : String((m as any).city ?? '').trim() || '—';
+          : pickedCross.dimension === 'poste'
+            ? String((m as any).positionCategory ?? '').trim() || '—'
+            : String((m as any).activityCategory ?? '').trim() || '—';
       return dimValue === pickedCross.dimValue;
     });
     return { title, rows };
-  }, [pickedCross, stats.profilesForDashboard, lang]);
+  }, [pickedCross, stats.profilesForDashboard, lang, ad.dimSector, ad.dimPoste, ad.dimIndustrie]);
 
   const pickedMemberIds = useMemo(() => {
     return new Set((pickedCrossMembers.rows ?? []).map((m: any) => String(m.id)));
@@ -473,7 +478,12 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     const photoOk = Boolean(String(m.photo ?? '').trim());
     const descOk = String(m.description ?? '').trim().length >= 30;
     const ok = nameOk && sectorOk && photoOk && descOk;
-    return { label: ok ? 'Profil complet' : 'Profil à compléter', tone: ok ? 'good' : 'warn' };
+    return {
+      label: ok
+        ? pickLang('Profil complet', 'Perfil completo', 'Complete profile', lang)
+        : pickLang('Profil à compléter', 'Perfil por completar', 'Profile incomplete', lang),
+      tone: ok ? 'good' : 'warn',
+    };
   };
 
   const matchReason = (m: any): string => {
@@ -482,9 +492,10 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       pickedCross.passionId,
       lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr'
     )}`;
-    if (pickedCross.dimension === 'sector') return `${passionLabel} + secteur “${pickedCross.dimValue}”`;
-    if (pickedCross.dimension === 'poste') return `${passionLabel} + fonction “${pickedCross.dimValue}”`;
-    return `${passionLabel} + industrie “${pickedCross.dimValue}”`;
+    const q = (s: string) => `"${s}"`;
+    if (pickedCross.dimension === 'sector') return `${passionLabel} + ${ad.dimSector} ${q(pickedCross.dimValue)}`;
+    if (pickedCross.dimension === 'poste') return `${passionLabel} + ${ad.dimPoste} ${q(pickedCross.dimValue)}`;
+    return `${passionLabel} + ${ad.dimIndustrie} ${q(pickedCross.dimValue)}`;
   };
 
   const affinityRows = useMemo(() => {
@@ -509,8 +520,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       .map((r) => {
         const passionLabel = `${getPassionEmoji(r.passionId)} ${getPassionLabel(r.passionId, locale)}`;
         const members = r.memberIds.size;
-        const actionType = members >= 4 ? 'événement' : members >= 2 ? 'dîner' : 'intro';
-        return { ...r, members, passionLabel, actionType };
+        return { ...r, members, passionLabel };
       })
       .sort((a, b) => b.members - a.members || b.count - a.count);
     return rows;
@@ -661,12 +671,12 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
   const coverageGapMatrixRows = useMemo(() => {
     const sectors = Object.entries(stats.profilesBySector ?? {}).map(([label, value]) => ({
       label,
-      kind: 'Secteur' as const,
+      kind: 'sector' as const,
       value,
     }));
     const cities = Object.entries(stats.profilesByCity ?? {}).map(([label, value]) => ({
       label,
-      kind: 'Ville' as const,
+      kind: 'city' as const,
       value,
     }));
     return [...sectors, ...cities]
@@ -961,27 +971,27 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           {/* B. Strategic KPI band */}
           <div className="admin-kpi-grid" id="admin-section-kpi">
             <div className="admin-kpi-card">
-              <p className="admin-kpi-card__label">{t('members') || 'Membres'}</p>
+              <p className="admin-kpi-card__label">{t('members')}</p>
               <p className="admin-kpi-card__value">{stats.totalProfiles}</p>
             </div>
             <div className="admin-kpi-card">
-              <p className="admin-kpi-card__label">Nouveaux inscrits</p>
+              <p className="admin-kpi-card__label">{ad.kpiNewSignups}</p>
               <p className="admin-kpi-card__value">{stats.newProfilesInPeriod}</p>
             </div>
             <div className="admin-kpi-card">
-              <p className="admin-kpi-card__label">Clics contact</p>
+              <p className="admin-kpi-card__label">{ad.kpiContactClicks}</p>
               <p className="admin-kpi-card__value">{stats.totalClicks}</p>
             </div>
             <div className="admin-kpi-card">
-              <p className="admin-kpi-card__label">Profils complets</p>
+              <p className="admin-kpi-card__label">{ad.kpiCompleteProfiles}</p>
               <p className="admin-kpi-card__value">{stats.completedProfilesStrict}</p>
             </div>
             <div className="admin-kpi-card">
-              <p className="admin-kpi-card__label">En attente</p>
+              <p className="admin-kpi-card__label">{ad.kpiPending}</p>
               <p className="admin-kpi-card__value">{stats.pendingReviewProfiles}</p>
             </div>
             <div className="admin-kpi-card">
-              <p className="admin-kpi-card__label">Vues profils</p>
+              <p className="admin-kpi-card__label">{ad.kpiProfileViews}</p>
               <p className="admin-kpi-card__value">{stats.totalProfileViewEvents}</p>
             </div>
           </div>
@@ -1094,11 +1104,11 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           <div className="admin-analytics-grid">
             <div className="admin-stack">
               <article className="admin-chart-card admin-chart-card--compact">
-                <p className="admin-chart-card__title">Évolution des inscriptions</p>
-                <p className="admin-chart-card__subtitle">Courbe basée sur les profils créés</p>
+                <p className="admin-chart-card__title">{ad.chartRegistrationsTitle}</p>
+                <p className="admin-chart-card__subtitle">{ad.chartRegistrationsSubtitle}</p>
                 <div className="admin-chart-card__body">
                   <div className="admin-chart-frame">
-                    <MiniErrorBoundary label="InscriptionAreaChart">
+                    <MiniErrorBoundary label="InscriptionAreaChart" t={t}>
                       <InscriptionAreaChart members={stats.profilesCreatedAt} height={280} />
                     </MiniErrorBoundary>
                   </div>
@@ -1108,11 +1118,11 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
             <div className="admin-stack">
               <article className="admin-chart-card admin-chart-card--compact" id="admin-section-completion">
-                <p className="admin-chart-card__title">Complétion des profils</p>
-                <p className="admin-chart-card__subtitle">Vue “strict” (nom, secteur, description, photo)</p>
+                <p className="admin-chart-card__title">{ad.chartCompletionTitle}</p>
+                <p className="admin-chart-card__subtitle">{ad.chartCompletionSubtitle}</p>
                 <div className="admin-chart-card__body">
                   <div className="admin-chart-frame">
-                    <MiniErrorBoundary label="ProfileCompletionGauge">
+                    <MiniErrorBoundary label="ProfileCompletionGauge" t={t}>
                       <ProfileCompletionGauge
                         totalMembers={stats.totalProfiles}
                         completedProfiles={stats.completedProfilesStrict}
@@ -1128,13 +1138,11 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
           <div className="admin-analytics-wide">
             <article className="admin-chart-card admin-chart-card--table" id="admin-section-active-members">
-              <p className="admin-chart-card__title">Membres les plus actifs</p>
-              <p className="admin-chart-card__subtitle">
-                Basé sur les clics de contact — score d’engagement par membre.
-              </p>
+              <p className="admin-chart-card__title">{ad.chartTopActiveTitle}</p>
+              <p className="admin-chart-card__subtitle">{ad.chartTopActiveSubtitle}</p>
               <div className="admin-chart-card__body">
                 <div className="admin-table-wrap">
-                  <MiniErrorBoundary label="TopActiveMembersTable">
+                  <MiniErrorBoundary label="TopActiveMembersTable" t={t}>
                     <TopActiveMembersTable members={stats.profilesForDashboard as any} lang={lang} />
                   </MiniErrorBoundary>
                 </div>
@@ -1144,8 +1152,8 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
           <div className="admin-analytics-secondary">
             <article className="admin-chart-card admin-chart-card--compact admin-chart-card--donut">
-              <p className="admin-chart-card__title">Répartition par secteur</p>
-              <p className="admin-chart-card__subtitle">Lecture rapide par univers d’activité</p>
+              <p className="admin-chart-card__title">{ad.chartSectorSplitTitle}</p>
+              <p className="admin-chart-card__subtitle">{ad.chartSectorSplitSubtitle}</p>
               <div className="admin-chart-card__body">
                 <div className="admin-chart-frame admin-chart-frame--sm">
                   <SectorDonutChart
@@ -1159,15 +1167,15 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
             <div className="min-w-0">
               <NeedsBarChart
                 data={needsData}
-                title="Opportunités actuellement recherchées"
-                subtitle="Les membres du réseau expriment activement ces besoins"
+                title={ad.needsBarTitle}
+                subtitle={ad.needsBarSubtitle}
                 compact
               />
             </div>
 
             <article className="admin-chart-card admin-chart-card--compact">
-              <p className="admin-chart-card__title">Couverture secteurs / villes</p>
-              <p className="admin-chart-card__subtitle">Identifier forces & zones faibles.</p>
+              <p className="admin-chart-card__title">{ad.chartCoverageTitle}</p>
+              <p className="admin-chart-card__subtitle">{ad.chartCoverageSubtitle}</p>
               <div className="admin-chart-card__body">
                 <div className="admin-chart-frame admin-chart-frame--sm admin-chart-frame--center">
                   <ResponsiveContainer width="100%" height="100%">
@@ -1176,7 +1184,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                       <XAxis dataKey="name" tick={xTickCardAngled as any} interval={0} height={52} />
                       <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
                       <Tooltip contentStyle={{ fontSize: 12 }} />
-                      <Bar dataKey="value" name="Membres" radius={[6, 6, 0, 0]}>
+                      <Bar dataKey="value" name={t('members')} radius={[6, 6, 0, 0]}>
                         {sectorCoverageRows.map((row, idx) => (
                           <Cell key={`${row.name}-${idx}`} fill={sectorColorByName.get(row.name) ?? '#1d4ed8'} />
                         ))}
@@ -1185,7 +1193,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                   </ResponsiveContainer>
                 </div>
                 <div className="admin-gaps">
-                  <p className="admin-gaps__title">Gaps (≤ 1 membre)</p>
+                  <p className="admin-gaps__title">{ad.gapsTitle}</p>
                   <ul className="admin-gaps__list">
                     {gapInsights.weakSectors.slice(0, 3).map((s) => (
                       <li key={`s-${s.name}`}>{s.name}</li>
@@ -1201,8 +1209,8 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
           <div className="admin-decision-grid">
             <article className="admin-chart-card admin-chart-card--compact" id="admin-section-missing-fields">
-              <p className="admin-chart-card__title">Champs les plus souvent manquants</p>
-              <p className="admin-chart-card__subtitle">Où concentrer les relances de complétion.</p>
+              <p className="admin-chart-card__title">{ad.chartMissingFieldsTitle}</p>
+              <p className="admin-chart-card__subtitle">{ad.chartMissingFieldsSubtitle}</p>
               <div className="admin-chart-card__body">
                 <div className="admin-chart-frame admin-chart-frame--decision-bar admin-chart-frame--center">
                   <ResponsiveContainer width="100%" height="100%">
@@ -1220,7 +1228,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                         width={92}
                       />
                       <Tooltip contentStyle={{ fontSize: 12 }} />
-                      <Bar dataKey="missing" name="Manquants" fill="#d97706" radius={[0, 6, 6, 0]} barSize={14} />
+                      <Bar dataKey="missing" name={ad.barNameMissing} fill="#d97706" radius={[0, 6, 6, 0]} barSize={14} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -1228,15 +1236,15 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
             </article>
 
             <article className="admin-chart-card admin-chart-card--compact" id="admin-section-attention">
-              <p className="admin-chart-card__title">Attention vs conversion</p>
+              <p className="admin-chart-card__title">{ad.chartAttentionTitle}</p>
               <p className="admin-chart-card__subtitle">
                 {attentionViewContact.useScatter
-                  ? 'Chaque point = un membre · axe X = vues profil, axe Y = clics contact.'
-                  : 'Vue segmentée (peu de signal sur la période) — priorités lisibles.'}
+                  ? ad.chartAttentionSubtitleScatter
+                  : ad.chartAttentionSubtitleEditorial}
               </p>
               <div className="admin-chart-card__body">
                 {attentionViewContact.scatter.length === 0 ? (
-                  <p className="admin-decision-empty">Pas encore de vues ni de contacts sur cette période.</p>
+                  <p className="admin-decision-empty">{ad.attentionEmpty}</p>
                 ) : attentionViewContact.useScatter ? (
                   <div className="admin-chart-frame admin-chart-frame--scatter">
                     <ResponsiveContainer width="100%" height="100%">
@@ -1245,11 +1253,11 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                         <XAxis
                           type="number"
                           dataKey="x"
-                          name="Vues"
+                          name={ad.scatterAxisViews}
                           tick={{ fontSize: 11, fill: '#64748b' }}
                           allowDecimals={false}
                           label={{
-                            value: 'Vues profil',
+                            value: ad.scatterAxisProfileViews,
                             position: 'insideBottom',
                             offset: -4,
                             style: { fontSize: 11, fill: '#78716c' },
@@ -1258,17 +1266,22 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                         <YAxis
                           type="number"
                           dataKey="y"
-                          name="Contacts"
+                          name={ad.scatterAxisContacts}
                           tick={{ fontSize: 11, fill: '#64748b' }}
                           allowDecimals={false}
                           label={{
-                            value: 'Clics contact',
+                            value: ad.scatterAxisContactClicks,
                             angle: -90,
                             position: 'insideLeft',
                             style: { fontSize: 11, fill: '#78716c', textAnchor: 'middle' },
                           }}
                         />
-                        <Tooltip content={<AttentionScatterTooltip />} cursor={{ strokeDasharray: '4 4' }} />
+                        <Tooltip
+                          content={(tp) => (
+                            <ScatterTooltipBody active={tp.active} payload={tp.payload as any} lang={lang} />
+                          )}
+                          cursor={{ strokeDasharray: '4 4' }}
+                        />
                         <Scatter data={attentionViewContact.scatter} fill="#4f46e5" fillOpacity={0.75} />
                       </ScatterChart>
                     </ResponsiveContainer>
@@ -1276,10 +1289,9 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                 ) : (
                   <div className="admin-attention-editorial">
                     <div className="admin-attention-segment">
-                      <p className="admin-attention-segment__title">Très vus, peu contactés</p>
+                      <p className="admin-attention-segment__title">{ad.attentionSegHighViewsLowContact}</p>
                       <p className="admin-attention-segment__meta">
-                        {attentionViewContact.editorial.counts.highAttentionLowContact} profil
-                        {attentionViewContact.editorial.counts.highAttentionLowContact > 1 ? 's' : ''}
+                        {adminPluralProfiles(attentionViewContact.editorial.counts.highAttentionLowContact, lang)}
                       </p>
                       <ul className="admin-decision-rows">
                         {attentionViewContact.editorial.highAttentionLowContact.length === 0 ? (
@@ -1293,7 +1305,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                                   {formatPersonName(String(m.nom ?? '').trim())}
                                 </span>
                                 <span className="admin-decision-rows__secondary">
-                                  {v} vue{v > 1 ? 's' : ''} · 0 contact
+                                  {ad.attentionRowViewsContacts(v, 0)}
                                 </span>
                               </li>
                             );
@@ -1302,10 +1314,9 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                       </ul>
                     </div>
                     <div className="admin-attention-segment">
-                      <p className="admin-attention-segment__title">Vus et contactés</p>
+                      <p className="admin-attention-segment__title">{ad.attentionSegEngaged}</p>
                       <p className="admin-attention-segment__meta">
-                        {attentionViewContact.editorial.counts.engaged} profil
-                        {attentionViewContact.editorial.counts.engaged > 1 ? 's' : ''}
+                        {adminPluralProfiles(attentionViewContact.editorial.counts.engaged, lang)}
                       </p>
                       <ul className="admin-decision-rows">
                         {attentionViewContact.editorial.engaged.length === 0 ? (
@@ -1320,7 +1331,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                                   {formatPersonName(String(m.nom ?? '').trim())}
                                 </span>
                                 <span className="admin-decision-rows__secondary">
-                                  {v} vue{v > 1 ? 's' : ''} · {c} contact{c > 1 ? 's' : ''}
+                                  {ad.attentionRowViewsContacts(v, c)}
                                 </span>
                               </li>
                             );
@@ -1329,10 +1340,9 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                       </ul>
                     </div>
                     <div className="admin-attention-segment">
-                      <p className="admin-attention-segment__title">Encore peu visibles</p>
+                      <p className="admin-attention-segment__title">{ad.attentionSegLowVis}</p>
                       <p className="admin-attention-segment__meta">
-                        {attentionViewContact.editorial.counts.lowVisibility} profil
-                        {attentionViewContact.editorial.counts.lowVisibility > 1 ? 's' : ''} sans signal
+                        {ad.attentionSegLowMeta(attentionViewContact.editorial.counts.lowVisibility)}
                       </p>
                       <ul className="admin-decision-rows">
                         {attentionViewContact.editorial.lowVisibility.length === 0 ? (
@@ -1343,7 +1353,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                               <span className="admin-decision-rows__primary">
                                 {formatPersonName(String(m.nom ?? '').trim())}
                               </span>
-                              <span className="admin-decision-rows__secondary">0 vue · 0 contact</span>
+                              <span className="admin-decision-rows__secondary">{ad.attentionRowZero}</span>
                             </li>
                           ))
                         )}
@@ -1355,13 +1365,11 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
             </article>
 
             <article className="admin-chart-card admin-chart-card--compact" id="admin-section-connect">
-              <p className="admin-chart-card__title">Membres à connecter en priorité</p>
-              <p className="admin-chart-card__subtitle">
-                Forte proximité de passions avec d’autres membres — utile pour intros ciblées.
-              </p>
+              <p className="admin-chart-card__title">{ad.connectPriorityTitle}</p>
+              <p className="admin-chart-card__subtitle">{ad.connectPrioritySubtitle}</p>
               <div className="admin-chart-card__body">
                 {relationshipPotential.memberScores.length === 0 ? (
-                  <p className="admin-decision-empty">Pas assez de passions renseignées pour estimer le potentiel.</p>
+                  <p className="admin-decision-empty">{ad.connectPriorityEmpty}</p>
                 ) : (
                   <ul className="admin-opportunity-member-list">
                     {relationshipPotential.memberScores.map((m) => (
@@ -1378,9 +1386,9 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                             </p>
                           )}
                         </div>
-                        <p className="admin-opportunity-member-list__score tabular-nums" title="Membres distincts partageant au moins une passion">
+                        <p className="admin-opportunity-member-list__score tabular-nums" title={ad.overlapScoreTitle}>
                           {m.score}
-                          <span className="admin-opportunity-member-list__score-label"> recoupements</span>
+                          <span className="admin-opportunity-member-list__score-label">{ad.overlapScoreSuffix}</span>
                         </p>
                       </li>
                     ))}
@@ -1390,8 +1398,8 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
             </article>
 
             <article className="admin-chart-card admin-chart-card--compact" id="admin-section-passions">
-              <p className="admin-chart-card__title">Passions les plus transverses</p>
-              <p className="admin-chart-card__subtitle">S’étendent sur le plus de secteurs — leviers pour animations transverses.</p>
+              <p className="admin-chart-card__title">{ad.passionsCrossTitle}</p>
+              <p className="admin-chart-card__subtitle">{ad.passionsCrossSubtitle}</p>
               <div className="admin-chart-card__body">
                 {relationshipPotential.topOverlapPassions.length === 0 ? (
                   <p className="admin-decision-empty">—</p>
@@ -1401,11 +1409,13 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                       <li key={p.pid} className="admin-opportunity-passion-list__row">
                         <p className="admin-opportunity-passion-list__label">{p.label}</p>
                         <div className="admin-opportunity-passion-list__metrics tabular-nums">
-                          <span title="Nombre de secteurs distincts">{p.sectorCount} sect.</span>
+                          <span title={ad.passionDistinctSectorsTitle}>
+                            {p.sectorCount} {ad.passionMetricSectors}
+                          </span>
                           <span className="admin-opportunity-passion-list__sep" aria-hidden>
                             ·
                           </span>
-                          <span title="Membres avec cette passion">{p.memberCount} membres</span>
+                          <span title={ad.passionMetricMembersTitle}>{ad.passionMetricMembers(p.memberCount)}</span>
                         </div>
                       </li>
                     ))}
@@ -1415,26 +1425,22 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
             </article>
 
             <article className="admin-chart-card admin-chart-card--compact admin-decision-span-2" id="admin-section-gaps">
-              <p className="admin-chart-card__title">Gaps secteurs & villes</p>
-              <p className="admin-chart-card__subtitle">
-                Zones comptant ≤ 2 membres — à surveiller pour la représentativité du réseau.
-              </p>
+              <p className="admin-chart-card__title">{ad.gapMatrixTitle}</p>
+              <p className="admin-chart-card__subtitle">{ad.gapMatrixSubtitle}</p>
               <div className="admin-chart-card__body">
                 {coverageGapMatrixRows.length === 0 ? (
-                  <p className="admin-decision-empty">
-                    Aucun secteur ni ville sous le seuil (≤2) avec les données actuelles.
-                  </p>
+                  <p className="admin-decision-empty">{ad.gapMatrixEmpty}</p>
                 ) : (
                   <div className="admin-gap-table-wrap">
                     <table className="admin-gap-table">
                       <thead>
                         <tr>
-                          <th scope="col">Libellé</th>
-                          <th scope="col">Type</th>
+                          <th scope="col">{ad.gapTableLabel}</th>
+                          <th scope="col">{ad.gapTableType}</th>
                           <th scope="col" className="admin-gap-table__num">
-                            Membres
+                            {ad.gapTableMembers}
                           </th>
-                          <th scope="col">Niveau</th>
+                          <th scope="col">{ad.gapTableLevel}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1443,11 +1449,11 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                           return (
                             <tr key={`${row.kind}-${row.label}`}>
                               <td className="admin-gap-table__label">{row.label}</td>
-                              <td>{row.kind}</td>
+                              <td>{row.kind === 'sector' ? ad.gapKindSector : ad.gapKindCity}</td>
                               <td className="admin-gap-table__num tabular-nums">{row.value}</td>
                               <td>
                                 <span className={`admin-gap-pill admin-gap-pill--${level}`}>
-                                  {row.value <= 1 ? 'Très fin' : 'Fin'}
+                                  {row.value <= 1 ? ad.gapLevelVeryThin : ad.gapLevelThin}
                                 </span>
                               </td>
                             </tr>
@@ -1464,10 +1470,8 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           {/* E. Deep-dive */}
           <div className="admin-bottom-section">
             <article className="admin-chart-card admin-chart-card--affinity" id="admin-section-affinities">
-              <p className="admin-chart-card__title">Affinités relationnelles du réseau</p>
-              <p className="admin-chart-card__subtitle">
-                Repère les terrains d’intérêt commun les plus utiles pour animer la communauté et accélérer les mises en relation.
-              </p>
+              <p className="admin-chart-card__title">{ad.affinityMainTitle}</p>
+              <p className="admin-chart-card__subtitle">{ad.affinityMainSubtitle}</p>
 
               <div className="admin-chart-card__body">
                 {/* LAYER A — Executive summary */}
@@ -1475,30 +1479,30 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                   {affinityInsights ? (
                     <div className="admin-affinity-summary-grid">
                       <div className="admin-mini-kpi">
-                        <p className="admin-mini-kpi__label">Passion la plus fédératrice</p>
+                        <p className="admin-mini-kpi__label">{ad.affinityKpiTopPassion}</p>
                         <p className="admin-mini-kpi__value">{affinityInsights.topPassionLabel}</p>
-                        <p className="admin-mini-kpi__meta">{affinityInsights.topPassionScore} occurrences (approx.)</p>
+                        <p className="admin-mini-kpi__meta">{ad.affinityOccurrences(affinityInsights.topPassionScore)}</p>
                       </div>
                       <div className="admin-mini-kpi">
-                        <p className="admin-mini-kpi__label">Secteur le plus affinitaire</p>
+                        <p className="admin-mini-kpi__label">{ad.affinityKpiTopSector}</p>
                         <p className="admin-mini-kpi__value">{affinityInsights.topSector}</p>
-                        <p className="admin-mini-kpi__meta">{affinityInsights.topSectorScore} occurrences (approx.)</p>
+                        <p className="admin-mini-kpi__meta">{ad.affinityOccurrences(affinityInsights.topSectorScore)}</p>
                       </div>
                       <div className="admin-mini-kpi">
-                        <p className="admin-mini-kpi__label">Croisement le plus fort</p>
+                        <p className="admin-mini-kpi__label">{ad.affinityKpiStrongestCross}</p>
                         <p className="admin-mini-kpi__value">
                           {affinityInsights.strongest.passionLabel} × {affinityInsights.strongest.sector}
                         </p>
-                        <p className="admin-mini-kpi__meta">{affinityInsights.strongest.members} membre(s)</p>
+                        <p className="admin-mini-kpi__meta">{ad.affinityMemberCount(affinityInsights.strongest.members)}</p>
                       </div>
                       <div className="admin-mini-kpi">
-                        <p className="admin-mini-kpi__label">Mise en relation prioritaire</p>
-                        <p className="admin-mini-kpi__value">Identifier les membres à connecter</p>
-                        <p className="admin-mini-kpi__meta">Priorité basée sur les signaux observés</p>
+                        <p className="admin-mini-kpi__label">{ad.affinityKpiPriorityIntro}</p>
+                        <p className="admin-mini-kpi__value">{ad.affinityKpiPriorityIntroValue}</p>
+                        <p className="admin-mini-kpi__meta">{ad.affinityKpiPriorityIntroMeta}</p>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-slate-600">Pas encore assez de données pour résumer les affinités.</p>
+                    <p className="text-sm text-slate-600">{ad.affinityEmptySummary}</p>
                   )}
                 </div>
 
@@ -1515,15 +1519,15 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                             <span className="admin-affinity-sep">×</span>
                             <span className="truncate">{r.sector}</span>
                           </p>
-                          <p className="admin-affinity-card__meta">{r.members} membre(s)</p>
-                          <p className="admin-affinity-card__suggestion">{activationSuggestion(r, idx)}</p>
+                          <p className="admin-affinity-card__meta">{ad.affinityMemberCount(r.members)}</p>
+                          <p className="admin-affinity-card__suggestion">{adminActivationSuggestion(r, idx, lang)}</p>
                           <div className="admin-affinity-card__actions">
                             <button
                               type="button"
                               className="admin-affinity-action"
                               onClick={() => setPickedCross({ passionId: r.passionId, dimValue: r.sector, dimension: 'sector' })}
                             >
-                              Voir les membres
+                              {adminAffinityViewMembers(lang)}
                             </button>
                           </div>
                         </div>
@@ -1534,12 +1538,10 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
                 {/* LAYER C — Secondary exploration (lower priority, collapsed by default) */}
                 <details className="admin-affinity-explore">
-                  <summary className="admin-affinity-explore__summary">
-                    Exploration (détail & matrice)
-                  </summary>
+                  <summary className="admin-affinity-explore__summary">{ad.affinityExploreSummary}</summary>
 
                   <div className="admin-affinity-explore__body">
-                    <div className="admin-affinity-subtabs" role="tablist" aria-label="Exploration affinités">
+                    <div className="admin-affinity-subtabs" role="tablist" aria-label={ad.affinityExploreAria}>
                       <button
                         type="button"
                         role="tab"
@@ -1547,7 +1549,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                         className={affinityExplore === 'detail' ? 'admin-affinity-subtab is-active' : 'admin-affinity-subtab'}
                         onClick={() => setAffinityExplore('detail')}
                       >
-                        Détail
+                        {ad.affinityTabDetail}
                       </button>
                       <button
                         type="button"
@@ -1556,7 +1558,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                         className={affinityExplore === 'matrix' ? 'admin-affinity-subtab is-active' : 'admin-affinity-subtab'}
                         onClick={() => setAffinityExplore('matrix')}
                       >
-                        Matrice
+                        {ad.affinityTabMatrix}
                       </button>
                     </div>
 
@@ -1566,10 +1568,10 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                           <table className="admin-table">
                             <thead>
                               <tr>
-                                <th>Passion</th>
-                                <th>Secteur</th>
-                                <th>Membres</th>
-                                <th>Action possible</th>
+                                <th>{ad.affinityTablePassion}</th>
+                                <th>{ad.affinityTableSector}</th>
+                                <th>{ad.affinityTableMembers}</th>
+                                <th>{ad.affinityTableAction}</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1591,7 +1593,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                                           setPickedCross({ passionId: r.passionId, dimValue: r.sector, dimension: 'sector' })
                                         }
                                       >
-                                        Explorer
+                                        {ad.affinityExploreBtn}
                                       </button>
                                     </td>
                                   </tr>
@@ -1606,24 +1608,22 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                     {affinityExplore === 'matrix' ? (
                       <div className="admin-affinity-matrix">
                         <div className="admin-matrix-toolbar">
-                          <p className="admin-matrix-caption">
-                            Vue exploratoire — utile pour voir la distribution globale des signaux.
-                          </p>
+                          <p className="admin-matrix-caption">{ad.matrixCaption}</p>
                           <label>
-                            <span className="sr-only">Vue de la matrice</span>
+                            <span className="sr-only">{ad.matrixFilterAria}</span>
                             <select
                               className="admin-matrix-filter"
                               value={crossDimension}
                               onChange={(e) => setCrossDimension(e.target.value as any)}
                             >
-                              <option value="sector">Vue : secteur</option>
-                              <option value="poste">Vue : fonction</option>
-                              <option value="industrie">Vue : industrie</option>
+                              <option value="sector">{ad.matrixViewSector}</option>
+                              <option value="poste">{ad.matrixViewRole}</option>
+                              <option value="industrie">{ad.matrixViewIndustry}</option>
                             </select>
                           </label>
                         </div>
                         <div className="admin-chart-frame">
-                          <MiniErrorBoundary label="PassionsCrossHeatmap">
+                          <MiniErrorBoundary label="PassionsCrossHeatmap" t={t}>
                             <PassionsCrossHeatmap
                               members={stats.profilesForDashboard.map((m) => ({
                                 id: m.id,
@@ -1657,7 +1657,9 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 px-4 pt-4">
                     <h3 className="text-base font-semibold text-stone-900">{pickedCrossMembers.title}</h3>
-                    <p className="mt-1 text-xs text-stone-500">{pickedCrossMembers.rows.length} membre(s) · shortlist: {shortlistCountInPick}</p>
+                    <p className="mt-1 text-xs text-stone-500">
+                      {ad.drawerMembersShortlist(pickedCrossMembers.rows.length, shortlistCountInPick)}
+                    </p>
                   </div>
                   <div className="flex flex-wrap items-center justify-end gap-2 px-4 pt-4">
                     <button
@@ -1669,49 +1671,49 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                         void copyText(lines.join('\n'));
                       }}
                       className="shrink-0 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
-                      title="Copier la liste des membres"
+                      title={ad.drawerCopyListTitle}
                     >
-                      Copier liste
+                      {ad.drawerCopyList}
                     </button>
                     <button
                       type="button"
                       onClick={() => {
-                        const names = pickedCrossMembers.rows.map((m: any) => String(m.nom ?? '').trim()).filter(Boolean);
-                        const msg =
-                          `Bonjour,\n\nJe vous contacte via l’annuaire (admin) car votre profil semble pertinent pour: ${pickedCrossMembers.title}.\n` +
-                          `Seriez-vous ouvert(e) à une introduction / échange rapide ?\n\nMerci,\n`;
-                        void copyText(msg);
+                        void copyText(ad.introEmailBulk(pickedCrossMembers.title));
                       }}
                       className="shrink-0 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50"
-                      title="Copier un texte d'intro"
+                      title={ad.drawerCopyIntroTitle}
                     >
-                      Copier intro
+                      {ad.drawerCopyIntro}
                     </button>
                     <button
                       type="button"
                       onClick={() => setPickedCross(null)}
                       className="shrink-0 rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
                     >
-                      Fermer
+                      {ad.drawerClose}
                     </button>
                   </div>
                 </div>
 
                 <div className="mt-3 flex-1 overflow-hidden px-4 pb-4">
                   <aside className="rounded-xl border border-stone-200 bg-stone-50 p-3">
-                    <p className="text-xs font-extrabold uppercase tracking-wide text-stone-600">Prochaines actions</p>
+                    <p className="text-xs font-extrabold uppercase tracking-wide text-stone-600">{ad.nextActionsTitle}</p>
                     <ul className="mt-2 grid gap-2 text-sm text-stone-800">
                       <li>
-                        <strong>Intro</strong>: sélectionner 2–3 profils et envoyer une introduction courte.
+                        <strong>{ad.strongIntro}</strong>
+                        {ad.nextActionsIntro}
                       </li>
                       <li>
-                        <strong>Shortlist</strong>: marquer 5–8 profils, puis “Copier liste” pour partager en interne.
+                        <strong>{ad.strongShortlist}</strong>
+                        {ad.nextActionsShortlist}
                       </li>
                       <li>
-                        <strong>Invite</strong>: si un secteur/passion est sous-représenté, inviter 1–2 profils “référence”.
+                        <strong>{ad.strongInvite}</strong>
+                        {ad.nextActionsInvite}
                       </li>
                       <li>
-                        <strong>Follow-up</strong>: relancer les profils shortlistés après 7 jours.
+                        <strong>{ad.strongFollowup}</strong>
+                        {ad.nextActionsFollowup}
                       </li>
                     </ul>
                     <div className="mt-3">
@@ -1726,7 +1728,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                         }}
                         className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
                       >
-                        Copier shortlist (sur cette sélection)
+                        {ad.nextActionsCopyShortlist}
                       </button>
                     </div>
                   </aside>
@@ -1769,7 +1771,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                                 href={`/membres/${encodeURIComponent(id)}`}
                                 className="rounded-md bg-blue-700 px-2.5 py-1 text-xs font-semibold text-white"
                               >
-                                Voir le profil
+                                {ad.drawerViewProfile}
                               </a>
                               <button
                                 type="button"
@@ -1780,20 +1782,18 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                                     : 'rounded-md bg-stone-100 px-2.5 py-1 text-xs font-semibold text-stone-700'
                                 }
                               >
-                                {isShortlisted ? 'Shortlisté' : 'Shortlister'}
+                                {isShortlisted ? ad.shortlistToggleOn : ad.shortlistToggleOff}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const msg =
-                                    `Bonjour ${String(m.nom ?? '').trim()},\n\n` +
-                                    `Je vous contacte via l’annuaire (admin) car votre profil semble pertinent pour: ${pickedCrossMembers.title}.\n` +
-                                    `Seriez-vous ouvert(e) à une introduction / échange rapide ?\n\nMerci,\n`;
-                                  void copyText(msg);
+                                  void copyText(
+                                    ad.introEmailSingle(String(m.nom ?? '').trim(), pickedCrossMembers.title)
+                                  );
                                 }}
                                 className="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-50"
                               >
-                                Préparer une intro
+                                {ad.prepareIntro}
                               </button>
                             </div>
                           </div>
@@ -1812,19 +1812,19 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           <div className="w-full max-w-5xl rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-semibold text-stone-900">
-                {activeChart === 'type' && 'Repartition profils (type)'}
-                {activeChart === 'status' && 'Profils par statut'}
-                {activeChart === 'city' && 'Profils par ville'}
-                {activeChart === 'sector' && 'Profils par secteur'}
-                {activeChart === 'growth' && 'Croissance profils (30 jours)'}
-                {activeChart === 'clicks' && 'Clics de contact par canal'}
+                {activeChart === 'type' && ad.modalChartType}
+                {activeChart === 'status' && ad.modalChartStatus}
+                {activeChart === 'city' && ad.modalChartCity}
+                {activeChart === 'sector' && ad.modalChartSector}
+                {activeChart === 'growth' && ad.modalChartGrowth}
+                {activeChart === 'clicks' && ad.modalChartClicks}
               </h3>
               <button
                 type="button"
                 onClick={() => setActiveChart(null)}
                 className="rounded-md border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
               >
-                Fermer
+                {ad.drawerClose}
               </button>
             </div>
             <div className="h-[65vh] min-h-[420px] w-full overflow-hidden">
@@ -1920,7 +1920,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                       <Line
                         type="monotone"
                         dataKey="count"
-                        name="Profils cumulés"
+                        name={ad.lineCumulativeProfiles}
                         stroke="#16a34a"
                         strokeWidth={3}
                         dot={{ r: 3 }}
@@ -1939,7 +1939,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                         wrapperStyle={{ fontSize: 12, width: '100%', paddingTop: 8 }}
                         iconSize={10}
                       />
-                      <Bar dataKey="value" name="Clics" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
+                      <Bar dataKey="value" name={ad.barClicksName} fill="#0ea5e9" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   )}
                 </>

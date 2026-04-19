@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { collection, getDocs, limit, query, Timestamp, where } from 'firebase/firestore';
+import { Link, useParams } from 'react-router-dom';
+import { addDoc, collection, getDocs, limit, query, Timestamp, where } from 'firebase/firestore';
+import type { User } from 'firebase/auth';
 import { db } from '@/firebase';
-import type { AdminEvent, Language } from '@/types';
+import type { AdminEvent, EventRespondentAttendance, Language } from '@/types';
 
 type TFn = (key: string) => string;
 
 type Props = {
   lang: Language;
   t: TFn;
+  currentUser?: User | null;
 };
 
 function fmtDateTime(ts: Timestamp | null | undefined, lang: Language): string {
@@ -27,11 +29,28 @@ function fmtDateTime(ts: Timestamp | null | undefined, lang: Language): string {
   }
 }
 
-export default function PublicEventPage({ lang, t }: Props) {
+function uiPublic(lang: Language, fr: string, es: string, en: string) {
+  return lang === 'en' ? en : lang === 'es' ? es : fr;
+}
+
+export default function PublicEventPage({ lang, t, currentUser }: Props) {
   const { slug } = useParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [event, setEvent] = useState<AdminEvent | null>(null);
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [comments, setComments] = useState('');
+  const [attendance, setAttendance] = useState<EventRespondentAttendance>('yes');
+
+  const [guestSubmitting, setGuestSubmitting] = useState(false);
+  const [guestSuccess, setGuestSuccess] = useState(false);
+  const [guestError, setGuestError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +64,12 @@ export default function PublicEventPage({ lang, t }: Props) {
       setLoading(true);
       setError(null);
       try {
-        const q = query(collection(db, 'events'), where('slug', '==', s), limit(1));
+        const q = query(
+          collection(db, 'events'),
+          where('slug', '==', s),
+          where('status', '==', 'published'),
+          limit(1)
+        );
         const snap = await getDocs(q);
         const docSnap = snap.docs[0];
         const row = docSnap ? ({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) } as AdminEvent) : null;
@@ -68,6 +92,59 @@ export default function PublicEventPage({ lang, t }: Props) {
     return 'Événement';
   }, [lang]);
 
+  const submitGuest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!event?.id || guestSubmitting) return;
+    const fn = firstName.trim();
+    const ln = lastName.trim();
+    const em = guestEmail.trim().toLowerCase();
+    const wa = whatsapp.trim();
+    const job = jobTitle.trim();
+    const co = companyName.trim();
+    const comm = comments.trim();
+
+    if (!fn || !ln || !em || !em.includes('@') || wa.length < 3 || !job || !co) {
+      setGuestError(
+        uiPublic(
+          lang,
+          'Remplis les champs obligatoires (prénom, nom, email, WhatsApp, poste, société).',
+          'Completa los obligatorios (nombre, apellido, email, WhatsApp, puesto, empresa).',
+          'Please fill required fields (first name, last name, email, WhatsApp, job position, company).'
+        )
+      );
+      return;
+    }
+    setGuestSubmitting(true);
+    setGuestError(null);
+    try {
+      await addDoc(collection(db, 'event_respondents'), {
+        eventId: event.id,
+        firstName: fn,
+        lastName: ln,
+        email: em,
+        whatsapp: wa,
+        jobTitle: job,
+        companyName: co,
+        comments: comm,
+        attendance,
+        createdAt: Timestamp.now(),
+      });
+      setGuestSuccess(true);
+      setFirstName('');
+      setLastName('');
+      setGuestEmail('');
+      setWhatsapp('');
+      setJobTitle('');
+      setCompanyName('');
+      setComments('');
+      setAttendance('yes');
+    } catch (err) {
+      setGuestError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setGuestSubmitting(false);
+    }
+  };
+
   if (loading) {
     return <p className="text-sm text-slate-500">{lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…'}</p>;
   }
@@ -86,56 +163,203 @@ export default function PublicEventPage({ lang, t }: Props) {
         <h2 className="text-lg font-bold text-stone-900">{title}</h2>
         <p className="mt-2 text-sm text-stone-600">
           {lang === 'es'
-            ? 'No encontramos este evento.'
+            ? 'No encontramos este evento o aún no está publicado.'
             : lang === 'en'
-              ? 'We could not find this event.'
-              : 'Impossible de trouver cet événement.'}
+              ? 'We could not find this event, or it is not published yet.'
+              : 'Impossible de trouver cet événement, ou il n’est pas encore publié.'}
         </p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-6">
-      <h2 className="text-2xl font-bold tracking-tight text-stone-900">{event.title}</h2>
-      <p className="mt-2 text-sm text-stone-600">
-        {fmtDateTime(event.startsAt, lang)}
-        {event.address ? ` · ${event.address}` : ''}
-      </p>
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-stone-200 bg-white p-6">
+        <h2 className="text-2xl font-bold tracking-tight text-stone-900">{event.title}</h2>
+        <p className="mt-2 text-sm text-stone-600">
+          {fmtDateTime(event.startsAt, lang)}
+          {event.address ? ` · ${event.address}` : ''}
+        </p>
 
-      {event.introText?.trim() ? (
-        <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50 p-4">
-          <p className="whitespace-pre-wrap text-sm text-stone-700">{event.introText}</p>
+        {event.introText?.trim() ? (
+          <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <p className="whitespace-pre-wrap text-sm text-stone-700">{event.introText}</p>
+          </div>
+        ) : null}
+      </div>
+
+      {!currentUser ? (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <p className="text-sm font-semibold text-blue-900">
+            {uiPublic(lang, 'Pas encore membre de l’annuaire ?', '¿Aún no eres miembro del directorio?', 'Not a directory member yet?')}
+          </p>
+          <p className="mt-1 text-xs text-blue-800">
+            {uiPublic(
+              lang,
+              'Crée un compte pour rejoindre le réseau et être visible par les autres membres.',
+              'Crea una cuenta para unirte a la red y ser visible para otros miembros.',
+              'Create an account to join the network and be visible to other members.'
+            )}
+          </p>
+          <Link
+            to="/inscription"
+            className="mt-3 inline-flex rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+          >
+            {t('signupPageTitle')}
+          </Link>
         </div>
-      ) : null}
+      ) : (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+          <p className="text-sm font-semibold text-indigo-900">
+            {uiPublic(
+              lang,
+              'Tu es connecté : tu peux aussi confirmer ta présence (ou ton refus) avec ton profil annuaire via la fenêtre qui s’affiche.',
+              'Has iniciado sesión: también puedes confirmar asistencia (o rechazar) con tu perfil del directorio en el modal.',
+              'You’re signed in: you can also confirm or decline with your directory profile via the prompt shown.'
+            )}
+          </p>
+        </div>
+      )}
 
-      <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
-        <p className="text-sm font-semibold text-blue-900">
-          {lang === 'es'
-            ? 'Para confirmar o rechazar, inicia sesión.'
-            : lang === 'en'
-              ? 'To RSVP (present/decline), please sign in.'
-              : 'Pour confirmer ou refuser, connectez-vous.'}
+      <div className="rounded-xl border border-stone-200 bg-white p-4">
+        <p className="text-sm font-semibold text-stone-900">
+          {uiPublic(lang, 'Répondre à l’invitation', 'Responder a la invitación', 'Respond to the invitation')}
         </p>
-        <p className="mt-1 text-xs text-blue-800">
-          {lang === 'es'
-            ? 'La inscripción (o rechazo) también crea/actualiza tu perfil en el directorio.'
-            : lang === 'en'
-              ? 'RSVP also creates/updates your directory profile.'
-              : 'La réponse crée/met à jour votre profil annuaire.'}
+        <p className="mt-1 text-xs text-stone-600">
+          {uiPublic(
+            lang,
+            'Indique si tu participes ou non. Les données servent à organiser l’événement.',
+            'Indica si participarás o no. Los datos sirven para organizar el evento.',
+            'Let us know if you plan to attend. Data is used to organize the event.'
+          )}
         </p>
-        <button
-          type="button"
-          onClick={() => {
-            // V1: la page RSVP détaillée + auth viendra ensuite. Pour l'instant, on s'appuie sur le bouton login du header.
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          className="mt-3 rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
-        >
-          {lang === 'es' ? 'Iniciar sesión' : lang === 'en' ? 'Sign in' : 'Se connecter'}
-        </button>
+
+        {guestSuccess ? (
+          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+            {uiPublic(
+              lang,
+              'Merci, ta réponse a bien été enregistrée.',
+              'Gracias, tu respuesta se ha registrado.',
+              'Thanks — your response was saved.'
+            )}
+          </p>
+        ) : (
+          <form onSubmit={(e) => void submitGuest(e)} className="mt-4 grid gap-3 sm:grid-cols-2">
+            {guestError ? (
+              <p className="sm:col-span-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+                {guestError}
+              </p>
+            ) : null}
+
+            <div>
+              <label className="block text-xs font-semibold text-stone-700">
+                {uiPublic(lang, 'Prénom *', 'Nombre *', 'First name *')}
+              </label>
+              <input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                autoComplete="given-name"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-stone-700">
+                {uiPublic(lang, 'Nom *', 'Apellido *', 'Last name *')}
+              </label>
+              <input
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                autoComplete="family-name"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-stone-700">Email *</label>
+              <input
+                type="email"
+                value={guestEmail}
+                onChange={(e) => setGuestEmail(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-stone-700">WhatsApp *</label>
+              <input
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                placeholder={uiPublic(lang, '+52 …', '+52 …', '+52 …')}
+                className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                autoComplete="tel"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-stone-700">
+                {uiPublic(lang, 'Poste / fonction *', 'Puesto / función *', 'Job position *')}
+              </label>
+              <input
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-stone-700">
+                {uiPublic(lang, 'Société *', 'Empresa *', 'Company *')}
+              </label>
+              <input
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                autoComplete="organization"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-stone-700">
+                {uiPublic(lang, 'Participation *', 'Participación *', 'Attendance *')}
+              </label>
+              <select
+                value={attendance}
+                onChange={(e) => setAttendance(e.target.value as EventRespondentAttendance)}
+                className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="yes">{uiPublic(lang, 'Je participe', 'Participaré', 'I will attend')}</option>
+                <option value="maybe">{uiPublic(lang, 'Peut-être', 'Quizás', 'Maybe')}</option>
+                <option value="no">{uiPublic(lang, 'Je ne participe pas', 'No participaré', 'I will not attend')}</option>
+              </select>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-stone-700">
+                {uiPublic(lang, 'Commentaires (optionnel)', 'Comentarios (opcional)', 'Comments (optional)')}
+              </label>
+              <textarea
+                value={comments}
+                onChange={(e) => setComments(e.target.value)}
+                rows={3}
+                className="mt-1 w-full resize-none rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <button
+                type="submit"
+                disabled={guestSubmitting}
+                className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-semibold text-white hover:bg-stone-800 disabled:opacity-60"
+              >
+                {guestSubmitting
+                  ? uiPublic(lang, 'Envoi…', 'Enviando…', 'Sending…')
+                  : uiPublic(lang, 'Envoyer ma réponse', 'Enviar mi respuesta', 'Send my response')}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
 }
-

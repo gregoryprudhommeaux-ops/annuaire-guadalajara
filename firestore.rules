@@ -244,6 +244,34 @@ service cloud.firestore {
     }
 
     /**
+     * Répondants (formulaire public /e/:slug, sans compte).
+     */
+    function isValidEventRespondent(data) {
+      return data.keys().hasOnly([
+          'eventId', 'firstName', 'lastName', 'email', 'whatsapp', 'jobTitle',
+          'companyName', 'comments', 'attendance', 'createdAt'
+        ])
+        && data.eventId is string && data.eventId.size() >= 8
+        && data.firstName is string && data.firstName.size() >= 1 && data.firstName.size() <= 80
+        && data.lastName is string && data.lastName.size() >= 1 && data.lastName.size() <= 80
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 320
+        && data.whatsapp is string && data.whatsapp.size() >= 3 && data.whatsapp.size() <= 60
+        && data.jobTitle is string && data.jobTitle.size() >= 1 && data.jobTitle.size() <= 120
+        && data.companyName is string && data.companyName.size() >= 1 && data.companyName.size() <= 200
+        && data.comments is string && data.comments.size() <= 2000
+        && data.attendance in ['yes', 'no', 'maybe']
+        && data.createdAt is timestamp;
+    }
+
+    match /event_respondents/{docId} {
+      allow read: if isAdmin();
+      allow create: if isValidEventRespondent(request.resource.data)
+        && exists(/databases/$(database)/documents/events/$(request.resource.data.eventId))
+        && get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.status == 'published';
+      allow update, delete: if false;
+    }
+
+    /**
      * Participations / invitations par événement — V1 : admin uniquement.
      * Statuts suivis : invited | present | declined + notes admin privées.
      */

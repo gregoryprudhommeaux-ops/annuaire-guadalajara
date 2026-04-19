@@ -166,7 +166,6 @@ import {
   AI_OPTIMIZATION_READINESS_TARGET,
   PUBLICATION_BIO_MIN_LEN,
 } from './lib/profilePublicationRules';
-import { translateFreeTextToUiLang } from './lib/aiTranslateFreeText';
 import {
   profileCoachFingerprint,
   collectProfileCoachGapKeys,
@@ -2297,7 +2296,12 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     setPublicEventError(null);
     (async () => {
       try {
-        const q = query(collection(db, 'events'), where('slug', '==', publicEventSlug), limit(1));
+        const q = query(
+          collection(db, 'events'),
+          where('slug', '==', publicEventSlug),
+          where('status', '==', 'published'),
+          limit(1)
+        );
         const snap = await getDocs(q);
         const docSnap = snap.docs[0];
         const row = docSnap ? ({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) } as AdminEvent) : null;
@@ -2343,11 +2347,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   useEffect(() => {
     if (!isPublicEventRoute) return;
-    // Objectif: /e/:slug doit pousser vers création de profil, puis RSVP.
+    // Invités WhatsApp : la page /e/:slug est lisible sans compte (formulaire + lien Google Form).
     if (!user) {
-      setAuthError(null);
-      setAuthModalResetKey((k) => k + 1);
-      setShowAuthModal(true);
       return;
     }
     if (!profile) {
@@ -3756,43 +3757,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       : (baseProfile?.companySize ?? 'solo');
 
     const isInitialSelfProfile = isSelf && !profile;
-    const previousMemberBio = String(
-      (baseProfile?.memberBio ?? baseProfile?.bio ?? '')
-    ).trim();
     const nextMemberBio = memberBioTrimmed;
-    const previousMemberBioTranslations = baseProfile?.memberBio?.trim()
-      ? baseProfile?.memberBioTranslations
-      : baseProfile?.bioTranslations;
-    const sameMemberBioAsBefore = nextMemberBio === previousMemberBio;
-    let nextMemberBioTranslations: Partial<Record<Language, string>> | ReturnType<typeof deleteField> =
-      deleteField();
-    if (nextMemberBio) {
-      if (
-        sameMemberBioAsBefore &&
-        previousMemberBioTranslations &&
-        Object.keys(previousMemberBioTranslations).length > 0
-      ) {
-        nextMemberBioTranslations = previousMemberBioTranslations;
-      } else {
-        const generated: Partial<Record<Language, string>> = { [lang]: nextMemberBio };
-        if (getGeminiApiKey()) {
-          const targets: Language[] = ['fr', 'es', 'en'];
-          const jobs = targets
-            .filter((target) => target !== lang)
-            .map(async (target) => {
-              try {
-                const out = await translateFreeTextToUiLang(nextMemberBio, target);
-                if (out.trim()) generated[target] = out.trim();
-              } catch {
-                // Keep graceful fallback to source text.
-              }
-            });
-          await Promise.all(jobs);
-        }
-        nextMemberBioTranslations =
-          Object.keys(generated).length > 0 ? generated : deleteField();
-      }
-    }
+    /** Pas de variantes par langue : le texte saisi est la seule source affichée. */
+    const nextMemberBioTranslations: ReturnType<typeof deleteField> = deleteField();
     const helpNewcomersVal = optionalString('helpNewcomers');
     const networkGoalVal = optionalString('networkGoal');
 
@@ -7538,7 +7505,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         </div>
                       }
                     >
-                      <PublicEventPageLazy lang={lang} t={t} />
+                      <PublicEventPageLazy lang={lang} t={t} currentUser={user} />
                     </React.Suspense>
                   </div>
                 </SectionErrorBoundary>

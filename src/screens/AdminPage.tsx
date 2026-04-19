@@ -8,7 +8,7 @@ import { MEMBER_REQUESTS_COLLECTION, mapMemberRequestDoc } from '@/lib/memberReq
 import AdminDashboard from '@/components/dashboard/AdminDashboard';
 import '@/features/admin/admin-dashboard.css';
 
-type TFn = (key: string) => string;
+type TFn = (key: string, params?: Record<string, string | number>) => string;
 
 export type AdminPageProps = {
   lang: Language;
@@ -22,19 +22,19 @@ type UnansweredNeedRow = {
   needsCount: number;
 };
 
-function AdminPeriodPills() {
+function AdminPeriodPills({ t }: { t: TFn }) {
   const { period, setPeriod, getPeriodLabel } = useTimePeriod();
-  const items: Array<{ key: typeof period; label: string }> = [
-    { key: 'today', label: "Aujourd'hui" },
-    { key: '7d', label: '7 jours' },
-    { key: '30d', label: '30 jours' },
-    { key: '90d', label: '90 jours' },
-    { key: 'all', label: 'Tout' },
+  const items: Array<{ key: typeof period; labelKey: string }> = [
+    { key: 'today', labelKey: 'adminTimePeriodToday' },
+    { key: '7d', labelKey: 'adminTimePeriod7d' },
+    { key: '30d', labelKey: 'adminTimePeriod30d' },
+    { key: '90d', labelKey: 'adminTimePeriod90d' },
+    { key: 'all', labelKey: 'adminTimePeriodAll' },
   ];
   return (
-    <div className="admin-toolbar" aria-label="Période">
+    <div className="admin-toolbar" aria-label={t('adminTimeToolbarAria')}>
       <div className="admin-period">
-        <div className="admin-period__pills" role="group" aria-label="Périodes">
+        <div className="admin-period__pills" role="group" aria-label={t('adminTimePeriodGroupAria')}>
           {items.map((p) => (
             <button
               key={p.key}
@@ -42,11 +42,11 @@ function AdminPeriodPills() {
               className={cn('admin-pill', p.key === period && 'is-active')}
               onClick={() => setPeriod(p.key)}
             >
-              {p.label}
+              {t(p.labelKey)}
             </button>
           ))}
         </div>
-        <span className="admin-period__range" aria-label="Période sélectionnée">
+        <span className="admin-period__range" aria-label={t('adminTimeSelectedAria')}>
           {getPeriodLabel()}
         </span>
       </div>
@@ -81,7 +81,6 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
         );
         const reqs = requestsSnap.docs.map((d) => mapMemberRequestDoc(d.id, d.data() as any));
 
-        // "Besoins" = profils avec `highlightedNeeds` (0–3). "Sans réponse" = 0 commentaire dans `need_comments`.
         const usersSnap = await getDocs(collection(db, 'users'));
         const withNeeds = usersSnap.docs
           .map((d) => ({ uid: d.id, ...(d.data() as Record<string, unknown>) }))
@@ -91,7 +90,6 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
         const uids = withNeeds.map((p) => p.uid).filter(Boolean);
         const unanswered: UnansweredNeedRow[] = [];
 
-        // Firestore "in" is limited to 30 values; chunk to keep it safe.
         const chunkSize = 30;
         const commentedNeedIds = new Set<string>();
         for (let i = 0; i < uids.length; i += chunkSize) {
@@ -143,8 +141,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
     };
   }, []);
 
-  const loading =
-    lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…';
+  const loading = t('loading');
 
   const unansweredCount = unansweredNeeds?.length ?? 0;
 
@@ -154,14 +151,13 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
     const page = Math.min(requestsPage, maxPage);
     const start = page * PAGE_SIZE;
     const pageRows = recentRequests.slice(start, start + PAGE_SIZE);
+    const count = Math.min(12, recentRequests.length);
     return (
       <article className="admin-card">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="admin-card__title">Dernières demandes</h2>
-            <p className="admin-card__text">
-              Dernières {Math.min(12, recentRequests.length)} demandes publiées.
-            </p>
+            <h2 className="admin-card__title">{t('adminRecentRequestsTitle')}</h2>
+            <p className="admin-card__text">{t('adminRecentRequestsLead', { count })}</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -169,8 +165,8 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
               className="admin-pill"
               onClick={() => setRequestsPage((p) => Math.max(0, p - 1))}
               disabled={page <= 0}
-              aria-label="Demandes précédentes"
-              title="Demandes précédentes"
+              aria-label={t('adminRequestsPrev')}
+              title={t('adminRequestsPrev')}
               style={{ minHeight: 32, padding: '0 10px', opacity: page <= 0 ? 0.5 : 1 }}
             >
               ←
@@ -180,21 +176,21 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
               className="admin-pill"
               onClick={() => setRequestsPage((p) => Math.min(maxPage, p + 1))}
               disabled={page >= maxPage}
-              aria-label="Demandes suivantes"
-              title="Demandes suivantes"
+              aria-label={t('adminRequestsNext')}
+              title={t('adminRequestsNext')}
               style={{ minHeight: 32, padding: '0 10px', opacity: page >= maxPage ? 0.5 : 1 }}
             >
               →
             </button>
             <a href="/requests" className="admin-pill" style={{ textDecoration: 'none', minHeight: 32 }}>
-              Ouvrir
+              {t('adminOpen')}
             </a>
           </div>
         </div>
         <div className="admin-card__body">
           <div className="admin-list">
             {recentRequests.length === 0 ? (
-              <p className="text-sm text-slate-600">Aucune demande.</p>
+              <p className="text-sm text-slate-600">{t('adminNoRequests')}</p>
             ) : (
               pageRows.map((r) => (
                 <a
@@ -217,7 +213,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
         </div>
       </article>
     );
-  }, [PAGE_SIZE, recentRequests, requestsPage]);
+  }, [PAGE_SIZE, recentRequests, requestsPage, t]);
 
   const unansweredNeedsUi = useMemo(() => {
     if (!unansweredNeeds) return null;
@@ -229,11 +225,9 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
       <article className="admin-card admin-card--featured">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="admin-card__eyebrow">PRIORITÉ</p>
-            <h2 className="admin-card__title">Besoins sans réponse</h2>
-            <p className="admin-card__text">
-              Profils avec besoins mis en avant et 0 commentaire.
-            </p>
+            <p className="admin-card__eyebrow">{t('adminPriorityEyebrow')}</p>
+            <h2 className="admin-card__title">{t('adminUnansweredNeedsTitle')}</h2>
+            <p className="admin-card__text">{t('adminUnansweredNeedsLead')}</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -241,8 +235,8 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
               className="admin-pill"
               onClick={() => setNeedsPage((p) => Math.max(0, p - 1))}
               disabled={page <= 0}
-              aria-label="Besoins précédents"
-              title="Besoins précédents"
+              aria-label={t('adminNeedsPrev')}
+              title={t('adminNeedsPrev')}
               style={{ minHeight: 32, padding: '0 10px', opacity: page <= 0 ? 0.5 : 1 }}
             >
               ←
@@ -252,8 +246,8 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
               className="admin-pill"
               onClick={() => setNeedsPage((p) => Math.min(maxPage, p + 1))}
               disabled={page >= maxPage}
-              aria-label="Besoins suivants"
-              title="Besoins suivants"
+              aria-label={t('adminNeedsNext')}
+              title={t('adminNeedsNext')}
               style={{ minHeight: 32, padding: '0 10px', opacity: page >= maxPage ? 0.5 : 1 }}
             >
               →
@@ -264,7 +258,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
           <div className="admin-highlight-number">{unansweredCount}</div>
           <div className="admin-list">
             {unansweredNeeds.length === 0 ? (
-              <p className="text-sm text-slate-600">Aucun besoin en attente.</p>
+              <p className="text-sm text-slate-600">{t('adminNoUnansweredNeeds')}</p>
             ) : (
               pageRows.map((row) => (
                 <a
@@ -285,20 +279,18 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
         </div>
       </article>
     );
-  }, [PAGE_SIZE, needsPage, unansweredNeeds, unansweredCount]);
+  }, [PAGE_SIZE, needsPage, unansweredNeeds, unansweredCount, t]);
 
   return (
     <div className="admin-dashboard-page">
       <div className="admin-shell">
-        <TimePeriodProvider defaultPeriod="30d">
+        <TimePeriodProvider defaultPeriod="30d" uiLang={lang}>
           <div className="admin-header">
             <div className="admin-header__copy">
-              <h1 className="admin-header__title">Admin</h1>
-              <p className="admin-header__text">
-                Pilotage du réseau : croissance, qualité des profils, demandes, gaps secteurs/ville et stats d’usage.
-              </p>
+              <h1 className="admin-header__title">{t('adminPanel')}</h1>
+              <p className="admin-header__text">{t('adminPageLead')}</p>
             </div>
-            <AdminPeriodPills />
+            <AdminPeriodPills t={t} />
           </div>
 
           {loadError ? (
@@ -315,8 +307,8 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
                 unansweredNeedsUi
               ) : (
                 <article className="admin-card admin-card--featured">
-                  <p className="admin-card__eyebrow">PRIORITÉ</p>
-                  <h2 className="admin-card__title">Besoins sans réponse</h2>
+                  <p className="admin-card__eyebrow">{t('adminPriorityEyebrow')}</p>
+                  <h2 className="admin-card__title">{t('adminUnansweredNeedsTitle')}</h2>
                   <div className="admin-card__body">
                     <p className="admin-card__text">{loading}</p>
                   </div>
@@ -328,7 +320,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
                 recentRequestsUi
               ) : (
                 <article className="admin-card">
-                  <h2 className="admin-card__title">Dernières demandes</h2>
+                  <h2 className="admin-card__title">{t('adminRecentRequestsTitle')}</h2>
                   <div className="admin-card__body">
                     <p className="admin-card__text">{loading}</p>
                   </div>
@@ -341,4 +333,3 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
     </div>
   );
 }
-

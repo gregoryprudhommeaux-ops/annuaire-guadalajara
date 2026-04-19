@@ -15,7 +15,8 @@
     "cypress:run": "cypress run",
     "test:e2e": "cypress run",
     "firebase:login": "firebase login",
-    "firebase:deploy:rules": "firebase deploy --only firestore"
+    "firebase:deploy:rules": "firebase deploy --only firestore",
+    "firebase:deploy:functions": "firebase deploy --only functions"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

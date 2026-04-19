@@ -24,7 +24,6 @@ export function buildProfileSearchBlob(p: UserProfile): string {
     );
   }
   const memberBio = effectiveMemberBio(p);
-  const memberBioTrans = Object.values(p.memberBioTranslations ?? {}).join(' ');
   const activityDescJoined = allActivityDescriptionTexts(p).join(' ');
   const parts: string[] = [
     p.fullName,
@@ -35,7 +34,6 @@ export function buildProfileSearchBlob(p: UserProfile): string {
     workFunctionLabel(p.positionCategory, 'en'),
     ...sectorParts,
     memberBio,
-    memberBioTrans,
     activityDescJoined,
     p.bio || '',
     p.city || '',
