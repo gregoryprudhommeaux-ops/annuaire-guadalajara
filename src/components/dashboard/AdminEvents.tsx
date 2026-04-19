@@ -648,38 +648,46 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
         </p>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[420px_1fr]">
-        <div className="rounded-xl border border-stone-200 bg-white p-3 shadow-sm">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
-              {uiLabel(lang, 'Tous les événements', 'Todos los eventos', 'All events')}
-            </p>
-            {loading ? <p className="text-xs text-stone-400">{uiLabel(lang, 'Chargement…', 'Cargando…', 'Loading…')}</p> : null}
-          </div>
-          <div className="space-y-2">
-            {events.map((e) => (
-              <button
-                key={e.id}
-                type="button"
-                onClick={() => setActiveEventId(e.id)}
-                className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${
-                  activeEventId === e.id ? 'border-blue-300 bg-blue-50' : 'border-stone-200 bg-white hover:bg-stone-50'
-                }`}
-              >
-                <p className="truncate text-sm font-semibold text-stone-900">{e.title}</p>
-                <p className="truncate text-xs text-stone-500">
-                  {fmtDateTime(e.startsAt, lang)}
-                  {e.address ? ` · ${e.address}` : ''}
-                </p>
-              </button>
-            ))}
-            {!loading && events.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-stone-200 bg-stone-50 px-3 py-3 text-sm text-stone-600">
-                {uiLabel(lang, 'Aucun événement pour le moment.', 'Todavía no hay eventos.', 'No events yet.')}
+      <div
+        className={
+          showEditor
+            ? 'grid grid-cols-1 gap-4'
+            : 'grid gap-4 lg:grid-cols-[420px_1fr]'
+        }
+      >
+        {!showEditor ? (
+          <div className="rounded-xl border border-stone-200 bg-white p-3 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                {uiLabel(lang, 'Tous les événements', 'Todos los eventos', 'All events')}
               </p>
-            ) : null}
+              {loading ? <p className="text-xs text-stone-400">{uiLabel(lang, 'Chargement…', 'Cargando…', 'Loading…')}</p> : null}
+            </div>
+            <div className="space-y-2">
+              {events.map((e) => (
+                <button
+                  key={e.id}
+                  type="button"
+                  onClick={() => setActiveEventId(e.id)}
+                  className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${
+                    activeEventId === e.id ? 'border-blue-300 bg-blue-50' : 'border-stone-200 bg-white hover:bg-stone-50'
+                  }`}
+                >
+                  <p className="truncate text-sm font-semibold text-stone-900">{e.title}</p>
+                  <p className="truncate text-xs text-stone-500">
+                    {fmtDateTime(e.startsAt, lang)}
+                    {e.address ? ` · ${e.address}` : ''}
+                  </p>
+                </button>
+              ))}
+              {!loading && events.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-stone-200 bg-stone-50 px-3 py-3 text-sm text-stone-600">
+                  {uiLabel(lang, 'Aucun événement pour le moment.', 'Todavía no hay eventos.', 'No events yet.')}
+                </p>
+              ) : null}
+            </div>
           </div>
-        </div>
+        ) : null}
 
         <div className="min-w-0 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
           {showEditor ? (

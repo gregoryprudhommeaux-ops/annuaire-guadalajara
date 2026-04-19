@@ -2215,7 +2215,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   /** Libellés / aides FR raccourcis (patch UX) uniquement sur /profile/edit. */
   const profileEditFrUx = isEditProfileRoute && lang === 'fr';
   const isMembersDirectoryRoute = location.pathname === '/membres' || isNetworkRoute;
-  const isEventsAdminRoute = location.pathname === '/evenements';
+  const pathnameNorm = location.pathname.replace(/\/$/, '') || '/';
+  const isEventsAdminRoute = pathnameNorm === '/evenements';
 
   useEffect(() => {
     if (!isNetworkRoute) setShowSavedMembersOnly(false);
@@ -2273,7 +2274,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   }, [location.pathname, location.search]);
 
   useLayoutEffect(() => {
-    if (location.pathname === '/evenements') {
+    const p = location.pathname.replace(/\/$/, '') || '/';
+    if (p === '/evenements') {
       setViewMode('dashboard');
       setDirectoryDiscoveryStripsHidden(true);
     }
@@ -6787,8 +6789,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
           )}
 
-          {/* Colonne gauche — recherche (membres connectés uniquement), stats */}
-          {user && !isAdminDashboard && !isEditProfileRoute && (
+          {/* Colonne gauche — recherche (membres connectés uniquement), stats (masquée sur /evenements) */}
+          {user && !isAdminDashboard && !isEditProfileRoute && !isEventsAdminRoute && (
           <div
             className={cn(
               'order-1 min-w-0 w-full lg:order-1',
@@ -6894,12 +6896,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   ? 'lg:col-span-12 lg:col-start-1'
                   : !user
                     ? 'lg:col-span-12 lg:col-start-1'
-                    : 'lg:col-span-8 lg:col-start-5'),
+                    : isEventsAdminRoute
+                      ? 'lg:col-span-12 lg:col-start-1'
+                      : 'lg:col-span-8 lg:col-start-5'),
               user && showDiscoveryStrips && !isAdminDashboard && 'lg:space-y-5'
             )}
           >
             {/* Connecté : nouveaux membres en tête de la colonne centrale */}
-            {user && showDiscoveryStrips && !isAdminDashboard && !isEditProfileRoute && (
+            {user && showDiscoveryStrips && !isAdminDashboard && !isEditProfileRoute && !isEventsAdminRoute && (
               <NewMembersSection
                 copy={h}
                 lang={lang}
@@ -6936,7 +6940,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </>
             )}
 
-            {!isMembersDirectoryRoute && !isAdminDashboard && !isEditProfileRoute && (
+            {!isMembersDirectoryRoute && !isAdminDashboard && !isEditProfileRoute && !isEventsAdminRoute && (
               <NetworkRequestsSection
                 t={t}
                 lang={lang}
@@ -7067,7 +7071,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             {!isEditProfileRoute && (
             <DirectoryTabsSection
               tabs={
-                isNetworkRoute
+                isNetworkRoute || isEventsAdminRoute
                   ? []
                   : directoryViewTabs.map((tab) => ({
                       id: tab.id,
@@ -7077,7 +7081,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               }
               activeTab={viewMode}
               onTabChange={(id) => {
-                if (isNetworkRoute) return;
+                if (isNetworkRoute || isEventsAdminRoute) return;
                 if (id === 'dashboard') {
                   setSelectedProfile(null);
                   setShowValidationPanel(false);
