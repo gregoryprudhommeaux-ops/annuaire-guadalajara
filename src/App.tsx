@@ -155,6 +155,7 @@ import {
   getPassionEmoji,
   sanitizePassionIds,
 } from './lib/passionConfig';
+import { toImageUrlFromMaybeDrive } from './lib/driveUrls';
 import {
   WORKING_LANGUAGE_OPTIONS,
   sanitizeWorkingLanguageCodes,
@@ -9048,6 +9049,46 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     }
                   })()}
                 </p>
+
+                {(() => {
+                  const raw = String(upcomingInviteEvent.event.flyerUrl ?? '').trim();
+                  if (!raw) return null;
+                  let img = '';
+                  try {
+                    const u = new URL(raw);
+                    if (u.protocol === 'http:' || u.protocol === 'https:') {
+                      img = toImageUrlFromMaybeDrive(raw);
+                    }
+                  } catch {
+                    img = '';
+                  }
+                  if (!img) return null;
+                  return (
+                    <a
+                      href={raw}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block overflow-hidden rounded-xl border border-stone-200 bg-stone-50"
+                      aria-label={pickLang('Ouvrir le flyer', 'Abrir el flyer', 'Open flyer', lang)}
+                    >
+                      <img
+                        src={img}
+                        alt={pickLang(
+                          `Flyer: ${upcomingInviteEvent.event.title}`,
+                          `Flyer: ${upcomingInviteEvent.event.title}`,
+                          `Flyer: ${upcomingInviteEvent.event.title}`,
+                          lang
+                        )}
+                        className="h-44 w-full object-cover"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    </a>
+                  );
+                })()}
 
                 {String(upcomingInviteEvent.event.mapsUrl ?? '').trim() ? (
                   <a

@@ -219,6 +219,34 @@ function mapDoc<T extends Record<string, unknown>>(id: string, data: T): T & { i
   return { id, ...data };
 }
 
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  if (!v || typeof v !== 'object') return false;
+  const proto = Object.getPrototypeOf(v);
+  return proto === Object.prototype || proto === null;
+}
+
+function removeUndefinedDeep<T>(value: T): T {
+  if (value === undefined) return value;
+  if (value === null) return value;
+  if (Array.isArray(value)) {
+    // Keep array shape; strip `undefined` items defensively.
+    return value.map((x) => removeUndefinedDeep(x)).filter((x) => x !== undefined) as unknown as T;
+  }
+  // Preserve Firestore Timestamp objects as-is.
+  if (value instanceof Timestamp) return value;
+  if (isPlainObject(value)) {
+    const out: Record<string, unknown> = {};
+    Object.entries(value).forEach(([k, v]) => {
+      if (v === undefined) return;
+      const cleaned = removeUndefinedDeep(v);
+      if (cleaned === undefined) return;
+      out[k] = cleaned;
+    });
+    return out as unknown as T;
+  }
+  return value;
+}
+
 export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminEventsProps) {
   const baseUrl =
     publicBaseUrl ??
@@ -270,6 +298,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewLang, setPreviewLang] = useState<Language>('es');
   const [saving, setSaving] = useState(false);
+  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
   const [magicLinkOpen, setMagicLinkOpen] = useState(false);
   const [magicLinkUrl, setMagicLinkUrl] = useState<string>('');
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -463,7 +492,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     void ensureMemberIndexLoaded();
   };
 
-  const saveEvent = async () => {
+  const doSaveEvent = async () => {
     const title = titleDraft.trim();
     if (!title) return;
     if (!startsAtDateDraft || !startsAtTimeDraft) return;
@@ -500,12 +529,14 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       createdAt: now,
       updatedAt: now,
     };
-    const patch: Omit<AdminEvent, 'id'> = adminUid ? { ...patchBase, createdByUid: adminUid } : patchBase;
+    const patch: Omit<AdminEvent, 'id'> = removeUndefinedDeep(
+      adminUid ? { ...patchBase, createdByUid: adminUid } : patchBase
+    );
     setError(null);
     setSaving(true);
     try {
       if (!editId) {
-        const ref = await addDoc(collection(db, 'events'), patch);
+        const ref = await addDoc(collection(db, 'events'), patch as Record<string, unknown>);
         const saved: AdminEvent = { id: ref.id, ...patch };
         setEvents((prev) => [saved, ...prev].sort((a, b) => b.startsAt.toMillis() - a.startsAt.toMillis()));
         setActiveEventId(ref.id);
@@ -538,12 +569,14 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
         setMagicLinkUrl(url);
         setMagicLinkOpen(true);
       } else {
-        await updateDoc(doc(db, 'events', editId), {
-          ...patch,
-          createdAt: undefined,
+        const updatePayload: Record<string, unknown> = {
+          ...(patch as unknown as Record<string, unknown>),
           ...(adminUid ? { createdByUid: adminUid } : {}),
           updatedAt: now,
-        } as Record<string, unknown>);
+        };
+        // Firestore rejects `undefined` values. On update, never send `createdAt`.
+        delete updatePayload.createdAt;
+        await updateDoc(doc(db, 'events', editId), removeUndefinedDeep(updatePayload));
         setEvents((prev) =>
           prev.map((e) => (e.id === editId ? ({ ...e, ...patch, id: editId, createdAt: e.createdAt } as AdminEvent) : e))
         );
@@ -558,6 +591,15 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     } finally {
       setSaving(false);
     }
+  };
+
+  const requestSave = () => {
+    setSaveConfirmOpen(true);
+  };
+
+  const confirmSave = () => {
+    setSaveConfirmOpen(false);
+    void doSaveEvent();
   };
 
   const cancelEditor = () => {
@@ -1348,7 +1390,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                   </button>
                   <button
                     type="button"
-                    onClick={() => void saveEvent()}
+                    onClick={requestSave}
                     disabled={saving}
                     className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
@@ -1781,12 +1823,91 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
               </div>
               <button
                 type="button"
-                onClick={() => void saveEvent()}
+                onClick={requestSave}
                 disabled={saving}
                 className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Save className="h-4 w-4" aria-hidden />
                 {saving ? uiLabel(lang, 'Enregistrement…', 'Guardando…', 'Saving…') : uiLabel(lang, 'Enregistrer', 'Guardar', 'Save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {saveConfirmOpen ? (
+        <div className="fixed inset-0 z-[245] flex items-center justify-center bg-stone-900/60 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-base font-semibold text-stone-900">
+                  {uiLabel(lang, 'Confirmer l’enregistrement', 'Confirmar guardado', 'Confirm save')}
+                </p>
+                <p className="mt-1 text-xs text-stone-500">
+                  {uiLabel(
+                    lang,
+                    'Vérifie le statut avant d’enregistrer.',
+                    'Verifica el estado antes de guardar.',
+                    'Double-check the status before saving.'
+                  )}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSaveConfirmOpen(false)}
+                className="rounded-md p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-900"
+                aria-label={uiLabel(lang, 'Fermer', 'Cerrar', 'Close')}
+              >
+                <X className="h-5 w-5" aria-hidden />
+              </button>
+            </div>
+
+            <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+              <p className="text-sm font-semibold text-stone-900">
+                {uiLabel(lang, 'Statut sélectionné', 'Estado seleccionado', 'Selected status')}:{' '}
+                <span className="uppercase">
+                  {statusDraft === 'published'
+                    ? uiLabel(lang, 'Publié', 'Publicado', 'Published')
+                    : statusDraft === 'closed'
+                      ? uiLabel(lang, 'Clos', 'Cerrado', 'Closed')
+                      : uiLabel(lang, 'Brouillon', 'Borrador', 'Draft')}
+                </span>
+              </p>
+              <p className="mt-1 text-xs text-stone-600">
+                {statusDraft === 'published'
+                  ? uiLabel(
+                      lang,
+                      'Cet événement sera visible sur le site (et partageable selon ton option).',
+                      'Este evento será visible en el sitio (y compartible según tu opción).',
+                      'This event will be visible on the site (and shareable depending on your option).'
+                    )
+                  : uiLabel(
+                      lang,
+                      'Cet événement ne sera pas public tant qu’il n’est pas “Publié”.',
+                      'Este evento no será público hasta que esté “Publicado”.',
+                      'This event will not be public until it is “Published”.'
+                    )}
+              </p>
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setSaveConfirmOpen(false)}
+                className="rounded-md border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+              >
+                {uiLabel(lang, 'Annuler', 'Cancelar', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={confirmSave}
+                disabled={saving}
+                className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Save className="h-4 w-4" aria-hidden />
+                {saving
+                  ? uiLabel(lang, 'Enregistrement…', 'Guardando…', 'Saving…')
+                  : uiLabel(lang, 'Confirmer', 'Confirmar', 'Confirm')}
               </button>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { addDoc, collection, getDocs, limit, query, Timestamp, where } from 'fir
 import type { User } from 'firebase/auth';
 import { db } from '@/firebase';
 import type { AdminEvent, EventRespondentAttendance, Language } from '@/types';
+import { toImageUrlFromMaybeDrive } from '@/lib/driveUrls';
 
 type TFn = (key: string) => string;
 
@@ -216,6 +217,31 @@ export default function PublicEventPage({ lang, t, currentUser, onStartRsvp }: P
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-stone-200 bg-white p-6">
+        {(() => {
+          const raw = safeHttpUrl(event.flyerUrl);
+          const img = raw ? safeHttpUrl(toImageUrlFromMaybeDrive(raw)) : '';
+          if (!img) return null;
+          return (
+            <a
+              href={raw}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mb-4 block overflow-hidden rounded-2xl border border-stone-200 bg-stone-50"
+              aria-label={uiPublic(lang, 'Ouvrir le flyer', 'Abrir el flyer', 'Open flyer')}
+            >
+              <img
+                src={img}
+                alt={uiPublic(lang, `Flyer: ${event.title}`, `Flyer: ${event.title}`, `Flyer: ${event.title}`)}
+                className="h-56 w-full object-cover sm:h-72"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </a>
+          );
+        })()}
         <h2 className="text-2xl font-bold tracking-tight text-stone-900">{event.title}</h2>
         {String(event.organizerName ?? '').trim() ? (
           <p className="mt-2 text-sm font-semibold text-stone-700">
