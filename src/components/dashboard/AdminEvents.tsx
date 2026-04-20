@@ -1001,31 +1001,33 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                       className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                     />
                   </div>
-                  <div>
-                    <label className="text-xs font-semibold text-stone-700">
-                      {uiLabel(lang, 'Heure de début *', 'Hora de inicio *', 'Start time *')}
-                    </label>
-                    <input
-                      type="time"
-                      value={startsAtTimeDraft}
-                      onChange={(e) => setStartsAtTimeDraft(e.target.value)}
-                      onClick={(e) => openNativePicker(e.currentTarget)}
-                      onFocus={(e) => openNativePicker(e.currentTarget)}
-                      className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-stone-700">
-                      {uiLabel(lang, 'Heure de fin', 'Hora de fin', 'End time')}
-                    </label>
-                    <input
-                      type="time"
-                      value={endsAtTimeDraft}
-                      onChange={(e) => setEndsAtTimeDraft(e.target.value)}
-                      onClick={(e) => openNativePicker(e.currentTarget)}
-                      onFocus={(e) => openNativePicker(e.currentTarget)}
-                      className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                    />
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div>
+                      <label className="text-xs font-semibold text-stone-700">
+                        {uiLabel(lang, 'Heure de début *', 'Hora de inicio *', 'Start time *')}
+                      </label>
+                      <input
+                        type="time"
+                        value={startsAtTimeDraft}
+                        onChange={(e) => setStartsAtTimeDraft(e.target.value)}
+                        onClick={(e) => openNativePicker(e.currentTarget)}
+                        onFocus={(e) => openNativePicker(e.currentTarget)}
+                        className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-stone-700">
+                        {uiLabel(lang, 'Heure de fin', 'Hora de fin', 'End time')}
+                      </label>
+                      <input
+                        type="time"
+                        value={endsAtTimeDraft}
+                        onChange={(e) => setEndsAtTimeDraft(e.target.value)}
+                        onClick={(e) => openNativePicker(e.currentTarget)}
+                        onFocus={(e) => openNativePicker(e.currentTarget)}
+                        className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                      />
+                    </div>
                   </div>
                   <div className="sm:col-span-2">
                     <label className="text-xs font-semibold text-stone-700">{uiLabel(lang, 'Adresse', 'Dirección', 'Address')}</label>
