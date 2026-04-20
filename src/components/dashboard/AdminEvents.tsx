@@ -81,10 +81,41 @@ function respondentAttendanceBadge(att: EventRespondentAttendance) {
 }
 
 async function safeCopy(text: string) {
+  const value = String(text ?? '');
+  if (!value) return;
+
+  // 1) Clipboard API (requiert contexte sécurisé + permissions)
   try {
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(value);
+    return;
   } catch {
-    // fallback: ignore (user can select manually)
+    // ignore → fallback
+  }
+
+  // 2) Fallback legacy (textarea + execCommand)
+  try {
+    const el = document.createElement('textarea');
+    el.value = value;
+    el.setAttribute('readonly', 'true');
+    el.style.position = 'fixed';
+    el.style.top = '0';
+    el.style.left = '0';
+    el.style.opacity = '0';
+    document.body.appendChild(el);
+    el.focus();
+    el.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(el);
+    if (ok) return;
+  } catch {
+    // ignore → prompt
+  }
+
+  // 3) Ultime fallback : afficher le texte pour Cmd/Ctrl+C
+  try {
+    window.prompt('Copiez le texte ci-dessous (Cmd/Ctrl + C) :', value);
+  } catch {
+    // ignore
   }
 }
 
