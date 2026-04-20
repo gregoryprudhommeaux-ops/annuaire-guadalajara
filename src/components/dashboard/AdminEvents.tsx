@@ -26,6 +26,9 @@ import type {
 import { db } from '@/firebase';
 import { PASSIONS_CATEGORIES, getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/passionConfig';
 import { profileDistinctActivityCategories } from '@/lib/companyActivities';
+import { WORKING_LANGUAGE_OPTIONS, workingLanguageLabel } from '@/lib/contactPreferences';
+import { NATIONALITY_OPTIONS, nationalityLabel } from '@/lib/nationalityOptions';
+import { USER_ADMIN_PRIVATE_COLLECTION } from '@/lib/userAdminPrivate';
 
 type TFn = (key: string) => string;
 
@@ -243,6 +246,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
   const [titleDraft, setTitleDraft] = useState('');
   const [organizerDraft, setOrganizerDraft] = useState('');
   const [shareEnabledDraft, setShareEnabledDraft] = useState(false);
+  const [eventLanguageDraft, setEventLanguageDraft] = useState<Language>('fr');
   const [introDraft, setIntroDraft] = useState('');
   const [addressDraft, setAddressDraft] = useState('');
   const [registrationFormUrlDraft, setRegistrationFormUrlDraft] = useState('');
@@ -261,6 +265,8 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
   const [editorMemberQuery, setEditorMemberQuery] = useState('');
   const [editorSectorFilter, setEditorSectorFilter] = useState<string>('');
   const [editorPassionFilter, setEditorPassionFilter] = useState<string>('');
+  const [editorLanguageFilter, setEditorLanguageFilter] = useState<string>('');
+  const [editorNationalityFilter, setEditorNationalityFilter] = useState<string>('');
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewLang, setPreviewLang] = useState<Language>('es');
   const [saving, setSaving] = useState(false);
@@ -289,6 +295,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       setTitleDraft('');
       setOrganizerDraft('');
       setShareEnabledDraft(false);
+      setEventLanguageDraft(lang);
       setIntroDraft('');
       setAddressDraft('');
       setRegistrationFormUrlDraft('');
@@ -305,11 +312,14 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       setEditorMemberQuery('');
       setEditorSectorFilter('');
       setEditorPassionFilter('');
+      setEditorLanguageFilter('');
+      setEditorNationalityFilter('');
       return;
     }
     setTitleDraft(e.title ?? '');
     setOrganizerDraft(e.organizerName ?? '');
     setShareEnabledDraft(e.shareEnabled === true);
+    setEventLanguageDraft((e.eventLanguage as Language) ?? lang);
     setIntroDraft(e.introText ?? '');
     setAddressDraft(e.address ?? '');
     setRegistrationFormUrlDraft(e.registrationFormUrl ?? '');
@@ -345,6 +355,8 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     setEditorMemberQuery('');
     setEditorSectorFilter('');
     setEditorPassionFilter('');
+    setEditorLanguageFilter('');
+    setEditorNationalityFilter('');
   };
 
   useEffect(() => {
@@ -447,7 +459,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     setEditId(e.id);
     hydrateEditorFromEvent(e);
     setShowEditor(true);
-    setPreviewLang(lang);
+    setPreviewLang((e.eventLanguage as Language) ?? lang);
     void ensureMemberIndexLoaded();
   };
 
@@ -473,6 +485,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       title,
       organizerName: organizerDraft.trim() || undefined,
       shareEnabled: shareEnabledDraft === true,
+      eventLanguage: eventLanguageDraft,
       introText: introDraft.trim() || undefined,
       address: addressDraft.trim() || undefined,
       registrationFormUrl: registrationFormUrlDraft.trim() || undefined,
@@ -555,8 +568,22 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     if (memberIndexLoading || memberIndex.length > 0) return;
     setMemberIndexLoading(true);
     try {
-      const snap = await getDocs(collection(db, 'users'));
-      const rows = snap.docs.map((d) => mapDoc(d.id, d.data() as Record<string, unknown>)) as unknown as UserProfile[];
+      const [usersSnap, privSnap] = await Promise.all([
+        getDocs(collection(db, 'users')),
+        getDocs(collection(db, USER_ADMIN_PRIVATE_COLLECTION)),
+      ]);
+      const privByUid = new Map<string, { nationality?: string }>();
+      privSnap.docs.forEach((d) => {
+        const data = d.data() as Record<string, unknown>;
+        const nationality = typeof data.nationality === 'string' ? data.nationality : undefined;
+        privByUid.set(d.id, { nationality });
+      });
+      const rows = usersSnap.docs.map((d) => {
+        const base = mapDoc(d.id, d.data() as Record<string, unknown>) as any;
+        const priv = privByUid.get(d.id);
+        if (priv?.nationality) base.nationality = priv.nationality;
+        return base;
+      }) as unknown as UserProfile[];
       setMemberIndex(rows);
     } finally {
       setMemberIndexLoading(false);
@@ -587,6 +614,8 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     const q = editorMemberQuery.trim().toLowerCase();
     const sector = editorSectorFilter.trim();
     const passion = editorPassionFilter.trim();
+    const wl = editorLanguageFilter.trim();
+    const nat = editorNationalityFilter.trim();
     return memberIndex
       .filter((m) => {
         if (sector && !profileDistinctActivityCategories(m).includes(sector)) return false;
@@ -594,12 +623,27 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
           const ids = sanitizePassionIds(m.passionIds);
           if (!ids.includes(passion)) return false;
         }
+        if (wl) {
+          const codes = Array.isArray(m.workingLanguageCodes) ? m.workingLanguageCodes : [];
+          if (!codes.includes(wl)) return false;
+        }
+        if (nat) {
+          const nationality = (m as any).nationality;
+          if (typeof nationality !== 'string' || nationality !== nat) return false;
+        }
         if (!q) return true;
         const hay = `${m.fullName ?? ''} ${m.companyName ?? ''} ${m.email ?? ''}`.toLowerCase();
         return hay.includes(q);
       })
       .slice(0, 12);
-  }, [memberIndex, editorMemberQuery, editorSectorFilter, editorPassionFilter]);
+  }, [
+    memberIndex,
+    editorMemberQuery,
+    editorSectorFilter,
+    editorPassionFilter,
+    editorLanguageFilter,
+    editorNationalityFilter,
+  ]);
 
   const editorSelectedMembers = useMemo(() => {
     const set = new Set(editorInviteUids);
@@ -1098,6 +1142,20 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                       <option value="closed">{uiLabel(lang, 'Clos', 'Cerrado', 'Closed')}</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="text-xs font-semibold text-stone-700">
+                      {uiLabel(lang, "Événement en", "Evento en", "Event in")}
+                    </label>
+                    <select
+                      value={eventLanguageDraft}
+                      onChange={(e) => setEventLanguageDraft(e.target.value as Language)}
+                      className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="fr">Français</option>
+                      <option value="es">Español</option>
+                      <option value="en">English</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Bloc groupe / affinités (inchangé) */}
@@ -1121,8 +1179,8 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                     </p>
                   </div>
 
-                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                    <div className="relative sm:col-span-1">
+                  <div className="mt-3 grid gap-2 sm:grid-cols-5">
+                    <div className="relative sm:col-span-2">
                       <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-stone-400" aria-hidden />
                       <input
                         value={editorMemberQuery}
@@ -1162,6 +1220,34 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                             </option>
                           ))
                         )}
+                      </select>
+                    </div>
+                    <div>
+                      <select
+                        value={editorLanguageFilter}
+                        onChange={(e) => setEditorLanguageFilter(e.target.value)}
+                        className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="">{uiLabel(lang, 'Langues (toutes)', 'Idiomas (todos)', 'Languages (all)')}</option>
+                        {WORKING_LANGUAGE_OPTIONS.map((opt) => (
+                          <option key={opt.code} value={opt.code}>
+                            {workingLanguageLabel(opt.code, lang)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <select
+                        value={editorNationalityFilter}
+                        onChange={(e) => setEditorNationalityFilter(e.target.value)}
+                        className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="">{uiLabel(lang, 'Nationalités (toutes)', 'Nacionalidades (todas)', 'Nationalities (all)')}</option>
+                        {NATIONALITY_OPTIONS.map((o) => (
+                          <option key={o.code} value={o.code}>
+                            {nationalityLabel(o.code, lang)}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
