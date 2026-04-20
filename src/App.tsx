@@ -2220,6 +2220,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const isRequestsRoute = location.pathname === '/requests';
   const isRadarRoute = location.pathname === '/radar';
   const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+  // Admin is a separate product space (`/admin`), not a member dashboard mode.
+  const isAdminDashboard = false;
   const isEditProfileRoute = location.pathname === '/profile/edit';
   /** Libellés / aides FR raccourcis (patch UX) uniquement sur /profile/edit. */
   const profileEditFrUx = isEditProfileRoute && lang === 'fr';
@@ -4275,8 +4277,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   }, [searchTerm, filterCategory, filterLocation, filterProfileType]);
 
   const showDiscoveryStrips = !showDirectoryClearFilters && !directoryDiscoveryStripsHidden;
-  // Admin is a separate product space (`/admin`), not a member dashboard mode.
-  const isAdminDashboard = false;
 
   const directoryViewTabs = useMemo(
     () =>

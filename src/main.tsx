@@ -31,7 +31,11 @@ class RootErrorBoundary extends React.Component<
             Essaie de recharger la page. Si le problème persiste, il peut s’agir d’un cache navigateur.
           </p>
           <pre className="mt-4 max-h-48 overflow-auto rounded-xl bg-slate-950 p-3 text-xs text-slate-100">
-            {String(this.state.error?.message || this.state.error)}
+            {String(
+              new URLSearchParams(window.location.search).has('__debug')
+                ? this.state.error?.stack || this.state.error?.message || this.state.error
+                : this.state.error?.message || this.state.error
+            )}
           </pre>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <button
