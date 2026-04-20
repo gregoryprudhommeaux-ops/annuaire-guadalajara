@@ -275,6 +275,8 @@ export interface AdminEvent {
   id: string;
   slug: string;
   title: string;
+  /** Organisateur (société / association / organisme). */
+  organizerName?: string;
   introText?: string;
   address?: string;
   /** URL du formulaire d’inscription (ex. Google Form / Typeform). */

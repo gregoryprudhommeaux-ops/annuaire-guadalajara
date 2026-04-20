@@ -228,10 +228,20 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const activeEvent = useMemo(() => events.find((e) => e.id === activeEventId) ?? null, [events, activeEventId]);
 
+  const organizerSuggestions = useMemo(() => {
+    const s = new Set<string>();
+    events.forEach((e) => {
+      const v = String(e.organizerName ?? '').trim();
+      if (v) s.add(v);
+    });
+    return Array.from(s).sort((a, b) => a.localeCompare(b));
+  }, [events]);
+
   const [showEditor, setShowEditor] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
 
   const [titleDraft, setTitleDraft] = useState('');
+  const [organizerDraft, setOrganizerDraft] = useState('');
   const [introDraft, setIntroDraft] = useState('');
   const [addressDraft, setAddressDraft] = useState('');
   const [registrationFormUrlDraft, setRegistrationFormUrlDraft] = useState('');
@@ -276,6 +286,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
   const hydrateEditorFromEvent = (e: AdminEvent | null) => {
     if (!e) {
       setTitleDraft('');
+      setOrganizerDraft('');
       setIntroDraft('');
       setAddressDraft('');
       setRegistrationFormUrlDraft('');
@@ -295,6 +306,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       return;
     }
     setTitleDraft(e.title ?? '');
+    setOrganizerDraft(e.organizerName ?? '');
     setIntroDraft(e.introText ?? '');
     setAddressDraft(e.address ?? '');
     setRegistrationFormUrlDraft(e.registrationFormUrl ?? '');
@@ -456,6 +468,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     const patchBase: Omit<AdminEvent, 'id' | 'createdByUid'> = {
       slug,
       title,
+      organizerName: organizerDraft.trim() || undefined,
       introText: introDraft.trim() || undefined,
       address: addressDraft.trim() || undefined,
       registrationFormUrl: registrationFormUrlDraft.trim() || undefined,
@@ -719,6 +732,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       id: editId ?? 'draft',
       slug,
       title,
+      organizerName: organizerDraft.trim() || undefined,
       introText: introDraft.trim() || undefined,
       address: addressDraft.trim() || undefined,
       registrationFormUrl: registrationFormUrlDraft.trim() || undefined,
@@ -736,6 +750,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     };
   }, [
     titleDraft,
+    organizerDraft,
     introDraft,
     addressDraft,
     registrationFormUrlDraft,
@@ -875,6 +890,31 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                       onChange={(e) => setTitleDraft(e.target.value)}
                       className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                     />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-semibold text-stone-700">
+                      {uiLabel(lang, 'Organisateur', 'Organizador', 'Organizer')}
+                    </label>
+                    <input
+                      value={organizerDraft}
+                      onChange={(e) => setOrganizerDraft(e.target.value)}
+                      list="fn_event_organizers"
+                      placeholder={uiLabel(lang, 'Ex. Association XYZ', 'Ej. Asociación XYZ', 'e.g. XYZ Association')}
+                      className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    />
+                    <datalist id="fn_event_organizers">
+                      {organizerSuggestions.map((o) => (
+                        <option key={o} value={o} />
+                      ))}
+                    </datalist>
+                    <p className="mt-1 text-xs text-stone-500">
+                      {uiLabel(
+                        lang,
+                        'Les organisateurs déjà utilisés sont proposés automatiquement.',
+                        'Los organizadores usados antes se sugieren automáticamente.',
+                        'Previously used organizers are suggested automatically.'
+                      )}
+                    </p>
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-stone-700">{uiLabel(lang, 'Date *', 'Fecha *', 'Date *')}</label>

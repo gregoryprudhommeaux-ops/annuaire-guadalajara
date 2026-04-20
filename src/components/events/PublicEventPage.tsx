@@ -217,6 +217,11 @@ export default function PublicEventPage({ lang, t, currentUser, onStartRsvp }: P
     <div className="space-y-6">
       <div className="rounded-2xl border border-stone-200 bg-white p-6">
         <h2 className="text-2xl font-bold tracking-tight text-stone-900">{event.title}</h2>
+        {String(event.organizerName ?? '').trim() ? (
+          <p className="mt-2 text-sm font-semibold text-stone-700">
+            {uiPublic(lang, 'Organisé par', 'Organizado por', 'Organized by')}: {String(event.organizerName ?? '').trim()}
+          </p>
+        ) : null}
         <p className="mt-2 text-sm text-stone-600">
           {fmtTimeRange(event, lang)}
           {event.address ? ` · ${event.address}` : ''}

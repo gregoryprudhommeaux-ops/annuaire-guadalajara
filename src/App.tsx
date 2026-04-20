@@ -8811,6 +8811,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     {pickLang('Souhaitez-vous participer à', '¿Quieres participar en', 'Do you want to attend', lang)}{' '}
                     <span className="font-semibold text-stone-900">{publicEvent.title}</span> ?
                   </p>
+                  {String(publicEvent.organizerName ?? '').trim() ? (
+                    <p className="mt-1 text-xs font-semibold text-stone-600">
+                      {pickLang('Organisé par', 'Organizado por', 'Organized by', lang)}:{' '}
+                      {String(publicEvent.organizerName ?? '').trim()}
+                    </p>
+                  ) : null}
                 </div>
                 <button
                   type="button"
