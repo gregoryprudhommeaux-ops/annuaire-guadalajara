@@ -29,6 +29,7 @@ import { profileDistinctActivityCategories } from '@/lib/companyActivities';
 import { WORKING_LANGUAGE_OPTIONS, workingLanguageLabel } from '@/lib/contactPreferences';
 import { NATIONALITY_OPTIONS, nationalityLabel } from '@/lib/nationalityOptions';
 import { USER_ADMIN_PRIVATE_COLLECTION } from '@/lib/userAdminPrivate';
+import { copyTextToClipboard } from '@/lib/clipboard';
 
 type TFn = (key: string) => string;
 
@@ -84,42 +85,7 @@ function respondentAttendanceBadge(att: EventRespondentAttendance) {
 }
 
 async function safeCopy(text: string) {
-  const value = String(text ?? '');
-  if (!value) return;
-
-  // 1) Clipboard API (requiert contexte sécurisé + permissions)
-  try {
-    await navigator.clipboard.writeText(value);
-    return;
-  } catch {
-    // ignore → fallback
-  }
-
-  // 2) Fallback legacy (textarea + execCommand)
-  try {
-    const el = document.createElement('textarea');
-    el.value = value;
-    el.setAttribute('readonly', 'true');
-    el.style.position = 'fixed';
-    el.style.top = '0';
-    el.style.left = '0';
-    el.style.opacity = '0';
-    document.body.appendChild(el);
-    el.focus();
-    el.select();
-    const ok = document.execCommand('copy');
-    document.body.removeChild(el);
-    if (ok) return;
-  } catch {
-    // ignore → prompt
-  }
-
-  // 3) Ultime fallback : afficher le texte pour Cmd/Ctrl+C
-  try {
-    window.prompt('Copiez le texte ci-dessous (Cmd/Ctrl + C) :', value);
-  } catch {
-    // ignore
-  }
+  await copyTextToClipboard(text);
 }
 
 function eventPublicUrl(baseUrl: string, slug: string) {
@@ -759,7 +725,17 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
 
   const copyLink = async () => {
     if (!activeEvent) return;
-    await safeCopy(eventPublicUrl(baseUrl, activeEvent.slug));
+    const url = eventPublicUrl(baseUrl, activeEvent.slug);
+    const ok = await copyTextToClipboard(url);
+    if (ok) return;
+    window.alert(
+      uiLabel(
+        lang,
+        `Impossible de copier automatiquement. Copie ce lien manuellement :\n\n${url}`,
+        `No se pudo copiar automáticamente. Copia manualmente este enlace:\n\n${url}`,
+        `Could not copy automatically. Please copy this link manually:\n\n${url}`
+      )
+    );
   };
 
   const deleteActiveEvent = async () => {
