@@ -2081,6 +2081,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [rsvpBusy, setRsvpBusy] = useState(false);
   const [rsvpError, setRsvpError] = useState<string | null>(null);
   const [pendingRsvpStatus, setPendingRsvpStatus] = useState<'present' | 'declined' | null>(null);
+  const [rsvpDismissedForEventId, setRsvpDismissedForEventId] = useState<string | null>(null);
   const [upcomingInviteEvent, setUpcomingInviteEvent] = useState<null | { event: AdminEvent; status: 'invited' | 'present' | 'declined' }>(
     null
   );
@@ -2296,6 +2297,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       setRsvpDoneForEventId(null);
       setRsvpCheckDoneForEventId(null);
       setPendingRsvpStatus(null);
+      setRsvpDismissedForEventId(null);
       return;
     }
     if (!publicEventSlug) return;
@@ -2421,9 +2423,11 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       return;
     }
     if (publicEvent && !showRsvpModal && rsvpDoneForEventId !== publicEvent.id) {
-      setShowRsvpModal(true);
+      if (rsvpDismissedForEventId !== publicEvent.id) {
+        setShowRsvpModal(true);
+      }
     }
-  }, [isPublicEventRoute, user, profile, publicEvent, showRsvpModal, rsvpDoneForEventId]);
+  }, [isPublicEventRoute, user, profile, publicEvent, showRsvpModal, rsvpDoneForEventId, rsvpDismissedForEventId]);
 
   const getAuthErrorMessage = (code: string) => {
     const host = typeof window !== 'undefined' ? window.location.host : '';
@@ -4105,6 +4109,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       );
       setRsvpError(null);
       setPendingRsvpStatus(null);
+      setRsvpDismissedForEventId(null);
       // Après RSVP: rester sur la page (V1). On pourra rediriger vers /membres plus tard.
     } catch (e) {
       setRsvpError(e instanceof Error ? e.message : String(e));
@@ -8790,7 +8795,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
               onClick={() => {
-                if (!rsvpBusy) setShowRsvpModal(false);
+                if (!rsvpBusy) {
+                  setRsvpDismissedForEventId(publicEvent.id);
+                  setShowRsvpModal(false);
+                }
               }}
             />
             <motion.div
@@ -8821,7 +8829,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 <button
                   type="button"
                   onClick={() => {
-                    if (!rsvpBusy) setShowRsvpModal(false);
+                    if (!rsvpBusy) {
+                      setRsvpDismissedForEventId(publicEvent.id);
+                      setShowRsvpModal(false);
+                    }
                   }}
                   className="rounded-md p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-900"
                   aria-label={pickLang('Fermer', 'Cerrar', 'Close', lang)}
