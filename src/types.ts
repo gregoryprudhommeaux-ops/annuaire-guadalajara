@@ -277,6 +277,8 @@ export interface AdminEvent {
   title: string;
   /** Organisateur (société / association / organisme). */
   organizerName?: string;
+  /** Autorise les membres à partager l'invitation à un tiers. */
+  shareEnabled?: boolean;
   introText?: string;
   address?: string;
   /** URL du formulaire d’inscription (ex. Google Form / Typeform). */

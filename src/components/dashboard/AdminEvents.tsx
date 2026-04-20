@@ -242,6 +242,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
 
   const [titleDraft, setTitleDraft] = useState('');
   const [organizerDraft, setOrganizerDraft] = useState('');
+  const [shareEnabledDraft, setShareEnabledDraft] = useState(false);
   const [introDraft, setIntroDraft] = useState('');
   const [addressDraft, setAddressDraft] = useState('');
   const [registrationFormUrlDraft, setRegistrationFormUrlDraft] = useState('');
@@ -287,6 +288,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     if (!e) {
       setTitleDraft('');
       setOrganizerDraft('');
+      setShareEnabledDraft(false);
       setIntroDraft('');
       setAddressDraft('');
       setRegistrationFormUrlDraft('');
@@ -307,6 +309,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     }
     setTitleDraft(e.title ?? '');
     setOrganizerDraft(e.organizerName ?? '');
+    setShareEnabledDraft(e.shareEnabled === true);
     setIntroDraft(e.introText ?? '');
     setAddressDraft(e.address ?? '');
     setRegistrationFormUrlDraft(e.registrationFormUrl ?? '');
@@ -469,6 +472,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       slug,
       title,
       organizerName: organizerDraft.trim() || undefined,
+      shareEnabled: shareEnabledDraft === true,
       introText: introDraft.trim() || undefined,
       address: addressDraft.trim() || undefined,
       registrationFormUrl: registrationFormUrlDraft.trim() || undefined,
@@ -733,6 +737,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       slug,
       title,
       organizerName: organizerDraft.trim() || undefined,
+      shareEnabled: shareEnabledDraft === true,
       introText: introDraft.trim() || undefined,
       address: addressDraft.trim() || undefined,
       registrationFormUrl: registrationFormUrlDraft.trim() || undefined,
@@ -751,6 +756,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
   }, [
     titleDraft,
     organizerDraft,
+    shareEnabledDraft,
     introDraft,
     addressDraft,
     registrationFormUrlDraft,
@@ -913,6 +919,30 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                         'Les organisateurs déjà utilisés sont proposés automatiquement.',
                         'Los organizadores usados antes se sugieren automáticamente.',
                         'Previously used organizers are suggested automatically.'
+                      )}
+                    </p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-stone-700">
+                      <input
+                        type="checkbox"
+                        checked={shareEnabledDraft}
+                        onChange={(e) => setShareEnabledDraft(e.target.checked)}
+                        className="h-4 w-4 rounded border-stone-300 text-blue-700 focus:ring-blue-200"
+                      />
+                      {uiLabel(
+                        lang,
+                        "Autoriser le partage de l'invitation par les membres",
+                        'Permitir compartir la invitación por miembros',
+                        'Allow members to share the invitation'
+                      )}
+                    </label>
+                    <p className="mt-1 text-xs text-stone-500">
+                      {uiLabel(
+                        lang,
+                        'Affiche un bouton “Partager” côté membres (lien /e/…).',
+                        'Muestra un botón “Compartir” para miembros (enlace /e/…).',
+                        'Shows a “Share” button for members (/e/… link).'
                       )}
                     </p>
                   </div>

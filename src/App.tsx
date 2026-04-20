@@ -2086,6 +2086,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     null
   );
   const [upcomingInviteLoading, setUpcomingInviteLoading] = useState(false);
+  const [upcomingInviteModalOpen, setUpcomingInviteModalOpen] = useState(false);
   /** Masque « Nouveaux membres » et « Opportunités » après interaction avec les onglets du listing (remonte le bloc principal). */
   const [directoryDiscoveryStripsHidden, setDirectoryDiscoveryStripsHidden] = useState(false);
   const [matches, setMatches] = useState<MatchSuggestion[]>([]);
@@ -2382,6 +2383,55 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       cancelled = true;
     };
   }, [user?.uid]);
+
+  const submitMemberEventRsvp = useCallback(
+    async (event: AdminEvent, status: 'present' | 'declined') => {
+      if (!user?.uid || !profile?.uid) return;
+      setRsvpBusy(true);
+      try {
+        const now = Timestamp.now();
+        const id = `${event.id}_${user.uid}`;
+        await setDoc(
+          doc(db, 'event_participations', id),
+          {
+            eventId: event.id,
+            uid: user.uid,
+            email: String(profile.email ?? user.email ?? '').trim().toLowerCase(),
+            fullName: profile.fullName ?? user.displayName ?? null,
+            companyName: profile.companyName ?? null,
+            status,
+            statusSource: 'guest',
+            createdAt: now,
+            updatedAt: now,
+          },
+          { merge: true }
+        );
+        setUpcomingInviteEvent((prev) => (prev && prev.event.id === event.id ? { ...prev, status } : prev));
+      } finally {
+        setRsvpBusy(false);
+      }
+    },
+    [profile?.companyName, profile?.email, profile?.fullName, profile?.uid, user?.email, user?.displayName, user?.uid]
+  );
+
+  const shareEventInvite = useCallback(async (ev: AdminEvent) => {
+    const link = `${window.location.protocol}//${window.location.host}/e/${encodeURIComponent(String(ev.slug ?? ''))}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: ev.title, url: link });
+        return;
+      }
+    } catch {
+      // ignore → fallback
+    }
+    try {
+      await navigator.clipboard.writeText(link);
+      return;
+    } catch {
+      // ignore
+    }
+    window.prompt('Copiez le lien ci-dessous (Cmd/Ctrl + C) :', link);
+  }, []);
 
   useEffect(() => {
     // Si on a déjà une réponse enregistrée, ne pas re-demander.
@@ -6970,20 +7020,26 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             )}
           >
             {upcomingInviteEvent ? (
-              <div className="mb-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setUpcomingInviteModalOpen(true)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') setUpcomingInviteModalOpen(true);
+                }}
+                className="mb-4 cursor-pointer rounded-2xl border border-stone-200 bg-white p-3 shadow-sm transition-colors hover:bg-stone-50"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
-                      {pickLang('Événement à venir', 'Próximo evento', 'Upcoming event', lang)}
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+                      {pickLang('Événement', 'Evento', 'Event', lang)}
                     </p>
-                    <p className="mt-1 truncate text-sm font-semibold text-stone-900">
-                      {upcomingInviteEvent.event.title}
-                    </p>
+                    <p className="mt-1 line-clamp-2 text-sm font-semibold text-stone-900">{upcomingInviteEvent.event.title}</p>
                     <p className="mt-1 text-xs text-stone-600">
                       {(() => {
                         try {
                           const d = upcomingInviteEvent.event.startsAt?.toDate?.();
-                          const when = d
+                          return d
                             ? d.toLocaleString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-MX' : 'fr-FR', {
                                 year: 'numeric',
                                 month: 'short',
@@ -6992,51 +7048,49 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 minute: '2-digit',
                               })
                             : '';
-                          const where = String(upcomingInviteEvent.event.address ?? '').trim();
-                          return `${when}${where ? ` · ${where}` : ''}`;
                         } catch {
                           return '';
                         }
                       })()}
                     </p>
                   </div>
-                  <span
-                    className={cn(
-                      'inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-                      upcomingInviteEvent.status === 'present'
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                        : upcomingInviteEvent.status === 'declined'
-                          ? 'border-rose-200 bg-rose-50 text-rose-800'
-                          : 'border-stone-200 bg-stone-50 text-stone-700'
-                    )}
-                  >
-                    {upcomingInviteEvent.status === 'present'
-                      ? pickLang('Inscrit', 'Inscrito', 'Registered', lang)
-                      : upcomingInviteEvent.status === 'declined'
-                        ? pickLang('Refusé', 'Rechazado', 'Declined', lang)
-                        : pickLang('Invitation', 'Invitación', 'Invited', lang)}
-                  </span>
-                </div>
-                <div className="mt-3">
-                  <Link
-                    to={`/e/${encodeURIComponent(String(upcomingInviteEvent.event.slug ?? ''))}`}
-                    className={cn(
-                      'inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold',
-                      upcomingInviteEvent.status === 'present'
-                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                        : 'bg-stone-900 text-white hover:bg-stone-800'
-                    )}
-                  >
-                    {upcomingInviteEvent.status === 'present'
-                      ? pickLang('Voir les détails', 'Ver detalles', 'View details', lang)
-                      : pickLang('Répondre maintenant', 'Responder ahora', 'RSVP now', lang)}
-                  </Link>
-                  {upcomingInviteLoading ? (
-                    <p className="mt-2 text-[11px] text-stone-400">
-                      {pickLang('Mise à jour…', 'Actualizando…', 'Refreshing…', lang)}
-                    </p>
+                  {upcomingInviteEvent.status === 'present' ? (
+                    <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                      {pickLang('Inscrit', 'Inscrito', 'Registered', lang)}
+                    </span>
                   ) : null}
                 </div>
+
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void submitMemberEventRsvp(upcomingInviteEvent.event, 'present');
+                    }}
+                    disabled={rsvpBusy}
+                    className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {pickLang('Je participe', 'Sí, participaré', 'I will attend', lang)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void submitMemberEventRsvp(upcomingInviteEvent.event, 'declined');
+                    }}
+                    disabled={rsvpBusy}
+                    className="rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                  >
+                    {pickLang('Je ne participe pas', 'No participaré', "I won't attend", lang)}
+                  </button>
+                </div>
+
+                {upcomingInviteLoading ? (
+                  <p className="mt-2 text-[11px] text-stone-400">
+                    {pickLang('Mise à jour…', 'Actualizando…', 'Refreshing…', lang)}
+                  </p>
+                ) : null}
               </div>
             ) : null}
 
@@ -8787,6 +8841,122 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       />
 
       <AnimatePresence>
+        {upcomingInviteModalOpen && upcomingInviteEvent ? (
+          <div className="fixed inset-0 z-[225] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+              onClick={() => setUpcomingInviteModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 10 }}
+              className="relative w-full max-w-2xl overflow-hidden rounded-2xl bg-white p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-lg font-bold text-stone-900">
+                    {pickLang('Détails de l’événement', 'Detalles del evento', 'Event details', lang)}
+                  </h3>
+                  <p className="mt-1 text-sm text-stone-600">
+                    <span className="font-semibold text-stone-900">{upcomingInviteEvent.event.title}</span>
+                  </p>
+                  {String(upcomingInviteEvent.event.organizerName ?? '').trim() ? (
+                    <p className="mt-1 text-xs font-semibold text-stone-600">
+                      {pickLang('Organisé par', 'Organizado por', 'Organized by', lang)}:{' '}
+                      {String(upcomingInviteEvent.event.organizerName ?? '').trim()}
+                    </p>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUpcomingInviteModalOpen(false)}
+                  className="rounded-md p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-900"
+                  aria-label={pickLang('Fermer', 'Cerrar', 'Close', lang)}
+                >
+                  <X className="h-5 w-5" aria-hidden />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-sm text-stone-700">
+                  {(() => {
+                    try {
+                      const d = upcomingInviteEvent.event.startsAt?.toDate?.();
+                      const when = d
+                        ? d.toLocaleString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-MX' : 'fr-FR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '';
+                      const where = String(upcomingInviteEvent.event.address ?? '').trim();
+                      return [when, where].filter(Boolean).join(' · ');
+                    } catch {
+                      return '';
+                    }
+                  })()}
+                </p>
+
+                {String(upcomingInviteEvent.event.mapsUrl ?? '').trim() ? (
+                  <a
+                    href={String(upcomingInviteEvent.event.mapsUrl ?? '').trim()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                  >
+                    {pickLang('Ouvrir Google Maps', 'Abrir Google Maps', 'Open Google Maps', lang)}
+                  </a>
+                ) : null}
+
+                {upcomingInviteEvent.event.introText?.trim() ? (
+                  <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+                    <p className="whitespace-pre-wrap text-sm text-stone-700">{upcomingInviteEvent.event.introText}</p>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={() => void submitMemberEventRsvp(upcomingInviteEvent.event, 'present')}
+                  disabled={rsvpBusy}
+                  className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                >
+                  {pickLang('Je participe', 'Sí, participaré', 'I will attend', lang)}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void submitMemberEventRsvp(upcomingInviteEvent.event, 'declined')}
+                  disabled={rsvpBusy}
+                  className="rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                >
+                  {pickLang('Je ne pourrai pas', 'No podré asistir', "I can't attend", lang)}
+                </button>
+                {upcomingInviteEvent.event.shareEnabled === true ? (
+                  <button
+                    type="button"
+                    onClick={() => void shareEventInvite(upcomingInviteEvent.event)}
+                    className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-800 hover:bg-stone-100"
+                  >
+                    {pickLang('Partager', 'Compartir', 'Share', lang)}
+                  </button>
+                ) : (
+                  <div className="hidden sm:block" />
+                )}
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+
         {showRsvpModal && publicEvent && (
           <div className="fixed inset-0 z-[230] flex items-center justify-center p-4">
             <motion.div
