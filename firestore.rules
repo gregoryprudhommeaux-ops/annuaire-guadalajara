@@ -291,7 +291,9 @@ service cloud.firestore {
           && data.updatedAt is timestamp;
       }
 
-      allow read, delete: if isAdmin();
+      // Lecture : admin + membre propriétaire (permet d'afficher ses invitations / RSVP).
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.uid == request.auth.uid);
+      allow delete: if isAdmin();
       // Guest ne peut écrire que pour des événements publiés (sinon fuite de brouillons).
       allow create, update: if isAdmin() || (
         isValidGuestParticipation(request.resource.data)

@@ -11,6 +11,7 @@ type Props = {
   lang: Language;
   t: TFn;
   currentUser?: User | null;
+  onStartRsvp?: (status: 'present' | 'declined') => void;
 };
 
 function fmtDateTime(ts: Timestamp | null | undefined, lang: Language): string {
@@ -29,11 +30,51 @@ function fmtDateTime(ts: Timestamp | null | undefined, lang: Language): string {
   }
 }
 
+function fmtTimeRange(event: AdminEvent, lang: Language): string {
+  const start = fmtDateTime(event.startsAt, lang);
+  const end = event.endsAt ? fmtDateTime(event.endsAt, lang) : '';
+  if (!end) return start;
+  // Si même jour, on garde une seule date, puis "HH:MM – HH:MM"
+  try {
+    const s = event.startsAt.toDate();
+    const e = event.endsAt.toDate();
+    const sameDay = s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth() && s.getDate() === e.getDate();
+    if (!sameDay) return `${start} → ${end}`;
+    const dateOnly = s.toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-MX' : 'fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: '2-digit',
+    });
+    const startTime = s.toLocaleTimeString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-MX' : 'fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const endTime = e.toLocaleTimeString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-MX' : 'fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return `${dateOnly} · ${startTime} – ${endTime}`;
+  } catch {
+    return `${start} – ${end}`;
+  }
+}
+
 function uiPublic(lang: Language, fr: string, es: string, en: string) {
   return lang === 'en' ? en : lang === 'es' ? es : fr;
 }
 
-export default function PublicEventPage({ lang, t, currentUser }: Props) {
+function safeHttpUrl(raw: string | undefined | null): string {
+  const s = String(raw ?? '').trim();
+  if (!s) return '';
+  try {
+    const u = new URL(s);
+    return u.protocol === 'http:' || u.protocol === 'https:' ? s : '';
+  } catch {
+    return '';
+  }
+}
+
+export default function PublicEventPage({ lang, t, currentUser, onStartRsvp }: Props) {
   const { slug } = useParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -177,15 +218,157 @@ export default function PublicEventPage({ lang, t, currentUser }: Props) {
       <div className="rounded-2xl border border-stone-200 bg-white p-6">
         <h2 className="text-2xl font-bold tracking-tight text-stone-900">{event.title}</h2>
         <p className="mt-2 text-sm text-stone-600">
-          {fmtDateTime(event.startsAt, lang)}
+          {fmtTimeRange(event, lang)}
           {event.address ? ` · ${event.address}` : ''}
         </p>
+
+        {(() => {
+          const mapsUrl = safeHttpUrl(event.mapsUrl);
+          if (!mapsUrl) return null;
+          return (
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+            >
+              {uiPublic(lang, 'Ouvrir Google Maps', 'Abrir Google Maps', 'Open Google Maps')}
+            </a>
+          );
+        })()}
+
+        {(() => {
+          const dress = String(event.dressCode ?? '').trim();
+          const parking = String(event.parking ?? '').trim();
+          if (!dress && !parking) return null;
+          const dressLabel =
+            dress === 'casual'
+              ? uiPublic(lang, 'Décontractée', 'Casual', 'Casual')
+              : dress === 'smart_casual'
+                ? uiPublic(lang, 'Casual chic', 'Smart casual', 'Smart casual')
+                : dress === 'business'
+                  ? uiPublic(lang, 'Business', 'Business', 'Business')
+                  : dress === 'formal'
+                    ? uiPublic(lang, 'Formelle', 'Formal', 'Formal')
+                    : dress === 'traditional'
+                      ? uiPublic(lang, 'Traditionnelle', 'Tradicional', 'Traditional')
+                      : '';
+          const parkingLabel =
+            parking === 'on_site'
+              ? uiPublic(lang, 'Parking sur place', 'Estacionamiento en sitio', 'On-site parking')
+              : parking === 'secure_nearby'
+                ? uiPublic(lang, 'Parking sécurisé proche', 'Estacionamiento seguro cercano', 'Secure parking nearby')
+                : parking === 'valet'
+                  ? uiPublic(lang, 'Voiturier', 'Valet parking', 'Valet service')
+                  : parking === 'unknown'
+                    ? uiPublic(lang, 'Pas de solution identifiée', 'Sin solución identificada', 'No identified solution')
+                    : '';
+          if (!dressLabel && !parkingLabel) return null;
+          return (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {dressLabel ? (
+                <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+                    {uiPublic(lang, 'Tenue', 'Vestimenta', 'Dress code')}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-stone-900">{dressLabel}</p>
+                </div>
+              ) : null}
+              {parkingLabel ? (
+                <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+                    {uiPublic(lang, 'Stationnement', 'Estacionamiento', 'Parking')}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-stone-900">{parkingLabel}</p>
+                </div>
+              ) : null}
+            </div>
+          );
+        })()}
 
         {event.introText?.trim() ? (
           <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50 p-4">
             <p className="whitespace-pre-wrap text-sm text-stone-700">{event.introText}</p>
           </div>
         ) : null}
+
+        {(() => {
+          const formUrl = safeHttpUrl(event.registrationFormUrl);
+          const flyerUrl = safeHttpUrl(event.flyerUrl);
+          if (!formUrl && !flyerUrl) return null;
+          return (
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {formUrl ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-900">
+                    {uiPublic(lang, "Formulaire d'inscription", 'Formulario de inscripción', 'Registration form')}
+                  </p>
+                  <a
+                    href={formUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+                  >
+                    {uiPublic(lang, 'Ouvrir', 'Abrir', 'Open')}
+                  </a>
+                </div>
+              ) : null}
+              {flyerUrl ? (
+                <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-900">
+                    {uiPublic(lang, 'Flyer', 'Flyer', 'Flyer')}
+                  </p>
+                  <a
+                    href={flyerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800"
+                  >
+                    {uiPublic(lang, 'Voir', 'Ver', 'View')}
+                  </a>
+                </div>
+              ) : null}
+            </div>
+          );
+        })()}
+      </div>
+
+      <div className="rounded-xl border border-stone-200 bg-white p-4">
+        <p className="text-sm font-semibold text-stone-900">
+          {uiPublic(lang, 'Participation à l’événement', 'Participación al evento', 'Event RSVP')}
+        </p>
+        <p className="mt-1 text-xs text-stone-600">
+          {uiPublic(
+            lang,
+            'Répondez ici. Si vous participez, on vous demandera de créer un compte et compléter votre profil.',
+            'Responde aquí. Si participas, te pediremos crear una cuenta y completar tu perfil.',
+            'Reply here. If you attend, you’ll be asked to create an account and complete your profile.'
+          )}
+        </p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => onStartRsvp?.('present')}
+            className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            {uiPublic(lang, 'Je participe', 'Sí, participaré', 'Yes, I will attend')}
+          </button>
+          <button
+            type="button"
+            onClick={() => onStartRsvp?.('declined')}
+            className="rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-50"
+          >
+            {uiPublic(lang, 'Je ne pourrai pas', 'No podré asistir', "No, I can't attend")}
+          </button>
+        </div>
+        <p className="mt-2 text-[11px] text-stone-500">
+          {uiPublic(
+            lang,
+            'Votre réponse via ce bouton est visible uniquement par les administrateurs.',
+            'Tu respuesta por este botón será visible solo para administradores.',
+            'Your response via this button is visible to admins only.'
+          )}
+        </p>
       </div>
 
       {!currentUser ? (

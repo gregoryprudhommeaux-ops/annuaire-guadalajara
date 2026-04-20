@@ -277,7 +277,19 @@ export interface AdminEvent {
   title: string;
   introText?: string;
   address?: string;
+  /** URL du formulaire d’inscription (ex. Google Form / Typeform). */
+  registrationFormUrl?: string;
+  /** URL du flyer (image / PDF / page), affiché sur la page publique. */
+  flyerUrl?: string;
   startsAt: Timestamp;
+  /** Heure de fin (optionnelle). */
+  endsAt?: Timestamp;
+  /** Tenue exigée / recommandée. */
+  dressCode?: 'casual' | 'smart_casual' | 'business' | 'formal' | 'traditional' | 'none_specified';
+  /** Lien Google Maps (ou autre URL) pour faciliter la localisation. */
+  mapsUrl?: string;
+  /** Stationnement. */
+  parking?: 'secure_nearby' | 'valet' | 'on_site' | 'unknown';
   capacity?: number;
   status?: 'draft' | 'published' | 'closed';
   createdAt: Timestamp;

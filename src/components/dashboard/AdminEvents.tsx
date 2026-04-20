@@ -124,6 +124,17 @@ function eventPublicUrl(baseUrl: string, slug: string) {
   return `${b}/e/${slug}`;
 }
 
+function safeHttpUrl(raw: string | undefined | null): string {
+  const s = String(raw ?? '').trim();
+  if (!s) return '';
+  try {
+    const u = new URL(s);
+    return u.protocol === 'http:' || u.protocol === 'https:' ? s : '';
+  } catch {
+    return '';
+  }
+}
+
 function buildEmailTemplate(e: AdminEvent, url: string) {
   const title = e.title?.trim() || 'Evento';
   // Toujours en espagnol mexicain pour les invitations (même si l’admin UI est en FR/EN).
@@ -179,8 +190,16 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
   const [titleDraft, setTitleDraft] = useState('');
   const [introDraft, setIntroDraft] = useState('');
   const [addressDraft, setAddressDraft] = useState('');
+  const [registrationFormUrlDraft, setRegistrationFormUrlDraft] = useState('');
+  const [flyerUrlDraft, setFlyerUrlDraft] = useState('');
   const [startsAtDateDraft, setStartsAtDateDraft] = useState(''); // yyyy-mm-dd
   const [startsAtTimeDraft, setStartsAtTimeDraft] = useState(''); // HH:MM
+  const [endsAtTimeDraft, setEndsAtTimeDraft] = useState(''); // HH:MM
+  const [mapsUrlDraft, setMapsUrlDraft] = useState('');
+  const [parkingDraft, setParkingDraft] = useState<'secure_nearby' | 'valet' | 'on_site' | 'unknown'>('unknown');
+  const [dressCodeDraft, setDressCodeDraft] = useState<
+    'casual' | 'smart_casual' | 'business' | 'formal' | 'traditional' | 'none_specified'
+  >('none_specified');
   const [capacityDraft, setCapacityDraft] = useState<string>('');
   const [statusDraft, setStatusDraft] = useState<'draft' | 'published' | 'closed'>('draft');
   const [editorInviteUids, setEditorInviteUids] = useState<string[]>([]);
@@ -214,8 +233,14 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       setTitleDraft('');
       setIntroDraft('');
       setAddressDraft('');
+      setRegistrationFormUrlDraft('');
+      setFlyerUrlDraft('');
       setStartsAtDateDraft('');
       setStartsAtTimeDraft('');
+      setEndsAtTimeDraft('');
+      setMapsUrlDraft('');
+      setParkingDraft('unknown');
+      setDressCodeDraft('none_specified');
       setCapacityDraft('');
       setStatusDraft('draft');
       setEditorInviteUids([]);
@@ -227,6 +252,11 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     setTitleDraft(e.title ?? '');
     setIntroDraft(e.introText ?? '');
     setAddressDraft(e.address ?? '');
+    setRegistrationFormUrlDraft(e.registrationFormUrl ?? '');
+    setFlyerUrlDraft(e.flyerUrl ?? '');
+    setMapsUrlDraft(e.mapsUrl ?? '');
+    setParkingDraft((e.parking as any) ?? 'unknown');
+    setDressCodeDraft((e.dressCode as any) ?? 'none_specified');
     const d = e.startsAt?.toDate?.();
     if (d) {
       const yyyy = String(d.getFullYear());
@@ -236,9 +266,18 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       const mi = String(d.getMinutes()).padStart(2, '0');
       setStartsAtDateDraft(`${yyyy}-${mm}-${dd}`);
       setStartsAtTimeDraft(`${hh}:${mi}`);
+      const d2 = (e.endsAt as any)?.toDate?.();
+      if (d2) {
+        const hh2 = String(d2.getHours()).padStart(2, '0');
+        const mi2 = String(d2.getMinutes()).padStart(2, '0');
+        setEndsAtTimeDraft(`${hh2}:${mi2}`);
+      } else {
+        setEndsAtTimeDraft('');
+      }
     } else {
       setStartsAtDateDraft('');
       setStartsAtTimeDraft('');
+      setEndsAtTimeDraft('');
     }
     setCapacityDraft(typeof e.capacity === 'number' ? String(e.capacity) : '');
     setStatusDraft(e.status ?? 'draft');
@@ -357,6 +396,13 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     const dt = new Date(`${startsAtDateDraft}T${startsAtTimeDraft}:00`);
     if (Number.isNaN(dt.getTime())) return;
     const startsAt = Timestamp.fromDate(dt);
+    const endsAt =
+      endsAtTimeDraft.trim() && startsAtDateDraft
+        ? (() => {
+            const dt2 = new Date(`${startsAtDateDraft}T${endsAtTimeDraft.trim()}:00`);
+            return Number.isNaN(dt2.getTime()) ? undefined : Timestamp.fromDate(dt2);
+          })()
+        : undefined;
     const now = Timestamp.now();
     const slug = slugify(`${title}-${startsAtDateDraft}`);
     const capacity = capacityDraft.trim() ? Number(capacityDraft) : undefined;
@@ -365,7 +411,13 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       title,
       introText: introDraft.trim() || undefined,
       address: addressDraft.trim() || undefined,
+      registrationFormUrl: registrationFormUrlDraft.trim() || undefined,
+      flyerUrl: flyerUrlDraft.trim() || undefined,
+      mapsUrl: mapsUrlDraft.trim() || undefined,
+      parking: parkingDraft,
+      dressCode: dressCodeDraft,
       startsAt,
+      ...(endsAt ? { endsAt } : {}),
       capacity: Number.isFinite(capacity as number) ? (capacity as number) : undefined,
       status: statusDraft,
       createdAt: now,
@@ -608,6 +660,13 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     const title = titleDraft.trim() || uiLabel(lang, 'Événement', 'Evento', 'Event');
     const safeDate = startsAtDateDraft && startsAtTimeDraft ? new Date(`${startsAtDateDraft}T${startsAtTimeDraft}:00`) : new Date();
     const startsAt = Timestamp.fromDate(Number.isNaN(safeDate.getTime()) ? new Date() : safeDate);
+    const endsAt =
+      startsAtDateDraft && endsAtTimeDraft.trim()
+        ? (() => {
+            const dt2 = new Date(`${startsAtDateDraft}T${endsAtTimeDraft.trim()}:00`);
+            return Number.isNaN(dt2.getTime()) ? undefined : Timestamp.fromDate(dt2);
+          })()
+        : undefined;
     const slug = slugify(`${title}-${startsAtDateDraft || 'date'}`);
     return {
       id: editId ?? 'draft',
@@ -615,7 +674,13 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
       title,
       introText: introDraft.trim() || undefined,
       address: addressDraft.trim() || undefined,
+      registrationFormUrl: registrationFormUrlDraft.trim() || undefined,
+      flyerUrl: flyerUrlDraft.trim() || undefined,
+      mapsUrl: mapsUrlDraft.trim() || undefined,
+      parking: parkingDraft,
+      dressCode: dressCodeDraft,
       startsAt,
+      ...(endsAt ? { endsAt } : {}),
       capacity: capacityDraft.trim() ? Number(capacityDraft) : undefined,
       status: statusDraft,
       createdAt: Timestamp.now(),
@@ -626,8 +691,14 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     titleDraft,
     introDraft,
     addressDraft,
+    registrationFormUrlDraft,
+    flyerUrlDraft,
+    mapsUrlDraft,
+    parkingDraft,
+    dressCodeDraft,
     startsAtDateDraft,
     startsAtTimeDraft,
+    endsAtTimeDraft,
     capacityDraft,
     statusDraft,
     editId,
@@ -770,11 +841,26 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-stone-700">{uiLabel(lang, 'Heure *', 'Hora *', 'Time *')}</label>
+                    <label className="text-xs font-semibold text-stone-700">
+                      {uiLabel(lang, 'Heure de début *', 'Hora de inicio *', 'Start time *')}
+                    </label>
                     <input
                       type="time"
                       value={startsAtTimeDraft}
                       onChange={(e) => setStartsAtTimeDraft(e.target.value)}
+                      onClick={(e) => openNativePicker(e.currentTarget)}
+                      onFocus={(e) => openNativePicker(e.currentTarget)}
+                      className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-stone-700">
+                      {uiLabel(lang, 'Heure de fin', 'Hora de fin', 'End time')}
+                    </label>
+                    <input
+                      type="time"
+                      value={endsAtTimeDraft}
+                      onChange={(e) => setEndsAtTimeDraft(e.target.value)}
                       onClick={(e) => openNativePicker(e.currentTarget)}
                       onFocus={(e) => openNativePicker(e.currentTarget)}
                       className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
@@ -789,6 +875,19 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                     />
                   </div>
                   <div className="sm:col-span-2">
+                    <label className="text-xs font-semibold text-stone-700">
+                      {uiLabel(lang, 'Lien Google Maps (optionnel)', 'Enlace Google Maps (opcional)', 'Google Maps link (optional)')}
+                    </label>
+                    <input
+                      type="url"
+                      inputMode="url"
+                      placeholder="https://maps.google.com/…"
+                      value={mapsUrlDraft}
+                      onChange={(e) => setMapsUrlDraft(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
                     <label className="text-xs font-semibold text-stone-700">{uiLabel(lang, 'Texte d’introduction', 'Texto de introducción', 'Intro text')}</label>
                     <textarea
                       value={introDraft}
@@ -796,6 +895,70 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                       rows={4}
                       className="mt-1 w-full resize-none rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                     />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-semibold text-stone-700">
+                      {uiLabel(lang, "Formulaire d'inscription (URL)", 'Formulario de inscripción (URL)', 'Registration form (URL)')}
+                    </label>
+                    <input
+                      type="url"
+                      inputMode="url"
+                      placeholder="https://..."
+                      value={registrationFormUrlDraft}
+                      onChange={(e) => setRegistrationFormUrlDraft(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    />
+                    <p className="mt-1 text-xs text-stone-500">
+                      {uiLabel(lang, 'Affiché en encart sur la page publique.', 'Se muestra en la página pública.', 'Shown as a card on the public page.')}
+                    </p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-semibold text-stone-700">
+                      {uiLabel(lang, 'Flyer (URL)', 'Flyer (URL)', 'Flyer (URL)')}
+                    </label>
+                    <input
+                      type="url"
+                      inputMode="url"
+                      placeholder="https://..."
+                      value={flyerUrlDraft}
+                      onChange={(e) => setFlyerUrlDraft(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    />
+                    <p className="mt-1 text-xs text-stone-500">
+                      {uiLabel(lang, 'Image/PDF/page. Visible depuis la page publique.', 'Imagen/PDF/página. Visible en la página pública.', 'Image/PDF/page. Visible on the public page.')}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-stone-700">
+                      {uiLabel(lang, 'Tenue', 'Vestimenta', 'Dress code')}
+                    </label>
+                    <select
+                      value={dressCodeDraft}
+                      onChange={(e) => setDressCodeDraft(e.target.value as any)}
+                      className="mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="none_specified">{uiLabel(lang, 'Non précisée', 'No especificado', 'Not specified')}</option>
+                      <option value="casual">{uiLabel(lang, 'Décontractée (casual)', 'Casual', 'Casual')}</option>
+                      <option value="smart_casual">{uiLabel(lang, 'Casual chic (smart casual)', 'Smart casual', 'Smart casual')}</option>
+                      <option value="business">{uiLabel(lang, 'Business', 'Business', 'Business')}</option>
+                      <option value="formal">{uiLabel(lang, 'Formelle (formal)', 'Formal', 'Formal')}</option>
+                      <option value="traditional">{uiLabel(lang, 'Traditionnelle', 'Tradicional', 'Traditional')}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-stone-700">
+                      {uiLabel(lang, 'Stationnement', 'Estacionamiento', 'Parking')}
+                    </label>
+                    <select
+                      value={parkingDraft}
+                      onChange={(e) => setParkingDraft(e.target.value as any)}
+                      className="mt-1 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="unknown">{uiLabel(lang, 'Pas de solution identifiée', 'Sin solución identificada', 'No identified solution')}</option>
+                      <option value="on_site">{uiLabel(lang, 'Parking sur place', 'Estacionamiento en sitio', 'On-site parking')}</option>
+                      <option value="secure_nearby">{uiLabel(lang, 'Parking sécurisé proche', 'Estacionamiento seguro cercano', 'Secure parking nearby')}</option>
+                      <option value="valet">{uiLabel(lang, 'Voiturier (valet service)', 'Valet parking', 'Valet service')}</option>
+                    </select>
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-stone-700">{uiLabel(lang, 'Capacité (optionnel)', 'Capacidad (opcional)', 'Capacity (optional)')}</label>
@@ -1061,6 +1224,36 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                   <p className="mt-2 whitespace-pre-wrap text-sm text-stone-700">{activeEvent.introText}</p>
                 </div>
               ) : null}
+
+              {(() => {
+                const formUrl = safeHttpUrl(activeEvent.registrationFormUrl);
+                const flyerUrl = safeHttpUrl(activeEvent.flyerUrl);
+                if (!formUrl && !flyerUrl) return null;
+                return (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {formUrl ? (
+                      <a
+                        href={formUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-100"
+                      >
+                        {uiLabel(lang, "Ouvrir le formulaire d'inscription", 'Abrir formulario', 'Open registration form')}
+                      </a>
+                    ) : null}
+                    {flyerUrl ? (
+                      <a
+                        href={flyerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-900 hover:bg-indigo-100"
+                      >
+                        {uiLabel(lang, 'Voir le flyer', 'Ver flyer', 'View flyer')}
+                      </a>
+                    ) : null}
+                  </div>
+                );
+              })()}
 
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="rounded-xl border border-stone-200 bg-white p-4">

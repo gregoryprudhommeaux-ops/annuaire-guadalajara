@@ -2080,6 +2080,11 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [rsvpCheckDoneForEventId, setRsvpCheckDoneForEventId] = useState<string | null>(null);
   const [rsvpBusy, setRsvpBusy] = useState(false);
   const [rsvpError, setRsvpError] = useState<string | null>(null);
+  const [pendingRsvpStatus, setPendingRsvpStatus] = useState<'present' | 'declined' | null>(null);
+  const [upcomingInviteEvent, setUpcomingInviteEvent] = useState<null | { event: AdminEvent; status: 'invited' | 'present' | 'declined' }>(
+    null
+  );
+  const [upcomingInviteLoading, setUpcomingInviteLoading] = useState(false);
   /** Masque « Nouveaux membres » et « Opportunités » après interaction avec les onglets du listing (remonte le bloc principal). */
   const [directoryDiscoveryStripsHidden, setDirectoryDiscoveryStripsHidden] = useState(false);
   const [matches, setMatches] = useState<MatchSuggestion[]>([]);
@@ -2290,6 +2295,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       setRsvpError(null);
       setRsvpDoneForEventId(null);
       setRsvpCheckDoneForEventId(null);
+      setPendingRsvpStatus(null);
       return;
     }
     if (!publicEventSlug) return;
@@ -2318,6 +2324,62 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       cancelled = true;
     };
   }, [isPublicEventRoute, publicEventSlug]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadUpcomingInvite() {
+      if (!user?.uid) {
+        setUpcomingInviteEvent(null);
+        return;
+      }
+      setUpcomingInviteLoading(true);
+      try {
+        const partsSnap = await getDocs(
+          query(collection(db, 'event_participations'), where('uid', '==', user.uid), limit(40))
+        );
+        const byEvent = new Map<string, { eventId: string; status: 'invited' | 'present' | 'declined' }>();
+        partsSnap.docs.forEach((d) => {
+          const data = d.data() as { eventId?: string; status?: string };
+          const eventId = String(data.eventId ?? '').trim();
+          const st = String(data.status ?? '').trim() as 'invited' | 'present' | 'declined';
+          if (!eventId || !['invited', 'present', 'declined'].includes(st)) return;
+          const prev = byEvent.get(eventId);
+          // Priorité : present/declined > invited
+          if (!prev || (prev.status === 'invited' && st !== 'invited')) {
+            byEvent.set(eventId, { eventId, status: st });
+          }
+        });
+        const now = Date.now();
+        let best: null | { event: AdminEvent; status: 'invited' | 'present' | 'declined' } = null;
+        for (const row of byEvent.values()) {
+          const evSnap = await getDoc(doc(db, 'events', row.eventId));
+          if (!evSnap.exists()) continue;
+          const ev = { id: evSnap.id, ...(evSnap.data() as Record<string, unknown>) } as AdminEvent;
+          if (String(ev.status ?? '') !== 'published') continue;
+          const startsMs =
+            (ev.startsAt && typeof (ev.startsAt as any).toMillis === 'function' ? (ev.startsAt as any).toMillis() : 0) || 0;
+          if (!startsMs || startsMs < now) continue;
+          if (!best) best = { event: ev, status: row.status };
+          else {
+            const bestMs =
+              (best.event.startsAt && typeof (best.event.startsAt as any).toMillis === 'function'
+                ? (best.event.startsAt as any).toMillis()
+                : 0) || 0;
+            if (startsMs < bestMs) best = { event: ev, status: row.status };
+          }
+        }
+        if (!cancelled) setUpcomingInviteEvent(best);
+      } catch {
+        if (!cancelled) setUpcomingInviteEvent(null);
+      } finally {
+        if (!cancelled) setUpcomingInviteLoading(false);
+      }
+    }
+    void loadUpcomingInvite();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
 
   useEffect(() => {
     // Si on a déjà une réponse enregistrée, ne pas re-demander.
@@ -3336,6 +3398,82 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     setShowAuthModal(true);
   }, []);
 
+  const missingProfileFieldsForEventRsvp = useCallback(
+    (p: UserProfile | null | undefined): string[] => {
+      if (!p) return [];
+      const missing: string[] = [];
+      if (!String(p.fullName ?? '').trim()) missing.push(pickLang('Nom complet', 'Nombre completo', 'Full name', lang));
+      if (!String(p.email ?? '').trim()) missing.push('Email');
+      if (!String(p.whatsapp ?? '').trim()) missing.push(pickLang('WhatsApp / téléphone', 'WhatsApp / teléfono', 'WhatsApp / phone', lang));
+      if (!String(p.companyName ?? '').trim()) missing.push(pickLang('Société', 'Empresa', 'Company', lang));
+      // Champs existants mais optionnels dans le modèle : on les rend requis pour RSVP.
+      if (!String(p.positionCategory ?? '').trim()) missing.push(pickLang('Poste / fonction', 'Puesto / función', 'Job position', lang));
+      if (!String(p.activityCategory ?? '').trim()) missing.push(pickLang("Secteur d'activité", 'Sector de actividad', 'Industry', lang));
+      return missing;
+    },
+    [lang]
+  );
+
+  const ensureRsvpReady = useCallback(
+    (status: 'present' | 'declined') => {
+      setPendingRsvpStatus(status);
+
+      if (!user) {
+        openAuthModal();
+        return false;
+      }
+      if (!profile) {
+        setProfileSaveError(
+          pickLang(
+            "Pour enregistrer votre participation, créez votre profil (nom, email, WhatsApp/téléphone, société, poste, secteur).",
+            'Para registrar tu participación, completa tu perfil (nombre, email, WhatsApp/teléfono, empresa, puesto, sector).',
+            'To save your RSVP, please complete your profile (name, email, WhatsApp/phone, company, position, industry).',
+            lang
+          )
+        );
+        setIsEditing(true);
+        setIsProfileExpanded(true);
+        return false;
+      }
+      const missing = missingProfileFieldsForEventRsvp(profile);
+      if (missing.length > 0) {
+        setProfileSaveError(
+          pickLang(
+            `Pour enregistrer votre participation, complétez votre profil : ${missing.join(', ')}.`,
+            `Para registrar tu participación, completa tu perfil: ${missing.join(', ')}.`,
+            `To save your RSVP, complete your profile: ${missing.join(', ')}.`,
+            lang
+          )
+        );
+        setIsEditing(true);
+        setIsProfileExpanded(true);
+        return false;
+      }
+      return true;
+    },
+    [lang, missingProfileFieldsForEventRsvp, openAuthModal, profile, user]
+  );
+
+  useEffect(() => {
+    if (!isPublicEventRoute || !publicEvent?.id) return;
+    if (!pendingRsvpStatus) return;
+    if (rsvpBusy) return;
+    if (!user || !profile) return;
+    const missing = missingProfileFieldsForEventRsvp(profile);
+    if (missing.length > 0) return;
+    // Profil prêt : enregistrer automatiquement la réponse en attente.
+    void submitRsvp(pendingRsvpStatus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isPublicEventRoute,
+    publicEvent?.id,
+    pendingRsvpStatus,
+    rsvpBusy,
+    user,
+    profile,
+    missingProfileFieldsForEventRsvp,
+  ]);
+
   useEffect(() => {
     if (!isSignupLandingRoute) {
       signupAuthOpenedRef.current = false;
@@ -3899,7 +4037,12 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       setIsEditing(false);
       setEditingProfile(null);
       if (isPublicEventRoute && publicEvent) {
-        setShowRsvpModal(true);
+        // Si l’utilisateur venait de se créer/compléter un profil pour RSVP, enregistre automatiquement.
+        if (pendingRsvpStatus && ensureRsvpReady(pendingRsvpStatus)) {
+          void submitRsvp(pendingRsvpStatus);
+        } else {
+          setShowRsvpModal(true);
+        }
       }
     } catch (error) {
       console.error('Profile save failed', error);
@@ -3930,7 +4073,13 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   };
 
   const submitRsvp = async (status: 'present' | 'declined') => {
-    if (!user || !profile || !publicEvent) return;
+    if (!publicEvent) return;
+    const ok = ensureRsvpReady(status);
+    if (!ok) {
+      setShowRsvpModal(false);
+      return;
+    }
+    if (!user || !profile) return;
     // UX: fermer immédiatement, puis enregistrer (ré-ouvre en cas d’erreur).
     setRsvpDoneForEventId(publicEvent.id);
     setShowRsvpModal(false);
@@ -3955,6 +4104,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
         { merge: true }
       );
       setRsvpError(null);
+      setPendingRsvpStatus(null);
       // Après RSVP: rester sur la page (V1). On pourra rediriger vers /membres plus tard.
     } catch (e) {
       setRsvpError(e instanceof Error ? e.message : String(e));
@@ -3964,6 +4114,17 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       setRsvpBusy(false);
     }
   };
+
+  const startRsvpFromPublicPage = useCallback(
+    (status: 'present' | 'declined') => {
+      if (!publicEvent) return;
+      const ok = ensureRsvpReady(status);
+      if (!ok) return;
+      setRsvpError(null);
+      setShowRsvpModal(true);
+    },
+    [ensureRsvpReady, publicEvent]
+  );
 
   const handleDeleteProfile = async (uid: string) => {
     try {
@@ -6803,6 +6964,77 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               isAdminDashboard && 'hidden'
             )}
           >
+            {upcomingInviteEvent ? (
+              <div className="mb-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                      {pickLang('Événement à venir', 'Próximo evento', 'Upcoming event', lang)}
+                    </p>
+                    <p className="mt-1 truncate text-sm font-semibold text-stone-900">
+                      {upcomingInviteEvent.event.title}
+                    </p>
+                    <p className="mt-1 text-xs text-stone-600">
+                      {(() => {
+                        try {
+                          const d = upcomingInviteEvent.event.startsAt?.toDate?.();
+                          const when = d
+                            ? d.toLocaleString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-MX' : 'fr-FR', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : '';
+                          const where = String(upcomingInviteEvent.event.address ?? '').trim();
+                          return `${when}${where ? ` · ${where}` : ''}`;
+                        } catch {
+                          return '';
+                        }
+                      })()}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      'inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
+                      upcomingInviteEvent.status === 'present'
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                        : upcomingInviteEvent.status === 'declined'
+                          ? 'border-rose-200 bg-rose-50 text-rose-800'
+                          : 'border-stone-200 bg-stone-50 text-stone-700'
+                    )}
+                  >
+                    {upcomingInviteEvent.status === 'present'
+                      ? pickLang('Inscrit', 'Inscrito', 'Registered', lang)
+                      : upcomingInviteEvent.status === 'declined'
+                        ? pickLang('Refusé', 'Rechazado', 'Declined', lang)
+                        : pickLang('Invitation', 'Invitación', 'Invited', lang)}
+                  </span>
+                </div>
+                <div className="mt-3">
+                  <Link
+                    to={`/e/${encodeURIComponent(String(upcomingInviteEvent.event.slug ?? ''))}`}
+                    className={cn(
+                      'inline-flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold',
+                      upcomingInviteEvent.status === 'present'
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        : 'bg-stone-900 text-white hover:bg-stone-800'
+                    )}
+                  >
+                    {upcomingInviteEvent.status === 'present'
+                      ? pickLang('Voir les détails', 'Ver detalles', 'View details', lang)
+                      : pickLang('Répondre maintenant', 'Responder ahora', 'RSVP now', lang)}
+                  </Link>
+                  {upcomingInviteLoading ? (
+                    <p className="mt-2 text-[11px] text-stone-400">
+                      {pickLang('Mise à jour…', 'Actualizando…', 'Refreshing…', lang)}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
             {isNetworkRoute ? (
               <NetworkSidebar
                 query={searchTerm}
@@ -7509,7 +7741,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         </div>
                       }
                     >
-                      <PublicEventPageLazy lang={lang} t={t} currentUser={user} />
+                      <PublicEventPageLazy lang={lang} t={t} currentUser={user} onStartRsvp={startRsvpFromPublicPage} />
                     </React.Suspense>
                   </div>
                 </SectionErrorBoundary>
@@ -8597,6 +8829,109 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   {rsvpError}
                 </p>
               ) : null}
+
+              <div className="mb-4 space-y-2">
+                <p className="text-sm text-stone-700">
+                  {(() => {
+                    try {
+                      const d = publicEvent.startsAt?.toDate?.();
+                      const d2 = (publicEvent.endsAt as any)?.toDate?.();
+                      const whenStart = d
+                        ? d.toLocaleString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-MX' : 'fr-FR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '';
+                      let when = whenStart;
+                      if (d && d2) {
+                        const sameDay = d.getFullYear() === d2.getFullYear() && d.getMonth() === d2.getMonth() && d.getDate() === d2.getDate();
+                        if (sameDay) {
+                          const dateOnly = d.toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-MX' : 'fr-FR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: '2-digit',
+                          });
+                          const startTime = d.toLocaleTimeString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-MX' : 'fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          });
+                          const endTime = d2.toLocaleTimeString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-MX' : 'fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          });
+                          when = `${dateOnly} · ${startTime} – ${endTime}`;
+                        } else {
+                          const endFull = d2.toLocaleString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-MX' : 'fr-FR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          });
+                          when = `${whenStart} → ${endFull}`;
+                        }
+                      }
+                      const where = String(publicEvent.address ?? '').trim();
+                      return [when, where].filter(Boolean).join(' · ');
+                    } catch {
+                      return '';
+                    }
+                  })()}
+                </p>
+                {String(publicEvent.mapsUrl ?? '').trim() ? (
+                  <a
+                    href={String(publicEvent.mapsUrl ?? '').trim()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+                  >
+                    {pickLang('Ouvrir Google Maps', 'Abrir Google Maps', 'Open Google Maps', lang)}
+                  </a>
+                ) : null}
+                {publicEvent.introText?.trim() ? (
+                  <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+                    <p className="whitespace-pre-wrap text-sm text-stone-700">{publicEvent.introText}</p>
+                  </div>
+                ) : null}
+                {String(publicEvent.dressCode ?? '').trim() && String(publicEvent.dressCode ?? '') !== 'none_specified' ? (
+                  <p className="text-xs text-stone-600">
+                    <span className="font-semibold">{pickLang('Tenue :', 'Vestimenta:', 'Dress code:', lang)}</span>{' '}
+                    {(() => {
+                      const v = String(publicEvent.dressCode ?? '');
+                      if (v === 'casual') return pickLang('Décontractée', 'Casual', 'Casual', lang);
+                      if (v === 'smart_casual') return pickLang('Casual chic', 'Smart casual', 'Smart casual', lang);
+                      if (v === 'business') return pickLang('Business', 'Business', 'Business', lang);
+                      if (v === 'formal') return pickLang('Formelle', 'Formal', 'Formal', lang);
+                      if (v === 'traditional') return pickLang('Traditionnelle', 'Tradicional', 'Traditional', lang);
+                      return '';
+                    })()}
+                  </p>
+                ) : null}
+                {String(publicEvent.parking ?? '').trim() ? (
+                  <p className="text-xs text-stone-600">
+                    <span className="font-semibold">{pickLang('Stationnement :', 'Estacionamiento:', 'Parking:', lang)}</span>{' '}
+                    {(() => {
+                      const v = String(publicEvent.parking ?? '');
+                      if (v === 'on_site') return pickLang('Parking sur place', 'Estacionamiento en sitio', 'On-site parking', lang);
+                      if (v === 'secure_nearby')
+                        return pickLang('Parking sécurisé proche', 'Estacionamiento seguro cercano', 'Secure parking nearby', lang);
+                      if (v === 'valet') return pickLang('Voiturier', 'Valet parking', 'Valet service', lang);
+                      return pickLang('Pas de solution identifiée', 'Sin solución identificada', 'No identified solution', lang);
+                    })()}
+                  </p>
+                ) : null}
+                <p className="text-xs text-stone-500">
+                  {pickLang(
+                    "Pour enregistrer « Je participe », il faut créer un compte et compléter votre profil (nom, email, WhatsApp/téléphone, société, poste, secteur).",
+                    'Para registrar “Sí, participaré”, debes crear una cuenta y completar tu perfil (nombre, email, WhatsApp/teléfono, empresa, puesto, sector).',
+                    'To save “Yes, I will attend”, you must create an account and complete your profile (name, email, WhatsApp/phone, company, position, industry).',
+                    lang
+                  )}
+                </p>
+              </div>
 
               <div className="grid gap-2 sm:grid-cols-2">
                 <button
