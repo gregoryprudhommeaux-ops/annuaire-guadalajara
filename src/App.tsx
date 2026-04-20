@@ -2043,6 +2043,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [showSavedMembersOnly, setShowSavedMembersOnly] = useState(false);
   const [showValidationPanel, setShowValidationPanel] = useState(false);
   const [memberRequests, setMemberRequests] = useState<MemberNetworkRequest[]>([]);
+  const [guestUpcomingEvents, setGuestUpcomingEvents] = useState<AdminEvent[]>([]);
+  const [guestUpcomingEventsLoading, setGuestUpcomingEventsLoading] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<
     'companies' | 'members' | 'activities' | 'radar' | 'dashboard'
@@ -2327,6 +2329,39 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       cancelled = true;
     };
   }, [isPublicEventRoute, publicEventSlug]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadGuestUpcomingEvents() {
+      if (user || isAdminDashboard || isSignupLandingRoute) {
+        setGuestUpcomingEvents([]);
+        setGuestUpcomingEventsLoading(false);
+        return;
+      }
+      setGuestUpcomingEventsLoading(true);
+      try {
+        const now = Timestamp.now();
+        const q = query(
+          collection(db, 'events'),
+          where('status', '==', 'published'),
+          where('startsAt', '>=', now),
+          orderBy('startsAt', 'asc'),
+          limit(6)
+        );
+        const snap = await getDocs(q);
+        const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Record<string, unknown>) } as AdminEvent));
+        if (!cancelled) setGuestUpcomingEvents(rows);
+      } catch {
+        if (!cancelled) setGuestUpcomingEvents([]);
+      } finally {
+        if (!cancelled) setGuestUpcomingEventsLoading(false);
+      }
+    }
+    void loadGuestUpcomingEvents();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, isAdminDashboard, isSignupLandingRoute]);
 
   useEffect(() => {
     let cancelled = false;
@@ -6986,6 +7021,114 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   />
                 }
               />
+              <section className="w-full min-w-0">
+                <div className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="text-base font-bold text-stone-900">
+                        {pickLang('Événements à venir', 'Próximos eventos', 'Upcoming events', lang)}
+                      </h3>
+                      <p className="mt-1 text-xs text-stone-500">
+                        {pickLang(
+                          'Les événements publics sont accessibles à tous. Les autres sont réservés selon les infos de votre profil.',
+                          'Los eventos públicos están disponibles para todos. Los demás dependen de tu perfil.',
+                          'Public events are available to everyone. Other events depend on your profile.',
+                          lang
+                        )}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={openAuthModal}
+                      className="rounded-lg bg-stone-900 px-3 py-2 text-xs font-semibold text-white hover:bg-stone-800"
+                    >
+                      {pickLang('Créer mon profil', 'Crear mi perfil', 'Create my profile', lang)}
+                    </button>
+                  </div>
+
+                  {guestUpcomingEventsLoading ? (
+                    <p className="mt-4 text-sm text-stone-500">{pickLang('Chargement…', 'Cargando…', 'Loading…', lang)}</p>
+                  ) : guestUpcomingEvents.length === 0 ? (
+                    <p className="mt-4 text-sm text-stone-500">
+                      {pickLang(
+                        "Aucun événement à venir pour l’instant.",
+                        'No hay eventos próximos por ahora.',
+                        'No upcoming events for now.',
+                        lang
+                      )}
+                    </p>
+                  ) : (
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      {guestUpcomingEvents.map((ev) => {
+                        const isPublic = ev.shareEnabled === true;
+                        const title = isPublic
+                          ? String(ev.title ?? '')
+                          : pickLang('Événement réservé', 'Evento reservado', 'Reserved event', lang);
+                        const when = (() => {
+                          try {
+                            const d = ev.startsAt?.toDate?.();
+                            return d
+                              ? d.toLocaleString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-MX' : 'fr-FR', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
+                              : '';
+                          } catch {
+                            return '';
+                          }
+                        })();
+                        return (
+                          <div
+                            key={ev.id}
+                            className={cn(
+                              'rounded-xl border border-stone-200 bg-white p-4',
+                              !isPublic && 'relative overflow-hidden'
+                            )}
+                          >
+                            <div className={cn(!isPublic && 'pointer-events-none select-none blur-sm opacity-60')}>
+                              <p className="text-sm font-semibold text-stone-900">{title}</p>
+                              <p className="mt-1 text-xs text-stone-600">{when}</p>
+                              {isPublic ? (
+                                <div className="mt-3">
+                                  <Link
+                                    to={`/e/${encodeURIComponent(String(ev.slug ?? ''))}`}
+                                    className="inline-flex items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800"
+                                  >
+                                    {pickLang('Voir', 'Ver', 'View', lang)}
+                                  </Link>
+                                </div>
+                              ) : null}
+                            </div>
+
+                            {!isPublic ? (
+                              <div className="absolute inset-0 flex items-end justify-between gap-2 p-4">
+                                <p className="text-[11px] font-semibold text-stone-700">
+                                  {pickLang(
+                                    'Certains événements ne sont destinés qu’à certains critères professionnels ou personnels, selon les informations disponibles dans votre profil.',
+                                    'Algunos eventos dependen de criterios profesionales o personales según la información de tu perfil.',
+                                    'Some events depend on professional or personal criteria based on your profile information.',
+                                    lang
+                                  )}
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={openAuthModal}
+                                  className="shrink-0 rounded-lg bg-stone-900 px-3 py-2 text-[11px] font-semibold text-white hover:bg-stone-800"
+                                >
+                                  {pickLang('Débloquer', 'Desbloquear', 'Unlock', lang)}
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </section>
               <section className="w-full min-w-0">
                 <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-12 lg:gap-8 lg:items-stretch">
                   <div className="min-w-0 lg:col-span-8">
