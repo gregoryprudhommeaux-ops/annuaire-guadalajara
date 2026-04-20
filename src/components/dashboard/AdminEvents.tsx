@@ -135,37 +135,81 @@ function safeHttpUrl(raw: string | undefined | null): string {
   }
 }
 
-function buildEmailTemplate(e: AdminEvent, url: string) {
-  const title = e.title?.trim() || 'Evento';
-  // Toujours en espagnol mexicain pour les invitations (même si l’admin UI est en FR/EN).
-  const when = e.startsAt ? fmtDateTime(e.startsAt, 'es') : '';
+function buildEmailTemplate(e: AdminEvent, url: string, templateLang: Language) {
+  const title = e.title?.trim() || (templateLang === 'fr' ? 'Événement' : templateLang === 'en' ? 'Event' : 'Evento');
+  const when = e.startsAt ? fmtDateTime(e.startsAt, templateLang) : '';
   const where = e.address?.trim() || '';
+  const maps = safeHttpUrl(e.mapsUrl);
+
+  const subjectPrefix = templateLang === 'fr' ? 'Objet' : templateLang === 'en' ? 'Subject' : 'Asunto';
+  const inviteWord = templateLang === 'fr' ? 'Invitation' : templateLang === 'en' ? 'Invitation' : 'Invitación';
+  const hello = templateLang === 'fr' ? 'Bonjour,' : templateLang === 'en' ? 'Hi,' : 'Hola,';
+  const bodyInvite =
+    templateLang === 'fr'
+      ? `Je vous invite à ${title}${when ? ` — ${when}` : ''}${where ? `, ${where}` : ''}.`
+      : templateLang === 'en'
+        ? `I'd like to invite you to ${title}${when ? ` — ${when}` : ''}${where ? `, ${where}` : ''}.`
+        : `Te invito a ${title}${when ? ` — ${when}` : ''}${where ? `, ${where}` : ''}.`;
+  const cta =
+    templateLang === 'fr'
+      ? `Pour confirmer votre présence (ou refuser) et créer/compléter votre profil dans l’annuaire :`
+      : templateLang === 'en'
+        ? `To confirm your attendance (or decline) and create/complete your directory profile:`
+        : `Para confirmar tu asistencia (o rechazar) y crear/completar tu perfil en el directorio:`;
+  const note =
+    templateLang === 'fr'
+      ? `Note : les informations saisies seront enregistrées dans l’annuaire pour faciliter les mises en relation et les prochaines invitations.`
+      : templateLang === 'en'
+        ? `Note: the information you enter will be saved in the directory to help connections and future invitations.`
+        : `Nota: la información que ingreses se registrará en el directorio para facilitar conexiones y futuras invitaciones.`;
+  const seeYou = templateLang === 'fr' ? 'À bientôt !' : templateLang === 'en' ? 'See you soon!' : '¡Nos vemos!';
+  const mapsLabel =
+    templateLang === 'fr' ? 'Localisation (Google Maps)' : templateLang === 'en' ? 'Location (Google Maps)' : 'Ubicación (Google Maps)';
+
   return [
-    `Asunto: Invitación – ${title}`,
+    `${subjectPrefix}: ${inviteWord} – ${title}`,
     '',
-    'Hola,',
+    hello,
     '',
-    `Te invito a ${title}${when ? ` — ${when}` : ''}${where ? `, ${where}` : ''}.`,
+    bodyInvite,
+    ...(maps ? ['', `${mapsLabel}: ${maps}`] : []),
     '',
-    `Para confirmar tu asistencia (o rechazar) y crear/completar tu perfil en el directorio:`,
+    cta,
     url,
     '',
-    `Nota: la información que ingreses se registrará en el directorio para facilitar conexiones y futuras invitaciones.`,
+    note,
     '',
-    '¡Nos vemos!',
+    seeYou,
   ].join('\n');
 }
 
-function buildWhatsappTemplate(e: AdminEvent, url: string) {
-  const title = e.title?.trim() || 'Evento';
-  // Toujours en espagnol mexicain pour les invitations (même si l’admin UI est en FR/EN).
-  const when = e.startsAt ? fmtDateTime(e.startsAt, 'es') : '';
+function buildWhatsappTemplate(e: AdminEvent, url: string, templateLang: Language) {
+  const title = e.title?.trim() || (templateLang === 'fr' ? 'Événement' : templateLang === 'en' ? 'Event' : 'Evento');
+  const when = e.startsAt ? fmtDateTime(e.startsAt, templateLang) : '';
   const where = e.address?.trim() || '';
-  return [
-    `¡Hola! Invitación: ${title}${when ? ` — ${when}` : ''}${where ? ` @ ${where}` : ''}.`,
-    `Confirmación/rechazo + perfil en el directorio: ${url}`,
-    `(la info se integrará al directorio para matching y próximos eventos)`,
-  ].join('\n');
+  const maps = safeHttpUrl(e.mapsUrl);
+
+  const line1 =
+    templateLang === 'fr'
+      ? `Bonjour ! Invitation : ${title}${when ? ` — ${when}` : ''}${where ? ` @ ${where}` : ''}.`
+      : templateLang === 'en'
+        ? `Hi! Invitation: ${title}${when ? ` — ${when}` : ''}${where ? ` @ ${where}` : ''}.`
+        : `¡Hola! Invitación: ${title}${when ? ` — ${when}` : ''}${where ? ` @ ${where}` : ''}.`;
+  const line2 =
+    templateLang === 'fr'
+      ? `Confirmation/refus + profil dans l’annuaire : ${url}`
+      : templateLang === 'en'
+        ? `RSVP (yes/no) + directory profile: ${url}`
+        : `Confirmación/rechazo + perfil en el directorio: ${url}`;
+  const line3 =
+    templateLang === 'fr'
+      ? `(les infos seront intégrées à l’annuaire pour les connexions et prochains événements)`
+      : templateLang === 'en'
+        ? `(info will be saved in the directory for networking and future events)`
+        : `(la info se integrará al directorio para matching y próximos eventos)`;
+  const mapsLabel = templateLang === 'fr' ? 'Maps' : templateLang === 'en' ? 'Maps' : 'Maps';
+
+  return [line1, ...(maps ? [`${mapsLabel}: ${maps}`] : []), line2, line3].join('\n');
 }
 
 function mapDoc<T extends Record<string, unknown>>(id: string, data: T): T & { id: string } {
@@ -207,6 +251,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
   const [editorSectorFilter, setEditorSectorFilter] = useState<string>('');
   const [editorPassionFilter, setEditorPassionFilter] = useState<string>('');
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewLang, setPreviewLang] = useState<Language>('es');
   const [saving, setSaving] = useState(false);
   const [magicLinkOpen, setMagicLinkOpen] = useState(false);
   const [magicLinkUrl, setMagicLinkUrl] = useState<string>('');
@@ -380,12 +425,14 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
     setEditId(null);
     hydrateEditorFromEvent(null);
     setShowEditor(true);
+    setPreviewLang(lang);
     void ensureMemberIndexLoaded();
   };
   const openEdit = (e: AdminEvent) => {
     setEditId(e.id);
     hydrateEditorFromEvent(e);
     setShowEditor(true);
+    setPreviewLang(lang);
     void ensureMemberIndexLoaded();
   };
 
@@ -614,12 +661,12 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
   const copyEmail = async () => {
     if (!activeEvent) return;
     const url = eventPublicUrl(baseUrl, activeEvent.slug);
-    await safeCopy(buildEmailTemplate(activeEvent, url));
+    await safeCopy(buildEmailTemplate(activeEvent, url, 'es'));
   };
   const copyWhatsapp = async () => {
     if (!activeEvent) return;
     const url = eventPublicUrl(baseUrl, activeEvent.slug);
-    await safeCopy(buildWhatsappTemplate(activeEvent, url));
+    await safeCopy(buildWhatsappTemplate(activeEvent, url, 'es'));
   };
 
   const deleteActiveEvent = async () => {
@@ -1515,6 +1562,20 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                 <p className="mt-1 text-xs text-stone-500">
                   {uiLabel(lang, 'Ce texte sera copié/collé dans tes messages.', 'Este texto se copiará/pegará en tus mensajes.', 'This text is meant to be copy/pasted.')}
                 </p>
+                <div className="mt-3 inline-flex overflow-hidden rounded-lg border border-stone-200 bg-white">
+                  {(['fr', 'es', 'en'] as Language[]).map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      onClick={() => setPreviewLang(l)}
+                      className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        previewLang === l ? 'bg-stone-900 text-white' : 'bg-white text-stone-700 hover:bg-stone-50'
+                      }`}
+                    >
+                      {l.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
               </div>
               <button
                 type="button"
@@ -1530,13 +1591,13 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
               <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Email</p>
                 <pre className="mt-2 whitespace-pre-wrap break-words text-xs text-stone-800">
-                  {buildEmailTemplate(previewEventDraft, previewDraftUrl)}
+                  {buildEmailTemplate(previewEventDraft, previewDraftUrl, previewLang)}
                 </pre>
               </div>
               <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">WhatsApp</p>
                 <pre className="mt-2 whitespace-pre-wrap break-words text-xs text-stone-800">
-                  {buildWhatsappTemplate(previewEventDraft, previewDraftUrl)}
+                  {buildWhatsappTemplate(previewEventDraft, previewDraftUrl, previewLang)}
                 </pre>
               </div>
             </div>
@@ -1545,7 +1606,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => void safeCopy(buildEmailTemplate(previewEventDraft, previewDraftUrl))}
+                  onClick={() => void safeCopy(buildEmailTemplate(previewEventDraft, previewDraftUrl, previewLang))}
                   className="inline-flex items-center gap-2 rounded-md border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
                 >
                   <Copy className="h-4 w-4" aria-hidden />
@@ -1553,7 +1614,7 @@ export default function AdminEvents({ lang, t, publicBaseUrl, adminUid }: AdminE
                 </button>
                 <button
                   type="button"
-                  onClick={() => void safeCopy(buildWhatsappTemplate(previewEventDraft, previewDraftUrl))}
+                  onClick={() => void safeCopy(buildWhatsappTemplate(previewEventDraft, previewDraftUrl, previewLang))}
                   className="inline-flex items-center gap-2 rounded-md border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
                 >
                   <Copy className="h-4 w-4" aria-hidden />
