@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, Menu, UserRound } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { Button } from '@/components/ui/Button';
@@ -58,6 +58,21 @@ export function AppHeader({
 
   const { primary, account } = useMemo(() => getNavigation({ isAuthenticated }), [isAuthenticated]);
 
+  const isPrimaryNavItemActive = (href: string) => {
+    if (href.includes('#')) {
+      if (href.includes('comment-ca-marche')) {
+        return location.hash === '#comment-ca-marche';
+      }
+      if (href === '/#') {
+        return location.pathname === '/' && (location.hash === '' || location.hash === '#');
+      }
+    }
+    if (!href.startsWith('/')) return false;
+    return (
+      location.pathname === href || (href !== '/' && !href.includes('#') && location.pathname.startsWith(`${href}/`))
+    );
+  };
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 6);
     onScroll();
@@ -68,7 +83,7 @@ export function AppHeader({
   useEffect(() => {
     // Close the sheet on route changes.
     setMenuOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, location.hash]);
 
   return (
     <header
@@ -83,7 +98,7 @@ export function AppHeader({
       <div className="mx-auto w-full max-w-[var(--fn-page-max)] px-[var(--fn-page-pad)]">
         <div className="pt-[env(safe-area-inset-top)]">
           <div className="flex h-[var(--fn-header-h)] min-w-0 items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 max-w-full flex-1 pr-1">
             {backHref ? (
               <Link
                 to={backHref}
@@ -107,31 +122,7 @@ export function AppHeader({
             )}
           </div>
 
-          {/* Desktop primary navigation */}
-          {!backHref ? (
-            <nav className="hidden items-center gap-1 sm:flex" aria-label="Navigation principale">
-              {primary.map((it) => (
-                <NavLink
-                  key={it.id}
-                  to={it.href}
-                  className={({ isActive }) =>
-                    cn(
-                      'inline-flex min-h-[44px] items-center gap-2 rounded-[var(--fn-radius-sm)] px-3 text-sm font-semibold outline-none',
-                      'focus-visible:ring-2 focus-visible:ring-[rgb(var(--fn-ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fn-bg)]',
-                      isActive
-                        ? 'bg-[var(--fn-surface-2)] text-[var(--fn-fg)]'
-                        : 'text-[var(--fn-muted)] hover:bg-[var(--fn-surface-2)] hover:text-[var(--fn-fg)]'
-                    )
-                  }
-                >
-                  <span className="text-[var(--fn-muted-2)]">{it.icon}</span>
-                  <span className="truncate">{it.label}</span>
-                </NavLink>
-              ))}
-            </nav>
-          ) : null}
-
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex min-w-0 shrink-0 items-center gap-2 sm:pl-2">
             {/* Minimal language switch lives here */}
             {rightSlot}
 
@@ -171,6 +162,38 @@ export function AppHeader({
             </div>
           </div>
           </div>
+
+          {/* Primary navigation: second row (sm+), not in the top banner — more room for the logo. */}
+          {!backHref ? (
+            <div className="hidden border-t border-[var(--fn-border)] bg-[var(--fn-surface)] py-2.5 sm:block">
+              <nav
+                className="flex flex-wrap items-center gap-2"
+                aria-label="Navigation principale"
+              >
+                {primary.map((it) => {
+                  const active = isPrimaryNavItemActive(it.href);
+                  const common = cn(
+                    'inline-flex min-h-[44px] min-w-0 max-w-full items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold shadow-[var(--fn-shadow-sm)] transition-colors sm:px-4',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--fn-ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fn-surface)]',
+                    active
+                      ? 'border-[var(--fn-border)] bg-[var(--fn-surface-2)] text-[var(--fn-fg)]'
+                      : 'border-[var(--fn-border)] bg-[var(--fn-surface)] text-[var(--fn-muted)] hover:bg-[var(--fn-surface-2)]',
+                  );
+                  return it.href.includes('#') ? (
+                    <a key={it.id} href={it.href} className={common}>
+                      {it.icon ? <span className="shrink-0 text-[var(--fn-muted-2)]">{it.icon}</span> : null}
+                      <span className="truncate">{it.label}</span>
+                    </a>
+                  ) : (
+                    <Link key={it.id} to={it.href} className={common}>
+                      {it.icon ? <span className="shrink-0 text-[var(--fn-muted-2)]">{it.icon}</span> : null}
+                      <span className="truncate">{it.label}</span>
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+          ) : null}
         </div>
       </div>
 

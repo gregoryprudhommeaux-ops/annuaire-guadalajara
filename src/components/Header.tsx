@@ -1,21 +1,14 @@
 /**
  * Header annuaire — DA : ombre légère, bordure basse.
- * Mobile : langue = menu déroulant coin haut droite ; dès sm le switch segmenté remplace ce menu (pas de doublon).
- * Desktop (sm+) : switch FR | ES | EN segmenté + trailing inline.
+ * Langue : icône globe + menu (LanguageSwitch) sur mobile et desktop, sauf doublon si géré ailleurs.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import React from 'react';
 import { cn } from '../cn';
 import { guestCtaFullBleed, pageHeaderInner } from '../lib/pageLayout';
 import type { Language } from '../types';
 import siteFaviconUrl from '../../favicon.svg?url';
-
-const LANGUAGES: { code: Language; label: string }[] = [
-  { code: 'fr', label: 'FR' },
-  { code: 'es', label: 'ES' },
-  { code: 'en', label: 'EN' },
-];
+import { LanguageSwitch } from '@/components/layout/LanguageSwitch';
 
 /** Même graphisme que le favicon (onglet du navigateur). */
 function SiteLogoMark({ className }: { className?: string }) {
@@ -34,68 +27,6 @@ function SiteLogoMark({ className }: { className?: string }) {
         className="h-full w-full object-contain p-0.5"
         decoding="async"
       />
-    </div>
-  );
-}
-
-export function LanguageDropdownMobile({
-  lang,
-  onLangChange,
-}: {
-  lang: Language;
-  onLangChange: (lang: Language) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const current = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
-  const others = LANGUAGES.filter((l) => l.code !== lang);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [open]);
-
-  return (
-    <div ref={rootRef} className="relative shrink-0">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-      >
-        {current.label}
-        <ChevronDown
-          className={cn('h-3.5 w-3.5 text-slate-500 transition-transform', open && 'rotate-180')}
-          strokeWidth={2}
-          aria-hidden
-        />
-      </button>
-      {open ? (
-        <ul
-          role="listbox"
-          className="absolute right-0 z-[60] mt-1 min-w-[5.5rem] overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
-        >
-          {others.map(({ code, label }) => (
-            <li key={code} role="option">
-              <button
-                type="button"
-                className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                onClick={() => {
-                  onLangChange(code);
-                  setOpen(false);
-                }}
-              >
-                {label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
     </div>
   );
 }
@@ -181,11 +112,11 @@ export const Header: React.FC<HeaderProps> = ({
                   </p>
                 </div>
               </a>
-              {/* Mobile only : dès sm le switch segmenté suffit (évite doublon FR+chevron). Si topRight : langue gérée là (ex. admin). */}
+              {/* Mobile only : si pas de topRight. Dès sm : même composant en barre (voir ligne suivante) sauf doublon. */}
               <div
                 className={cn('absolute right-0 top-0', topRight ? 'hidden' : 'sm:hidden')}
               >
-                <LanguageDropdownMobile lang={lang} onLangChange={onLangChange} />
+                <LanguageSwitch value={lang} onChange={onLangChange} />
               </div>
             </div>
 
@@ -204,26 +135,8 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             >
               {!hideDesktopLanguageSwitch ? (
-                <div className="hidden shrink-0 items-center overflow-hidden rounded-md border border-slate-200 divide-x divide-slate-200 sm:flex">
-                  {LANGUAGES.map(({ code, label }) => {
-                    const isActive = lang === code;
-                    return (
-                      <button
-                        key={code}
-                        type="button"
-                        onClick={() => onLangChange(code)}
-                        aria-pressed={isActive}
-                        className={cn(
-                          'px-3 py-1.5 text-xs font-semibold transition-colors',
-                          isActive
-                            ? 'bg-blue-700 text-white'
-                            : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                        )}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
+                <div className="hidden shrink-0 sm:block">
+                  <LanguageSwitch value={lang} onChange={onLangChange} />
                 </div>
               ) : null}
               {trailing ? (

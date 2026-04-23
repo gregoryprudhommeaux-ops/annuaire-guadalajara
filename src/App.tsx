@@ -254,7 +254,8 @@ import {
   ProfileCardEmailContact,
   ProfileCardWhatsappContactFooter,
 } from './components/profile/ProfileCardUi';
-import { Header as AppHeader, LanguageDropdownMobile } from './components/Header';
+import { Header as AppHeader } from './components/Header';
+import { LanguageSwitch } from '@/components/layout/LanguageSwitch';
 import SignupInviteCard from './components/home/SignupInviteCard';
 import WhyJoinSection from './components/home/WhyJoinSection';
 import First50MembersBanner from './components/home/First50MembersBanner';
@@ -369,7 +370,6 @@ import EmailAuthPanel from './components/EmailAuthPanel';
 import { HomePage as MarketingHomePage } from '@/components/home/HomePage';
 import PublicHomePage from '@/pages/PublicHomePage';
 import AppShell from '@/components/layout/AppShell';
-import { getNavigation } from '@/data/navigation';
 import { getPrimaryNav } from '@/routes/primaryNav';
 import { canAccessRoute, getAppRole } from '@/auth/roleModel';
 import { HeroTopActions } from '@/components/hero/HeroTopActions';
@@ -4831,32 +4831,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     });
   };
-  const languageControlsTopRight = (
-    <>
-      <div className="sm:hidden">
-        <LanguageDropdownMobile lang={lang} onLangChange={setLang} />
-      </div>
-      <div className="hidden w-[220px] shrink-0 items-center overflow-hidden rounded-full border border-slate-200 divide-x divide-slate-200 bg-white sm:flex">
-        {(['fr', 'es', 'en'] as const).map((code) => {
-          const isActive = lang === code;
-          return (
-            <button
-              key={code}
-              type="button"
-              onClick={() => setLang(code)}
-              aria-pressed={isActive}
-              className={cn(
-                'flex-1 px-3 py-2 text-xs font-semibold transition-colors',
-                isActive ? 'bg-blue-700 text-white' : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-              )}
-            >
-              {code.toUpperCase()}
-            </button>
-          );
-        })}
-      </div>
-    </>
-  );
+  const languageControlsTopRight = <LanguageSwitch value={lang} onChange={setLang} />;
 
   return (
     <div className="flex min-h-screen min-w-0 flex-col bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
@@ -5129,27 +5104,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             rightSlot: languageControlsTopRight,
           }}
           showBottomNav={Boolean(user)}
-          topNav={
-            user ? (
-              <nav className="flex flex-wrap items-center gap-2" aria-label={pickLang('Navigation', 'Navegación', 'Navigation', lang)}>
-                {getNavigation({ isAuthenticated: true }).primary.map((it) => (
-                  <Link
-                    key={it.href}
-                    to={it.href}
-                    className={cn(
-                      'inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold shadow-[var(--fn-shadow-sm)] transition-colors',
-                      location.pathname === it.href || (it.href !== '/' && location.pathname.startsWith(it.href))
-                        ? 'border-[rgb(var(--fn-border))] bg-[rgb(var(--fn-surface))] text-[rgb(var(--fn-fg))]'
-                        : 'border-[rgb(var(--fn-border))] bg-[rgb(var(--fn-surface-2))] text-[rgb(var(--fn-muted))] hover:bg-[rgb(var(--fn-surface))]'
-                    )}
-                  >
-                    {it.icon ? <span className="text-[rgb(var(--fn-muted-2))]">{it.icon}</span> : null}
-                    <span className="truncate">{it.label}</span>
-                  </Link>
-                ))}
-              </nav>
-            ) : null
-          }
           contentClassName={cn(
             'pt-0',
             isEditProfileRoute &&

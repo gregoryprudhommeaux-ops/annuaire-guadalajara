@@ -6,6 +6,12 @@
     scroll-padding-bottom: calc(var(--fn-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 1.5rem);
     scroll-padding-top: calc(env(safe-area-inset-top, 0px) + var(--fn-header-h) + 0.5rem);
   }
+  @media (min-width: 640px) {
+    /* Second header row (primary nav) from sm+ */
+    main.fn-app-shell-profile {
+      scroll-padding-top: calc(env(safe-area-inset-top, 0px) + var(--fn-header-h) + var(--fn-header-subnav-h) + 0.5rem);
+    }
+  }
 }
 
 @layer components {
@@ -19,7 +25,9 @@
     .profile-edit--in-app-shell .form-section,
     .profile-edit--in-app-shell .profile-section,
     .profile-edit--in-app-shell section {
-      scroll-margin-top: 5rem;
+      scroll-margin-top: calc(
+        env(safe-area-inset-top, 0px) + var(--fn-header-h) + var(--fn-header-subnav-h) + 3.5rem
+      );
     }
   }
 }

@@ -80,7 +80,7 @@ export default function ProfileEditScreen({
             className={cn(
               'sticky z-40',
               inAppShell
-                ? 'top-[calc(env(safe-area-inset-top,0px)+var(--fn-header-h)+0.5rem)] sm:top-4'
+                ? 'top-[calc(env(safe-area-inset-top,0px)+var(--fn-header-h)+0.5rem)] sm:top-[calc(env(safe-area-inset-top,0px)+var(--fn-header-h)+var(--fn-header-subnav-h)+0.5rem)]'
                 : 'top-24 sm:top-16',
             )}
           >

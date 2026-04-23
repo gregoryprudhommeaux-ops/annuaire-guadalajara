@@ -9,8 +9,6 @@ type BaseShellProps = {
   children: React.ReactNode;
   className?: string;
   contentClassName?: string;
-  /** Optional desktop top navigation row (rendered under header). */
-  topNav?: React.ReactNode;
 };
 
 /** Simple API (preferred): pass auth state, header stays compact. */
@@ -32,7 +30,6 @@ export default function AppShell(props: AppShellProps) {
   const children = props.children;
   const className = props.className;
   const contentClassName = props.contentClassName;
-  const topNav = props.topNav;
 
   const isAdvanced = 'header' in props;
   const isLoggedIn = isAdvanced ? Boolean(props.header.user) : Boolean(props.isLoggedIn);
@@ -49,12 +46,6 @@ export default function AppShell(props: AppShellProps) {
   return (
     <div className={cn('min-h-[100dvh] bg-[rgb(var(--fn-bg))] text-[rgb(var(--fn-fg))]', className)}>
       <AppHeader {...header} />
-
-      {topNav ? (
-        <div className="mx-auto hidden w-full max-w-[var(--fn-page-max)] px-[var(--fn-page-pad)] pt-3 sm:block">
-          {topNav}
-        </div>
-      ) : null}
 
       <main
         className={cn(
