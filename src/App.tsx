@@ -57,6 +57,53 @@ import {
 import { FirebaseError } from 'firebase/app';
 import { auth, db } from './firebase';
 import { serverTimestamp } from 'firebase/firestore';
+import ProfileEditScreen from '@/features/profile/screens/ProfileEditScreen';
+import ProfileEditLegacyBody from '@/features/profile/screens/ProfileEditLegacyBody';
+import ProfileEditCard from '@/features/profile/screens/legacy/ProfileEditCard';
+import ProfileEditCardHeader from '@/features/profile/screens/legacy/ProfileEditCardHeader';
+import ProfileEditCardHeaderContent from '@/features/profile/screens/legacy/ProfileEditCardHeaderContent';
+import ProfileEditRoute from '@/features/profile/routes/ProfileEditRoute';
+import ProfileEditExpandMotion from '@/features/profile/screens/legacy/ProfileEditExpandMotion';
+import ProfileEditExpandedContainer from '@/features/profile/screens/legacy/ProfileEditExpandedContainer';
+import ProfileEditOptimizationCallout from '@/features/profile/screens/legacy/ProfileEditOptimizationCallout';
+import ProfileEditValidationCallout from '@/features/profile/screens/legacy/ProfileEditValidationCallout';
+import ProfileEditExpandedSection from '@/features/profile/screens/legacy/ProfileEditExpandedSection';
+import ProfileEditFormLayout from '@/features/profile/screens/legacy/ProfileEditFormLayout';
+import ProfileEditForm from '@/features/profile/screens/legacy/ProfileEditForm';
+import ProfileEditAdminEditNotice from '@/features/profile/screens/legacy/ProfileEditAdminEditNotice';
+import ProfileEditFormHints from '@/features/profile/screens/legacy/ProfileEditFormHints';
+import ProfileEditCardSection from '@/features/profile/screens/legacy/ProfileEditCardSection';
+import ProfileEditCompanyActivitySlotCard from '@/features/profile/screens/legacy/ProfileEditCompanyActivitySlotCard';
+import ProfileEditCompanyActivityBasics from '@/features/profile/screens/legacy/ProfileEditCompanyActivityBasics';
+import ProfileEditCompanyActivityLocation from '@/features/profile/screens/legacy/ProfileEditCompanyActivityLocation';
+import ProfileEditCompanyActivityCountryRole from '@/features/profile/screens/legacy/ProfileEditCompanyActivityCountryRole';
+import ProfileEditCompanyActivityArrivalYear from '@/features/profile/screens/legacy/ProfileEditCompanyActivityArrivalYear';
+import ProfileEditCompanyActivityCreationEmployee from '@/features/profile/screens/legacy/ProfileEditCompanyActivityCreationEmployee';
+import ProfileEditCompanyActivityKindStatus from '@/features/profile/screens/legacy/ProfileEditCompanyActivityKindStatus';
+import ProfileEditCompanyActivityDescription from '@/features/profile/screens/legacy/ProfileEditCompanyActivityDescription';
+import ProfileEditDangerZone from '@/features/profile/screens/legacy/ProfileEditDangerZone';
+import ProfileEditCollapsedActionsBar from '@/features/profile/screens/legacy/ProfileEditCollapsedActionsBar';
+import ProfileEditSaveSuccessBanner from '@/features/profile/screens/legacy/ProfileEditSaveSuccessBanner';
+import ProfileEditOnboardingNudge from '@/features/profile/screens/legacy/ProfileEditOnboardingNudge';
+import ProfileEditSaveError from '@/features/profile/screens/legacy/ProfileEditSaveError';
+import ProfileEditAdminProfileHeaderContent from '@/features/profile/screens/legacy/ProfileEditAdminProfileHeaderContent';
+import ProfileEditPassionsSection from '@/features/profile/sections/ProfileEditPassionsSection';
+import ProfileEditVisibilitySection from '@/features/profile/sections/ProfileEditVisibilitySection';
+import ProfileEditPersonContactBlock from '@/features/profile/sections/ProfileEditPersonContactBlock';
+import ProfileEditPersonVisibilityLanguagesBlock from '@/features/profile/sections/ProfileEditPersonVisibilityLanguagesBlock';
+import ProfileEditPersonBioBlock from '@/features/profile/sections/ProfileEditPersonBioBlock';
+import ProfileEditPersonPhotoVisualBlock from '@/features/profile/sections/ProfileEditPersonPhotoVisualBlock';
+import ProfileEditCompanyActivitySlotsBlock from '@/features/profile/sections/ProfileEditCompanyActivitySlotsBlock';
+import ProfileEditUnpublishedSectionShell from '@/features/profile/sections/ProfileEditUnpublishedSectionShell';
+import ProfileEditUnpublishedAdminFields from '@/features/profile/sections/ProfileEditUnpublishedAdminFields';
+import ProfileEditCompanyActivitySectionShell from '@/features/profile/sections/ProfileEditCompanyActivitySectionShell';
+import ProfileEditPersonSectionShell from '@/features/profile/sections/ProfileEditPersonSectionShell';
+import ProfileEditFormActions from '@/features/profile/sections/ProfileEditFormActions';
+import ProfileEditNoProfilePanel from '@/features/profile/sections/ProfileEditNoProfilePanel';
+import ProfileEditAdminSelfPanelHeader from '@/features/profile/routes/ProfileEditAdminSelfPanelHeader';
+import ProfileEditExpandedForm from '@/features/profile/routes/ProfileEditExpandedForm';
+import type { ProfileEditExpandedFormCtx } from '@/features/profile/routes/ProfileEditExpandedForm';
+import type { ProfileEditLegacyBodyCtx } from '@/features/profile/routes/profileEditLegacyBodyContext';
 import {
   UserProfile,
   Language,
@@ -320,6 +367,9 @@ import {
 } from './lib/firebaseAuthUi';
 import EmailAuthPanel from './components/EmailAuthPanel';
 import { HomePage as MarketingHomePage } from '@/components/home/HomePage';
+import PublicHomePage from '@/pages/PublicHomePage';
+import AppShell from '@/components/layout/AppShell';
+import { getNavigation } from '@/data/navigation';
 import { getPrimaryNav } from '@/routes/primaryNav';
 import { canAccessRoute, getAppRole } from '@/auth/roleModel';
 import { HeroTopActions } from '@/components/hero/HeroTopActions';
@@ -403,7 +453,10 @@ class SectionErrorBoundary extends React.Component<
   // NOTE: TS in this repo doesn't expose React.Component instance members on subclasses.
   // We declare them to keep error reporting without affecting runtime behavior.
   declare props: { fallback: React.ReactNode; children: React.ReactNode };
-  declare setState: (s: Partial<{ hasError: boolean; errorText: string }>) => void;
+  declare setState: React.Component<
+    { fallback: React.ReactNode; children: React.ReactNode },
+    { hasError: boolean; errorText: string }
+  >['setState'];
   state: { hasError: boolean; errorText: string } = { hasError: false, errorText: '' };
 
   static getDerivedStateFromError(): { hasError: boolean; errorText: string } {
@@ -2220,8 +2273,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const isNetworkRoute = location.pathname === '/network';
   const isRequestsRoute = location.pathname === '/requests';
   const isRadarRoute = location.pathname === '/radar';
+  /** `/admin` and `/admin/*` — not the member `AppShell`. Admin uses the legacy `AppHeader` (nav row) + full-width `<main>`. */
   const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
-  // Admin is a separate product space (`/admin`), not a member dashboard mode.
+  // Kept for naming clarity elsewhere; admin is not the same surface as the member "dashboard" route.
   const isAdminDashboard = false;
   const isEditProfileRoute = location.pathname === '/profile/edit';
   /** Libellés / aides FR raccourcis (patch UX) uniquement sur /profile/edit. */
@@ -3555,7 +3609,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     if (missing.length > 0) return;
     // Profil prêt : enregistrer automatiquement la réponse en attente.
     void submitRsvp(pendingRsvpStatus);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isPublicEventRoute,
     publicEvent?.id,
@@ -4741,6 +4794,43 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
   }
 
   const headerAdminLayout = Boolean(user && viewerIsAdmin && isAdminRoute);
+  const useNewPublicHome = Boolean(
+    !shortLegalPage &&
+      !isSignupMinimal &&
+      isHomeRoute &&
+      !isSignupLandingRoute &&
+      !isAdminDashboard &&
+      !isAdminRoute
+  );
+  // AppShell: member frame only (header + bottom bar + safe area) when a shell body exists below.
+  // Excludes `/admin` (intentional: back-office trame, no BottomNav) and other MainApp paths that keep legacy
+  // <main> — /onboarding, /membres, /evenements, /e/:…, /inscription (if logged in), etc. — so no empty shell.
+  // Mobile hardening of admin should follow product/analytics, not the member app shell.
+  const useAppShellMemberContent =
+    isEditProfileRoute ||
+    isDashboardRoute ||
+    isNetworkRoute ||
+    isRequestsRoute ||
+    isRadarRoute;
+  const useAppShellNonAdmin = Boolean(
+    !shortLegalPage && !isSignupMinimal && !useNewPublicHome && !isAdminRoute
+  ) && useAppShellMemberContent;
+
+  const requestSubmitProfileForm = () => {
+    window.requestAnimationFrame(() => {
+      profileFormLayoutRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+      const form = directoryProfileFormRef.current;
+      if (!form) return;
+      if (typeof (form as any).requestSubmit === 'function') {
+        (form as any).requestSubmit();
+        return;
+      }
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    });
+  };
   const languageControlsTopRight = (
     <>
       <div className="sm:hidden">
@@ -4770,190 +4860,37 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
   return (
     <div className="flex min-h-screen min-w-0 flex-col bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
-      <AppHeader
-        title={t('title')}
-        subtitle={t('subtitle')}
-        // Admin: show the "new profiles" badge on the dedicated button, not on the logo.
-        notificationCount={headerAdminLayout ? 0 : viewerIsAdmin ? pendingProfiles.length : 0}
-        homeAriaLabel={t('nav.backHome')}
-        onHomeClick={(e) => {
-          e.preventDefault();
-          window.location.assign('/');
-        }}
-        lang={lang}
-        onLangChange={setLang}
-        // Keep login + language controls in the top-right header (like before),
-        // rather than pushing guest CTA into a full-width mobile bar.
-        guestMobileFullWidthCta={false}
-        // Language controls are always top-right to avoid duplicates.
-        hideDesktopLanguageSwitch
-        topRight={
-          headerAdminLayout && user ? (
-            <div className="flex shrink-0 items-center gap-2">
-              {languageControlsTopRight}
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="inline-flex rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
-                title={t('logout')}
-              >
-                <LogOut size={18} />
-              </button>
-              <div className="block h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200">
-                <ProfileAvatar
-                  photoURL={user.photoURL}
-                  fullName={user.displayName || user.email || ''}
-                  className="h-full w-full"
-                  initialsClassName="text-[10px] font-bold text-slate-600"
-                  iconSize={16}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex shrink-0 items-center gap-2">{languageControlsTopRight}</div>
-          )
-        }
-        fullWidthRow={
-          headerAdminLayout ? (
-            <nav
-              className="flex w-full min-w-0 flex-wrap items-center gap-2"
-              aria-label={pickLang(
-                'Navigation du site et outils admin',
-                'Navegación del sitio y herramientas admin',
-                'Site navigation and admin tools',
-                lang
-              )}
-            >
-              <Link
-                to="/"
-                className={primaryNavPillClass(isHomeRoute)}
-              >
-                {t('nav.home')}
-              </Link>
-              <Link
-                to="/network"
-                className={primaryNavPillClass(isNetworkRoute)}
-              >
-                {t('nav.network')}
-              </Link>
-              <Link
-                to="/requests"
-                className={primaryNavPillClass(isRequestsRoute)}
-              >
-                {t('nav.requests')}
-              </Link>
-              <Link
-                to="/radar"
-                className={primaryNavPillClass(isRadarRoute)}
-              >
-                {t('nav.radar')}
-              </Link>
-              <Link
-                to="/admin"
-                className={primaryNavPillClass(isAdminRoute)}
-              >
-                {t('nav.admin')}
-              </Link>
-              <span
-                className="mx-0.5 hidden h-6 w-px shrink-0 bg-stone-900/10 sm:inline-block"
-                aria-hidden
-              />
-              <button
-                type="button"
-                onClick={() => setShowValidationPanel(true)}
-                className={cn('relative', primaryNavPillClass(false))}
-                title={t('newProfiles')}
-              >
-                <span className="truncate">{t('newProfiles')}</span>
-                {pendingProfiles.length > 0 ? (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-bold text-white">
-                    {pendingProfiles.length > 99 ? '99+' : pendingProfiles.length}
-                  </span>
-                ) : null}
-              </button>
-              <button type="button" onClick={exportToExcel} className={primaryNavPillClass(false)} title={t('exportData')}>
-                <span className="truncate">{t('exportData')}</span>
-              </button>
-              <Link
-                to="/evenements"
-                onClick={() => setDashboardInitialAdminTab('events')}
-                className={primaryNavPillClass(isEventsAdminRoute)}
-                title={pickLang(
-                  'Ouvrir la page Événements',
-                  'Abrir la página de Eventos',
-                  'Open Events page',
-                  lang
-                )}
-              >
-                {t('adminTabEvents')}
-              </Link>
-              {isAdminEmail(user?.email) && !adminUserDocExists ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedProfile(null);
-                    setEditingProfile(null);
-                    setAdminSelfProfileOptIn(true);
-                    setIsEditing(true);
-                    setIsProfileExpanded(true);
-                    window.requestAnimationFrame(() => {
-                      profileFormLayoutRef.current?.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start',
-                      });
-                    });
-                  }}
-                  className={primaryNavPillClass(false)}
-                  title={pickLang(
-                    "Créer votre fiche annuaire (optionnel)",
-                    'Crear tu ficha del directorio (opcional)',
-                    'Create your directory profile (optional)',
-                    lang
-                  )}
-                >
-                  {pickLang('Créer mon profil', 'Crear mi perfil', 'Create my profile', lang)}
-                </button>
-              ) : null}
-            </nav>
-          ) : (
-            <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <nav className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto">
-                {getPrimaryNav(role).map((item) => {
-                  const href = item.href;
-                  const active =
-                    location.pathname === href || (href !== '/' && location.pathname.startsWith(href));
-                  return (
-                    <Link key={href} to={href} className={primaryNavPillClass(active)}>
-                      {t(item.labelKey)}
-                    </Link>
-                  );
-                })}
-              </nav>
-              <div className="w-full min-w-0 sm:w-auto sm:max-w-[420px] sm:shrink-0 sm:pl-3 sm:flex sm:justify-end">
-                <HeroTopActions
-                  currentLocale={lang}
-                  isAuthenticated={Boolean(user)}
-                  onChangeLocale={setLang}
-                  onLogout={handleLogout}
-                  onLogin={openAuthModal}
-                />
-              </div>
-            </div>
-          )
-        }
-        trailing={
-          user ? (
-            headerAdminLayout ? null : (
-              <div className="flex items-center justify-end gap-2">
+      {useNewPublicHome || useAppShellNonAdmin ? null : (
+        <AppHeader
+          title={t('title')}
+          subtitle={t('subtitle')}
+          // Admin: show the "new profiles" badge on the dedicated button, not on the logo.
+          notificationCount={headerAdminLayout ? 0 : viewerIsAdmin ? pendingProfiles.length : 0}
+          homeAriaLabel={t('nav.backHome')}
+          onHomeClick={(e) => {
+            e.preventDefault();
+            window.location.assign('/');
+          }}
+          lang={lang}
+          onLangChange={setLang}
+          // Keep login + language controls in the top-right header (like before),
+          // rather than pushing guest CTA into a full-width mobile bar.
+          guestMobileFullWidthCta={false}
+          // Language controls are always top-right to avoid duplicates.
+          hideDesktopLanguageSwitch
+          topRight={
+            headerAdminLayout && user ? (
+              <div className="flex shrink-0 items-center gap-2">
+                {languageControlsTopRight}
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
+                  className="inline-flex rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
                   title={t('logout')}
                 >
                   <LogOut size={18} />
                 </button>
-                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200">
+                <div className="block h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200">
                   <ProfileAvatar
                     photoURL={user.photoURL}
                     fullName={user.displayName || user.email || ''}
@@ -4963,12 +4900,138 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   />
                 </div>
               </div>
+            ) : (
+              <div className="flex shrink-0 items-center gap-2">{languageControlsTopRight}</div>
             )
-          ) : (
-            null
-          )
-        }
-      />
+          }
+          fullWidthRow={
+            headerAdminLayout ? (
+              <nav
+                className="flex w-full min-w-0 flex-wrap items-center gap-2"
+                aria-label={pickLang(
+                  'Navigation du site et outils admin',
+                  'Navegación del sitio y herramientas admin',
+                  'Site navigation and admin tools',
+                  lang
+                )}
+              >
+                <Link to="/" className={primaryNavPillClass(isHomeRoute)}>
+                  {t('nav.home')}
+                </Link>
+                <Link to="/network" className={primaryNavPillClass(isNetworkRoute)}>
+                  {t('nav.network')}
+                </Link>
+                <Link to="/requests" className={primaryNavPillClass(isRequestsRoute)}>
+                  {t('nav.requests')}
+                </Link>
+                <Link to="/radar" className={primaryNavPillClass(isRadarRoute)}>
+                  {t('nav.radar')}
+                </Link>
+                <Link to="/admin" className={primaryNavPillClass(isAdminRoute)}>
+                  {t('nav.admin')}
+                </Link>
+                <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-stone-900/10 sm:inline-block" aria-hidden />
+                <button
+                  type="button"
+                  onClick={() => setShowValidationPanel(true)}
+                  className={cn('relative', primaryNavPillClass(false))}
+                  title={t('newProfiles')}
+                >
+                  <span className="truncate">{t('newProfiles')}</span>
+                  {pendingProfiles.length > 0 ? (
+                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-bold text-white">
+                      {pendingProfiles.length > 99 ? '99+' : pendingProfiles.length}
+                    </span>
+                  ) : null}
+                </button>
+                <button type="button" onClick={exportToExcel} className={primaryNavPillClass(false)} title={t('exportData')}>
+                  <span className="truncate">{t('exportData')}</span>
+                </button>
+                <Link
+                  to="/evenements"
+                  onClick={() => setDashboardInitialAdminTab('events')}
+                  className={primaryNavPillClass(isEventsAdminRoute)}
+                  title={pickLang('Ouvrir la page Événements', 'Abrir la página de Eventos', 'Open Events page', lang)}
+                >
+                  {t('adminTabEvents')}
+                </Link>
+                {isAdminEmail(user?.email) && !adminUserDocExists ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProfile(null);
+                      setEditingProfile(null);
+                      setAdminSelfProfileOptIn(true);
+                      setIsEditing(true);
+                      setIsProfileExpanded(true);
+                      window.requestAnimationFrame(() => {
+                        profileFormLayoutRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      });
+                    }}
+                    className={primaryNavPillClass(false)}
+                    title={pickLang(
+                      "Créer votre fiche annuaire (optionnel)",
+                      'Crear tu ficha del directorio (opcional)',
+                      'Create your directory profile (optional)',
+                      lang
+                    )}
+                  >
+                    {pickLang('Créer mon profil', 'Crear mi perfil', 'Create my profile', lang)}
+                  </button>
+                ) : null}
+              </nav>
+            ) : (
+              <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <nav className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto">
+                  {getPrimaryNav(role).map((item) => {
+                    const href = item.href;
+                    const active = location.pathname === href || (href !== '/' && location.pathname.startsWith(href));
+                    return (
+                      <Link key={href} to={href} className={primaryNavPillClass(active)}>
+                        {t(item.labelKey)}
+                      </Link>
+                    );
+                  })}
+                </nav>
+                <div className="w-full min-w-0 sm:w-auto sm:max-w-[420px] sm:shrink-0 sm:pl-3 sm:flex sm:justify-end">
+                  <HeroTopActions
+                    currentLocale={lang}
+                    isAuthenticated={Boolean(user)}
+                    onChangeLocale={setLang}
+                    onLogout={handleLogout}
+                    onLogin={openAuthModal}
+                  />
+                </div>
+              </div>
+            )
+          }
+          trailing={
+            user ? (
+              headerAdminLayout ? null : (
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
+                    title={t('logout')}
+                  >
+                    <LogOut size={18} />
+                  </button>
+                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200">
+                    <ProfileAvatar
+                      photoURL={user.photoURL}
+                      fullName={user.displayName || user.email || ''}
+                      className="h-full w-full"
+                      initialsClassName="text-[10px] font-bold text-slate-600"
+                      iconSize={16}
+                    />
+                  </div>
+                </div>
+              )
+            ) : null
+          }
+        />
+      )}
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <AnimatePresence>
@@ -5046,1658 +5109,513 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         shortLegalPage === 'privacy' ? <PrivacyPage /> : <TermsPage />
       ) : (
         <>
-      {user && !isAdminDashboard && (isDashboardRoute || isEditProfileRoute) && (
-        <div className="bg-stone-50 border-b border-stone-200">
-          {showEmailVerifyBanner ? (
-            <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-950">
-              <p className="font-medium">{t('authVerifyEmailBanner')}</p>
-              <div className="mt-2 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
-                <button
-                  type="button"
-                  onClick={handleResendEmailVerification}
-                  disabled={emailVerifySending}
-                  className="rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100 disabled:opacity-60"
-                >
-                  {emailVerifySending
-                    ? pickLang('Envoi…', 'Enviando…', 'Sending…', lang)
-                    : t('authResendVerification')}
-                </button>
-                {emailVerifyNotice ? (
-                  <span className="text-xs text-amber-900/90">{emailVerifyNotice}</span>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
-          {viewerIsAdmin && viewMode !== 'dashboard' && (
-            <div className={cn(pageSectionPad, 'pb-0 sm:hidden')}>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedProfile(null);
-                  setShowValidationPanel(false);
-                  setDirectoryDiscoveryStripsHidden(true);
-                  window.location.assign('/dashboard');
-                }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-800 transition-colors hover:bg-indigo-100"
-              >
-                <LayoutDashboard size={17} aria-hidden />
-                {t('dashboardTab')}
-              </button>
-            </div>
+      {useNewPublicHome ? (
+        <PublicHomePage
+          user={user}
+          memberCount={stats.total}
+          sectors={allProfiles.map((p) => p.activityCategory ?? '').filter(Boolean).slice(0, 6)}
+          onRequestSignIn={openAuthModal}
+          onSignOut={handleLogout}
+          headerRightSlot={languageControlsTopRight}
+        />
+      ) : null}
+
+      {useAppShellNonAdmin ? (
+        <AppShell
+          header={{
+            user: user ? { displayName: user.displayName, email: user.email, photoURL: user.photoURL } : null,
+            onSignIn: openAuthModal,
+            onSignOut: handleLogout,
+            rightSlot: languageControlsTopRight,
+          }}
+          showBottomNav={Boolean(user)}
+          topNav={
+            user ? (
+              <nav className="flex flex-wrap items-center gap-2" aria-label={pickLang('Navigation', 'Navegación', 'Navigation', lang)}>
+                {getNavigation({ isAuthenticated: true }).primary.map((it) => (
+                  <Link
+                    key={it.href}
+                    to={it.href}
+                    className={cn(
+                      'inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold shadow-[var(--fn-shadow-sm)] transition-colors',
+                      location.pathname === it.href || (it.href !== '/' && location.pathname.startsWith(it.href))
+                        ? 'border-[rgb(var(--fn-border))] bg-[rgb(var(--fn-surface))] text-[rgb(var(--fn-fg))]'
+                        : 'border-[rgb(var(--fn-border))] bg-[rgb(var(--fn-surface-2))] text-[rgb(var(--fn-muted))] hover:bg-[rgb(var(--fn-surface))]'
+                    )}
+                  >
+                    {it.icon ? <span className="text-[rgb(var(--fn-muted-2))]">{it.icon}</span> : null}
+                    <span className="truncate">{it.label}</span>
+                  </Link>
+                ))}
+              </nav>
+            ) : null
+          }
+          contentClassName={cn(
+            'pt-0',
+            isEditProfileRoute &&
+              user &&
+              'fn-app-shell-profile pb-[calc(var(--fn-bottomnav-h)+env(safe-area-inset-bottom)+28px)]',
           )}
-          <div className={cn(pageSectionPad, isEditProfileRoute && 'profile-edit-page')}>
-            {isEditProfileRoute && (editingProfile?.uid ?? profile?.uid) && !profileVisibilityBandHidden ? (
-              <div className="sticky top-24 z-40 mb-4 sm:top-16">
-                <div className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur">
-                    <div className="p-3 sm:p-4">
-                      <ProfileCompletionCard
-                        profile={profileCompletionCardSource}
-                        t={t}
-                        lang={lang}
-                        onEditField={scrollToProfileCompletionField}
-                        className="border-0 bg-transparent p-0 shadow-none"
-                        matchingRecommendationsNote={t('profileFormMatchingRecommendationsNote')}
-                        rightActions={
-                          <button
-                            type="button"
-                            disabled={profileSaveBusy}
-                            onClick={() => {
-                              setIsProfileExpanded(true);
-                              setIsEditing(true);
-                              window.requestAnimationFrame(() => {
-                                profileFormLayoutRef.current?.scrollIntoView({
-                                  behavior: 'smooth',
-                                  block: 'start',
-                                });
-                                const form = directoryProfileFormRef.current;
-                                if (!form) return;
-                                if (typeof (form as any).requestSubmit === 'function') {
-                                  (form as any).requestSubmit();
-                                  return;
-                                }
-                                form.dispatchEvent(
-                                  new Event('submit', { bubbles: true, cancelable: true })
-                                );
-                              });
-                            }}
-                            className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
-                          >
-                            {profileSaveBusy
-                              ? pickLang('Enregistrement...', 'Guardando...', 'Saving...', lang)
-                              : 'Enregistrer'}
-                          </button>
-                        }
-                        discreetRightFooter={
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setProfileVisibilityBandHidden(true);
-                              try {
-                                window.sessionStorage.setItem('fn_profile_visibility_band_hidden', '1');
-                              } catch {
-                                // ignore
-                              }
-                            }}
-                            className="text-[10px] font-normal leading-snug text-slate-400 transition-colors hover:text-slate-600 sm:text-xs"
-                          >
-                            {pickLang(
-                              'Masquer ce bandeau',
-                              'Ocultar este banner',
-                              'Hide this banner',
-                              lang
-                            )}
-                          </button>
-                        }
-                      />
-                    </div>
-                  </div>
-              </div>
-            ) : null}
-            {showAdminSelfProfilePanel ? (
-            <section className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden relative">
-              <div
-                className={cn(
-                  'flex items-center justify-between gap-3 p-4 transition-colors',
-                  !isEditProfileRoute && 'cursor-pointer hover:bg-stone-50'
-                )}
-                onClick={
-                  isEditProfileRoute
-                    ? undefined
-                    : () => {
-                        if (!isProfileExpanded) {
-                          setIsProfileExpanded(true);
-                          setIsEditing(true);
-                        } else {
-                          setIsProfileExpanded(false);
-                        }
-                      }
-                }
-              >
-                <div
-                  className={cn(
-                    'flex min-w-0 flex-1 gap-3',
-                    isProfileExpanded ? 'items-center' : 'items-start sm:items-center'
-                  )}
-                >
-                  {!isProfileExpanded ? (
-                    <div className="mt-0.5 h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-stone-200 bg-stone-50 sm:mt-0">
-                      {profile ? (
-                        <ProfileAvatar
-                          photoURL={profile.photoURL}
-                          fullName={profile.fullName}
-                          className="h-full w-full"
-                          iconSize={22}
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-stone-100 text-stone-500">
-                          <UserIcon size={18} aria-hidden />
-                        </div>
-                      )}
-                    </div>
-                  ) : null}
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        <h2 className="text-lg font-semibold tracking-tight">
-                          {editingSomeoneElse && editingProfile
-                            ? pickLang(
-                                `Fiche membre : ${editingProfile.fullName || editingProfile.email || editingProfile.uid}`,
-                                `Ficha del miembro: ${editingProfile.fullName || editingProfile.email || editingProfile.uid}`,
-                                `Member profile: ${editingProfile.fullName || editingProfile.email || editingProfile.uid}`,
-                                lang
-                              )
-                            : t('myProfile')}
-                        </h2>
-                        <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
-                          {editingSomeoneElse
-                            ? pickLang('Édition admin', 'Edición admin', 'Admin edit', lang)
-                            : isAdminEmail(user?.email)
-                              ? pickLang('Admin', 'Admin', 'Admin', lang)
-                              : pickLang(
-                                  `Profil: ${profileCompletionPct}%`,
-                                  `Perfil: ${profileCompletionPct}%`,
-                                  `Profile: ${profileCompletionPct}%`,
-                                  lang
-                                )}
-                        </span>
-                      </div>
-
-                      {isEditProfileRoute &&
-                      (editingProfile?.uid ?? profile?.uid) &&
-                      profileVisibilityBandHidden ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setProfileVisibilityBandHidden(false);
-                            try {
-                              window.sessionStorage.removeItem('fn_profile_visibility_band_hidden');
-                            } catch {
-                              // ignore
-                            }
-                          }}
-                          className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-                        >
-                          {pickLang(
-                            'Afficher la visibilité du profil',
-                            'Mostrar visibilidad del perfil',
-                            'Show profile visibility',
-                            lang
-                          )}
-                        </button>
-                      ) : null}
-                    </div>
-                    {profile ? (
-                      <div className="flex items-start gap-2">
-                        {isAdminEmail(user?.email) && editingSomeoneElse && editingProfile ? (
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <p className="text-[11px] font-medium leading-relaxed text-violet-900 sm:text-xs">
-                              {pickLang(
-                                'Vous corrigez la fiche d’un autre membre — elle ne remplace pas votre compte administrateur.',
-                                'Estás corrigiendo la ficha de otro miembro: no sustituye tu cuenta de administrador.',
-                                'You are editing another member’s directory profile — it is not your admin account.',
-                                lang
-                              )}
-                            </p>
-                          </div>
-                        ) : isAdminEmail(user?.email) ? (
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <p className="text-[11px] font-medium leading-relaxed text-blue-700 sm:text-xs">
-                              {pickLang(
-                                'Compte administrateur : accès complet sans fiche annuaire publiée.',
-                                'Cuenta de administración: acceso completo sin ficha en el directorio.',
-                                'Admin account: full access without a published directory profile.',
-                                lang
-                              )}
-                            </p>
-                          </div>
-                        ) : (
-                          <>
-                            {profileCoachSource === 'ai' ? (
-                              <Sparkles
-                                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-600"
-                                aria-hidden
-                              />
-                            ) : null}
-                            {profileCoachLoading && profileCoachSource !== 'ai' ? (
-                              <RefreshCw
-                                className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-stone-400"
-                                aria-hidden
-                              />
-                            ) : null}
-                            <div className="min-w-0 flex-1 space-y-1">
-                              <p className="text-[11px] font-medium leading-relaxed text-blue-700 sm:text-xs">
-                                {pickLang(
-                                  profileCompletionPct >= 100
-                                    ? 'Bravo, votre profil est complet !'
-                                    : `Objectif 100%: complétez votre profil pour gagner en visibilité.`,
-                                  profileCompletionPct >= 100
-                                    ? 'Excelente, tu perfil está completo.'
-                                    : 'Meta 100%: completa tu perfil para ganar visibilidad.',
-                                  profileCompletionPct >= 100
-                                    ? 'Great, your profile is complete.'
-                                    : 'Target 100%: complete your profile to boost visibility.',
-                                  lang
-                                )}
-                              </p>
-                              {profileCoachLine.trim() ? (
-                                <p className="text-xs leading-relaxed text-stone-500 sm:text-sm break-words">
-                                  {profileCoachLine}
-                                </p>
-                              ) : null}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {user && !profile && !isProfileExpanded && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setIsEditing(true); setIsProfileExpanded(true); }}
-                      className="px-4 py-1.5 bg-stone-900 text-white text-xs rounded-lg hover:bg-stone-800 transition-all font-medium"
-                    >
-                      {t('register')}
-                    </button>
-                  )}
-                  {!isEditProfileRoute ? (
-                    <div className="p-2 text-stone-400">
-                      {isProfileExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-
-              {!isProfileExpanded && user ? (
-                <div
-                  className="flex flex-wrap gap-2 border-t border-stone-100 px-4 py-3 sm:px-5"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {profile?.uid ? (
+        >
+          {/* Keep existing page rendering below, but without the legacy <main> wrapper. */}
+          {user && !isAdminDashboard && (isDashboardRoute || isEditProfileRoute) && (
+            <div className="mb-4 rounded-2xl border border-stone-200 bg-white">
+              {/* Banner area is still driven by existing state; keep it visible within the new shell. */}
+              {showEmailVerifyBanner ? (
+                <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-950">
+                  <p className="font-medium">{t('authVerifyEmailBanner')}</p>
+                  <div className="mt-2 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
                     <button
                       type="button"
-                      onClick={handleSharePublicProfileLink}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-800 shadow-sm transition-colors hover:bg-stone-50"
+                      onClick={handleResendEmailVerification}
+                      disabled={emailVerifySending}
+                      className="rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100 disabled:opacity-60"
                     >
-                      <Share2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      {t('profileSharePublicCta')}
+                      {emailVerifySending ? pickLang('Envoi…', 'Enviando…', 'Sending…', lang) : t('authResendVerification')}
                     </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMemberRequestModalNonce((n) => n + 1);
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-100"
-                  >
-                    <Megaphone className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    {t('memberRequestsPostCta')}
-                  </button>
-                  {viewerIsAdmin ? (
-                    <Link
-                      to="/evenements"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDashboardInitialAdminTab('events');
-                      }}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-900 transition-colors hover:bg-indigo-100"
-                    >
-                      <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      {t('profileCreateEventCta')}
-                    </Link>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {profileSaveSuccess ? (
-                <div className="mx-4 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 sm:mx-6 sm:text-sm">
-                  {profileSaveSuccess}
-                </div>
-              ) : null}
-
-            <AnimatePresence>
-              {isProfileExpanded && (
-                <motion.div 
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  className="overflow-hidden"
-                >
-                  <div className="border-t border-stone-100 p-4 pt-0 sm:p-6 sm:pt-0">
-                    {profile?.isValidated === false && (
-                      <div className="mt-6 p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-center gap-3">
-                        <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg shrink-0">
-                          <Users size={14} />
-                        </div>
-                        <p className="text-[10px] text-amber-800 leading-relaxed font-medium">
-                          {t('validationMessage')}
-                        </p>
-                      </div>
-                    )}
-                    {profile?.isValidated === false && profile.optimizationSuggestion && (
-                      <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl space-y-3">
-                        <p className="text-xs font-bold text-indigo-900">
-                          {pickLang(
-                            'Suggestions IA disponibles pour optimiser votre profil avant validation.',
-                            'Sugerencias IA disponibles para optimizar tu perfil antes de la validación.',
-                            'AI suggestions are available to improve your profile before validation.',
-                            lang
-                          )}
-                        </p>
-                        <ul className="text-xs text-indigo-800 list-disc pl-4 space-y-1">
-                          {profile.optimizationSuggestion.summary.slice(0, 4).map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingProfile({
-                                ...profile,
-                                memberBio:
-                                  profile.optimizationSuggestion?.bioSuggested ||
-                                  profile.memberBio ||
-                                  profile.bio,
-                              });
-                              setIsEditing(true);
-                            }}
-                            className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all"
-                          >
-                            {pickLang(
-                              'Appliquer les suggestions IA',
-                              'Aplicar sugerencias IA',
-                              'Apply AI suggestions',
-                              lang
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    <div className="mt-6">
-                      {profile || isEditing ? (
-                        <div
-                          ref={profileFormLayoutRef}
-                          className="grid gap-6 lg:grid-cols-1 lg:items-start"
-                        >
-                          <div className="min-w-0 space-y-6">
-                            {user &&
-                            profileCompletionPct < 100 &&
-                            profileCompletionPct <= 50 &&
-                            profile?.isValidated !== true &&
-                            !editingSomeoneElse &&
-                            !isAdminEmail(user.email) ? (
-                              <OnboardingIntroBanner t={t} className="w-full" />
-                            ) : null}
-                            <form
-                              ref={directoryProfileFormRef}
-                              key={profileFormRemountKey}
-                              onSubmit={handleSaveProfile}
-                              className={cn('space-y-8', isEditProfileRoute && 'profile-edit-density space-y-6')}
-                            >
-                          {isEditProfileRoute ? <ProfileEditFormPatchStyles /> : null}
-                          {editingProfile && editingProfile.uid !== user.uid ? (
-                            <p
-                              className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium leading-relaxed text-indigo-950"
-                              role="status"
-                            >
-                              {pickLang(
-                                `Vous modifiez la fiche de ${editingProfile.fullName || editingProfile.email || editingProfile.uid}. Les changements s’appliquent à son compte annuaire.`,
-                                `Estás editando la ficha de ${editingProfile.fullName || editingProfile.email || editingProfile.uid}. Los cambios se aplican a su ficha del directorio.`,
-                                `You are editing ${editingProfile.fullName || editingProfile.email || editingProfile.uid}'s profile. Changes apply to their directory entry.`,
-                                lang
-                              )}
-                            </p>
-                          ) : null}
-                          <div className="space-y-1.5">
-                            <p className="rounded-md border border-stone-200/70 bg-stone-50/60 px-2 py-1 text-[11px] leading-snug text-stone-500">
-                              {t('profileFormRequiredLegend')}
-                            </p>
-                            {user && !editingSomeoneElse ? (
-                              <p className="rounded-md border border-blue-100/70 bg-blue-50/50 px-2 py-1 text-[11px] leading-snug text-blue-900/90">
-                                {t('profileFormDraftLocalHint')}
-                              </p>
-                            ) : null}
-                          </div>
-
-                          <section
-                            className={cn(
-                              'profile-card-compact space-y-4',
-                              isEditProfileRoute && 'profile-card-soft profile-stack-md'
-                            )}
-                          >
-                            <div className="profile-section-header">
-                              <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
-                                {t('profileFormSectionPerson')}
-                              </h2>
-                              <ProfileSectionTag
-                                tone="public"
-                                label={pickLang(
-                                  'Visible publiquement',
-                                  'Visible públicamente',
-                                  'Shown on your public profile',
-                                  lang
-                                )}
-                              />
-                              <ProfileSectionTag
-                                tone="matching"
-                                label={pickLang(
-                                  'Important pour le matching',
-                                  'Importante para el emparejamiento',
-                                  'Used for matching',
-                                  lang
-                                )}
-                              />
-                            </div>
-
-                            <ProfileSectionHint tone="public">
-                              {pickLang(
-                                'Identité, moyens de contact, langues, présentation personnelle et photo.',
-                                'Identidad, contacto, idiomas, bio personal y foto.',
-                                'Identity, contact, languages, personal intro and photo.',
-                                lang
-                              )}
-                            </ProfileSectionHint>
-
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
-                              {t('profileFormSectionIdentity')}
-                            </p>
-                            <div className={cn('profile-form-grid-2', isEditProfileRoute && 'profile-grid-2')}>
-                              <div className="profile-form-block--dense space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {profileEditFrUx ? PROFILE_FIELD_LABELS.fullName : t('fullName')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
-                                </label>
-                                <input
-                                  id="profile-completion-fullName"
-                                  name="fullName"
-                                  defaultValue={
-                                    formDraftT?.fullName ??
-                                    editingProfile?.fullName ??
-                                    profile?.fullName ??
-                                    ''
-                                  }
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                              </div>
-
-                              <div className="profile-form-block--dense space-y-1">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {profileEditFrUx ? PROFILE_FIELD_LABELS.email : t('email')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
-                                </label>
-                                <input
-                                  id="profile-completion-email"
-                                  type="email"
-                                  name="email"
-                                  defaultValue={
-                                    formDraftT?.email ??
-                                    editingProfile?.email ??
-                                    profile?.email ??
-                                    user.email ??
-                                    ''
-                                  }
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                              </div>
-
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 sm:col-span-2">
-                                {t('profileFormSubContact')}
-                              </p>
-                              <div className="profile-form-block--dense min-w-0 space-y-1 sm:col-span-2">
-                                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {profileEditFrUx ? PROFILE_FIELD_LABELS.linkedinUrl : t('linkedin')}
-                                </label>
-                                <input
-                                  name="linkedin"
-                                  id="linkedin-input"
-                                  type="url"
-                                  autoComplete="url"
-                                  defaultValue={
-                                    formDraftT?.linkedin ??
-                                    editingProfile?.linkedin ??
-                                    profile?.linkedin ??
-                                    ''
-                                  }
-                                  placeholder="https://linkedin.com/in/..."
-                                  className="h-10 min-w-0 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                              </div>
-
-                              <div className="profile-form-block--dense min-w-0 sm:col-span-2">
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(9rem,12rem)_1fr]">
-                                  <div className="space-y-1">
-                                    <label
-                                      className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                      htmlFor="whatsappDial"
-                                    >
-                                      {profileEditFrUx ? PROFILE_FIELD_LABELS.countryDialCode : t('profileFormPhoneCountryLabel')}
-                                    </label>
-                                    <select
-                                      id="whatsappDial"
-                                      name="whatsappDial"
-                                      defaultValue={formDraftT?.whatsappDial ?? profileWhatsappDialDefault}
-                                      className="h-10 w-full rounded-lg border border-stone-200 bg-white px-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                    >
-                                      {phoneDialRowsOrderedForUi().map((row) => (
-                                        <option key={row.dial} value={row.dial}>
-                                          {dialLabelForLang(row.dial, lang)}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <label
-                                      className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                      htmlFor="whatsappLocal"
-                                    >
-                                      {profileEditFrUx ? PROFILE_FIELD_LABELS.phoneWhatsapp : t('profileFormPhoneLocalLabel')}
-                                      <span className="text-red-500 font-semibold" aria-hidden>
-                                        {' *'}
-                                      </span>
-                                    </label>
-                                    <input
-                                      id="whatsappLocal"
-                                      type="tel"
-                                      name="whatsappLocal"
-                                      defaultValue={formDraftT?.whatsappLocal ?? profileWhatsappLocalDefault}
-                                      placeholder={pickLang('ex. 33 1234 5678', 'ej. 33 1234 5678', 'e.g. 33 1234 5678', lang)}
-                                      autoComplete="tel-national"
-                                      className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                    />
-                                    <ProfileFieldHint>
-                                      {pickLang(
-                                        PROFILE_FIELD_HELP.phoneWhatsapp,
-                                        'Número sin repetir el prefijo internacional.',
-                                        'Number without repeating the country prefix.',
-                                        lang
-                                      )}
-                                    </ProfileFieldHint>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div
-                              className={cn(
-                                'mb-4',
-                                isEditProfileRoute ? 'inline-checkboxes' : 'flex flex-col gap-2'
-                              )}
-                            >
-                              <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700 hover:text-stone-900">
-                                <input
-                                  type="checkbox"
-                                  name="isEmailPublic"
-                                  defaultChecked={
-                                    formDraftC?.isEmailPublic ??
-                                    editingProfile?.isEmailPublic ??
-                                    profile?.isEmailPublic ??
-                                    false
-                                  }
-                                  className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                />
-                                <span>{t('isEmailPublic')}</span>
-                              </label>
-                              <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700 hover:text-stone-900">
-                                <input
-                                  type="checkbox"
-                                  name="isWhatsappPublic"
-                                  defaultChecked={
-                                    formDraftC?.isWhatsappPublic ??
-                                    editingProfile?.isWhatsappPublic ??
-                                    profile?.isWhatsappPublic ??
-                                    false
-                                  }
-                                  className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                />
-                                <span>{t('isWhatsappPublic')}</span>
-                              </label>
-                            </div>
-
-                            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-stone-500">
-                              {t('profileFormSubLanguages')}
-                            </p>
-                            <div className="mb-4 space-y-1" id="profile-completion-workLanguages">
-                              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                {profileEditFrUx ? PROFILE_FIELD_LABELS.languages : t('contactPrefsWorkingLangLabel')}
-                              </span>
-                              <div className="flex flex-wrap gap-2">
-                                {WORKING_LANGUAGE_OPTIONS.map((opt) => {
-                                  const selected = workingLanguagesDraft.includes(opt.code);
-                                  const disabled = !selected && workingLanguagesDraft.length >= 3;
-                                  return (
-                                    <button
-                                      key={opt.code}
-                                      type="button"
-                                      onClick={() => toggleWorkingLanguageDraft(opt.code)}
-                                      disabled={disabled}
-                                      className={cn(
-                                        'rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-all',
-                                        selected
-                                          ? 'border-blue-600 bg-blue-700 text-white shadow-sm'
-                                          : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300',
-                                        disabled && !selected && 'cursor-not-allowed opacity-40 hover:border-stone-200'
-                                      )}
-                                    >
-                                      {opt.label[lang]}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              <ProfileFieldHint>
-                                {profileEditFrUx
-                                  ? PROFILE_FIELD_HELP.languages
-                                  : t('contactPrefsWorkingLangTip')}
-                              </ProfileFieldHint>
-                            </div>
-
-                            <input type="hidden" name="photoURL" value={profilePhotoUrlDraft} />
-                            {isEditProfileRoute ? (
-                              <ProfileEditorialMemberBioField
-                                formDraftT={formDraftT}
-                                editingProfile={editingProfile}
-                                profile={profile}
-                                profileEditFrUx={profileEditFrUx}
-                                lang={lang}
-                                t={t}
-                              />
-                            ) : (
-                              <div className="space-y-1">
-                                <label
-                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                  htmlFor="profile-member-bio"
-                                >
-                                  {profileEditFrUx ? PROFILE_FIELD_LABELS.bio : t('memberBio')}
-                                  <span className="text-red-500 font-semibold" aria-hidden>
-                                    {' *'}
-                                  </span>
-                                </label>
-                                <textarea
-                                  id="profile-member-bio"
-                                  name="memberBio"
-                                  rows={4}
-                                  maxLength={4000}
-                                  defaultValue={
-                                    formDraftT?.memberBio ??
-                                    (editingProfile?.memberBio ??
-                                      profile?.memberBio ??
-                                      editingProfile?.bio ??
-                                      profile?.bio) ??
-                                    ''
-                                  }
-                                  placeholder={pickLang(
-                                    'Qui êtes-vous, votre parcours, ce que vous apportez au réseau…',
-                                    'Quién eres, tu trayectoria, qué aportas a la red…',
-                                    'Who you are, your path, what you bring to the network…',
-                                    lang
-                                  )}
-                                  className="min-h-[90px] w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                                <ProfileFieldHint>
-                                  {profileEditFrUx ? PROFILE_FIELD_HELP.bio : t('profileFormMemberBioHint')}
-                                </ProfileFieldHint>
-                              </div>
-                            )}
-                            <div className="space-y-3 rounded-xl border border-stone-200 bg-white/70 p-4 shadow-sm">
-                              <h3 className="text-sm font-semibold text-stone-900">
-                                {t('profileFormSectionPhotoVisual')}
-                              </h3>
-                              <p className="text-xs leading-relaxed text-stone-600">
-                                {t('profileFormPhotoVisualIntro')}
-                              </p>
-                              <p className="border-l-2 border-stone-300 pl-3 text-xs leading-relaxed text-stone-500">
-                                {t('profileFormPhotoNoHostingNote')}
-                              </p>
-                              <ProfileIdentityVisual
-                                fullName={
-                                  editingProfile?.fullName ??
-                                  profile?.fullName ??
-                                  user?.displayName ??
-                                  ''
-                                }
-                                photoUrl={profilePhotoUrlDraft}
-                                linkedinUrl={
-                                  editingProfile?.linkedin ?? profile?.linkedin ?? undefined
-                                }
-                                size="lg"
-                                imageAlt={
-                                  profilePhotoUrlDraft.trim()
-                                    ? pickLang(
-                                        'Photo de profil — aperçu',
-                                        'Foto de perfil — vista previa',
-                                        'Profile photo — preview',
-                                        lang
-                                      )
-                                    : undefined
-                                }
-                              />
-                              <p className="text-xs font-medium text-stone-800">
-                                {t('profileFormPhotoCredibilityNote')}
-                              </p>
-                              <div className="space-y-1">
-                                <label
-                                  className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                  htmlFor="profilePhotoUrl"
-                                >
-                                  {profileEditFrUx
-                                    ? PROFILE_FIELD_LABELS.profilePhoto
-                                    : t('profileFormPhotoPublicUrlLabel')}
-                                </label>
-                                <input
-                                  id="profilePhotoUrl"
-                                  type="url"
-                                  inputMode="url"
-                                  autoComplete="url"
-                                  value={profilePhotoUrlDraft}
-                                  onChange={(e) => setProfilePhotoUrlDraft(e.target.value)}
-                                  onBlur={() => {
-                                    setProfilePhotoUrlDraft((prev) => {
-                                      const trimmed = String(prev ?? '').trim();
-                                      if (!trimmed) return '';
-                                      return trimmed.split('#')[0];
-                                    });
-                                  }}
-                                  onPaste={(e) => {
-                                    const text = e.clipboardData?.getData('text') ?? '';
-                                    if (!text) return;
-                                    e.preventDefault();
-                                    setProfilePhotoUrlDraft(text.trim().split('#')[0]);
-                                  }}
-                                  placeholder="https://…"
-                                  className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                />
-                              </div>
-                            </div>
-                          </section>
-
-                          <ProfileMatchingSection
-                            lang={lang}
-                            t={t}
-                            pickLang={pickLang}
-                            profileEditFrUx={profileEditFrUx}
-                            isEditProfileRoute={isEditProfileRoute}
-                            formDraftT={formDraftT}
-                            editingProfile={editingProfile}
-                            profile={profile}
-                            highlightedNeedsDraft={highlightedNeedsDraft}
-                            onToggleHighlightedNeed={toggleHighlightedNeedDraft}
-                          />
-                          <section
-                            className={cn(
-                              'space-y-3 rounded-xl border border-stone-200 bg-stone-50/40 p-4',
-                              isEditProfileRoute && 'profile-card-soft profile-stack-md'
-                            )}
-                          >
-                            <div className="profile-section-header">
-                              <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
-                                {t('profileFormSectionCompanyActivity')}
-                              </h2>
-                              <ProfileSectionTag
-                                tone="public"
-                                label={pickLang(
-                                  'Visible publiquement',
-                                  'Visible públicamente',
-                                  'Shown on your public profile',
-                                  lang
-                                )}
-                              />
-                              <ProfileSectionTag
-                                tone="matching"
-                                label={pickLang(
-                                  'Important pour le matching',
-                                  'Importante para el emparejamiento',
-                                  'Used for matching',
-                                  lang
-                                )}
-                              />
-                            </div>
-                            <ProfileSectionHint tone="public">{t('profileFormCompanyDetailsIntro')}</ProfileSectionHint>
-                            <p className="mb-3 text-xs font-medium text-stone-700">
-                              {companyActivitiesDraft
-                                .map((s) => s.companyName.trim())
-                                .filter(Boolean)
-                                .join(' | ') ||
-                                pickLang('—', '—', '—', lang)}
-                            </p>
-
-                            <div className="space-y-4">
-                              {companyActivitiesDraft.map((slot, idx) => {
-                                const collapsed = companyActivityEditCollapsed[slot.id] === true;
-                                return (
-                                  <div
-                                    key={slot.id}
-                                    className="rounded-xl border border-stone-200 bg-white p-3 shadow-sm"
-                                  >
-                                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                                      <button
-                                        type="button"
-                                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-stone-200 bg-stone-50 text-stone-600 hover:bg-stone-100"
-                                        aria-expanded={!collapsed}
-                                        onClick={() =>
-                                          setCompanyActivityEditCollapsed((p) => ({
-                                            ...p,
-                                            [slot.id]: !(p[slot.id] === true),
-                                          }))
-                                        }
-                                      >
-                                        {collapsed ? (
-                                          <ChevronRight className="h-4 w-4" aria-hidden />
-                                        ) : (
-                                          <ChevronDown className="h-4 w-4" aria-hidden />
-                                        )}
-                                      </button>
-                                      <span className="min-w-0 flex-1 text-xs font-bold uppercase tracking-wide text-stone-800">
-                                        {t('profileFormCompanyActivityBlockTitle')} {idx + 1}
-                                        {slot.companyName.trim() ? (
-                                          <span className="ml-1 font-semibold normal-case text-stone-600">
-                                            — {slot.companyName.trim()}
-                                          </span>
-                                        ) : null}
-                                      </span>
-                                      {companyActivitiesDraft.length > 1 ? (
-                                        <button
-                                          type="button"
-                                          className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-800 hover:bg-rose-100"
-                                          onClick={() =>
-                                            setCompanyActivitiesDraft((prev) =>
-                                              prev.length <= 1 ? prev : prev.filter((s) => s.id !== slot.id)
-                                            )
-                                          }
-                                        >
-                                          <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                                          {t('profileFormRemoveCompanyActivity')}
-                                        </button>
-                                      ) : null}
-                                    </div>
-
-                                    {!collapsed ? (
-                                      <div className="space-y-4 border-t border-stone-100 pt-3">
-                                        <div
-                                          className={cn(
-                                            'grid grid-cols-1 gap-4 md:grid-cols-2',
-                                            isEditProfileRoute && 'profile-grid-2'
-                                          )}
-                                        >
-                                          <div className="space-y-1">
-                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.companyName : t('companyName')}
-                                              <span className="text-red-500 font-semibold" aria-hidden>
-                                                {' *'}
-                                              </span>
-                                            </label>
-                                            <input
-                                              id={idx === 0 ? 'profile-completion-companyName' : undefined}
-                                              value={slot.companyName}
-                                              onChange={(e) =>
-                                                updateCompanyActivitySlot(slot.id, {
-                                                  companyName: e.target.value,
-                                                })
-                                              }
-                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            />
-                                          </div>
-                                          <div className="space-y-1">
-                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.companyWebsite : t('website')}
-                                              <span className="text-red-500 font-semibold" aria-hidden>
-                                                {' *'}
-                                              </span>
-                                            </label>
-                                            <input
-                                              type="url"
-                                              inputMode="url"
-                                              autoComplete="url"
-                                              placeholder="https://..."
-                                              value={slot.website ?? ''}
-                                              onChange={(e) =>
-                                                updateCompanyActivitySlot(slot.id, { website: e.target.value })
-                                              }
-                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            />
-                                          </div>
-                                        </div>
-
-                                        <div className="space-y-1">
-                                          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                            {profileEditFrUx ? PROFILE_FIELD_LABELS.sector : t('activityCategory')}
-                                            <span className="text-red-500 font-semibold" aria-hidden>
-                                              {' *'}
-                                            </span>
-                                          </label>
-                                          <select
-                                            value={slot.activityCategory || ''}
-                                            onChange={(e) =>
-                                              updateCompanyActivitySlot(slot.id, {
-                                                activityCategory: e.target.value || undefined,
-                                              })
-                                            }
-                                            className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                          >
-                                            <option value="">
-                                              {pickLang('— Secteur —', '— Sector —', '— Sector —', lang)}
-                                            </option>
-                                            {ACTIVITY_CATEGORIES.map((c) => (
-                                              <option key={c} value={c}>
-                                                {activityCategoryLabel(c, lang)}
-                                              </option>
-                                            ))}
-                                          </select>
-                                        </div>
-
-                                        <div
-                                          className={cn(
-                                            'grid grid-cols-1 gap-4 md:grid-cols-3',
-                                            isEditProfileRoute && 'profile-grid-3'
-                                          )}
-                                        >
-                                          <div className="space-y-1">
-                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.city : t('city')}
-                                              <span className="text-red-500 font-semibold" aria-hidden>
-                                                {' *'}
-                                              </span>
-                                            </label>
-                                            <select
-                                              value={slot.city || ''}
-                                              onChange={(e) =>
-                                                updateCompanyActivitySlot(slot.id, { city: e.target.value })
-                                              }
-                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            >
-                                              <option value="">
-                                                {pickLang('— Ville —', '— Ciudad —', '— City —', lang)}
-                                              </option>
-                                              {CITIES.map((c) => (
-                                                <option key={c} value={c}>
-                                                  {cityOptionLabel(c, lang)}
-                                                </option>
-                                              ))}
-                                            </select>
-                                          </div>
-                                          <div className="space-y-1">
-                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.district : t('neighborhood')}
-                                            </label>
-                                            <input
-                                              value={slot.neighborhood ?? ''}
-                                              onChange={(e) =>
-                                                updateCompanyActivitySlot(slot.id, {
-                                                  neighborhood: e.target.value,
-                                                })
-                                              }
-                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            />
-                                          </div>
-                                          <div className="space-y-1">
-                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.state : t('state')}
-                                              <span className="text-red-500 font-semibold" aria-hidden>
-                                                {' *'}
-                                              </span>
-                                            </label>
-                                            <input
-                                              value={slot.state ?? ''}
-                                              placeholder={pickLang('Jalisco', 'Jalisco', 'Jalisco', lang)}
-                                              onChange={(e) =>
-                                                updateCompanyActivitySlot(slot.id, { state: e.target.value })
-                                              }
-                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            />
-                                          </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                          <div className="space-y-1 md:col-span-2">
-                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.country : t('country')}
-                                              <span className="text-red-500 font-semibold" aria-hidden>
-                                                {' *'}
-                                              </span>
-                                            </label>
-                                            <input
-                                              value={slot.country ?? ''}
-                                              placeholder={pickLang('Mexique', 'México', 'Mexico', lang)}
-                                              onChange={(e) =>
-                                                updateCompanyActivitySlot(slot.id, { country: e.target.value })
-                                              }
-                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            />
-                                            <ProfileFieldHint>
-                                              {profileEditFrUx
-                                                ? PROFILE_FIELD_HELP.country
-                                                : t('profileFormCountryFootnote')}
-                                            </ProfileFieldHint>
-                                          </div>
-                                          <div className="space-y-1 md:col-span-1">
-                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.roleInCompany : t('workFunction')}
-                                              <span className="text-red-500 font-semibold" aria-hidden>
-                                                {' *'}
-                                              </span>
-                                            </label>
-                                            <select
-                                              value={slot.positionCategory || ''}
-                                              onChange={(e) =>
-                                                updateCompanyActivitySlot(slot.id, {
-                                                  positionCategory: e.target.value,
-                                                })
-                                              }
-                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            >
-                                              <option value="">{t('selectWorkFunction')}</option>
-                                              {WORK_FUNCTION_OPTIONS.map((opt) => (
-                                                <option key={opt} value={opt}>
-                                                  {workFunctionLabel(opt, lang)}
-                                                </option>
-                                              ))}
-                                            </select>
-                                            <ProfileFieldHint>
-                                              {profileEditFrUx
-                                                ? PROFILE_FIELD_HELP.roleInCompany
-                                                : t('workFunctionHint')}
-                                            </ProfileFieldHint>
-                                          </div>
-                                        </div>
-
-                                        {idx === 0 ? (
-                                          <div className="space-y-1">
-                                            <label
-                                              className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                              htmlFor="profile-arrival-year"
-                                            >
-                                              {profileEditFrUx
-                                                ? PROFILE_FIELD_LABELS.arrivalYearInMexico
-                                                : t('arrivalYear')}
-                                            </label>
-                                            <input
-                                              id="profile-arrival-year"
-                                              type="number"
-                                              value={slot.arrivalYear ?? ''}
-                                              onChange={(e) => {
-                                                const v = e.target.value;
-                                                updateCompanyActivitySlot(slot.id, {
-                                                  arrivalYear: v === '' ? undefined : Number(v),
-                                                });
-                                              }}
-                                              className="h-10 w-full max-w-xs rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            />
-                                            <ProfileFieldHint>
-                                              {profileEditFrUx
-                                                ? PROFILE_FIELD_HELP.arrivalYearInMexico
-                                                : t('profileFormArrivalRegionHint')}
-                                            </ProfileFieldHint>
-                                          </div>
-                                        ) : null}
-
-                                        <div
-                                          className={cn(
-                                            'grid grid-cols-1 gap-4 md:grid-cols-2',
-                                            isEditProfileRoute && 'profile-grid-2'
-                                          )}
-                                        >
-                                          <div className="space-y-1">
-                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {t('creationYear')}
-                                            </label>
-                                            <input
-                                              type="number"
-                                              value={slot.creationYear ?? ''}
-                                              onChange={(e) => {
-                                                const v = e.target.value;
-                                                updateCompanyActivitySlot(slot.id, {
-                                                  creationYear: v === '' ? undefined : Number(v),
-                                                });
-                                              }}
-                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            />
-                                          </div>
-                                          <div className="space-y-1">
-                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.employeeRange : t('employeeCount')}{' '}
-                                              <span className="text-[10px] font-normal normal-case text-stone-400">
-                                                {t('employeeCountOptional')}
-                                              </span>
-                                            </label>
-                                            <select
-                                              value={employeeCountToSelectDefault(slot.employeeCount)}
-                                              onChange={(e) =>
-                                                updateCompanyActivitySlot(slot.id, {
-                                                  employeeCount: e.target.value === '' ? '' : e.target.value,
-                                                })
-                                              }
-                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            >
-                                              <option value="">
-                                                {pickLang(
-                                                  '— Choisir une fourchette —',
-                                                  '— Elegir un rango —',
-                                                  '— Choose a range —',
-                                                  lang
-                                                )}
-                                              </option>
-                                              {EMPLOYEE_COUNT_RANGES.map((r) => (
-                                                <option key={r} value={r}>
-                                                  {r}
-                                                </option>
-                                              ))}
-                                            </select>
-                                          </div>
-                                        </div>
-
-                                        <div
-                                          className={cn(
-                                            'grid grid-cols-1 gap-4 md:grid-cols-3',
-                                            isEditProfileRoute && 'profile-grid-3'
-                                          )}
-                                        >
-                                          <div className="space-y-1">
-                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {profileEditFrUx ? PROFILE_FIELD_LABELS.companyType : t('profileFormCompanyType')}
-                                              <span className="text-red-500 font-semibold" aria-hidden>
-                                                {' *'}
-                                              </span>
-                                            </label>
-                                            <select
-                                              required
-                                              value={slot.communityCompanyKind ?? ''}
-                                              onChange={(e) =>
-                                                updateCompanyActivitySlot(slot.id, {
-                                                  communityCompanyKind:
-                                                    (e.target.value as CommunityCompanyKind) || undefined,
-                                                })
-                                              }
-                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            >
-                                              <option value="" disabled>
-                                                {pickLang('— Choisir —', '— Elegir —', '— Choose —', lang)}
-                                              </option>
-                                              <option value="startup">Startup</option>
-                                              <option value="pme">PME / SME</option>
-                                              <option value="corporate">Corporate</option>
-                                              <option value="independent">
-                                                {pickLang('Indépendant', 'Independiente', 'Independent', lang)}
-                                              </option>
-                                              <option value="association">
-                                                {pickLang('Association', 'Asociación', 'Association', lang)}
-                                              </option>
-                                              <option value="nonprofit">
-                                                {pickLang('Non profit', 'Sin fines de lucro', 'Non-profit', lang)}
-                                              </option>
-                                              <option value="club">
-                                                {pickLang('Club', 'Club', 'Club', lang)}
-                                              </option>
-                                            </select>
-                                          </div>
-                                          <div className="space-y-1">
-                                            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                              {profileEditFrUx
-                                                ? PROFILE_FIELD_LABELS.professionalStatus
-                                                : t('profileFormProfessionalStatus')}
-                                              <span className="text-red-500 font-semibold" aria-hidden>
-                                                {' *'}
-                                              </span>
-                                            </label>
-                                            <select
-                                              required
-                                              value={slot.communityMemberStatus ?? ''}
-                                              onChange={(e) =>
-                                                updateCompanyActivitySlot(slot.id, {
-                                                  communityMemberStatus:
-                                                    (e.target.value as CommunityMemberStatus) || undefined,
-                                                })
-                                              }
-                                              className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                            >
-                                              <option value="" disabled>
-                                                {pickLang('— Choisir —', '— Elegir —', '— Choose —', lang)}
-                                              </option>
-                                              <option value="freelance">Freelance</option>
-                                              <option value="employee">
-                                                {pickLang('Salarié', 'Asalariado', 'Employee', lang)}
-                                              </option>
-                                              <option value="owner">
-                                                {pickLang('Dirigeant / fondateur', 'Director / fundador', 'Owner / founder', lang)}
-                                              </option>
-                                              <option value="volunteer">
-                                                {pickLang('Bénévole', 'Voluntario(a)', 'Volunteer', lang)}
-                                              </option>
-                                            </select>
-                                          </div>
-                                          <div className="space-y-1">
-                                            <label
-                                              htmlFor={`typicalClientSizes-${slot.id}`}
-                                              className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600"
-                                            >
-                                              {profileEditFrUx
-                                                ? PROFILE_FIELD_LABELS.typicalClientSizes
-                                                : t('contactPrefsClientSizeLabel')}
-                                            </label>
-                                            <TypicalClientSizesDropdown
-                                              fieldId={`typicalClientSizes-${slot.id}`}
-                                              value={slot.typicalClientSizes ?? []}
-                                              onChange={(next) =>
-                                                updateCompanyActivitySlot(slot.id, {
-                                                  typicalClientSizes: next,
-                                                })
-                                              }
-                                              lang={lang}
-                                              emptyLabel={t('contactPrefsClientSizeEmpty')}
-                                              maxHint={t('contactPrefsClientSizeMaxHint')}
-                                            />
-                                            <p className="mt-1 text-[10px] text-stone-400">
-                                              {t('contactPrefsClientSizeHint')}
-                                            </p>
-                                          </div>
-                                        </div>
-
-                                        <div className="space-y-1">
-                                          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                            {profileEditFrUx
-                                              ? PROFILE_FIELD_LABELS.activityDescription
-                                              : t('profileFormActivityDescriptionLabel')}
-                                            <span className="text-red-500 font-semibold" aria-hidden>
-                                              {' *'}
-                                            </span>
-                                          </label>
-                                          <textarea
-                                            id={idx === 0 ? 'profile-completion-activityDescription' : undefined}
-                                            value={slot.activityDescription ?? ''}
-                                            onChange={(e) =>
-                                              updateCompanyActivitySlot(slot.id, {
-                                                activityDescription: e.target.value,
-                                              })
-                                            }
-                                            rows={4}
-                                            maxLength={4000}
-                                            placeholder={pickLang(
-                                              'Décrivez l’activité de cette entreprise sur ce marché…',
-                                              'Describe la actividad de esta empresa en este mercado…',
-                                              'Describe this company’s activity in this market…',
-                                              lang
-                                            )}
-                                            className="min-h-[90px] w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                          />
-                                          <ProfileFieldHint>
-                                            {profileEditFrUx
-                                              ? PROFILE_FIELD_HELP.activityDescription
-                                              : t('profileFormActivityDescriptionHint')}
-                                          </ProfileFieldHint>
-                                        </div>
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                );
-                              })}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setCompanyActivitiesDraft((prev) => [...prev, emptyCompanyActivitySlot()])
-                              }
-                              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-stone-300 bg-white py-2.5 text-xs font-semibold text-stone-700 hover:border-stone-400 hover:bg-stone-50"
-                            >
-                              <Plus className="h-4 w-4" aria-hidden />
-                              {t('profileFormAddCompanyActivity')}
-                            </button>
-                          </section>
-                          <section
-                            id="profile-completion-passions"
-                            className={cn(
-                              'space-y-3 rounded-xl border border-stone-200 bg-white p-4',
-                              isEditProfileRoute && 'profile-card-compact'
-                            )}
-                          >
-                            <div className="profile-section-header">
-                              <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
-                                {t('profileFormSectionPassions')}
-                              </h2>
-                              <ProfileSectionTag
-                                tone="public"
-                                label={pickLang(
-                                  'Visible publiquement',
-                                  'Visible públicamente',
-                                  'Shown on your public profile',
-                                  lang
-                                )}
-                              />
-                              <ProfileSectionTag
-                                tone="matching"
-                                label={pickLang(
-                                  'Important pour le matching',
-                                  'Importante para el emparejamiento',
-                                  'Used for matching',
-                                  lang
-                                )}
-                              />
-                            </div>
-                            <ProfileSectionHint tone="public">
-                              {pickLang(
-                                `${PROFILE_FIELD_HELP.passions} Ils font aussi office d’ice breakers relationnels.`,
-                                'Intereses fuera de tu actividad principal: humanizan tu ficha y el matching. También sirven como rompehielos.',
-                                'Interests outside your core work humanize your profile and matching. They also work as conversational ice-breakers.',
-                                lang
-                              )}
-                            </ProfileSectionHint>
-                            <IceBreakerInterests
-                              lang={lang}
-                              value={passionIdsDraft}
-                              onChange={(ids) => setPassionIdsDraft(sanitizePassionIds(ids))}
-                              markRequired
-                            />
-                          </section>
-
-
-                          <section
-                            className={cn(
-                              'space-y-3',
-                              isEditProfileRoute && 'profile-card-soft profile-stack-md'
-                            )}
-                          >
-                            <div className="profile-section-header">
-                              <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
-                                {t('profileFormSectionVisibility')}
-                              </h2>
-                              <ProfileSectionTag
-                                tone="public"
-                                label={pickLang(
-                                  'Visible publiquement',
-                                  'Visible públicamente',
-                                  'Shown on your public profile',
-                                  lang
-                                )}
-                              />
-                            </div>
-                            <ProfileSectionHint tone="public">
-                              {pickLang(
-                                'Ces options contrôlent ce que les autres membres voient sur votre fiche.',
-                                'Estas opciones controlan lo que otros miembros ven en tu ficha.',
-                                'These options control what other members see on your profile.',
-                                lang
-                              )}
-                            </ProfileSectionHint>
-                            <div className="space-y-1">
-                              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                {profileEditFrUx ? PROFILE_FIELD_LABELS.openness : t('contactPrefsOpenToLabel')}
-                              </span>
-                              <div
-                                className={cn(
-                                  'mt-0',
-                                  isEditProfileRoute ? 'inline-checkboxes' : 'space-y-2'
-                                )}
-                              >
-                                <label className="flex cursor-pointer items-start gap-3 rounded-lg p-1 hover:bg-stone-50">
-                                  <input
-                                    type="checkbox"
-                                    name="openToMentoring"
-                                    defaultChecked={
-                                      formDraftC?.openToMentoring ??
-                                      (editingProfile?.openToMentoring ?? profile?.openToMentoring) ===
-                                        true
-                                    }
-                                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                  />
-                                  <span className="text-sm text-stone-700">{t('contactPrefsOpenMentoring')}</span>
-                                </label>
-                                <label className="flex cursor-pointer items-start gap-3 rounded-lg p-1 hover:bg-stone-50">
-                                  <input
-                                    type="checkbox"
-                                    name="openToTalks"
-                                    defaultChecked={
-                                      formDraftC?.openToTalks ??
-                                      (editingProfile?.openToTalks ?? profile?.openToTalks) === true
-                                    }
-                                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                  />
-                                  <span className="text-sm text-stone-700">{t('contactPrefsOpenTalks')}</span>
-                                </label>
-                                <label className="flex cursor-pointer items-start gap-3 rounded-lg p-1 hover:bg-stone-50">
-                                  <input
-                                    type="checkbox"
-                                    name="openToEvents"
-                                    defaultChecked={
-                                      formDraftC?.openToEvents ??
-                                      (editingProfile?.openToEvents ?? profile?.openToEvents) === true
-                                    }
-                                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                  />
-                                  <span className="text-sm text-stone-700">{t('contactPrefsOpenEvents')}</span>
-                                </label>
-                              </div>
-                              <ProfileFieldHint>
-                                {profileEditFrUx ? PROFILE_FIELD_HELP.openness : t('contactPrefsOpenToHint')}
-                              </ProfileFieldHint>
-                            </div>
-                          </section>
-
-                          {formAdminPrivateReady && formAdminPrivate !== null ? (
-                            <section
-                              key={`unpublished-admin-${editingProfile?.uid ?? profile?.uid}`}
-                              className={cn(
-                                'profile-card-compact space-y-4 border-t border-stone-200 pt-4',
-                                isEditProfileRoute && 'profile-card-soft profile-stack-md'
-                              )}
-                            >
-                              <div className="profile-section-header">
-                                <h2 className="m-0 min-w-0 text-sm font-semibold text-stone-900">
-                                  {t('profileFormSectionUnpublished')}
-                                </h2>
-                                <ProfileSectionTag
-                                  tone="internal"
-                                  label={pickLang('Interne uniquement', 'Solo interno', 'Internal only', lang)}
-                                />
-                              </div>
-
-                              <ProfileSectionHint tone="internal">
-                                {pickLang(
-                                  'Ces informations servent aux statistiques et à l’animation du réseau.',
-                                  'Estos datos sirven para estadísticas y la dinámica de la red.',
-                                  'This information supports statistics and how we run the community.',
-                                  lang
-                                )}
-                              </ProfileSectionHint>
-
-                              <div className={cn('profile-form-grid-2', isEditProfileRoute && 'profile-grid-2')}>
-                                <div className="profile-form-block--dense space-y-1">
-                                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                    {profileEditFrUx ? PROFILE_FIELD_LABELS.gender : t('genderStatLabel')}
-                                  </label>
-                                  <select
-                                    name="genderStat"
-                                    defaultValue={formDraftT?.genderStat ?? formAdminPrivate.genderStat ?? ''}
-                                    className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                  >
-                                    <option value="">{t('genderStatSelectPlaceholder')}</option>
-                                    <option value="male">{t('genderStatMale')}</option>
-                                    <option value="female">{t('genderStatFemale')}</option>
-                                    <option value="other">{t('genderStatOther')}</option>
-                                    <option value="prefer_not_say">{t('genderStatPreferNotSay')}</option>
-                                  </select>
-                                  <ProfileFieldHint>
-                                    {pickLang(
-                                      PROFILE_FIELD_HELP.gender,
-                                      'Solo con fines estadísticos.',
-                                      'For internal statistics only.',
-                                      lang
-                                    )}
-                                  </ProfileFieldHint>
-                                </div>
-
-                                <div className="profile-form-block--dense space-y-1">
-                                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
-                                    {profileEditFrUx ? PROFILE_FIELD_LABELS.nationality : t('nationalityLabel')}
-                                  </label>
-                                  <select
-                                    name="nationality"
-                                    defaultValue={formDraftT?.nationality ?? formAdminPrivate.nationality ?? ''}
-                                    className="h-10 w-full rounded-lg border border-stone-200 bg-white px-3 text-sm outline-none transition-all focus:ring-2 focus:ring-stone-900"
-                                  >
-                                    <option value="">{t('nationalitySelectPlaceholder')}</option>
-                                    {NATIONALITY_OPTIONS.map((o) => (
-                                      <option key={o.code} value={o.code}>
-                                        {nationalityLabel(o.code, lang)}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <ProfileFieldHint>{t('nationalityHint')}</ProfileFieldHint>
-                                </div>
-
-                                <div className="profile-form-block--dense sm:col-span-2">
-                                  <div className="rounded-xl border border-stone-200 bg-stone-50/60 px-3 py-3 sm:px-4 sm:py-3">
-                                    <div
-                                      className={cn(
-                                        'flex flex-wrap items-center gap-x-5 gap-y-2 sm:gap-x-8',
-                                        isEditProfileRoute && 'inline-checkboxes'
-                                      )}
-                                    >
-                                      <label className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded-lg py-0.5 pr-1 hover:bg-stone-100/80">
-                                        <input
-                                          type="checkbox"
-                                          name="openToEventSponsoring"
-                                          defaultChecked={
-                                            formDraftC?.openToEventSponsoring ??
-                                            formAdminPrivate.openToEventSponsoring === true
-                                          }
-                                          className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                        />
-                                        <span className="text-sm font-medium text-stone-800">
-                                          {t('contactPrefsOpenEventSponsoring')}
-                                        </span>
-                                      </label>
-                                      <label className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded-lg py-0.5 pr-1 hover:bg-stone-100/80">
-                                        <input
-                                          type="checkbox"
-                                          name="acceptsDelegationVisits"
-                                          defaultChecked={
-                                            formDraftC?.acceptsDelegationVisits ??
-                                            formAdminPrivate.acceptsDelegationVisits === true
-                                          }
-                                          className="h-4 w-4 shrink-0 rounded border-stone-300 text-stone-900 focus:ring-stone-900"
-                                        />
-                                        <span className="text-sm font-medium text-stone-800">
-                                          {profileEditFrUx
-                                            ? PROFILE_FIELD_LABELS.hostDelegations
-                                            : t('acceptsDelegationVisitsLabel')}
-                                        </span>
-                                      </label>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </section>
-                          ) : null}
-
-                          <div className="flex justify-end gap-3 border-t border-stone-200 pt-6">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setIsEditing(false);
-                                setEditingProfile(null);
-                                if (!isEditProfileRoute) {
-                                  setIsProfileExpanded(false);
-                                }
-                              }}
-                              className="rounded-lg border border-stone-300 px-4 py-2 text-sm text-stone-700 transition-colors hover:bg-stone-50"
-                            >
-                              {t('cancel')}
-                            </button>
-                            <button
-                              type="submit"
-                              disabled={profileSaveBusy}
-                              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {profileSaveBusy
-                                ? pickLang('Enregistrement...', 'Guardando...', 'Saving...', lang)
-                                : t('save')}
-                            </button>
-                          </div>
-
-                          {(editingProfile?.uid ?? profile?.uid) ? (
-                            <div className="mt-8 border-t border-red-100 pt-4">
-                              <p className="mb-2 text-xs text-stone-400">{t('profileFormDangerZoneLabel')}</p>
-                              <button
-                                type="button"
-                                className="text-xs text-red-500 underline decoration-red-500/80 underline-offset-2 hover:text-red-700"
-                                onClick={() => {
-                                  const delUid = editingProfile?.uid ?? profile?.uid;
-                                  if (!delUid) return;
-                                  if (
-                                    !window.confirm(
-                                      delUid === user?.uid
-                                        ? t('profileFormDeleteOwnConfirm')
-                                        : t('confirmDelete')
-                                    )
-                                  ) {
-                                    return;
-                                  }
-                                  void handleDeleteProfile(delUid);
-                                }}
-                              >
-                                {t('deleteProfile')}
-                              </button>
-                            </div>
-                          ) : null}
-
-                          {profileSaveError && (
-                            <p className="mt-3 text-xs text-red-600">{profileSaveError}</p>
-                          )}
-                            </form>
-                          </div>
-                          {/* Profile completion card is sticky on /profile/edit */}
-                        </div>
-                      ) : (
-                        <div className="py-8 text-center">
-                          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-stone-50 text-stone-300">
-                            <Plus size={32} />
-                          </div>
-                          <p className="mb-6 text-sm text-stone-500">{t('noProfile')}</p>
-                          <button
-                            type="button"
-                            onClick={() => setIsEditing(true)}
-                            className="rounded-lg bg-stone-900 px-8 py-2 font-medium text-white transition-all hover:bg-stone-800"
-                          >
-                            {t('register')}
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    {emailVerifyNotice ? <span className="text-xs text-amber-900/90">{emailVerifyNotice}</span> : null}
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            </section>
-            ) : null}
-          </div>
-        </div>
-      )}
+                </div>
+              ) : null}
+            </div>
+          )}
 
+          {/* Render the previous content block (except admin/home/signup/legal). */}
+          {isEditProfileRoute ? (
+            user ? (
+            <ProfileEditRoute
+              inAppShell
+              lang={lang}
+              t={t}
+              isEditProfileRoute={isEditProfileRoute}
+              profile={profile}
+              editingProfile={editingProfile}
+              editingSomeoneElse={editingSomeoneElse}
+              profileVisibilityBandHidden={profileVisibilityBandHidden}
+              profileCompletionCardSource={profileCompletionCardSource}
+              profileSaveBusy={profileSaveBusy}
+              showAdminSelfProfilePanel={showAdminSelfProfilePanel}
+              isProfileExpanded={isProfileExpanded}
+              setIsProfileExpanded={setIsProfileExpanded}
+              setIsEditing={setIsEditing}
+              setProfileVisibilityBandHidden={setProfileVisibilityBandHidden}
+              scrollToProfileCompletionField={scrollToProfileCompletionField}
+              requestSubmitProfileForm={requestSubmitProfileForm}
+              ctx={{
+                cn,
+                pageSectionPad,
+                isEditProfileRoute,
+                showAdminSelfProfilePanel,
+                isProfileExpanded,
+                setIsProfileExpanded,
+                setIsEditing,
+                user,
+                profile,
+                editingProfile,
+                editingSomeoneElse,
+                profileVisibilityBandHidden,
+                setProfileVisibilityBandHidden,
+                pickLang,
+                lang,
+                t,
+                profileCompletionPct,
+                profileCoachLine,
+                profileCoachLoading,
+                profileCoachSource,
+                profileSaveSuccess,
+                isAdminEmail,
+                adminHeaderProps: {
+                  lang,
+                  t,
+                  pickLang,
+                  isEditProfileRoute,
+                  isProfileExpanded,
+                  profileVisibilityBandHidden,
+                  profileCompletionPct,
+                  profileCoachLine,
+                  profileCoachLoading,
+                  profileCoachSource,
+                  user,
+                  profile,
+                  editingProfile,
+                  editingSomeoneElse,
+                  isAdminEmail,
+                  onShowVisibilityBand: () => {
+                    setProfileVisibilityBandHidden(false);
+                    try {
+                      window.sessionStorage.removeItem('fn_profile_visibility_band_hidden');
+                    } catch {
+                      // ignore
+                    }
+                  },
+                  onRegister: () => {
+                    setIsEditing(true);
+                    setIsProfileExpanded(true);
+                  },
+                  showRegisterButton: !!user && !profile && !isProfileExpanded,
+                  rightChevron: <ChevronDown size={20} />,
+                  downChevron: <ChevronUp size={20} />,
+                  icons: { UserIcon, Sparkles, RefreshCw },
+                },
+                collapsedActions: {
+                  viewerIsAdmin,
+                  onSharePublicProfileLink: handleSharePublicProfileLink,
+                  onOpenPostRequest: () => setMemberRequestModalNonce((n) => n + 1),
+                  onAdminCreateEventClick: () => setDashboardInitialAdminTab('events'),
+                  icons: { Share2, Megaphone, Calendar },
+                },
+                onApplyOptimizationSuggestion: () => {
+                  if (!profile) return;
+                  setEditingProfile({
+                    ...profile,
+                    memberBio:
+                      profile.optimizationSuggestion?.bioSuggested || profile.memberBio || profile.bio,
+                  });
+                  setIsEditing(true);
+                },
+                expandedFormCtx: {
+                  profile,
+                  isEditing,
+                  ProfileEditFormLayout,
+                  profileFormLayoutRef,
+                  user,
+                  profileCompletionPct,
+                  editingSomeoneElse,
+                  isAdminEmail,
+                  OnboardingIntroBanner,
+                  t,
+                  ProfileEditOnboardingNudge,
+                  ProfileEditForm,
+                  directoryProfileFormRef,
+                  profileFormRemountKey,
+                  handleSaveProfile,
+                  cn,
+                  isEditProfileRoute,
+                  ProfileEditFormPatchStyles,
+                  ProfileEditAdminEditNotice,
+                  editingProfile,
+                  pickLang,
+                  lang,
+                  ProfileEditFormHints,
+                  profileEditFrUx,
+                  PROFILE_FIELD_LABELS,
+                  PROFILE_FIELD_HELP,
+                  formDraftT,
+                  formDraftC,
+                  profileWhatsappDialDefault,
+                  profileWhatsappLocalDefault,
+                  phoneDialRowsOrderedForUi,
+                  dialLabelForLang,
+                  ProfileEditPersonSectionShell,
+                  ProfileEditPersonContactBlock,
+                  ProfileEditPersonVisibilityLanguagesBlock,
+                  workingLanguagesDraft,
+                  toggleWorkingLanguageDraft,
+                  WORKING_LANGUAGE_OPTIONS,
+                  profilePhotoUrlDraft,
+                  ProfileEditPersonBioBlock,
+                  ProfileEditorialMemberBioField,
+                  ProfileEditPersonPhotoVisualBlock,
+                  ProfileIdentityVisual,
+                  setProfilePhotoUrlDraft,
+                  ProfileMatchingSection,
+                  highlightedNeedsDraft,
+                  toggleHighlightedNeedDraft,
+                  ProfileEditCompanyActivitySectionShell,
+                  ProfileEditCompanyActivitySlotsBlock,
+                  companyActivitiesDraft,
+                  setCompanyActivitiesDraft,
+                  emptyCompanyActivitySlot,
+                  companyActivityEditCollapsed,
+                  setCompanyActivityEditCollapsed,
+                  updateCompanyActivitySlot,
+                  ACTIVITY_CATEGORIES,
+                  activityCategoryLabel,
+                  CITIES,
+                  cityOptionLabel,
+                  WORK_FUNCTION_OPTIONS,
+                  workFunctionLabel,
+                  EMPLOYEE_COUNT_RANGES,
+                  employeeCountToSelectDefault,
+                  TypicalClientSizesDropdown,
+                  Trash2,
+                  ChevronDown,
+                  ChevronRight,
+                  Plus,
+                  ProfileEditPassionsSection,
+                  passionIdsDraft,
+                  setPassionIdsDraft,
+                  sanitizePassionIds,
+                  ProfileEditVisibilitySection,
+                  formAdminPrivateReady,
+                  formAdminPrivate,
+                  ProfileEditUnpublishedSectionShell,
+                  ProfileEditUnpublishedAdminFields,
+                  NATIONALITY_OPTIONS,
+                  nationalityLabel,
+                  ProfileFieldHint,
+                  ProfileEditFormActions,
+                  profileSaveBusy,
+                  setIsEditing,
+                  setEditingProfile,
+                  setIsProfileExpanded,
+                  ProfileEditDangerZone,
+                  handleDeleteProfile,
+                  profileSaveError,
+                  ProfileEditSaveError,
+                  ProfileEditNoProfilePanel,
+                } satisfies ProfileEditExpandedFormCtx,
+                ProfileEditLegacyBody,
+                ProfileEditCard,
+                ProfileEditCardHeader,
+                ProfileEditAdminProfileHeaderContent,
+                ProfileEditCollapsedActionsBar,
+                ProfileEditSaveSuccessBanner,
+                ProfileEditExpandMotion,
+                ProfileEditExpandedContainer,
+                ProfileEditValidationCallout,
+                ProfileEditOptimizationCallout,
+                ProfileEditExpandedSection,
+                ProfileEditExpandedForm,
+                Users,
+              } satisfies ProfileEditLegacyBodyCtx}
+            />
+            ) : (
+            <div className="rounded-2xl border border-[rgb(var(--fn-border))] bg-[rgb(var(--fn-surface))] p-6 text-center shadow-[var(--fn-shadow-sm)]">
+              <p className="text-sm text-[rgb(var(--fn-muted))]">
+                {pickLang(
+                  'Connectez-vous pour modifier votre fiche membre.',
+                  'Inicia sesión para editar tu perfil.',
+                  'Sign in to edit your member profile.',
+                  lang
+                )}
+              </p>
+              <button
+                type="button"
+                onClick={() => openAuthModal()}
+                className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white"
+              >
+                {t('authEmailSignIn')}
+              </button>
+            </div>
+            )
+          ) : isDashboardRoute ? (
+            <React.Suspense fallback={<div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">{lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…'}</div>}>
+              <DashboardPage
+                lang={lang}
+                t={t}
+                user={user}
+                registeredWithProfile={!!user && !!profile}
+                onUnlockRadar={() => {
+                  if (!user) {
+                    openAuthModal();
+                  } else {
+                    setShowOnboarding(true);
+                  }
+                }}
+              />
+            </React.Suspense>
+          ) : isNetworkRoute ? (
+            <div className="grid gap-4 lg:grid-cols-[360px_1fr] lg:gap-6">
+              <aside className="min-w-0">
+                <NetworkSidebar
+                  query={searchTerm}
+                  onQueryChange={setSearchTerm}
+                  onSubmitSearch={scrollDirectoryIntoView}
+                  sectorOptions={networkSidebarSectorOptions}
+                  profileOptions={networkSidebarProfileOptions}
+                  locationOptions={networkSidebarLocationOptions}
+                  selectedSector={filterCategory}
+                  selectedProfile={filterProfileType}
+                  selectedLocation={filterLocation}
+                  onSectorChange={setFilterCategory}
+                  onProfileChange={(v) => handleFilterProfileTypeChange(v as ProfileTypeFilterKey)}
+                  onLocationChange={(v) => setFilterLocation(v as LocationFilterKey)}
+                  onSuggestContact={handleRandomProfile}
+                  suggestContactDisabled={guestVisibleProfilesForRandom.length === 0}
+                  showClearFilters={showDirectoryClearFilters}
+                  onClearFilters={clearDirectoryFilters}
+                  launchProgress={
+                    stats.total < FIRST_50_MEMBER_TARGET
+                      ? {
+                          currentCount: stats.total,
+                          targetCount: FIRST_50_MEMBER_TARGET,
+                          inviteUrl: getSignupJoinUrl(),
+                          defaultOpen: false,
+                        }
+                      : null
+                  }
+                />
+              </aside>
+              <section className="min-w-0 space-y-4">
+                <header className="rounded-[var(--fn-radius-md)] border border-[rgb(var(--fn-border))] bg-[rgb(var(--fn-surface))] p-4 shadow-[var(--fn-shadow-sm)]">
+                  <h1 className="text-lg font-semibold tracking-tight text-[rgb(var(--fn-fg))]">
+                    {t('membersPageTitle')}
+                  </h1>
+                  <p className="mt-1 text-sm text-[rgb(var(--fn-muted))]">{t('membersPageSubtitle')}</p>
+                </header>
+
+                <NetworkToolbar>
+                  <SortPanel title={t('membersSortLabel')} htmlFor="members-directory-sort">
+                    <SortSelect
+                      id="members-directory-sort"
+                      value={membersSortMode}
+                      onChange={(mode) => {
+                        const sortParam =
+                          mode === 'recent' ? 'recent' : mode === 'alphabetical' ? 'alpha' : 'default';
+                        const p = new URLSearchParams(location.search);
+                        p.set('sort', sortParam);
+                        navigate({ pathname: '/network', search: `?${p.toString()}` }, { replace: true });
+                      }}
+                    />
+                  </SortPanel>
+                  <SavedMembersPanel
+                    title={t('network.savedPanel.title')}
+                    count={savedMembersCount}
+                    description={t('network.savedPanel.description')}
+                    onClick={openSavedMembersDirectoryView}
+                    active={showSavedMembersOnly}
+                  />
+                </NetworkToolbar>
+
+                <div ref={membersDirectoryGridRef} className="member-grid">
+                  {membersDirectoryListDisplayed.map((p) => (
+                    <React.Fragment key={p.uid}>
+                      <ProfileCard
+                        variant="default"
+                        p={p}
+                        onSelect={setSelectedProfile}
+                        onEdit={startEditing}
+                        onDelete={setProfileToDelete}
+                        user={user}
+                        profile={profile}
+                        viewerIsAdmin={viewerIsAdmin}
+                        guestDirectoryTeaser={guestDirectoryRestricted}
+                        onGuestJoin={onGuestDirectoryJoin}
+                      />
+                    </React.Fragment>
+                  ))}
+                  {guestDirectoryRestricted && membersDirectoryHiddenCount > 0 && (
+                    <GuestDirectoryInterstitial
+                      hiddenCount={membersDirectoryHiddenCount}
+                      onJoin={onGuestDirectoryJoin}
+                      t={t}
+                      className="md:col-span-2"
+                    />
+                  )}
+                </div>
+              </section>
+            </div>
+          ) : isRequestsRoute ? (
+            <div className="space-y-4">
+              <header className="rounded-[var(--fn-radius-md)] border border-[rgb(var(--fn-border))] bg-[rgb(var(--fn-surface))] p-4 shadow-[var(--fn-shadow-sm)]">
+                <h1 className="text-lg font-semibold tracking-tight text-[rgb(var(--fn-fg))]">
+                  {t('nav.requests')}
+                </h1>
+                <p className="mt-1 text-sm text-[rgb(var(--fn-muted))]">
+                  {pickLang(
+                    'Publiez un besoin, repérez des opportunités, et demandez une mise en relation.',
+                    'Publica una necesidad, detecta oportunidades y pide una introducción.',
+                    'Post a request, spot opportunities, and ask for an introduction.',
+                    lang
+                  )}
+                </p>
+              </header>
+
+              <NetworkRequestsSection
+                t={t}
+                lang={lang}
+                requests={memberRequests}
+                user={user}
+                profile={profile}
+                viewerIsAdmin={viewerIsAdmin}
+                onOpenAuth={openAuthModal}
+                onOpenAuthorProfile={(uid) => {
+                  const found = allProfiles.find((p) => p.uid === uid);
+                  if (found) setSelectedProfile(found);
+                }}
+                onCreate={handleCreateMemberRequest}
+                onDelete={handleDeleteMemberRequest}
+                postModalOpenNonce={memberRequestModalNonce}
+              />
+            </div>
+          ) : isRadarRoute ? (
+            <div className="space-y-4">
+              <header className="rounded-[var(--fn-radius-md)] border border-[rgb(var(--fn-border))] bg-[rgb(var(--fn-surface))] p-4 shadow-[var(--fn-shadow-sm)]">
+                <h1 className="text-lg font-semibold tracking-tight text-[rgb(var(--fn-fg))]">
+                  {t('nav.radar')}
+                </h1>
+                <p className="mt-1 text-sm text-[rgb(var(--fn-muted))]">
+                  {pickLang(
+                    'Repérez les dynamiques du réseau et les signaux faibles du marché.',
+                    'Detecta dinámicas de red y señales tempranas del mercado.',
+                    'Spot network dynamics and early market signals.',
+                    lang
+                  )}
+                </p>
+              </header>
+
+              <SectionErrorBoundary
+                fallback={
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+                    {pickLang(
+                      'Le module Radar a rencontré une erreur.',
+                      'El módulo Radar encontró un error.',
+                      'Radar module crashed.',
+                      lang
+                    )}
+                  </div>
+                }
+              >
+                <React.Suspense
+                  fallback={
+                    <div className="rounded-xl border border-stone-200 bg-white p-6 text-sm text-stone-500">
+                      {pickLang('Chargement du radar...', 'Cargando radar...', 'Loading radar...', lang)}
+                    </div>
+                  }
+                >
+                  <NetworkRadarSection
+                    lang={lang}
+                    t={t}
+                    allProfiles={allProfiles}
+                    viewerProfile={profile}
+                    user={user}
+                    copy={h}
+                    activityCategoryLabel={activityCategoryLabel}
+                    needOptionLabel={needOptionLabel}
+                    getPassionEmoji={getPassionEmoji}
+                    getPassionLabel={getPassionLabel}
+                    onNeedClick={(needId) => {
+                      navigate('/network');
+                      setPassionIdFilter('');
+                      setHighlightedNeedFilter(needId);
+                    }}
+                    onPassionClick={(passionId) => {
+                      navigate('/network');
+                      setHighlightedNeedFilter('');
+                      setPassionIdFilter(passionId);
+                    }}
+                    onCreateProfile={openAuthModal}
+                    registeredWithProfile={!!user && !!profile}
+                    onUnlockRadar={() => {
+                      if (!user) {
+                        openAuthModal();
+                      } else {
+                        setShowOnboarding(true);
+                      }
+                    }}
+                  />
+                </React.Suspense>
+              </SectionErrorBoundary>
+            </div>
+          ) : // Defensive: when `useAppShellNonAdmin` is true, one of the branches above should always match
+          // (see `useAppShellMemberContent`). If this renders, a route was added to the shell without a case here.
+          null}
+        </AppShell>
+      ) : null}
+
+
+      {!useNewPublicHome && !useAppShellNonAdmin ? (
       <main
         className={cn(pageMainPad, isAdminRoute ? 'max-w-none' : 'max-w-7xl')}
       >
@@ -7965,7 +6883,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         </div>
         </>
         )}
-    </main>
+      </main>
+      ) : null}
 
       {/* Profile Detail Modal */}
       <AnimatePresence>
@@ -8942,34 +7861,36 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       )}
       </div>
 
-      <footer className="mt-auto border-t border-stone-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-4 text-xs text-stone-400 sm:flex-row">
-          <span className="text-center sm:text-left">
-            © {new Date().getFullYear()} {t('footerBrandCopyright')}
-          </span>
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-end">
-            <Link
-              to="/privacy"
-              className="underline decoration-stone-400 underline-offset-2 transition-colors hover:text-stone-700"
-            >
-              {t('footerPrivacyPageLink')}
-            </Link>
-            <Link
-              to="/terms"
-              className="underline decoration-stone-400 underline-offset-2 transition-colors hover:text-stone-700"
-            >
-              {t('footerTermsPageLink')}
-            </Link>
-            <button
-              type="button"
-              onClick={() => setFooterContactOpen(true)}
-              className="underline decoration-stone-400 underline-offset-2 transition-colors hover:text-stone-700"
-            >
-              {t('footerContact')}
-            </button>
+      {!useNewPublicHome ? (
+        <footer className="mt-auto border-t border-stone-200 bg-white">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-4 text-xs text-stone-400 sm:flex-row">
+            <span className="text-center sm:text-left">
+              © {new Date().getFullYear()} {t('footerBrandCopyright')}
+            </span>
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-end">
+              <Link
+                to="/privacy"
+                className="underline decoration-stone-400 underline-offset-2 transition-colors hover:text-stone-700"
+              >
+                {t('footerPrivacyPageLink')}
+              </Link>
+              <Link
+                to="/terms"
+                className="underline decoration-stone-400 underline-offset-2 transition-colors hover:text-stone-700"
+              >
+                {t('footerTermsPageLink')}
+              </Link>
+              <button
+                type="button"
+                onClick={() => setFooterContactOpen(true)}
+                className="underline decoration-stone-400 underline-offset-2 transition-colors hover:text-stone-700"
+              >
+                {t('footerContact')}
+              </button>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      ) : null}
       {profile && (
         <ShareNeedsModal 
           isOpen={isShareNeedsModalOpen} 

@@ -1,0 +1,34 @@
+/* /profile/edit when rendered inside AppShell (bottom nav + safe area) */
+
+@layer components {
+  /* Extra room so the last form actions clear the fixed bottom bar; iOS can use this as scroll margin. */
+  main.fn-app-shell-profile {
+    scroll-padding-bottom: calc(var(--fn-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 1.5rem);
+    scroll-padding-top: calc(env(safe-area-inset-top, 0px) + var(--fn-header-h) + 0.5rem);
+  }
+}
+
+@layer components {
+  /* `scrollToField` / section anchors: clear sticky AppHeader + completion band (replaces fixed 100px on legacy). */
+  .profile-edit--in-app-shell .form-section,
+  .profile-edit--in-app-shell .profile-section,
+  .profile-edit--in-app-shell section {
+    scroll-margin-top: calc(env(safe-area-inset-top, 0px) + var(--fn-header-h) + 5.5rem);
+  }
+  @media (min-width: 640px) {
+    .profile-edit--in-app-shell .form-section,
+    .profile-edit--in-app-shell .profile-section,
+    .profile-edit--in-app-shell section {
+      scroll-margin-top: 5rem;
+    }
+  }
+}
+
+/* Viewport-level padding helps focused inputs scroll above the bar (WebKit / document scroller). */
+@layer base {
+  @media (max-width: 639.98px) {
+    html.fn-profile-edit-with-nav {
+      scroll-padding-bottom: calc(var(--fn-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 0.75rem);
+    }
+  }
+}

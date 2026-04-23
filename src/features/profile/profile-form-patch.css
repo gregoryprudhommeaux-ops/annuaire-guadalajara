@@ -202,3 +202,16 @@
   text-transform: uppercase;
   color: #64748b;
 }
+
+/* iOS Safari: font-size < 16px on focused inputs can trigger page zoom. */
+@media (max-width: 640px) {
+  .profile-edit-page input[type='text'],
+  .profile-edit-page input[type='email'],
+  .profile-edit-page input[type='number'],
+  .profile-edit-page input[type='url'],
+  .profile-edit-page input[type='tel'],
+  .profile-edit-page select,
+  .profile-edit-page textarea {
+    font-size: 16px;
+  }
+}

@@ -1,0 +1,79 @@
+@layer base {
+  :root {
+    /* ===== Warm premium palette (FrancoNetwork) ===== */
+    --bg: #f7f5f0;
+    --surface: #fcfbf8;
+    --surface-2: #f1eee8;
+    --border: #ddd7cd;
+    --text: #1f1d18;
+    --text-muted: #6f6a61;
+    --primary: #1f5f5b;
+    --primary-hover: #174946;
+    --primary-soft: #dce9e7;
+    --success: #2f6b3d;
+    --warning: #9a5a16;
+
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --shadow-sm: 0 1px 2px rgba(20, 20, 20, 0.05);
+    --shadow-md: 0 8px 24px rgba(20, 20, 20, 0.06);
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+
+    --max-content: 1120px;
+
+    /* Typography (keep Tailwind font tokens) */
+    --fn-font-sans: var(--font-sans);
+    --fn-font-mono: var(--font-mono);
+
+    /* ===== Compatibility aliases used by shared components ===== */
+    --fn-bg: var(--bg);
+    --fn-surface: var(--surface);
+    --fn-surface-2: var(--surface-2);
+    --fn-surface-3: var(--surface-2);
+    --fn-border: var(--border);
+    --fn-fg: var(--text);
+    --fn-muted: var(--text-muted);
+    --fn-muted-2: var(--text-muted);
+
+    --fn-accent: var(--primary);
+    --fn-accent-weak: var(--primary-hover);
+    --fn-accent-contrast: #ffffff;
+
+    /* Focus ring stays neutral blue for accessibility */
+    --fn-ring: 37 99 235;
+
+    --fn-radius-sm: var(--radius-sm);
+    --fn-radius-md: var(--radius-md);
+    --fn-radius-lg: var(--radius-lg);
+    --fn-shadow-sm: var(--shadow-sm);
+    --fn-shadow-md: var(--shadow-md);
+
+    /* Layout */
+    --fn-page-max: var(--max-content);
+    --fn-page-pad: var(--space-4);
+    --fn-header-h: 56px;
+    --fn-bottomnav-h: 64px;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+  }
+}
+

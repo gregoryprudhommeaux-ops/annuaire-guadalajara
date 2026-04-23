@@ -70,7 +70,7 @@ export function IceBreakerInterestsWithSave({
         await setDoc(doc(db, 'users', targetUid), { passionIds: clean }, { merge: true });
       } catch (e) {
         console.error(e);
-        setError(statusText[lang] ?? statusText.fr.error);
+        setError((statusText[lang] ?? statusText.fr).error);
       } finally {
         setSaving(false);
       }

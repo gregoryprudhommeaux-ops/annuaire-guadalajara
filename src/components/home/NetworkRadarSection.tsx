@@ -238,15 +238,17 @@ export default function NetworkRadarSection({
   }, [needsBarData]);
 
   const renderNeedsYAxisTickSmall = useCallback(
-    (props: { x: number; y: number; payload?: { value?: string } }) => {
+    (props: { x: number | string; y: number | string; payload?: { value?: string } }) => {
       const { x, y, payload } = props;
       const full = String(payload?.value ?? '');
       const lines = splitNeedLabelLines(full, 4, 34);
       const lh = 10;
       const fs = 10;
       const startDy = lines.length <= 1 ? 0 : -((lines.length - 1) * lh) / 2;
+      const xNum = typeof x === 'number' ? x : Number(x);
+      const yNum = typeof y === 'number' ? y : Number(y);
       return (
-        <g transform={`translate(${x},${y})`}>
+        <g transform={`translate(${xNum},${yNum})`}>
           <title>{full}</title>
           <text
             textAnchor="end"
@@ -267,15 +269,17 @@ export default function NetworkRadarSection({
   );
 
   const renderNeedsYAxisTickLarge = useCallback(
-    (props: { x: number; y: number; payload?: { value?: string } }) => {
+    (props: { x: number | string; y: number | string; payload?: { value?: string } }) => {
       const { x, y, payload } = props;
       const full = String(payload?.value ?? '');
       const lines = splitNeedLabelLines(full, 5, 44);
       const lh = 13;
       const fs = 12;
       const startDy = lines.length <= 1 ? 0 : -((lines.length - 1) * lh) / 2;
+      const xNum = typeof x === 'number' ? x : Number(x);
+      const yNum = typeof y === 'number' ? y : Number(y);
       return (
-        <g transform={`translate(${x},${y})`}>
+        <g transform={`translate(${xNum},${yNum})`}>
           <title>{full}</title>
           <text
             textAnchor="end"

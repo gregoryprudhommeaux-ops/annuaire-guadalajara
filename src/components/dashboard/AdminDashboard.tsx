@@ -138,8 +138,8 @@ function AdminXAxisTickCompactAngled({
   fontSize,
   fill,
 }: {
-  x: number;
-  y: number;
+  x: number | string;
+  y: number | string;
   payload?: { value?: string | number };
   maxChars: number;
   fontSize: number;
@@ -147,8 +147,10 @@ function AdminXAxisTickCompactAngled({
 }) {
   const full = String(payload?.value ?? '');
   const short = compactLabel(full, maxChars);
+  const xNum = typeof x === 'number' ? x : Number(x);
+  const yNum = typeof y === 'number' ? y : Number(y);
   return (
-    <g transform={`translate(${x},${y})`}>
+    <g transform={`translate(${xNum},${yNum})`}>
       <title>{full}</title>
       <text textAnchor="end" dominantBaseline="hanging" fill={fill} fontSize={fontSize} transform="rotate(-20)">
         {short}
@@ -165,8 +167,8 @@ function AdminXAxisTickCompactFlat({
   fontSize,
   fill,
 }: {
-  x: number;
-  y: number;
+  x: number | string;
+  y: number | string;
   payload?: { value?: string | number };
   maxChars: number;
   fontSize: number;
@@ -174,8 +176,10 @@ function AdminXAxisTickCompactFlat({
 }) {
   const full = String(payload?.value ?? '');
   const short = compactLabel(full, maxChars);
+  const xNum = typeof x === 'number' ? x : Number(x);
+  const yNum = typeof y === 'number' ? y : Number(y);
   return (
-    <g transform={`translate(${x},${y})`}>
+    <g transform={`translate(${xNum},${yNum})`}>
       <title>{full}</title>
       <text textAnchor="middle" dominantBaseline="hanging" fill={fill} fontSize={fontSize}>
         {short}
@@ -275,7 +279,10 @@ class MiniErrorBoundary extends React.Component<
 > {
   // See note in `src/App.tsx` SectionErrorBoundary.
   declare props: { children: React.ReactNode; label: string; t: TFn };
-  declare setState: (s: Partial<{ hasError: boolean; msg: string }>) => void;
+  declare setState: React.Component<
+    { children: React.ReactNode; label: string; t: TFn },
+    { hasError: boolean; msg: string }
+  >['setState'];
   state: { hasError: boolean; msg: string } = { hasError: false, msg: '' };
   static getDerivedStateFromError() {
     return { hasError: true, msg: '' };
@@ -399,16 +406,16 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
   }, [bySectorData]);
   const chartTick = { fontSize: 10, fill: '#64748b' };
   const modalTick = { fontSize: 12, fill: '#475569' };
-  const xTickCardAngled = (props: { x: number; y: number; payload?: { value?: string | number } }) => (
+  const xTickCardAngled = (props: { x: number | string; y: number | string; payload?: { value?: string | number } }) => (
     <AdminXAxisTickCompactAngled {...props} maxChars={14} fontSize={10} fill="#64748b" />
   );
-  const xTickCardFlat = (props: { x: number; y: number; payload?: { value?: string | number } }) => (
+  const xTickCardFlat = (props: { x: number | string; y: number | string; payload?: { value?: string | number } }) => (
     <AdminXAxisTickCompactFlat {...props} maxChars={14} fontSize={10} fill="#64748b" />
   );
-  const xTickModalAngled = (props: { x: number; y: number; payload?: { value?: string | number } }) => (
+  const xTickModalAngled = (props: { x: number | string; y: number | string; payload?: { value?: string | number } }) => (
     <AdminXAxisTickCompactAngled {...props} maxChars={18} fontSize={12} fill="#475569" />
   );
-  const xTickModalFlat = (props: { x: number; y: number; payload?: { value?: string | number } }) => (
+  const xTickModalFlat = (props: { x: number | string; y: number | string; payload?: { value?: string | number } }) => (
     <AdminXAxisTickCompactFlat {...props} maxChars={18} fontSize={12} fill="#475569" />
   );
   const expandChartLabel = t('chartExpandLarge');
