@@ -5087,6 +5087,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       {useNewPublicHome ? (
         <PublicHomePage
           user={user}
+          isAdmin={viewerIsAdmin}
           memberCount={stats.total}
           sectors={allProfiles.map((p) => p.activityCategory ?? '').filter(Boolean).slice(0, 6)}
           onRequestSignIn={openAuthModal}

@@ -13,6 +13,8 @@ import { MobileFooter } from '@/components/marketing/MobileFooter';
 export type PublicHomePageProps = {
   /** Firebase user, if logged in (non-admin experience). */
   user?: User | null;
+  /** If true, show admin navigation affordances in the shared header. */
+  isAdmin?: boolean;
   /** Visible members count (optional social proof). */
   memberCount?: number;
   /** Optional sectors list (chips). */
@@ -27,6 +29,7 @@ export type PublicHomePageProps = {
 
 export default function PublicHomePage({
   user,
+  isAdmin = false,
   memberCount,
   sectors,
   onRequestSignIn,
@@ -48,8 +51,7 @@ export default function PublicHomePage({
         user: user
           ? { displayName: user.displayName, email: user.email, photoURL: user.photoURL }
           : null,
-        // Public landing uses the member nav; do not expose admin affordances here.
-        isAdmin: false,
+        isAdmin,
         onSignIn: onRequestSignIn,
         onSignOut,
         rightSlot: headerRightSlot,

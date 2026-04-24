@@ -1,4 +1,4 @@
-import { Home, Users, Handshake, Radar, Info, UserRound, Shield } from 'lucide-react';
+import { Home, Users, Handshake, Radar, Info, UserRound, Shield, CalendarDays } from 'lucide-react';
 import React from 'react';
 
 export type NavAudience = 'visitor' | 'member';
@@ -29,7 +29,10 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
         { id: 'requests', href: '/requests', label: 'Demandes', audience: 'member', placement: 'primary' },
         { id: 'radar', href: '/radar', label: 'Radar', audience: 'member', placement: 'primary' },
         ...(isAdmin
-          ? [{ id: 'admin', href: '/admin', label: 'Admin', audience: 'member', placement: 'primary' } satisfies NavItem]
+          ? ([
+              { id: 'admin', href: '/admin', label: 'Admin', audience: 'member', placement: 'primary' },
+              { id: 'events', href: '/evenements', label: 'Événements', audience: 'member', placement: 'primary' },
+            ] satisfies NavItem[])
           : []),
       ]
     : [
@@ -50,6 +53,7 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
     requests: React.createElement(Handshake, iconProps),
     radar: React.createElement(Radar, iconProps),
     admin: React.createElement(Shield, iconProps),
+    events: React.createElement(CalendarDays, iconProps),
     discover: React.createElement(Users, iconProps),
     how: React.createElement(Info, iconProps),
     about: React.createElement(Info, iconProps),
