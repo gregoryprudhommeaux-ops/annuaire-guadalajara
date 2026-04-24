@@ -2,6 +2,8 @@ import React from 'react';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageProvider';
+import { activityCategoryLabel } from '@/constants';
+import type { Language } from '@/types';
 
 export type SocialProofStripProps = {
   memberCount?: number;
@@ -9,10 +11,12 @@ export type SocialProofStripProps = {
 };
 
 export function SocialProofStrip({ memberCount, sectors }: SocialProofStripProps) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const chips = (sectors ?? []).slice(0, 6);
   const chipClass =
     'inline-flex items-center rounded-full border border-[var(--fn-border)] bg-[var(--fn-surface-2)] px-3 py-1.5 text-[11px] font-semibold text-[var(--fn-muted)] transition-colors hover:bg-[var(--fn-surface)] hover:text-[var(--fn-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--fn-ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fn-bg)]';
+
+  const labelForSector = (sector: string) => activityCategoryLabel(sector, lang as Language);
   return (
     <Card>
       <CardBody className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -35,19 +39,26 @@ export function SocialProofStrip({ memberCount, sectors }: SocialProofStripProps
                 to={`/network?sector=${encodeURIComponent(s)}`}
                 className={chipClass}
               >
-                {s}
+                {labelForSector(s)}
               </Link>
             ))}
           </div>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {['Conseil', 'Industrie', 'Tech', 'Services', 'Immobilier', 'Commerce'].map((s) => (
+            {[
+              'Conseil & Services aux entreprises',
+              'Industrie & Manufacturier',
+              'Technologies & Informatique',
+              'Commerce & Distribution',
+              'Santé & Bien-être',
+              'Autre',
+            ].map((s) => (
               <Link
                 key={s}
                 to={`/network?sector=${encodeURIComponent(s)}`}
                 className={chipClass}
               >
-                {s}
+                {labelForSector(s)}
               </Link>
             ))}
           </div>
