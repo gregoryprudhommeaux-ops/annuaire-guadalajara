@@ -407,17 +407,17 @@ export default function NetworkRadarSection({
             {kpiStats.map((stat) => (
               <div
                 key={stat.label}
-                className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-4 md:p-5"
+                className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm sm:rounded-2xl sm:p-4 md:p-5"
               >
-                <p className="line-clamp-2 min-h-[2.25rem] text-[10px] font-semibold leading-snug tracking-tight text-slate-600 sm:min-h-[2.5rem] sm:text-sm">
+                <p className="line-clamp-1 text-[10px] font-semibold leading-tight tracking-tight text-slate-600 sm:line-clamp-2 sm:text-sm">
                   {stat.label}
                 </p>
-                <div className="mt-1.5 flex shrink-0 items-baseline gap-2 sm:mt-2">
+                <div className="mt-1 flex shrink-0 items-baseline gap-2 sm:mt-2">
                   <span className="text-xl font-semibold tabular-nums leading-none tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
                     {stat.value}
                   </span>
                 </div>
-                <p className="mt-1.5 line-clamp-2 min-h-[2rem] text-[10px] leading-snug text-slate-500 sm:mt-2 sm:min-h-[2.25rem] sm:text-sm">
+                <p className="mt-1 line-clamp-1 text-[10px] leading-tight text-slate-500 sm:mt-2 sm:line-clamp-2 sm:text-sm">
                   {stat.detail}
                 </p>
               </div>
