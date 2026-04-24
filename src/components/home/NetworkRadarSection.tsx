@@ -349,7 +349,7 @@ export default function NetworkRadarSection({
 
   return (
     <div className="w-full min-w-0">
-      <div className="space-y-6 md:space-y-8">
+      <div className="space-y-8 md:space-y-10">
         {/* Hero */}
         <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-teal-50/40 p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -389,27 +389,30 @@ export default function NetworkRadarSection({
 
         <div className="relative">
           <div
-            className={
-              radarLocked
-                ? 'pointer-events-none select-none blur-lg saturate-50 transition-[filter]'
-                : undefined
-            }
+            className={cn(
+              'flex flex-col gap-6 sm:gap-8',
+              radarLocked && 'pointer-events-none select-none blur-lg saturate-50 transition-[filter]'
+            )}
             aria-hidden={radarLocked}
           >
-            {/* KPI */}
-            <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {/* KPI — 4 tuiles sur une ligne (y compris mobile) */}
+            <section className="grid grid-cols-4 gap-1.5 sm:gap-3 md:gap-4">
             {kpiStats.map((stat) => (
               <div
                 key={stat.label}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                className="min-w-0 rounded-xl border border-slate-200 bg-white p-2 shadow-sm sm:rounded-2xl sm:p-4 md:p-5"
               >
-                <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-                <div className="mt-3 flex items-end gap-2">
-                  <span className="text-3xl font-semibold tracking-tight text-slate-900">
+                <p className="line-clamp-3 text-[10px] font-medium leading-tight text-slate-500 sm:line-clamp-none sm:text-sm">
+                  {stat.label}
+                </p>
+                <div className="mt-1.5 flex items-end sm:mt-2 md:mt-3">
+                  <span className="text-base font-semibold tabular-nums leading-none tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
                     {stat.value}
                   </span>
                 </div>
-                <p className="mt-2 text-sm text-slate-500">{stat.detail}</p>
+                <p className="mt-1 line-clamp-2 text-[10px] leading-tight text-slate-500 sm:mt-2 sm:line-clamp-none sm:text-sm">
+                  {stat.detail}
+                </p>
               </div>
             ))}
             </section>
