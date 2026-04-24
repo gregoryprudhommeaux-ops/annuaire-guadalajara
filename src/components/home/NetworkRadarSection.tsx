@@ -104,6 +104,7 @@ export default function NetworkRadarSection({
   onUnlockRadar,
 }: Props) {
   const [activeRadarChart, setActiveRadarChart] = useState<null | 'sectors' | 'needs'>(null);
+  const [activeSectorRaw, setActiveSectorRaw] = useState<string | null>(null);
   const radarLocked = !registeredWithProfile;
   const profilesForStats = useMemo(() => {
     return allProfiles.filter((p) => {
@@ -167,6 +168,12 @@ export default function NetworkRadarSection({
   const sectorTotalMembers = useMemo(
     () => sectorPieData.reduce((acc, d) => acc + d.value, 0),
     [sectorPieData]
+  );
+
+  const sectorPieTop = useMemo(() => sectorPieData.slice(0, 8), [sectorPieData]);
+  const activeSector = useMemo(
+    () => (activeSectorRaw ? sectorPieTop.find((r) => r.raw === activeSectorRaw) ?? null : null),
+    [activeSectorRaw, sectorPieTop]
   );
 
   const needsBarData = useMemo(() => {
@@ -514,23 +521,29 @@ export default function NetworkRadarSection({
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
-                              data={sectorPieData}
+                              data={sectorPieTop}
                               dataKey="value"
                               nameKey="name"
                               cx="50%"
                               cy="50%"
                               innerRadius={60}
                               outerRadius={92}
-                              paddingAngle={sectorPieData.length > 1 ? 2 : 0}
+                              paddingAngle={sectorPieTop.length > 1 ? 2 : 0}
                             >
-                              {sectorPieData.map((_, idx) => (
+                              {sectorPieTop.map((row, idx) => {
+                                const selected = Boolean(activeSectorRaw && row.raw === activeSectorRaw);
+                                const dimmed = Boolean(activeSectorRaw && row.raw !== activeSectorRaw);
+                                return (
                                 <Cell
                                   key={idx}
                                   fill={DONUT_COLORS[idx % DONUT_COLORS.length]}
                                   stroke="#fff"
                                   strokeWidth={1}
+                                  style={{ cursor: 'pointer', opacity: dimmed ? 0.25 : 1 }}
+                                  onClick={() => setActiveSectorRaw(selected ? null : row.raw)}
                                 />
-                              ))}
+                                );
+                              })}
                             </Pie>
                             <Tooltip
                               formatter={(value: number, _n, item) => {
@@ -554,19 +567,33 @@ export default function NetworkRadarSection({
                           </div>
                         </div>
                       </div>
-                      <ul className="min-w-0 flex-1 space-y-2 text-[13px]">
-                        {sectorPieData.slice(0, 8).map((row, idx) => (
-                          <li key={row.raw} className="flex items-center gap-2">
-                            <span
-                              className="h-2.5 w-2.5 shrink-0 rounded-full"
-                              style={{ backgroundColor: DONUT_COLORS[idx % DONUT_COLORS.length] }}
-                              aria-hidden
-                            />
-                            <span className="min-w-0 flex-1 truncate text-slate-700">
-                              {row.name} · {row.value}
-                            </span>
-                          </li>
-                        ))}
+                      <ul className="min-w-0 flex-1 grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
+                        {(activeSector ? [activeSector] : sectorPieTop).map((row) => {
+                          const idx = sectorPieTop.findIndex((r) => r.raw === row.raw);
+                          const color = DONUT_COLORS[Math.max(0, idx) % DONUT_COLORS.length];
+                          const selected = Boolean(activeSectorRaw && row.raw === activeSectorRaw);
+                          return (
+                            <li key={row.raw}>
+                              <button
+                                type="button"
+                                onClick={() => setActiveSectorRaw(selected ? null : row.raw)}
+                                className={cn(
+                                  'flex w-full min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 text-left transition-colors',
+                                  selected ? 'bg-slate-50' : 'hover:bg-slate-50'
+                                )}
+                                title={row.name}
+                              >
+                                <span
+                                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                  style={{ backgroundColor: color }}
+                                  aria-hidden
+                                />
+                                <span className="min-w-0 flex-1 truncate text-slate-700">{row.name}</span>
+                                <span className="shrink-0 tabular-nums text-slate-500">{row.value}</span>
+                              </button>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   )}
@@ -675,38 +702,64 @@ export default function NetworkRadarSection({
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={sectorPieData}
+                          data={sectorPieTop}
                           dataKey="value"
                           nameKey="name"
                           cx="50%"
                           cy="50%"
                           innerRadius={90}
                           outerRadius={150}
-                          paddingAngle={sectorPieData.length > 1 ? 2 : 0}
+                          paddingAngle={sectorPieTop.length > 1 ? 2 : 0}
                           label
                         >
-                          {sectorPieData.map((_, idx) => (
-                            <Cell key={idx} fill={DONUT_COLORS[idx % DONUT_COLORS.length]} stroke="#fff" strokeWidth={1} />
-                          ))}
+                          {sectorPieTop.map((row, idx) => {
+                            const selected = Boolean(activeSectorRaw && row.raw === activeSectorRaw);
+                            const dimmed = Boolean(activeSectorRaw && row.raw !== activeSectorRaw);
+                            return (
+                              <Cell
+                                key={row.raw}
+                                fill={DONUT_COLORS[idx % DONUT_COLORS.length]}
+                                stroke="#fff"
+                                strokeWidth={1}
+                                style={{ cursor: 'pointer', opacity: dimmed ? 0.25 : 1 }}
+                                onClick={() => setActiveSectorRaw(selected ? null : row.raw)}
+                              />
+                            );
+                          })}
                         </Pie>
                         <Tooltip contentStyle={{ fontSize: 12 }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <ul className="w-full space-y-2 text-sm md:w-1/2">
-                    {sectorPieData.map((row, idx) => (
-                      <li key={row.raw} className="flex items-center gap-2">
-                        <span
-                          className="h-3 w-3 shrink-0 rounded-full"
-                          style={{ backgroundColor: DONUT_COLORS[idx % DONUT_COLORS.length] }}
-                          aria-hidden
-                        />
-                        <span className="min-w-0 flex-1 truncate text-slate-700">
-                          {row.name}
-                        </span>
-                        <span className="text-xs font-semibold text-slate-500">{row.value}</span>
-                      </li>
-                    ))}
+                  <ul className="w-full grid grid-cols-2 gap-x-4 gap-y-2 text-sm md:w-1/2">
+                    {(activeSector ? [activeSector] : sectorPieTop).map((row) => {
+                      const idx = sectorPieTop.findIndex((r) => r.raw === row.raw);
+                      const color = DONUT_COLORS[Math.max(0, idx) % DONUT_COLORS.length];
+                      const selected = Boolean(activeSectorRaw && row.raw === activeSectorRaw);
+                      return (
+                        <li key={row.raw}>
+                          <button
+                            type="button"
+                            onClick={() => setActiveSectorRaw(selected ? null : row.raw)}
+                            className={cn(
+                              'flex w-full min-w-0 items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors',
+                              selected ? 'bg-slate-50' : 'hover:bg-slate-50'
+                            )}
+                            title={row.name}
+                          >
+                            <span
+                              className="h-3 w-3 shrink-0 rounded-full"
+                              style={{ backgroundColor: color }}
+                              aria-hidden
+                            />
+                            <span className="min-w-0 flex-1 truncate text-slate-700">{row.name}</span>
+                            <span className="shrink-0 text-xs font-semibold tabular-nums text-slate-500">
+                              {row.value}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               ) : (

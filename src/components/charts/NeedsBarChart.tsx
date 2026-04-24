@@ -134,8 +134,10 @@ export function NeedsBarChart({
   const subtitleSize = compact ? 'text-[11px]' : 'text-sm';
   const yTickFontSize = compact ? 11 : 11;
   /** Wider axis + more chars per line so labels stay readable (Recharts clips if width is too small). */
-  const yAxisWidth = compact ? 200 : 300;
-  const yTickMaxLine = compact ? 28 : 40;
+  // Compact (Radar): keep the chart visually left-aligned on mobile.
+  // A too-wide Y axis creates a large empty gutter and pushes bars to the right.
+  const yAxisWidth = compact ? 160 : 300;
+  const yTickMaxLine = compact ? 22 : 40;
 
   return (
     <section className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm md:p-6">
@@ -164,7 +166,7 @@ export function NeedsBarChart({
             <BarChart
               data={rows}
               layout="vertical"
-              margin={{ top: 8, right: 16, left: 20, bottom: 8 }}
+              margin={{ top: 8, right: 16, left: compact ? 6 : 20, bottom: 8 }}
               barCategoryGap={compact ? 12 : 16}
             >
               <XAxis

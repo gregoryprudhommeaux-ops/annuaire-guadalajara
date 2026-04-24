@@ -68,9 +68,9 @@ export default function ProfileEditScreen({
           <h1 className="text-lg font-semibold tracking-tight text-[rgb(var(--fn-fg))]">{t('myProfile')}</h1>
           <p className="mt-1 text-sm text-[rgb(var(--fn-muted))]">
             {pickLang(
-              'Un profil clair facilite les mises en relation et l’accès aux opportunités.',
-              'Un perfil claro facilita las introducciones y el acceso a oportunidades.',
-              'A clear profile improves introductions and access to opportunities.'
+              'Plus votre profil est précis, plus l’IA peut créer des mises en relation pertinentes — et déclencher des opportunités.',
+              'Cuanto más preciso sea tu perfil, más la IA podrá generar introducciones relevantes y activar oportunidades.',
+              'The more specific your profile, the better AI can match you for relevant introductions and opportunities.'
             )}
           </p>
         </header>
