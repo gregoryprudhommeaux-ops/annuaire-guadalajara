@@ -499,6 +499,8 @@ export const EN_STRINGS: Record<string, string> = {
   radarKpiNewDetail: "recent growth",
   radarOpportunitiesHeading: "Most sought opportunities",
   radarOpportunitiesSub: "The most expressed needs in the community right now.",
+  radarNeedsChartTitle: "Most expressed needs",
+  radarNeedsChartSub: "Need categories currently most present in the network",
   radarSeeAll: "Details",
   radarWhereToActTitle: "Where to act now",
   radarWhereToActLead: "The categories below are the most visible requests at the moment.",

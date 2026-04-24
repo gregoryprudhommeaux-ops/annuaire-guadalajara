@@ -1,26 +1,43 @@
 import React from 'react';
 import { Card, CardBody } from '@/components/ui/Card';
-
-const PROFILES = [
-  {
-    title: 'Entrepreneur',
-    items: ['Accès rapide aux bons prestataires', 'Références et recommandations locales', 'Visibilité crédible, sans bruit'],
-  },
-  {
-    title: 'Partenaire',
-    items: ['Prospection plus fine (secteurs, langues)', 'Contexte business avant le premier contact', 'Opportunités qualifiées via demandes'],
-  },
-  {
-    title: 'Investisseur',
-    items: ['Lecture rapide de l’écosystème', 'Signal de sérieux (profil structuré)', 'Repérage de synergies et deals'],
-  },
-  {
-    title: 'Membre communauté',
-    items: ['Événements & invitations (selon accès)', 'Mises en relation ciblées', 'Réseau vivant, international'],
-  },
-] as const;
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 export function BenefitsByProfile() {
+  const { t } = useLanguage();
+  const PROFILES = [
+    {
+      title: t('marketing.publicHome.benefits.profile1Title'),
+      items: [
+        t('marketing.publicHome.benefits.profile1Item1'),
+        t('marketing.publicHome.benefits.profile1Item2'),
+        t('marketing.publicHome.benefits.profile1Item3'),
+      ],
+    },
+    {
+      title: t('marketing.publicHome.benefits.profile2Title'),
+      items: [
+        t('marketing.publicHome.benefits.profile2Item1'),
+        t('marketing.publicHome.benefits.profile2Item2'),
+        t('marketing.publicHome.benefits.profile2Item3'),
+      ],
+    },
+    {
+      title: t('marketing.publicHome.benefits.profile3Title'),
+      items: [
+        t('marketing.publicHome.benefits.profile3Item1'),
+        t('marketing.publicHome.benefits.profile3Item2'),
+        t('marketing.publicHome.benefits.profile3Item3'),
+      ],
+    },
+    {
+      title: t('marketing.publicHome.benefits.profile4Title'),
+      items: [
+        t('marketing.publicHome.benefits.profile4Item1'),
+        t('marketing.publicHome.benefits.profile4Item2'),
+        t('marketing.publicHome.benefits.profile4Item3'),
+      ],
+    },
+  ] as const;
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {PROFILES.map((p) => (

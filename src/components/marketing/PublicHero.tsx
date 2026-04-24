@@ -4,6 +4,7 @@ import { ArrowRight, Compass, ShieldCheck } from 'lucide-react';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 export type PublicHeroProps = {
   isAuthenticated: boolean;
@@ -24,16 +25,16 @@ export function PublicHero({
   onPrimaryClick,
   onSecondaryClick,
 }: PublicHeroProps) {
+  const { t } = useLanguage();
   return (
     <Card className="overflow-hidden">
       <CardBody className="space-y-4 sm:space-y-5">
         <div className="flex flex-col gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-[var(--fn-fg)] sm:text-3xl">
-            Rencontrez les bonnes personnes, dans un cadre fiable.
+            {t('marketing.publicHome.heroTitle')}
           </h1>
           <p className="max-w-2xl text-sm leading-relaxed text-[var(--fn-muted)] sm:text-[15px]">
-            Un annuaire structuré, des opportunités qualifiées et des mises en relation qui respectent votre temps — pensé
-            pour entrepreneurs, dirigeants et partenaires stratégiques.
+            {t('marketing.publicHome.heroLead')}
           </p>
         </div>
 
@@ -71,16 +72,16 @@ export function PublicHero({
         <div className={cn('grid gap-2 sm:grid-cols-3', isAuthenticated && 'sm:grid-cols-3')}>
           {[
             {
-              k: 'Annuaire',
-              v: 'Profils structurés · secteurs · langues',
+              k: t('marketing.publicHome.pill1Title'),
+              v: t('marketing.publicHome.pill1Body'),
             },
             {
-              k: 'Opportunités',
-              v: 'Demandes & mises en relation qualifiées',
+              k: t('marketing.publicHome.pill2Title'),
+              v: t('marketing.publicHome.pill2Body'),
             },
             {
-              k: 'Confiance',
-              v: 'Cadre clair · communauté business',
+              k: t('marketing.publicHome.pill3Title'),
+              v: t('marketing.publicHome.pill3Body'),
             },
           ].map((x) => (
             <div

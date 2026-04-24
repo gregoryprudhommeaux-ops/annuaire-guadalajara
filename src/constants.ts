@@ -156,6 +156,21 @@ export const TRANSLATIONS: Translations = {
   title: { fr: "Annuaire d'Affaires de Guadalajara", es: "Directorio de Negocios de Guadalajara" },
   subtitle: { fr: "Communauté d'affaires francophone", es: "Comunidad de negocios francohablante" },
   login: { fr: "Se connecter", es: "Iniciar sesión" },
+  'marketing.socialProof.title': {
+    fr: 'Un écosystème business qui se connaît — et se recommande.',
+    es: 'Un ecosistema empresarial que se conoce — y se recomienda.',
+    en: 'A business ecosystem that knows each other — and recommends each other.',
+  },
+  'marketing.socialProof.subtitleWithCount': {
+    fr: '{count}+ profils visibles · Guadalajara · FR/ES/EN',
+    es: '{count}+ perfiles visibles · Guadalajara · FR/ES/EN',
+    en: '{count}+ visible profiles · Guadalajara · FR/ES/EN',
+  },
+  'marketing.socialProof.subtitleFallback': {
+    fr: 'Guadalajara · FR/ES/EN · profils structurés',
+    es: 'Guadalajara · FR/ES/EN · perfiles estructurados',
+    en: 'Guadalajara · FR/ES/EN · structured profiles',
+  },
   /** Libellé du bouton header sur mobile (plus explicite) */
   loginMobile: {
     fr: "CRÉER UN PROFIL / LOGIN",
@@ -1196,6 +1211,14 @@ export const TRANSLATIONS: Translations = {
   radarOpportunitiesSub: {
     fr: "Les besoins les plus exprimés actuellement dans la communauté.",
     es: "Las necesidades más expresadas actualmente en la comunidad.",
+  },
+  radarNeedsChartTitle: {
+    fr: "Besoins les plus exprimés",
+    es: "Necesidades más expresadas",
+  },
+  radarNeedsChartSub: {
+    fr: "Catégories de besoins actuellement les plus présentes dans le réseau",
+    es: "Categorías de necesidades actualmente más presentes en la red",
   },
   radarSeeAll: { fr: "Détails", es: "Detalles" },
   radarWhereToActTitle: { fr: "Où agir maintenant", es: "Dónde actuar ahora" },

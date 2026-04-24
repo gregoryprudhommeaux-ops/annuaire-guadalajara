@@ -394,7 +394,8 @@
 @media (min-width: 720px) {
   .fn-network-page .network-toolbar {
     flex-direction: row;
-    align-items: stretch;
+    /* Avoid stretching cards to the tallest sibling. */
+    align-items: flex-start;
   }
 }
 
@@ -405,6 +406,7 @@
 
 .fn-network-page .network-saved-panel {
   flex: 0 1 320px;
+  align-self: flex-start;
   display: flex;
   align-items: flex-start;
   gap: 14px;

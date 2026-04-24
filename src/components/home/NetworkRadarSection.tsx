@@ -446,6 +446,8 @@ export default function NetworkRadarSection({
 
                 <NeedsBarChart
                   data={needsData}
+                  title={t('radarNeedsChartTitle')}
+                  subtitle={t('radarNeedsChartSub')}
                   compact
                   // Mobile: reduce label gutter so bars have room.
                   compactYAxisWidth={132}

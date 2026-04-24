@@ -9,6 +9,7 @@ import { BenefitsByProfile } from '@/components/marketing/BenefitsByProfile';
 import { FeaturedOpportunities } from '@/components/marketing/FeaturedOpportunities';
 import { FinalCta } from '@/components/marketing/FinalCta';
 import { MobileFooter } from '@/components/marketing/MobileFooter';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 export type PublicHomePageProps = {
   /** Firebase user, if logged in (non-admin experience). */
@@ -36,14 +37,19 @@ export default function PublicHomePage({
   onSignOut,
   headerRightSlot,
 }: PublicHomePageProps) {
+  const { t } = useLanguage();
   const isAuthenticated = Boolean(user);
 
   // If unauthenticated, prefer opening the auth modal (stay on page) when available.
   const primaryHref = isAuthenticated ? '/profile/edit' : onRequestSignIn ? '/' : '/inscription';
   const secondaryHref = isAuthenticated ? '/network' : '/network';
 
-  const primaryLabel = isAuthenticated ? 'Compléter mon profil' : 'Créer mon profil';
-  const secondaryLabel = isAuthenticated ? 'Explorer le réseau' : 'Découvrir le réseau';
+  const primaryLabel = isAuthenticated
+    ? t('marketing.publicHome.primaryAuthenticated')
+    : t('marketing.publicHome.primaryVisitor');
+  const secondaryLabel = isAuthenticated
+    ? t('marketing.publicHome.secondaryAuthenticated')
+    : t('marketing.publicHome.secondaryVisitor');
 
   return (
     <AppShell
@@ -74,15 +80,28 @@ export default function PublicHomePage({
           <SocialProofStrip memberCount={memberCount} sectors={sectors} />
         </MarketingSection>
 
-        <MarketingSection id="comment-ca-marche" eyebrow="Méthode" title="Une plateforme B2B, structurée" lead="Moins de dispersion. Plus de clarté.">
+        <MarketingSection
+          id="comment-ca-marche"
+          eyebrow={t('marketing.publicHome.methodEyebrow')}
+          title={t('marketing.publicHome.methodTitle')}
+          lead={t('marketing.publicHome.methodLead')}
+        >
           <HowItWorks />
         </MarketingSection>
 
-        <MarketingSection eyebrow="Valeur" title="Conçu pour des profils exigeants" lead="Entrepreneurs, dirigeants, investisseurs, partenaires : chaque usage a son parcours.">
+        <MarketingSection
+          eyebrow={t('marketing.publicHome.valueEyebrow')}
+          title={t('marketing.publicHome.valueTitle')}
+          lead={t('marketing.publicHome.valueLead')}
+        >
           <BenefitsByProfile />
         </MarketingSection>
 
-        <MarketingSection eyebrow="Opportunités" title="Ce qui se passe dans le réseau" lead="Un aperçu — puis des données réelles dès que vous êtes membre.">
+        <MarketingSection
+          eyebrow={t('marketing.publicHome.opportunitiesEyebrow')}
+          title={t('marketing.publicHome.opportunitiesTitle')}
+          lead={t('marketing.publicHome.opportunitiesLead')}
+        >
           <FeaturedOpportunities isAuthenticated={isAuthenticated} />
         </MarketingSection>
 
