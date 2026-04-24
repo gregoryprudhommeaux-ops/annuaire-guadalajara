@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button';
 import siteFaviconUrl from '../../../favicon.svg?url';
 import { MobileMenu } from '@/components/layout/MobileMenu';
 import { getNavigation } from '@/data/navigation';
+import { useLanguage } from '@/i18n/LanguageProvider';
+import { pickLang } from '@/lib/uiLocale';
 
 export type AppHeaderUser = {
   displayName?: string | null;
@@ -46,18 +48,24 @@ export function AppHeader({
   user,
   isAdmin = false,
   brandTitle = 'FrancoNetwork',
-  brandSubtitle = "Annuaire d'Affaires · Guadalajara",
+  brandSubtitle,
   onSignIn,
   onSignOut,
   rightSlot,
   backHref,
-  backLabel = 'Retour',
+  backLabel,
 }: AppHeaderProps) {
   const display = user?.displayName?.trim() || user?.email?.trim() || '';
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const isAuthenticated = Boolean(user);
+  const { lang, t } = useLanguage();
+
+  const resolvedBrandSubtitle =
+    brandSubtitle ??
+    pickLang("Annuaire d'Affaires · Guadalajara", 'Directorio de Negocios · Guadalajara', 'Business directory · Guadalajara', lang);
+  const resolvedBackLabel = backLabel ?? t('common.back');
 
   const { primary, account } = useMemo(
     () => getNavigation({ isAuthenticated, isAdmin }),
@@ -111,7 +119,7 @@ export function AppHeader({
                 className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-[var(--fn-fg)] hover:text-black"
               >
                 <ChevronRight className="h-4 w-4 rotate-180 text-[var(--fn-muted-2)]" aria-hidden />
-                <span className="truncate">{backLabel}</span>
+                <span className="truncate">{resolvedBackLabel}</span>
               </Link>
             ) : (
               <Link to="/" className="group flex min-w-0 items-center gap-3">
@@ -121,7 +129,7 @@ export function AppHeader({
                     {brandTitle}
                   </span>
                   <span className="block truncate text-[11px] font-medium text-[var(--fn-muted)] sm:text-xs">
-                    {brandSubtitle}
+                    {resolvedBrandSubtitle}
                   </span>
                 </span>
               </Link>
@@ -137,7 +145,7 @@ export function AppHeader({
               <div className="hidden min-w-0 items-center gap-2 rounded-[var(--fn-radius-sm)] border border-[var(--fn-border)] bg-[var(--fn-surface-2)] px-3 py-2 sm:flex">
                 <UserRound className="h-4 w-4 text-[var(--fn-muted-2)]" aria-hidden />
                 <span className="max-w-[12rem] truncate text-xs font-semibold text-[var(--fn-fg)]">
-                  {display || 'Membre'}
+                  {display || t('common.member')}
                 </span>
               </div>
             ) : null}
@@ -148,7 +156,7 @@ export function AppHeader({
                 type="button"
                 onClick={() => setMenuOpen(true)}
                 className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[var(--fn-radius-sm)] border border-[var(--fn-border)] bg-[var(--fn-surface)] text-[var(--fn-fg)] hover:bg-[var(--fn-surface-2)] sm:hidden"
-                aria-label="Ouvrir le menu"
+                aria-label={t('common.openMenu')}
               >
                 <Menu className="h-5 w-5" aria-hidden />
               </button>
@@ -158,11 +166,11 @@ export function AppHeader({
             <div className="hidden sm:block">
               {!isAuthenticated ? (
                 <Button variant="primary" onClick={onSignIn} className="min-h-[36px] px-3 py-1.5 text-sm">
-                  Connexion
+                  {t('login')}
                 </Button>
               ) : (
                 <Button variant="ghost" onClick={onSignOut} className="min-h-[36px] px-3 py-1.5 text-sm">
-                  Déconnexion
+                  {t('logout')}
                 </Button>
               )}
             </div>
@@ -174,7 +182,7 @@ export function AppHeader({
             <div className="hidden border-t border-[var(--fn-border)] bg-[var(--fn-surface)] py-2.5 sm:block">
               <nav
                 className="flex flex-wrap items-center gap-2"
-                aria-label="Navigation principale"
+                aria-label={t('common.primaryNavigation')}
               >
                 {primary.map((it) => {
                   const active = isPrimaryNavItemActive(it.href);

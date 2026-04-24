@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 export type SocialProofStripProps = {
   memberCount?: number;
@@ -8,6 +9,7 @@ export type SocialProofStripProps = {
 };
 
 export function SocialProofStrip({ memberCount, sectors }: SocialProofStripProps) {
+  const { t } = useLanguage();
   const chips = (sectors ?? []).slice(0, 6);
   const chipClass =
     'inline-flex items-center rounded-full border border-[var(--fn-border)] bg-[var(--fn-surface-2)] px-3 py-1.5 text-[11px] font-semibold text-[var(--fn-muted)] transition-colors hover:bg-[var(--fn-surface)] hover:text-[var(--fn-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--fn-ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fn-bg)]';
@@ -16,12 +18,12 @@ export function SocialProofStrip({ memberCount, sectors }: SocialProofStripProps
       <CardBody className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-semibold tracking-tight text-[var(--fn-fg)]">
-            Un écosystème business qui se connaît — et se recommande.
+            {t('marketing.socialProof.title')}
           </p>
           <p className="mt-1 text-xs leading-relaxed text-[var(--fn-muted)]">
             {typeof memberCount === 'number' && memberCount > 0
-              ? `${memberCount}+ profils visibles · Guadalajara · FR/ES/EN`
-              : `Guadalajara · FR/ES/EN · profils structurés`}
+              ? t('marketing.socialProof.subtitleWithCount', { count: memberCount })
+              : t('marketing.socialProof.subtitleFallback')}
           </p>
         </div>
 

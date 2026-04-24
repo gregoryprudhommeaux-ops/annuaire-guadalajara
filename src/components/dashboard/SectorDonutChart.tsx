@@ -95,7 +95,11 @@ export default function SectorDonutChart({
   };
 
   return (
-    <div ref={wrapRef} className="w-full min-w-0" style={{ height }}>
+    <div
+      ref={wrapRef}
+      className="relative w-full min-w-0"
+      style={{ height, overflow: 'visible' }}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -115,7 +119,17 @@ export default function SectorDonutChart({
             ))}
           </Pie>
           <Tooltip
-            contentStyle={{ fontSize: 12 }}
+            wrapperStyle={{
+              zIndex: 50,
+              pointerEvents: 'none',
+            }}
+            contentStyle={{
+              fontSize: 12,
+              borderRadius: 10,
+              border: '1px solid rgba(0,0,0,0.08)',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+            }}
+            allowEscapeViewBox={{ x: true, y: true }}
             formatter={(value: unknown, name: unknown) => {
               const n = String(name ?? '');
               const v = typeof value === 'number' ? value : Number(value ?? 0);

@@ -5,6 +5,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { cn } from '@/lib/cn';
 import type { NavItem } from '@/data/navigation';
 import { Button } from '@/components/ui/Button';
+import { useLanguage } from '@/i18n/LanguageProvider';
 
 export type MobileMenuProps = {
   open: boolean;
@@ -27,6 +28,7 @@ export function MobileMenu({
   onSignIn,
   onSignOut,
 }: MobileMenuProps) {
+  const { t } = useLanguage();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -62,12 +64,12 @@ export function MobileMenu({
       >
         <div className="mx-auto w-full max-w-[var(--fn-page-max)] px-[var(--fn-page-pad)] py-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold tracking-tight text-[var(--fn-fg)]">Menu</p>
+            <p className="text-sm font-semibold tracking-tight text-[var(--fn-fg)]">{t('common.menu')}</p>
             <button
               type="button"
               onClick={onClose}
               className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[var(--fn-radius-sm)] text-[var(--fn-muted-2)] outline-none hover:bg-[var(--fn-surface-2)] hover:text-[var(--fn-fg)] focus-visible:ring-2 focus-visible:ring-[rgb(var(--fn-ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fn-bg)]"
-              aria-label="Fermer"
+              aria-label={t('common.close')}
             >
               <X className="h-5 w-5" aria-hidden />
             </button>
@@ -77,18 +79,18 @@ export function MobileMenu({
             <div className="shrink-0">{rightSlot}</div>
             {!isAuthenticated ? (
               <Button variant="primary" onClick={onSignIn} className="min-h-[44px] px-3 py-2 text-sm">
-                Connexion
+                {t('login')}
               </Button>
             ) : (
               <Button variant="ghost" onClick={onSignOut} className="min-h-[44px] px-3 py-2 text-sm">
-                Déconnexion
+                {t('logout')}
               </Button>
             )}
           </div>
 
           <nav className="mt-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--fn-muted-2)]">
-              Navigation
+              {t('common.navigation')}
             </p>
             <ul className="mt-2 space-y-1">
               {primary.map((it) => (
@@ -128,7 +130,7 @@ export function MobileMenu({
 
           <div className="mt-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--fn-muted-2)]">
-              Compte
+              {t('common.account')}
             </p>
             <ul className="mt-2 space-y-1">
               {account.map((it) => (
@@ -157,7 +159,7 @@ export function MobileMenu({
                   onClick={onClose}
                   className="flex min-h-[44px] items-center gap-3 rounded-[var(--fn-radius-sm)] px-3 text-sm font-semibold text-[var(--fn-muted)] outline-none hover:bg-[var(--fn-surface-2)] focus-visible:ring-2 focus-visible:ring-[rgb(var(--fn-ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fn-bg)]"
                 >
-                  <span className="truncate">Confidentialité</span>
+                  <span className="truncate">{t('footer.privacy')}</span>
                 </Link>
               </li>
               <li>
@@ -166,7 +168,7 @@ export function MobileMenu({
                   onClick={onClose}
                   className="flex min-h-[44px] items-center gap-3 rounded-[var(--fn-radius-sm)] px-3 text-sm font-semibold text-[var(--fn-muted)] outline-none hover:bg-[var(--fn-surface-2)] focus-visible:ring-2 focus-visible:ring-[rgb(var(--fn-ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fn-bg)]"
                 >
-                  <span className="truncate">Conditions</span>
+                  <span className="truncate">{t('footer.terms')}</span>
                 </Link>
               </li>
             </ul>

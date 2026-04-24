@@ -79,6 +79,17 @@ const shell = {
     privacy: 'Política de privacidad',
     terms: 'Términos de uso',
     contact: 'Contacto',
+    tagline:
+      'Directorio de Negocios de Guadalajara — comunidad empresarial francófona, abierta e internacional.',
+    copyright: '© {year} FrancoNetwork. Todos los derechos reservados.',
+  },
+
+  marketing: {
+    socialProof: {
+      title: 'Un ecosistema empresarial que se conoce — y se recomienda.',
+      subtitleWithCount: '{count}+ perfiles visibles · Guadalajara · FR/ES/EN',
+      subtitleFallback: 'Guadalajara · FR/ES/EN · perfiles estructurados',
+    },
   },
 } as const;
 
@@ -89,6 +100,14 @@ export const es = {
     viewProfile: 'Ver perfil',
     learnMore: 'Saber más',
     loading: 'Cargando…',
+    menu: 'Menú',
+    close: 'Cerrar',
+    navigation: 'Navegación',
+    account: 'Cuenta',
+    back: 'Volver',
+    openMenu: 'Abrir menú',
+    primaryNavigation: 'Navegación principal',
+    member: 'Miembro',
     noResults: 'Sin resultados',
     search: 'Buscar',
     save: 'Guardar',

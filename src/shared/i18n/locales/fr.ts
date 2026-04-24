@@ -82,6 +82,17 @@ const shell = {
     privacy: 'Politique de confidentialité',
     terms: "Conditions d'utilisation",
     contact: 'Contact',
+    tagline:
+      'Annuaire d’Affaires de Guadalajara — communauté business francophone, ouverte et internationale.',
+    copyright: '© {year} FrancoNetwork. Tous droits réservés.',
+  },
+
+  marketing: {
+    socialProof: {
+      title: 'Un écosystème business qui se connaît — et se recommande.',
+      subtitleWithCount: '{count}+ profils visibles · Guadalajara · FR/ES/EN',
+      subtitleFallback: 'Guadalajara · FR/ES/EN · profils structurés',
+    },
   },
 } as const;
 
@@ -92,6 +103,14 @@ export const fr = {
     viewProfile: 'Voir le profil',
     learnMore: 'En savoir plus',
     loading: 'Chargement…',
+    menu: 'Menu',
+    close: 'Fermer',
+    navigation: 'Navigation',
+    account: 'Compte',
+    back: 'Retour',
+    openMenu: 'Ouvrir le menu',
+    primaryNavigation: 'Navigation principale',
+    member: 'Membre',
     noResults: 'Aucun résultat',
     search: 'Rechercher',
     save: 'Enregistrer',

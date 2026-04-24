@@ -79,6 +79,17 @@ const shell = {
     privacy: 'Privacy policy',
     terms: 'Terms of use',
     contact: 'Contact',
+    tagline:
+      'Guadalajara business directory — a francophone business community, open and international.',
+    copyright: '© {year} FrancoNetwork. All rights reserved.',
+  },
+
+  marketing: {
+    socialProof: {
+      title: 'A business ecosystem that knows each other — and recommends each other.',
+      subtitleWithCount: '{count}+ visible profiles · Guadalajara · FR/ES/EN',
+      subtitleFallback: 'Guadalajara · FR/ES/EN · structured profiles',
+    },
   },
 } as const;
 
@@ -89,6 +100,14 @@ export const en = {
     viewProfile: 'View profile',
     learnMore: 'Learn more',
     loading: 'Loading…',
+    menu: 'Menu',
+    close: 'Close',
+    navigation: 'Navigation',
+    account: 'Account',
+    back: 'Back',
+    openMenu: 'Open menu',
+    primaryNavigation: 'Primary navigation',
+    member: 'Member',
     noResults: 'No results',
     search: 'Search',
     save: 'Save',
