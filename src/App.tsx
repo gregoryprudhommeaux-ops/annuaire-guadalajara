@@ -5470,20 +5470,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </div>
           ) : isRequestsRoute ? (
             <div className="space-y-4">
-              <header className="rounded-[var(--fn-radius-md)] border border-[rgb(var(--fn-border))] bg-[rgb(var(--fn-surface))] p-4 shadow-[var(--fn-shadow-sm)]">
-                <h1 className="text-lg font-semibold tracking-tight text-[rgb(var(--fn-fg))]">
-                  {t('nav.requests')}
-                </h1>
-                <p className="mt-1 text-sm text-[rgb(var(--fn-muted))]">
-                  {pickLang(
-                    'Publiez un besoin, repérez des opportunités, et demandez une mise en relation.',
-                    'Publica una necesidad, detecta oportunidades y pide una introducción.',
-                    'Post a request, spot opportunities, and ask for an introduction.',
-                    lang
-                  )}
-                </p>
-              </header>
-
               <NetworkRequestsSection
                 t={t}
                 lang={lang}
@@ -5742,30 +5728,22 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           />
         ) : isRequestsRoute && !isAdminDashboard ? (
           <div className={cn(pageInnerMax, pageStack)}>
-            <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
-              {t('memberRequestsTitle')}
-            </h1>
-            <p className="text-sm text-stone-600">
-              {t('memberRequestsSubtitle')}
-            </p>
-            <div>
-              <NetworkRequestsSection
-                t={t}
-                lang={lang}
-                requests={memberRequests}
-                user={user}
-                profile={profile}
-                viewerIsAdmin={viewerIsAdmin}
-                onOpenAuth={openAuthModal}
-                onOpenAuthorProfile={(uid) => {
-                  const found = allProfiles.find((p) => p.uid === uid);
-                  if (found) setSelectedProfile(found);
-                }}
-                onCreate={handleCreateMemberRequest}
-                onDelete={handleDeleteMemberRequest}
-                postModalOpenNonce={memberRequestModalNonce}
-              />
-            </div>
+            <NetworkRequestsSection
+              t={t}
+              lang={lang}
+              requests={memberRequests}
+              user={user}
+              profile={profile}
+              viewerIsAdmin={viewerIsAdmin}
+              onOpenAuth={openAuthModal}
+              onOpenAuthorProfile={(uid) => {
+                const found = allProfiles.find((p) => p.uid === uid);
+                if (found) setSelectedProfile(found);
+              }}
+              onCreate={handleCreateMemberRequest}
+              onDelete={handleDeleteMemberRequest}
+              postModalOpenNonce={memberRequestModalNonce}
+            />
           </div>
         ) : isRadarRoute && !isAdminDashboard ? (
           <div className={pageInnerFluid}>

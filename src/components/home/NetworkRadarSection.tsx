@@ -348,7 +348,7 @@ export default function NetworkRadarSection({
   );
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
+    <div className="w-full min-w-0">
       <div className="space-y-6 md:space-y-8">
         {/* Hero */}
         <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-teal-50/40 p-5 shadow-sm sm:p-6">
@@ -745,6 +745,6 @@ export default function NetworkRadarSection({
         </div>
       )}
       </div>
-    </main>
+    </div>
   );
 }
