@@ -5537,7 +5537,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       setHighlightedNeedFilter('');
                       setPassionIdFilter(passionId);
                     }}
-                    onCreateProfile={openAuthModal}
+                    onCreateProfile={() => {
+                      navigate('/profile/edit');
+                    }}
                     registeredWithProfile={!!user && !!profile}
                     onUnlockRadar={() => {
                       if (!user) {
@@ -5803,7 +5805,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       setHighlightedNeedFilter('');
                       setPassionIdFilter(passionId);
                     }}
-                    onCreateProfile={openAuthModal}
+                    onCreateProfile={() => {
+                      navigate('/profile/edit');
+                    }}
                     registeredWithProfile={!!user && !!profile}
                     onUnlockRadar={() => {
                       if (!user) {
@@ -6694,7 +6698,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         setHighlightedNeedFilter('');
                         setPassionIdFilter(passionId);
                       }}
-                      onCreateProfile={openAuthModal}
+                      onCreateProfile={() => {
+                        navigate('/profile/edit');
+                      }}
                       registeredWithProfile={!!user && !!profile}
                       onUnlockRadar={() => {
                         if (!user) {

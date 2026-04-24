@@ -101,6 +101,7 @@ export function MobileMenu({
                   ) : (
                     <NavLink
                       to={it.href}
+                      end={it.href === '/'}
                       onClick={onClose}
                       className={({ isActive }) =>
                         cn(

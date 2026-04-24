@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Handshake, Radar, Info, UserRound } from 'lucide-react';
+import { Home, Users, Handshake, Radar, Info, UserRound } from 'lucide-react';
 import React from 'react';
 
 export type NavAudience = 'visitor' | 'member';
@@ -22,7 +22,7 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
 
   const primary: NavItem[] = isAuthed
     ? [
-        { id: 'dashboard', href: '/dashboard', label: 'Accueil', audience: 'member', placement: 'primary' },
+        { id: 'home', href: '/', label: 'Accueil', audience: 'member', placement: 'primary' },
         { id: 'network', href: '/network', label: 'Réseau', audience: 'member', placement: 'primary' },
         { id: 'requests', href: '/requests', label: 'Demandes', audience: 'member', placement: 'primary' },
         { id: 'radar', href: '/radar', label: 'Radar', audience: 'member', placement: 'primary' },
@@ -40,7 +40,7 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
   // Attach icons without coupling consumers to lucide imports.
   const iconProps = { className: 'h-5 w-5', 'aria-hidden': true } as const;
   const iconById: Record<string, React.ReactNode> = {
-    dashboard: React.createElement(LayoutDashboard, iconProps),
+    home: React.createElement(Home, iconProps),
     network: React.createElement(Users, iconProps),
     requests: React.createElement(Handshake, iconProps),
     radar: React.createElement(Radar, iconProps),

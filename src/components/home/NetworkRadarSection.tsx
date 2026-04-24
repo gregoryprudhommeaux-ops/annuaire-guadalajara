@@ -41,6 +41,7 @@ type Props = {
   getPassionLabel: (id: string, lang: Language) => string;
   onNeedClick: (needId: string) => void;
   onPassionClick: (passionId: string) => void;
+  /** Quand le radar n’est pas verrouillé (membre avec fiche) : ex. aller sur /profile/edit pour « Compléter mon profil ». */
   onCreateProfile: () => void;
   /** Utilisateur connecté avec fiche annuaire enregistrée (Firestore `users`). */
   registeredWithProfile: boolean;
