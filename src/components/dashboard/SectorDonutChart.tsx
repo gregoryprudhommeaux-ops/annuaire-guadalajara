@@ -47,6 +47,48 @@ export default function SectorDonutChart({
     '#14b8a6',
   ];
 
+  const isNarrow = wrapWidth > 0 ? wrapWidth < 420 : false;
+  /**
+   * Sur des largeurs “moyennes” (ex. colonne admin), le donut peut déborder à gauche si `cx=40%`
+   * + `outerRadius` proche de la hauteur — le conteneur admin a `overflow:hidden` et tronque le graph.
+   */
+  const { cx, innerRadius, outerRadius, pieChartMargin } = useMemo(() => {
+    const w = wrapWidth > 0 ? wrapWidth : 0;
+    // Hauteur utile: la zone <ResponsiveContainer /> correspond à `height` (padding vertical minimal).
+    const h = height;
+
+    const isTight = w > 0 && w < 700 && !isNarrow;
+    // Centre du donut: en layout non-narrow, un cx trop "à droite" (40%) + un gros R peut dépasser à gauche.
+    const cxPct = isNarrow
+      ? 0.5
+      : isTight
+        ? w > 0 && w < 560
+          ? 0.32
+          : 0.34
+        : 0.4;
+    const cxValue = `${Math.round(cxPct * 100)}%` as const;
+
+    // Marge empirique à droite pour ne pas mordre sur la légende (Recharts, layout vertical, align=right)
+    // + une petite marge "anti-clipping" côté SVG.
+    const legendRightGutter = isNarrow ? 0 : 150;
+    const padL = 12;
+    const padR = 12;
+    // Bornes du rayon: centré sur cxPct*w dans la largeur de plot, avec garde-fous hauteur.
+    const rFromLeft = w > 0 ? cxPct * w - padL : Number.POSITIVE_INFINITY;
+    const rFromRight = w > 0 ? w - cxPct * w - legendRightGutter - padR : Number.POSITIVE_INFINITY;
+    const rFromHeight = h * 0.42; // marge haute/basse pour le donut
+    const outerR = Math.round(
+      Math.min(118, Math.max(64, h * 0.34), rFromLeft, rFromRight, rFromHeight, w > 0 ? w * 0.32 : 118)
+    );
+    const innerR = Math.round(
+      Math.min(78, Math.max(48, h * 0.22), Math.max(40, outerR * 0.6))
+    );
+    // Marges: help Recharts conserver de l’air (labels) — surtout visible dans un cadre overflow:hidden côté admin.
+    const m = { top: 6, right: 8, bottom: 8, left: 10 } as const;
+
+    return { cx: cxValue, innerRadius: innerR, outerRadius: outerR, pieChartMargin: m };
+  }, [height, isNarrow, wrapWidth]);
+
   if (rows.length === 0) {
     return (
       <div className="flex w-full items-center justify-center text-sm text-stone-500" style={{ height }}>
@@ -54,8 +96,6 @@ export default function SectorDonutChart({
       </div>
     );
   }
-
-  const isNarrow = wrapWidth > 0 ? wrapWidth < 420 : false;
 
   const label = ({
     cx,
@@ -101,15 +141,15 @@ export default function SectorDonutChart({
       style={{ height, overflow: 'visible' }}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
+        <PieChart margin={pieChartMargin}>
           <Pie
             data={rows}
             dataKey="count"
             nameKey="secteur"
-            cx={isNarrow ? '50%' : '40%'}
+            cx={cx}
             cy={isNarrow ? '42%' : '50%'}
-            innerRadius={Math.round(Math.min(78, Math.max(54, height * 0.24)))}
-            outerRadius={Math.round(Math.min(118, Math.max(90, height * 0.38)))}
+            innerRadius={innerRadius}
+            outerRadius={outerRadius}
             paddingAngle={2}
             labelLine={false}
             label={label}

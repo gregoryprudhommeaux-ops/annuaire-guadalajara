@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { collection, getDocs, orderBy, query, where, limit } from 'firebase/firestore';
 import type { Language, MemberNetworkRequest, NeedComment, UserProfile } from '@/types';
 import { cn } from '@/lib/cn';
@@ -221,8 +222,10 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
     const page = Math.min(needsPage, maxPage);
     const start = page * PAGE_SIZE;
     const pageRows = unansweredNeeds.slice(start, start + PAGE_SIZE);
+    const urgent = unansweredCount > 10;
+    const first = pageRows[0];
     return (
-      <article className="admin-card admin-card--featured">
+      <article className={urgent ? 'admin-card admin-card--featured admin-card--urgent' : 'admin-card admin-card--featured'}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="admin-card__eyebrow">{t('adminPriorityEyebrow')}</p>
@@ -256,6 +259,20 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
         </div>
         <div className="admin-card__body">
           <div className="admin-highlight-number">{unansweredCount}</div>
+          {unansweredCount > 0 ? (
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-[var(--fn-muted)]">
+                {t('adminUnansweredNeedsLead')}
+              </p>
+              <Link
+                to={first ? `/profil/${encodeURIComponent(first.uid)}` : '/network'}
+                className="admin-pill"
+                style={{ textDecoration: 'none', minHeight: 32, background: 'rgba(15, 23, 42, 0.92)', color: '#fff' }}
+              >
+                {t('adminUnansweredCta')}
+              </Link>
+            </div>
+          ) : null}
           <div className="admin-list">
             {unansweredNeeds.length === 0 ? (
               <p className="text-sm text-[var(--fn-muted)]">{t('adminNoUnansweredNeeds')}</p>
@@ -290,7 +307,23 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
               <h1 className="admin-header__title">{t('adminPanel')}</h1>
               <p className="admin-header__text">{t('adminPageLead')}</p>
             </div>
-            <AdminPeriodPills t={t} />
+            <div className="admin-header__aside">
+              <div className="admin-header__actions">
+                <Link to="/stats" className="admin-pill" style={{ textDecoration: 'none', minHeight: 32 }}>
+                  {t('adminVitrineLink')}
+                </Link>
+                <a
+                  href="/stats"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="admin-pill"
+                  style={{ textDecoration: 'none', minHeight: 32 }}
+                >
+                  {t('adminVitrinePdf')}
+                </a>
+              </div>
+              <AdminPeriodPills t={t} />
+            </div>
           </div>
 
           {loadError ? (

@@ -9,6 +9,7 @@ import {
 import { db } from '../firebase';
 import { getProfileAiRecommendationReadiness, type UserProfile } from '../types';
 import { profileDistinctActivityCategories } from '../lib/companyActivities';
+import { formatPersonName } from '@/shared/utils/formatPersonName';
 import type { TimePeriod } from '@/contexts/TimePeriodContext';
 
 export type PeriodKey = TimePeriod;
@@ -84,6 +85,12 @@ export interface AdminStats {
   totalSpaRouteEvents: number;
   searchEvents: number;
   filterEvents: number;
+  newProfilesPreviousPeriod: number;
+  totalProfileViewEventsPrevious: number;
+  totalContactClickEventsPrevious: number;
+  recentLogins: Array<{ id: string; name: string; at: number }>;
+  recentSignups: Array<{ id: string; name: string; at: number }>;
+  returningMembersLast30d: number;
   loading: boolean;
   error: string | null;
 }
@@ -107,6 +114,39 @@ function getStartDate(period: PeriodKey): Date | null {
     const d = new Date(now);
     d.setDate(d.getDate() - 90);
     return d;
+  }
+  return null;
+}
+
+function getPreviousWindow(period: PeriodKey): { start: Date; end: Date } | null {
+  const now = new Date();
+  if (period === 'all') return null;
+  if (period === 'today') {
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const prevStart = new Date(start);
+    prevStart.setDate(prevStart.getDate() - 1);
+    return { start: prevStart, end: start };
+  }
+  if (period === '7d') {
+    const end = new Date(now);
+    end.setDate(end.getDate() - 7);
+    const start = new Date(now);
+    start.setDate(start.getDate() - 14);
+    return { start, end };
+  }
+  if (period === '30d') {
+    const end = new Date(now);
+    end.setDate(end.getDate() - 30);
+    const start = new Date(now);
+    start.setDate(start.getDate() - 60);
+    return { start, end };
+  }
+  if (period === '90d') {
+    const end = new Date(now);
+    end.setDate(end.getDate() - 90);
+    const start = new Date(now);
+    start.setDate(start.getDate() - 180);
+    return { start, end };
   }
   return null;
 }
@@ -164,6 +204,12 @@ export function useAdminStats(period: PeriodKey): AdminStats {
     totalSpaRouteEvents: 0,
     searchEvents: 0,
     filterEvents: 0,
+    newProfilesPreviousPeriod: 0,
+    totalProfileViewEventsPrevious: 0,
+    totalContactClickEventsPrevious: 0,
+    recentLogins: [],
+    recentSignups: [],
+    returningMembersLast30d: 0,
     loading: true,
     error: null,
   });
@@ -187,12 +233,21 @@ export function useAdminStats(period: PeriodKey): AdminStats {
           .filter((p): p is { id: string; createdAt: Timestamp } => Boolean(p.createdAt));
 
         const startDate = getStartDate(period);
+        const prevWindow = getPreviousWindow(period);
 
         const newInPeriod = allProfiles.filter((p) => {
           if (!startDate) return true;
           const createdAt = (p.createdAt as Timestamp)?.toDate?.();
           return createdAt && createdAt >= startDate;
         }).length;
+
+        const newProfilesPreviousPeriod = !prevWindow
+          ? 0
+          : allProfiles.filter((p) => {
+              const createdAt = (p.createdAt as Timestamp)?.toDate?.();
+              if (!createdAt) return false;
+              return createdAt >= prevWindow.start && createdAt < prevWindow.end;
+            }).length;
 
         const byType = { entreprise: 0, membre: 0 };
         const byStatus: Record<string, number> = {};
@@ -316,6 +371,38 @@ export function useAdminStats(period: PeriodKey): AdminStats {
 
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const returningMembersLast30d = allProfiles.filter((p) => {
+          const ls = (p as any).lastSeen;
+          if (typeof ls !== 'number') return false;
+          return ls >= thirtyDaysAgo.getTime();
+        }).length;
+
+        const nameFromRow = (p: Record<string, unknown> & { id: string }) => {
+          const up = rowToUserProfile(p);
+          return formatPersonName(String(up.fullName ?? '').trim()) || '—';
+        };
+        const recentLogins = [...allProfiles]
+          .map((p) => ({
+            id: p.id,
+            name: nameFromRow(p),
+            at: typeof (p as any).lastSeen === 'number' ? ((p as any).lastSeen as number) : 0,
+          }))
+          .filter((r) => r.at > 0)
+          .sort((a, b) => b.at - a.at)
+          .slice(0, 7);
+        const recentSignups = [...allProfiles]
+          .map((p) => {
+            const createdAt = (p.createdAt as Timestamp)?.toDate?.();
+            return {
+              id: p.id,
+              name: nameFromRow(p),
+              at: createdAt ? createdAt.getTime() : 0,
+            };
+          })
+          .filter((r) => r.at > 0)
+          .sort((a, b) => b.at - a.at)
+          .slice(0, 7);
+
         const growthMap: Record<string, number> = {};
         allProfiles.forEach((p: Record<string, unknown>) => {
           const createdAt = (p.createdAt as Timestamp)?.toDate?.();
@@ -357,6 +444,31 @@ export function useAdminStats(period: PeriodKey): AdminStats {
           console.warn('[useAdminStats] events_log read failed:', eventsErr);
           events = [];
         }
+
+        let prevEvents: Record<string, unknown>[] = [];
+        if (prevWindow) {
+          try {
+            const prevQ = query(
+              collection(db, 'events_log'),
+              where('createdAt', '>=', Timestamp.fromDate(prevWindow.start)),
+              where('createdAt', '<', Timestamp.fromDate(prevWindow.end))
+            );
+            const prevSnap = await getDocs(prevQ);
+            prevEvents = prevSnap.docs.map((d) => d.data() as Record<string, unknown>);
+          } catch (e) {
+            console.warn('[useAdminStats] events_log previous window read failed:', e);
+            prevEvents = [];
+          }
+        }
+        let totalProfileViewEventsPrevious = 0;
+        let totalContactClickEventsPrevious = 0;
+        prevEvents.forEach((e) => {
+          const type = e.eventType as string;
+          if (type === 'profile_view') totalProfileViewEventsPrevious += 1;
+          if (['click_linkedin', 'click_email', 'click_whatsapp'].includes(type)) {
+            totalContactClickEventsPrevious += 1;
+          }
+        });
 
         let linkedin = 0;
         let email = 0;
@@ -521,6 +633,12 @@ export function useAdminStats(period: PeriodKey): AdminStats {
             totalSpaRouteEvents,
             searchEvents,
             filterEvents,
+            newProfilesPreviousPeriod,
+            totalProfileViewEventsPrevious,
+            totalContactClickEventsPrevious,
+            recentLogins,
+            recentSignups,
+            returningMembersLast30d,
             loading: false,
             error: null,
           });

@@ -45,6 +45,21 @@
   color: var(--admin-muted);
 }
 
+.admin-dashboard-page .admin-header__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  min-width: min(520px, 100%);
+}
+
+.admin-dashboard-page .admin-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .admin-dashboard-page .admin-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -112,7 +127,7 @@
 
 .admin-dashboard-page .admin-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 24px;
 }
@@ -123,7 +138,7 @@
   border-radius: 16px;
   padding: 16px;
   box-shadow: var(--admin-shadow);
-  min-height: 92px;
+  min-height: 108px;
 }
 
 .admin-dashboard-page .admin-kpi-card__label {
@@ -148,6 +163,25 @@
   margin-top: 8px;
   font-size: 0.85rem;
   color: var(--admin-muted);
+}
+
+.admin-dashboard-page .admin-kpi-card__trend {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  color: var(--admin-muted);
+}
+
+.admin-dashboard-page .admin-kpi-card__trend-delta {
+  color: var(--admin-text);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .admin-dashboard-page .admin-kpi-grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
 }
 
 .admin-dashboard-page .admin-priority-grid {
@@ -395,6 +429,16 @@
 .admin-dashboard-page .admin-card--featured {
   border-color: #f4d58d;
   background: #fffdf7;
+}
+
+.admin-dashboard-page .admin-card--urgent {
+  border-color: #fb923c;
+  background: #fff7ed;
+  box-shadow: 0 10px 30px rgba(248, 113, 22, 0.12);
+}
+
+.admin-dashboard-page .admin-card--urgent .admin-card__eyebrow {
+  color: #9a3412;
 }
 
 .admin-dashboard-page .admin-card__eyebrow {
@@ -796,15 +840,15 @@
 }
 
 .admin-dashboard-page .admin-gap-pill--fragile {
-  background: #fff1f2;
-  color: #9f1239;
-  border: 1px solid #fecdd3;
+  background: #fee2e2;
+  color: #7f1d1d;
+  border: 1px solid #fecaca;
 }
 
 .admin-dashboard-page .admin-gap-pill--faible {
-  background: #fffbeb;
-  color: #b45309;
-  border: 1px solid #fde68a;
+  background: #ffedd5;
+  color: #9a3412;
+  border: 1px solid #fdba74;
 }
 
 .admin-dashboard-page .admin-gap-pill--ok {

@@ -203,6 +203,8 @@ export const EN_STRINGS: Record<string, string> = {
   contactFormHpLabel: "Leave blank",
   adminPageLead:
     "Network steering: growth, profile quality, requests, sector/city gaps, and usage stats.",
+  adminVitrineLink: "Public vitrine",
+  adminVitrinePdf: "Open /stats (PDF)",
   adminTimePeriodToday: "Today",
   adminTimePeriod7d: "7 days",
   adminTimePeriod30d: "30 days",
@@ -220,6 +222,7 @@ export const EN_STRINGS: Record<string, string> = {
   adminPriorityEyebrow: "PRIORITY",
   adminUnansweredNeedsTitle: "Needs with no response",
   adminUnansweredNeedsLead: "Profiles with highlighted needs and 0 comments.",
+  adminUnansweredCta: "Reply now",
   adminNoUnansweredNeeds: "No pending needs.",
   adminNeedsPrev: "Previous needs",
   adminNeedsNext: "Next needs",

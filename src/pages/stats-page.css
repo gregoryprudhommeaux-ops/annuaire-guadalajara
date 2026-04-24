@@ -1,0 +1,28 @@
+/* Vitrine /stats : PDF + impression */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .stats-print-root {
+    box-shadow: none !important;
+  }
+}
+
+.stats-print-root {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.stats-pdf-header {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.stats-pdf-footer {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 12px;
+  color: #64748b;
+}

@@ -309,5 +309,19 @@ service cloud.firestore {
     match /admin_allowlist/{uid} {
       allow read, write: if false;
     }
+
+    /**
+     * Statistiques publiques (agrégats) pour la vitrine / marketing.
+     * Écriture uniquement via Admin SDK / console (pas côté client).
+     */
+    match /public_vitrine/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /publicStats/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
   }
 }

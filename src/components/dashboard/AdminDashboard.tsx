@@ -22,15 +22,14 @@ import type { Language } from '@/types';
 import AdminProfileInsights from '@/components/dashboard/AdminProfileInsights';
 import AdminSiteInsights from '@/components/dashboard/AdminSiteInsights';
 import AdminEvents from '@/components/dashboard/AdminEvents';
-import SectorDonutChart from '@/components/dashboard/SectorDonutChart';
 import { useTimePeriod } from '@/contexts/TimePeriodContext';
 import ProfileCompletionGauge from '@/components/dashboard/ProfileCompletionGauge';
-import InscriptionAreaChart from '@/components/dashboard/InscriptionAreaChart';
 import { getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/passionConfig';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
 import PassionsCrossHeatmap, { type CrossPick } from '@/components/dashboard/PassionsCrossHeatmap';
 import TopActiveMembersTable from '@/components/dashboard/TopActiveMembersTable';
-import { pickLang } from '@/lib/uiLocale';
+import { pickLang, formatProfileLastSeen } from '@/lib/uiLocale';
+import { Link } from 'react-router-dom';
 import { NeedsBarChart } from '@/components/charts/NeedsBarChart';
 import { aggregateNeedsFromMembers } from '@/lib/needs';
 import { NEED_CATEGORY_LABELS } from '@/lib/needLabels';
@@ -307,6 +306,14 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
   const ad = useMemo(() => getAdminDashboardCopy(lang), [lang]);
   const [insightTab, setInsightTab] = useState<AdminInsightTab>('overview');
   const { period, setPeriod } = useTimePeriod();
+  const canComparePeriod = period !== 'all';
+  const formatDelta = (cur: number, prev: number) => {
+    if (!canComparePeriod) return '—';
+    const d = cur - prev;
+    if (d === 0) return '0';
+    const sign = d > 0 ? '▲' : '▼';
+    return `${sign} ${Math.abs(d)}`;
+  };
   const [activeChart, setActiveChart] = useState<
     | null
     | 'type'
@@ -582,6 +589,29 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       { field: 'Ville', missing: counts.city },
     ].sort((a, b) => b.missing - a.missing);
     return rows;
+  }, [stats.profilesForDashboard]);
+
+  const completionGoalDate = useMemo(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 3);
+    return d;
+  }, []);
+
+  const incompleteProfileLinks = useMemo(() => {
+    const profiles = (stats.profilesForDashboard ?? []) as any[];
+    const scored = profiles
+      .map((p) => {
+        const hasPhoto = Boolean(String(p.photo ?? '').trim());
+        const hasSector = Boolean(String(p.secteur ?? '').trim());
+        const hasDesc = String(p.description ?? '').trim().length >= 30;
+        const complete = hasPhoto && hasSector && hasDesc;
+        const score =
+          (hasPhoto ? 1 : 0) + (hasSector ? 1 : 0) + (hasDesc ? 1 : 0);
+        return { p, complete, score };
+      })
+      .filter((x) => !x.complete)
+      .sort((a, b) => a.score - b.score);
+    return scored.slice(0, 12).map((x) => x.p);
   }, [stats.profilesForDashboard]);
 
   const sectorCoverageRows = useMemo(() => {
@@ -905,8 +935,8 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           lang
         ),
         context: clipAdminRecText(topPassion.label, 52),
-        ctaLabel: pickLang('Vue passions', 'Vista', 'Passions view', lang),
-        payload: { type: 'scroll', id: 'admin-section-passions' },
+        ctaLabel: pickLang('Affinités (bas de page)', 'Afinidad (abajo)', 'Affinities (bottom)', lang),
+        payload: { type: 'scroll', id: 'admin-section-affinities' },
       });
     }
 
@@ -980,14 +1010,86 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
             <div className="admin-kpi-card">
               <p className="admin-kpi-card__label">{t('members')}</p>
               <p className="admin-kpi-card__value">{stats.totalProfiles}</p>
+              <p className="admin-kpi-card__trend" title={pickLang('Nouveaux inscrits vs fenêtre précédente', 'Altas vs ventana', 'New signups vs previous window', lang)}>
+                {pickLang('Nouveaux (période)', 'Altas (periodo)', 'New (period)', lang)} : {stats.newProfilesInPeriod}
+                {canComparePeriod ? (
+                  <span className="admin-kpi-card__trend-delta"> · {formatDelta(stats.newProfilesInPeriod, stats.newProfilesPreviousPeriod)}</span>
+                ) : null}
+              </p>
             </div>
             <div className="admin-kpi-card">
               <p className="admin-kpi-card__label">{ad.kpiNewSignups}</p>
               <p className="admin-kpi-card__value">{stats.newProfilesInPeriod}</p>
+              <p className="admin-kpi-card__trend">
+                {canComparePeriod ? (
+                  <>
+                    {pickLang('vs période précédente', 'vs anterior', 'vs previous period', lang)}:{' '}
+                    <span className="font-semibold tabular-nums">{formatDelta(stats.newProfilesInPeriod, stats.newProfilesPreviousPeriod)}</span>
+                  </>
+                ) : (
+                  '—'
+                )}
+              </p>
             </div>
             <div className="admin-kpi-card">
               <p className="admin-kpi-card__label">{ad.kpiContactClicks}</p>
               <p className="admin-kpi-card__value">{stats.totalClicks}</p>
+              <p className="admin-kpi-card__trend">
+                {canComparePeriod ? (
+                  <>
+                    Δ {pickLang('contacts', 'contactos', 'contacts', lang)}:{' '}
+                    <span className="font-semibold tabular-nums">
+                      {formatDelta(stats.totalClicks, stats.totalContactClickEventsPrevious)}
+                    </span>
+                  </>
+                ) : (
+                  '—'
+                )}
+              </p>
+            </div>
+            <div className="admin-kpi-card">
+              <p className="admin-kpi-card__label">{ad.kpiProfileViews}</p>
+              <p className="admin-kpi-card__value">{stats.totalProfileViewEvents}</p>
+              <p className="admin-kpi-card__trend">
+                {canComparePeriod ? (
+                  <>
+                    Δ {pickLang('vues', 'vistas', 'views', lang)}:{' '}
+                    <span className="font-semibold tabular-nums">
+                      {formatDelta(stats.totalProfileViewEvents, stats.totalProfileViewEventsPrevious)}
+                    </span>
+                  </>
+                ) : (
+                  '—'
+                )}
+              </p>
+            </div>
+            <div className="admin-kpi-card">
+              <p className="admin-kpi-card__label">
+                {pickLang('Taux de conversion Vue → contact', 'Conversión ver → contacto', 'View → contact rate', lang)}
+              </p>
+              <p className="admin-kpi-card__value">
+                {stats.totalProfileViewEvents > 0
+                  ? `${Math.round((stats.totalClicks / stats.totalProfileViewEvents) * 1000) / 10}%`
+                  : '—'}
+              </p>
+              <p className="admin-kpi-card__trend">
+                {pickLang('contactClicks / vues (période)', 'clics / vistas', 'clicks / views (period)', lang)}
+              </p>
+            </div>
+            <div className="admin-kpi-card">
+              <p className="admin-kpi-card__label">
+                {pickLang('Taux de complétion moyen', 'Completitud media', 'Avg. completion', lang)}
+              </p>
+              <p className="admin-kpi-card__value">{String(stats.avgProfileCompletionPct).replace('.', ',')}%</p>
+              <div
+                className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200"
+                title={pickLang('Basé sur la grille d’exigence “publication + IA”', 'Basado en criterios', 'Based on profile readiness', lang)}
+              >
+                <div
+                  className="h-full rounded-full bg-emerald-700"
+                  style={{ width: `${Math.min(100, Math.max(0, stats.avgProfileCompletionPct))}%` }}
+                />
+              </div>
             </div>
             <div className="admin-kpi-card">
               <p className="admin-kpi-card__label">{ad.kpiCompleteProfiles}</p>
@@ -998,9 +1100,145 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
               <p className="admin-kpi-card__value">{stats.pendingReviewProfiles}</p>
             </div>
             <div className="admin-kpi-card">
-              <p className="admin-kpi-card__label">{ad.kpiProfileViews}</p>
-              <p className="admin-kpi-card__value">{stats.totalProfileViewEvents}</p>
+              <p className="admin-kpi-card__label">
+                {pickLang('Taux de retour (30 j)', 'Retorno (30 d)', 'Return rate (30d)', lang)}
+              </p>
+              <p className="admin-kpi-card__value">
+                {stats.totalProfiles > 0
+                  ? `${Math.round((stats.returningMembersLast30d / stats.totalProfiles) * 1000) / 10}%`
+                  : '—'}
+              </p>
+              <p className="admin-kpi-card__trend">
+                {stats.returningMembersLast30d}{' '}
+                / {stats.totalProfiles} {pickLang('membres (lastSeen)', 'miembros', 'members', lang)}
+              </p>
             </div>
+          </div>
+
+          <div className="admin-analytics-grid">
+            <article className="admin-chart-card admin-chart-card--compact" id="admin-section-activity">
+              <p className="admin-chart-card__title">
+                {pickLang('Activité récente', 'Actividad reciente', 'Recent activity', lang)}
+              </p>
+              <p className="admin-chart-card__subtitle">
+                {pickLang('Dernières connexions (lastSeen) et derniers profils créés.', 'lastSeen y altas', 'logins and new profiles', lang)}
+              </p>
+              <div className="admin-chart-card__body">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                      {pickLang('Connexions', 'Conexiones', 'Logins', lang)}
+                    </p>
+                    <ul className="mt-2 space-y-2 text-sm">
+                      {stats.recentLogins.length === 0 ? (
+                        <li className="text-slate-500">—</li>
+                      ) : (
+                        stats.recentLogins.map((r) => (
+                          <li key={r.id} className="flex items-center justify-between gap-2">
+                            <Link className="font-semibold text-slate-900 underline" to={`/profil/${encodeURIComponent(r.id)}`}>
+                              {r.name}
+                            </Link>
+                            <span className="tabular-nums text-xs text-slate-500">
+                              {formatProfileLastSeen(r.at, lang) ?? '—'}
+                            </span>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                      {pickLang('Nouveaux profils', 'Nuevos perfiles', 'New profiles', lang)}
+                    </p>
+                    <ul className="mt-2 space-y-2 text-sm">
+                      {stats.recentSignups.length === 0 ? (
+                        <li className="text-slate-500">—</li>
+                      ) : (
+                        stats.recentSignups.map((r) => (
+                          <li key={r.id} className="flex items-center justify-between gap-2">
+                            <Link className="font-semibold text-slate-900 underline" to={`/profil/${encodeURIComponent(r.id)}`}>
+                              {r.name}
+                            </Link>
+                            <span className="tabular-nums text-xs text-slate-500">
+                              {formatProfileLastSeen(r.at, lang) ?? '—'}
+                            </span>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article className="admin-chart-card admin-chart-card--compact" id="admin-section-completion">
+              <p className="admin-chart-card__title">{ad.chartCompletionTitle}</p>
+              <p className="admin-chart-card__subtitle">{ad.chartCompletionSubtitle}</p>
+              <div className="admin-chart-card__body space-y-4">
+                <div>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="text-sm font-semibold text-slate-800">
+                      {pickLang('Complétion (stricte)', 'Completitud (estricta)', 'Strict completion', lang)}
+                    </p>
+                    <p className="text-sm font-extrabold tabular-nums text-slate-900">
+                      {stats.completedProfilesStrict}/{stats.totalProfiles} (
+                      {stats.totalProfiles > 0
+                        ? Math.round((stats.completedProfilesStrict / stats.totalProfiles) * 100)
+                        : 0}
+                      %)
+                    </p>
+                  </div>
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className="h-full rounded-full bg-emerald-700"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.max(0, stats.totalProfiles > 0 ? (stats.completedProfilesStrict / stats.totalProfiles) * 100 : 0)
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    {pickLang('Objectif 80% d’ici le', 'Objetivo 80% para el', 'Target 80% by', lang)}{' '}
+                    {completionGoalDate.toLocaleDateString(lang === 'es' ? 'es-MX' : lang === 'en' ? 'en-US' : 'fr-FR', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                    .
+                  </p>
+                </div>
+                <div className="admin-chart-frame">
+                  <MiniErrorBoundary label="ProfileCompletionGauge" t={t}>
+                    <ProfileCompletionGauge
+                      totalMembers={stats.totalProfiles}
+                      completedProfiles={stats.completedProfilesStrict}
+                      embedded
+                      showHeader={false}
+                    />
+                  </MiniErrorBoundary>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    {pickLang('Profils à compléter (aperçu)', 'Perfiles incompletos', 'Incomplete profiles', lang)}
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm">
+                    {incompleteProfileLinks.length === 0 ? (
+                      <li className="text-slate-500">—</li>
+                    ) : (
+                      incompleteProfileLinks.map((p: any) => (
+                        <li key={p.id}>
+                          <Link className="text-slate-900 underline" to={`/profil/${encodeURIComponent(String(p.id))}`}>
+                            {formatPersonName(String(p.nom ?? '').trim())}
+                          </Link>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </article>
           </div>
 
           <article className="admin-chart-card admin-recommended-actions" id="admin-section-recommended">
@@ -1107,42 +1345,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
             <div className="min-w-0">{priorityRight ?? null}</div>
           </div>
 
-          {/* D. Analytics grid */}
-          <div className="admin-analytics-grid">
-            <div className="admin-stack">
-              <article className="admin-chart-card admin-chart-card--compact">
-                <p className="admin-chart-card__title">{ad.chartRegistrationsTitle}</p>
-                <p className="admin-chart-card__subtitle">{ad.chartRegistrationsSubtitle}</p>
-                <div className="admin-chart-card__body">
-                  <div className="admin-chart-frame">
-                    <MiniErrorBoundary label="InscriptionAreaChart" t={t}>
-                      <InscriptionAreaChart members={stats.profilesCreatedAt} height={280} />
-                    </MiniErrorBoundary>
-                  </div>
-                </div>
-              </article>
-            </div>
-
-            <div className="admin-stack">
-              <article className="admin-chart-card admin-chart-card--compact" id="admin-section-completion">
-                <p className="admin-chart-card__title">{ad.chartCompletionTitle}</p>
-                <p className="admin-chart-card__subtitle">{ad.chartCompletionSubtitle}</p>
-                <div className="admin-chart-card__body">
-                  <div className="admin-chart-frame">
-                    <MiniErrorBoundary label="ProfileCompletionGauge" t={t}>
-                      <ProfileCompletionGauge
-                        totalMembers={stats.totalProfiles}
-                        completedProfiles={stats.completedProfilesStrict}
-                        embedded
-                        showHeader={false}
-                      />
-                    </MiniErrorBoundary>
-                  </div>
-                </div>
-              </article>
-            </div>
-          </div>
-
           <div className="admin-analytics-wide">
             <article className="admin-chart-card admin-chart-card--table" id="admin-section-active-members">
               <p className="admin-chart-card__title">{ad.chartTopActiveTitle}</p>
@@ -1158,19 +1360,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
           </div>
 
           <div className="admin-analytics-secondary">
-            <article className="admin-chart-card admin-chart-card--compact admin-chart-card--donut">
-              <p className="admin-chart-card__title">{ad.chartSectorSplitTitle}</p>
-              <p className="admin-chart-card__subtitle">{ad.chartSectorSplitSubtitle}</p>
-              <div className="admin-chart-card__body">
-                <div className="admin-chart-frame admin-chart-frame--sm">
-                  <SectorDonutChart
-                    data={bySectorData.map((d) => ({ secteur: d.name, count: d.value }))}
-                    height={280}
-                  />
-                </div>
-              </div>
-            </article>
-
             <div className="min-w-0">
               <NeedsBarChart
                 data={needsData}
@@ -1404,33 +1593,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
               </div>
             </article>
 
-            <article className="admin-chart-card admin-chart-card--compact" id="admin-section-passions">
-              <p className="admin-chart-card__title">{ad.passionsCrossTitle}</p>
-              <p className="admin-chart-card__subtitle">{ad.passionsCrossSubtitle}</p>
-              <div className="admin-chart-card__body">
-                {relationshipPotential.topOverlapPassions.length === 0 ? (
-                  <p className="admin-decision-empty">—</p>
-                ) : (
-                  <ul className="admin-opportunity-passion-list">
-                    {relationshipPotential.topOverlapPassions.map((p) => (
-                      <li key={p.pid} className="admin-opportunity-passion-list__row">
-                        <p className="admin-opportunity-passion-list__label">{p.label}</p>
-                        <div className="admin-opportunity-passion-list__metrics tabular-nums">
-                          <span title={ad.passionDistinctSectorsTitle}>
-                            {p.sectorCount} {ad.passionMetricSectors}
-                          </span>
-                          <span className="admin-opportunity-passion-list__sep" aria-hidden>
-                            ·
-                          </span>
-                          <span title={ad.passionMetricMembersTitle}>{ad.passionMetricMembers(p.memberCount)}</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </article>
-
             <article className="admin-chart-card admin-chart-card--compact admin-decision-span-2" id="admin-section-gaps">
               <p className="admin-chart-card__title">{ad.gapMatrixTitle}</p>
               <p className="admin-chart-card__subtitle">{ad.gapMatrixSubtitle}</p>
@@ -1448,11 +1610,26 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                             {ad.gapTableMembers}
                           </th>
                           <th scope="col">{ad.gapTableLevel}</th>
+                          <th scope="col">{pickLang('Relance', 'Recordatorio', 'Nudge', lang)}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {coverageGapMatrixRows.map((row) => {
                           const level = row.value <= 1 ? 'fragile' : 'faible';
+                          const subject = encodeURIComponent(
+                            `FrancoNetwork — ${row.kind === 'sector' ? 'Secteur' : 'Ville'} : ${row.label}`
+                          );
+                          const body = encodeURIComponent(
+                            [
+                              'Bonjour,',
+                              '',
+                              `Petit rappel réseau : la zone « ${row.label} » est très peu représentée (${row.value} membre(s) repéré(s)).`,
+                              'Si tu connais un profil pertinent, invite-le à postuler ici : https://franconetwork.app/inscription',
+                              '',
+                              'Merci,',
+                            ].join('\n')
+                          );
+                          const href = `mailto:contact@franconetwork.app?subject=${subject}&body=${body}`;
                           return (
                             <tr key={`${row.kind}-${row.label}`}>
                               <td className="admin-gap-table__label">{row.label}</td>
@@ -1462,6 +1639,11 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                                 <span className={`admin-gap-pill admin-gap-pill--${level}`}>
                                   {row.value <= 1 ? ad.gapLevelVeryThin : ad.gapLevelThin}
                                 </span>
+                              </td>
+                              <td>
+                                <a className="text-sm font-semibold text-slate-900 underline" href={href}>
+                                  {pickLang('Envoyer une relance', 'Enviar recordatorio', 'Send a nudge email', lang)}
+                                </a>
                               </td>
                             </tr>
                           );

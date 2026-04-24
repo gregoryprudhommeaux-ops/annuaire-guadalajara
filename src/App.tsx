@@ -385,12 +385,14 @@ function primaryNavPillClass(active: boolean) {
 const loadNetworkRadarSection = () => import('./components/home/NetworkRadarSection');
 const loadDashboardPage = () => import('./components/dashboard/DashboardPage');
 const loadAdminPage = () => import('@/screens/AdminPage');
+const loadStatsPage = () => import('@/pages/StatsPage');
 const loadAdminEvents = () => import('./components/dashboard/AdminEvents');
 const loadPublicEventPage = () => import('./components/events/PublicEventPage');
 const loadAdminMemberEventHistory = () => import('./components/admin/AdminMemberEventHistory');
 const NetworkRadarSection = React.lazy(loadNetworkRadarSection);
 const DashboardPage = React.lazy(loadDashboardPage);
 const AdminPageLazy = React.lazy(loadAdminPage);
+const StatsPageLazy = React.lazy(loadStatsPage);
 const AdminEventsLazy = React.lazy(loadAdminEvents);
 const PublicEventPageLazy = React.lazy(loadPublicEventPage);
 const AdminMemberEventHistoryLazy = React.lazy(loadAdminMemberEventHistory);
@@ -2269,6 +2271,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   }, [viewerIsAdmin]);
 
   const isHomeRoute = location.pathname === '/';
+  const isStatsRoute = location.pathname === '/stats';
   const isDashboardRoute = location.pathname === '/dashboard';
   const isNetworkRoute = location.pathname === '/network';
   const isRequestsRoute = location.pathname === '/requests';
@@ -4813,7 +4816,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       isHomeRoute &&
       !isSignupLandingRoute &&
       !isAdminDashboard &&
-      !isAdminRoute
+      !isAdminRoute &&
+      !isStatsRoute
   );
   // AppShell: member frame only (header + bottom bar + safe area) when a shell body exists below.
   // Excludes `/admin` (intentional: back-office trame, no BottomNav) and other MainApp paths that keep legacy
@@ -4924,6 +4928,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </Link>
                 <Link to="/radar" className={primaryNavPillClass(isRadarRoute)}>
                   {t('nav.radar')}
+                </Link>
+                <Link to="/stats" className={primaryNavPillClass(isStatsRoute)}>
+                  {pickLang('Vitrine', 'Vitrina', 'Showcase', lang)}
                 </Link>
                 <Link to="/admin" className={primaryNavPillClass(isAdminRoute)}>
                   {t('nav.admin')}
@@ -5626,7 +5633,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
       {!useNewPublicHome && !useAppShellNonAdmin && !useAppShellAdmin ? (
       <main
-        className={cn(pageMainPad, isAdminRoute ? 'max-w-none' : 'max-w-7xl')}
+        className={cn(pageMainPad, isAdminRoute || isStatsRoute ? 'max-w-none' : 'max-w-7xl')}
       >
         {isAdminRoute ? (
           viewerIsAdmin ? (
@@ -5642,6 +5649,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           ) : (
             <Navigate to={user ? '/dashboard' : '/'} replace />
           )
+        ) : isStatsRoute ? (
+          <React.Suspense
+            fallback={
+              <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                {lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…'}
+              </div>
+            }
+          >
+            <StatsPageLazy />
+          </React.Suspense>
         ) : isSignupMinimal ? (
           <>
             <Helmet>
@@ -7857,8 +7874,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       )}
       </div>
 
-      {!useNewPublicHome ? (
-        <footer className="mt-auto border-t border-stone-200 bg-white">
+      {!useNewPublicHome && !isStatsRoute ? (
+        <footer className="no-print mt-auto border-t border-stone-200 bg-white">
           <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-4 text-xs text-stone-400 sm:flex-row">
             <span className="text-center sm:text-left">
               © {new Date().getFullYear()} {t('footerBrandCopyright')}
@@ -8287,6 +8304,7 @@ const App = () => {
             <Route path="/network" element={<MainApp />} />
             <Route path="/requests" element={<MainApp />} />
             <Route path="/radar" element={<MainApp initialViewMode="radar" />} />
+            <Route path="/stats" element={<MainApp />} />
             <Route path="/admin" element={<MainApp />} />
             <Route path="/requests/:id" element={<RequestsRedirect />} />
             <Route path="/network/member/:slug" element={<MemberRedirect />} />
