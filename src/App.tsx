@@ -5370,6 +5370,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               />
             </React.Suspense>
           ) : isNetworkRoute ? (
+            /* Raccrocher l’arbre sur `.fn-network-page` pour appliquer `network.css` (champs, panneau, grilles). */
+            <div className="fn-network-page w-full min-w-0">
             <div className="grid gap-4 lg:grid-cols-[360px_1fr] lg:gap-6">
               <aside className="min-w-0">
                 <NetworkSidebar
@@ -5459,6 +5461,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   )}
                 </div>
               </section>
+            </div>
             </div>
           ) : isRequestsRoute ? (
             <div className="space-y-4">
