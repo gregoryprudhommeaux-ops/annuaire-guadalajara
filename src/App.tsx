@@ -5497,21 +5497,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               />
             </div>
           ) : isRadarRoute ? (
-            <div className="space-y-4">
-              <header className="rounded-[var(--fn-radius-md)] border border-[rgb(var(--fn-border))] bg-[rgb(var(--fn-surface))] p-4 shadow-[var(--fn-shadow-sm)]">
-                <h1 className="text-lg font-semibold tracking-tight text-[rgb(var(--fn-fg))]">
-                  {t('nav.radar')}
-                </h1>
-                <p className="mt-1 text-sm text-[rgb(var(--fn-muted))]">
-                  {pickLang(
-                    'Repérez les dynamiques du réseau et les signaux faibles du marché.',
-                    'Detecta dinámicas de red y señales tempranas del mercado.',
-                    'Spot network dynamics and early market signals.',
-                    lang
-                  )}
-                </p>
-              </header>
-
               <SectionErrorBoundary
                 fallback={
                   <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
@@ -5564,7 +5549,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   />
                 </React.Suspense>
               </SectionErrorBoundary>
-            </div>
           ) : // Defensive: when `useAppShellNonAdmin` is true, one of the branches above should always match
           // (see `useAppShellMemberContent`). If this renders, a route was added to the shell without a case here.
           null}
