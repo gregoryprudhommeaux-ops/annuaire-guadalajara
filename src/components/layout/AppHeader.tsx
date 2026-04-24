@@ -18,6 +18,8 @@ export type AppHeaderProps = {
   currentPath?: string;
   /** Visitor vs logged-in member. */
   user?: AppHeaderUser | null;
+  /** Admin experience: shows additional primary nav items (e.g. Admin). */
+  isAdmin?: boolean;
   /** Compact, premium lockup (never wraps badly). */
   brandTitle?: string;
   brandSubtitle?: string;
@@ -42,6 +44,7 @@ function LogoMark() {
 
 export function AppHeader({
   user,
+  isAdmin = false,
   brandTitle = 'FrancoNetwork',
   brandSubtitle = "Annuaire d'Affaires · Guadalajara",
   onSignIn,
@@ -56,7 +59,10 @@ export function AppHeader({
   const [scrolled, setScrolled] = useState(false);
   const isAuthenticated = Boolean(user);
 
-  const { primary, account } = useMemo(() => getNavigation({ isAuthenticated }), [isAuthenticated]);
+  const { primary, account } = useMemo(
+    () => getNavigation({ isAuthenticated, isAdmin }),
+    [isAuthenticated, isAdmin]
+  );
 
   const isPrimaryNavItemActive = (href: string) => {
     if (href.includes('#')) {

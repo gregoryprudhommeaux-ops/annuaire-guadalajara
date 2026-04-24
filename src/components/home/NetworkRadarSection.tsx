@@ -395,22 +395,22 @@ export default function NetworkRadarSection({
             )}
             aria-hidden={radarLocked}
           >
-            {/* KPI — 4 tuiles sur une ligne (y compris mobile) */}
-            <section className="grid grid-cols-4 gap-1.5 sm:gap-3 md:gap-4">
+            {/* KPI — 4 tuiles sur une ligne ; titres hauteur fixe (2 lignes) pour aligner chiffres + sous-textes */}
+            <section className="grid grid-cols-4 items-stretch gap-1.5 sm:gap-3 md:gap-4">
             {kpiStats.map((stat) => (
               <div
                 key={stat.label}
-                className="min-w-0 rounded-xl border border-slate-200 bg-white p-2 shadow-sm sm:rounded-2xl sm:p-4 md:p-5"
+                className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-2 shadow-sm sm:rounded-2xl sm:p-4 md:p-5"
               >
-                <p className="line-clamp-3 text-[10px] font-medium leading-tight text-slate-500 sm:line-clamp-none sm:text-sm">
+                <p className="line-clamp-2 min-h-[2.75rem] text-[10px] font-medium leading-tight text-slate-500 sm:min-h-[3.25rem] sm:text-sm">
                   {stat.label}
                 </p>
-                <div className="mt-1.5 flex items-end sm:mt-2 md:mt-3">
+                <div className="mt-1.5 flex shrink-0 sm:mt-2 md:mt-2.5">
                   <span className="text-base font-semibold tabular-nums leading-none tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
                     {stat.value}
                   </span>
                 </div>
-                <p className="mt-1 line-clamp-2 text-[10px] leading-tight text-slate-500 sm:mt-2 sm:line-clamp-none sm:text-sm">
+                <p className="mt-1.5 line-clamp-2 min-h-[2.25rem] text-[10px] leading-tight text-slate-500 sm:mt-2 sm:min-h-[2.75rem] sm:text-sm">
                   {stat.detail}
                 </p>
               </div>

@@ -1,4 +1,4 @@
-import { Home, Users, Handshake, Radar, Info, UserRound } from 'lucide-react';
+import { Home, Users, Handshake, Radar, Info, UserRound, Shield } from 'lucide-react';
 import React from 'react';
 
 export type NavAudience = 'visitor' | 'member';
@@ -15,10 +15,12 @@ export type NavItem = {
 
 type NavCtx = {
   isAuthenticated: boolean;
+  isAdmin?: boolean;
 };
 
 export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavItem[] } {
   const isAuthed = ctx.isAuthenticated;
+  const isAdmin = Boolean(ctx.isAdmin);
 
   const primary: NavItem[] = isAuthed
     ? [
@@ -26,6 +28,9 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
         { id: 'network', href: '/network', label: 'Réseau', audience: 'member', placement: 'primary' },
         { id: 'requests', href: '/requests', label: 'Demandes', audience: 'member', placement: 'primary' },
         { id: 'radar', href: '/radar', label: 'Radar', audience: 'member', placement: 'primary' },
+        ...(isAdmin
+          ? [{ id: 'admin', href: '/admin', label: 'Admin', audience: 'member', placement: 'primary' } satisfies NavItem]
+          : []),
       ]
     : [
         { id: 'discover', href: '/network', label: 'Découvrir', audience: 'visitor', placement: 'primary' },
@@ -44,6 +49,7 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
     network: React.createElement(Users, iconProps),
     requests: React.createElement(Handshake, iconProps),
     radar: React.createElement(Radar, iconProps),
+    admin: React.createElement(Shield, iconProps),
     discover: React.createElement(Users, iconProps),
     how: React.createElement(Info, iconProps),
     about: React.createElement(Info, iconProps),

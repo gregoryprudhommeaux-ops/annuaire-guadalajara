@@ -48,6 +48,8 @@ export default function PublicHomePage({
         user: user
           ? { displayName: user.displayName, email: user.email, photoURL: user.photoURL }
           : null,
+        // Public landing uses the member nav; do not expose admin affordances here.
+        isAdmin: false,
         onSignIn: onRequestSignIn,
         onSignOut,
         rightSlot: headerRightSlot,

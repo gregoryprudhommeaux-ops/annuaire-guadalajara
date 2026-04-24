@@ -28,11 +28,6 @@ export function PublicHero({
     <Card className="overflow-hidden">
       <CardBody className="space-y-4 sm:space-y-5">
         <div className="flex flex-col gap-3">
-          <p className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--fn-border)] bg-[var(--fn-surface-2)] px-3 py-1.5 text-[12px] font-semibold text-[var(--fn-muted)]">
-            <ShieldCheck className="h-4 w-4 text-[var(--fn-muted-2)]" aria-hidden />
-            Communauté d’affaires francophone à Guadalajara
-          </p>
-
           <h1 className="text-2xl font-semibold tracking-tight text-[var(--fn-fg)] sm:text-3xl">
             Rencontrez les bonnes personnes, dans un cadre fiable.
           </h1>

@@ -5099,6 +5099,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         <AppShell
           header={{
             user: user ? { displayName: user.displayName, email: user.email, photoURL: user.photoURL } : null,
+            isAdmin: viewerIsAdmin,
             onSignIn: openAuthModal,
             onSignOut: handleLogout,
             rightSlot: languageControlsTopRight,
