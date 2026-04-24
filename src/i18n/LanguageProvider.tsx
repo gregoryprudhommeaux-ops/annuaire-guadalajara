@@ -23,6 +23,21 @@ export type LanguageContextValue = {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
+const LANG_STORAGE_KEY = 'fn.lang';
+
+function isLanguage(value: unknown): value is Language {
+  return value === 'fr' || value === 'es' || value === 'en';
+}
+
+function readStoredLanguage(): Language | null {
+  try {
+    const v = window.localStorage.getItem(LANG_STORAGE_KEY);
+    return isLanguage(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 export function useLanguage(): LanguageContextValue {
   const ctx = useContext(LanguageContext);
   if (!ctx) {
@@ -32,10 +47,30 @@ export function useLanguage(): LanguageContextValue {
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLang] = useState<Language>('fr');
+  const [lang, setLang] = useState<Language>(() => {
+    if (typeof window === 'undefined') return 'fr';
+    return readStoredLanguage() ?? 'fr';
+  });
 
   useEffect(() => {
     document.documentElement.lang = lang;
+  }, [lang]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LANG_STORAGE_KEY, lang);
+    } catch {
+      // ignore (private mode / disabled storage)
+    }
+  }, [lang]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== LANG_STORAGE_KEY) return;
+      if (isLanguage(e.newValue) && e.newValue !== lang) setLang(e.newValue);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, [lang]);
 
   const t = useCallback(
