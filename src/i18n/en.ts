@@ -499,7 +499,7 @@ export const EN_STRINGS: Record<string, string> = {
   radarKpiNewDetail: "recent growth",
   radarOpportunitiesHeading: "Most sought opportunities",
   radarOpportunitiesSub: "The most expressed needs in the community right now.",
-  radarSeeAll: "See all",
+  radarSeeAll: "Details",
   radarWhereToActTitle: "Where to act now",
   radarWhereToActLead: "The categories below are the most visible requests at the moment.",
   radarView: "View",

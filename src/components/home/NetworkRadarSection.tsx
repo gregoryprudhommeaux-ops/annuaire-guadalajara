@@ -402,22 +402,22 @@ export default function NetworkRadarSection({
             )}
             aria-hidden={radarLocked}
           >
-            {/* KPI — mobile: 2×2 (lisible), desktop: 4 colonnes */}
-            <section className="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-4 md:gap-4">
+            {/* KPI — mobile: 2×2 compact, desktop: 4 colonnes */}
+            <section className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-4 sm:gap-3 md:gap-4">
             {kpiStats.map((stat) => (
               <div
                 key={stat.label}
-                className="flex h-full min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5"
+                className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-4 md:p-5"
               >
-                <p className="line-clamp-2 min-h-[2.75rem] text-[11px] font-semibold leading-snug tracking-tight text-slate-600 sm:min-h-[2.5rem] sm:text-sm">
+                <p className="line-clamp-2 min-h-[2.25rem] text-[10px] font-semibold leading-snug tracking-tight text-slate-600 sm:min-h-[2.5rem] sm:text-sm">
                   {stat.label}
                 </p>
-                <div className="mt-2 flex shrink-0 items-baseline gap-2">
-                  <span className="text-2xl font-semibold tabular-nums leading-none tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
+                <div className="mt-1.5 flex shrink-0 items-baseline gap-2 sm:mt-2">
+                  <span className="text-xl font-semibold tabular-nums leading-none tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
                     {stat.value}
                   </span>
                 </div>
-                <p className="mt-2 line-clamp-2 min-h-[2.25rem] text-[11px] leading-snug text-slate-500 sm:min-h-[2.25rem] sm:text-sm">
+                <p className="mt-1.5 line-clamp-2 min-h-[2rem] text-[10px] leading-snug text-slate-500 sm:mt-2 sm:min-h-[2.25rem] sm:text-sm">
                   {stat.detail}
                 </p>
               </div>
@@ -444,7 +444,14 @@ export default function NetworkRadarSection({
                   </button>
                 </div>
 
-                <NeedsBarChart data={needsData} compact={false} />
+                <NeedsBarChart
+                  data={needsData}
+                  compact
+                  // Mobile: reduce label gutter so bars have room.
+                  compactYAxisWidth={132}
+                  compactTickMaxChars={18}
+                  compactTickFontSize={10}
+                />
               </div>
             </section>
 

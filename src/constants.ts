@@ -1197,7 +1197,7 @@ export const TRANSLATIONS: Translations = {
     fr: "Les besoins les plus exprimés actuellement dans la communauté.",
     es: "Las necesidades más expresadas actualmente en la comunidad.",
   },
-  radarSeeAll: { fr: "Voir tout", es: "Ver todo" },
+  radarSeeAll: { fr: "Détails", es: "Detalles" },
   radarWhereToActTitle: { fr: "Où agir maintenant", es: "Dónde actuar ahora" },
   radarWhereToActLead: {
     fr: "Les catégories ci-dessous représentent les demandes les plus visibles du moment.",

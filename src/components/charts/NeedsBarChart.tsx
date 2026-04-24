@@ -13,6 +13,12 @@ type Props = {
   subtitle?: string;
   /** Compact variant (e.g. Radar). */
   compact?: boolean;
+  /** Override compact axis width (useful for mobile layouts). */
+  compactYAxisWidth?: number;
+  /** Override compact max chars per label line (tick renderer). */
+  compactTickMaxChars?: number;
+  /** Override compact tick font size. */
+  compactTickFontSize?: number;
   /** Hard cap of visible categories (defaults to 8). */
   limit?: number;
 };
@@ -107,6 +113,9 @@ export function NeedsBarChart({
   title = 'Besoins les plus exprimés',
   subtitle = 'Catégories de besoins actuellement les plus présentes dans le réseau',
   compact = false,
+  compactYAxisWidth,
+  compactTickMaxChars,
+  compactTickFontSize,
   limit = 8,
 }: Props) {
   const rows = useMemo(() => {
@@ -132,12 +141,12 @@ export function NeedsBarChart({
   const height = compact ? 280 : 420;
   const titleSize = compact ? 'text-[13px]' : 'text-base md:text-lg';
   const subtitleSize = compact ? 'text-[11px]' : 'text-sm';
-  const yTickFontSize = compact ? 11 : 11;
+  const yTickFontSize = compact ? (compactTickFontSize ?? 11) : 11;
   /** Wider axis + more chars per line so labels stay readable (Recharts clips if width is too small). */
   // Compact (Radar): keep the chart visually left-aligned on mobile.
   // A too-wide Y axis creates a large empty gutter and pushes bars to the right.
-  const yAxisWidth = compact ? 160 : 300;
-  const yTickMaxLine = compact ? 22 : 40;
+  const yAxisWidth = compact ? (compactYAxisWidth ?? 160) : 300;
+  const yTickMaxLine = compact ? (compactTickMaxChars ?? 22) : 40;
 
   return (
     <section className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm md:p-6">
