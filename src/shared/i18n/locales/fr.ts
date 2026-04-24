@@ -17,11 +17,11 @@ const shell = {
       memberCompanyNeedAria: 'Rechercher un membre, une entreprise ou un besoin',
     },
     recommendations: {
-      eyebrow: 'RECOMMANDATIONS',
-      title: 'Profils recommandés pour vous',
+      eyebrow: 'PROFILS RECOMMANDÉS',
+      title: 'À contacter rapidement pour une opportunité business',
       subtitle:
-        'Les profils dont les besoins recoupent clairement votre activité (encart vert) sont proposés en premier, puis les autres affinités.',
-      aria: 'Profils recommandés pour vous',
+        'Croisez les besoins publiés par les membres avec votre profil (expérience, savoir-faire, offre, intérêts). Les interlocuteurs les plus alignés apparaissent d’abord, avec les fortes affinités mises en avant (encart vert).',
+      aria: 'Profils recommandés et opportunités',
     },
     profileFallback: 'Profil',
     compatLevel: {

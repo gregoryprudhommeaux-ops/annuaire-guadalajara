@@ -16,11 +16,11 @@ const shell = {
       memberCompanyNeedAria: 'Search for a member, company, or need',
     },
     recommendations: {
-      eyebrow: 'RECOMMENDATIONS',
-      title: 'Recommended profiles for you',
+      eyebrow: 'RECOMMENDED PROFILES',
+      title: 'Reach out first for a business opportunity',
       subtitle:
-        'Profiles whose needs clearly overlap your activity (green callout) are listed first, then other affinities.',
-      aria: 'Recommended profiles for you',
+        'We match members’ posted needs with your profile (experience, offer, services, interests). The strongest fit appears first, with the clearest lead matches highlighted in green.',
+      aria: 'Recommended profiles and business opportunities',
     },
     profileFallback: 'Profile',
     compatLevel: {

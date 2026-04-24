@@ -5404,12 +5404,17 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 />
               </aside>
               <section className="min-w-0 space-y-4">
-                <header className="rounded-[var(--fn-radius-md)] border border-[rgb(var(--fn-border))] bg-[rgb(var(--fn-surface))] p-4 shadow-[var(--fn-shadow-sm)]">
-                  <h1 className="text-lg font-semibold tracking-tight text-[rgb(var(--fn-fg))]">
-                    {t('membersPageTitle')}
-                  </h1>
-                  <p className="mt-1 text-sm text-[rgb(var(--fn-muted))]">{t('membersPageSubtitle')}</p>
-                </header>
+                {user &&
+                  networkCompatibilityCurrentUser &&
+                  !guestDirectoryRestricted && (
+                    <RecommendedMembersSection
+                      currentUser={networkCompatibilityCurrentUser}
+                      members={membersDirectoryList
+                        .filter((p) => p.uid !== profile?.uid)
+                        .map((p) => userProfileToRecommendedMember(p, lang))}
+                      viewerProfile={profile}
+                    />
+                  )}
 
                 <NetworkToolbar>
                   <SortPanel title={t('membersSortLabel')} htmlFor="members-directory-sort">
@@ -6343,24 +6348,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 />
               )}
 
-            {isMembersDirectoryRoute && !isAdminDashboard && (
+            {isMembersDirectoryRoute && !isAdminDashboard && !isNetworkRoute && (
               <header
                 data-testid="members-directory-page"
-                className={cn(
-                  isNetworkRoute
-                    ? 'network-directory-header'
-                    : 'rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5'
-                )}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5"
               >
-                <h1
-                  className={cn(
-                    !isNetworkRoute &&
-                      'text-xl font-bold tracking-tight text-stone-900 sm:text-2xl'
-                  )}
-                >
+                <h1 className="text-xl font-bold tracking-tight text-stone-900 sm:text-2xl">
                   {t('membersPageTitle')}
                 </h1>
-                <p className={cn(!isNetworkRoute && 'mt-2 text-sm leading-snug text-stone-600')}>
+                <p className="mt-2 text-sm leading-snug text-stone-600">
                   {t('membersPageSubtitle')}
                 </p>
               </header>

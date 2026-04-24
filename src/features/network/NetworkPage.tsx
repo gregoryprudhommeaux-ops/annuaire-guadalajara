@@ -244,11 +244,6 @@ export function NetworkPage({
           />
         ) : null}
 
-        <header className="network-directory-header">
-          <h1>{t('membersPageTitle')}</h1>
-          <p>{t('membersPageSubtitle')}</p>
-        </header>
-
         <NetworkToolbar>
           <SortPanel title={t('membersSortLabel')}>
             <SortSelect value={sortBy} onChange={setSortBy} />
