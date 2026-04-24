@@ -2339,6 +2339,19 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     }
   }, [location.pathname, location.search]);
 
+  useEffect(() => {
+    // Deep-link filters from chips: /network?sector=...
+    const p = location.pathname.replace(/\/$/, '') || '/';
+    if (p !== '/network' && p !== '/membres') return;
+    const sp = new URLSearchParams(location.search);
+    const sector = (sp.get('sector') ?? '').trim();
+    if (sector) {
+      setFilterCategory(sector);
+      setViewMode('members');
+      setDirectoryDiscoveryStripsHidden(true);
+    }
+  }, [location.pathname, location.search]);
+
   useLayoutEffect(() => {
     const p = location.pathname.replace(/\/$/, '') || '/';
     if (p === '/evenements') {
@@ -4816,6 +4829,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
     !shortLegalPage && !isSignupMinimal && !useNewPublicHome && !isAdminRoute
   ) && useAppShellMemberContent;
 
+  // Admin shell: reuse the same header/nav styling as the member app shell,
+  // but keep BottomNav disabled (admin surface is desktop-first).
+  const useAppShellAdmin = Boolean(
+    !shortLegalPage &&
+      !isSignupMinimal &&
+      !useNewPublicHome &&
+      viewerIsAdmin &&
+      (isAdminRoute || isEventsAdminRoute)
+  );
+
   const requestSubmitProfileForm = () => {
     window.requestAnimationFrame(() => {
       profileFormLayoutRef.current?.scrollIntoView({
@@ -4835,7 +4858,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
   return (
     <div className="flex min-h-screen min-w-0 flex-col bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
-      {useNewPublicHome || useAppShellNonAdmin ? null : (
+      {useNewPublicHome || useAppShellNonAdmin || useAppShellAdmin ? null : (
         <AppHeader
           title={t('title')}
           subtitle={t('subtitle')}
@@ -5548,10 +5571,60 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           // (see `useAppShellMemberContent`). If this renders, a route was added to the shell without a case here.
           null}
         </AppShell>
+      ) : useAppShellAdmin ? (
+        <AppShell
+          header={{
+            user: user ? { displayName: user.displayName, email: user.email, photoURL: user.photoURL } : null,
+            isAdmin: viewerIsAdmin,
+            onSignIn: openAuthModal,
+            onSignOut: handleLogout,
+            rightSlot: languageControlsTopRight,
+          }}
+          showBottomNav={false}
+        >
+          {isAdminRoute ? (
+            <React.Suspense
+              fallback={
+                <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                  {lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…'}
+                </div>
+              }
+            >
+              <AdminPageLazy lang={lang} t={t} />
+            </React.Suspense>
+          ) : isEventsAdminRoute ? (
+            <SectionErrorBoundary
+              fallback={
+                <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+                  {pickLang(
+                    'La page Événements a rencontré une erreur.',
+                    'La página de Eventos encontró un error.',
+                    'Events page crashed.',
+                    lang
+                  )}
+                </div>
+              }
+            >
+              <div className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-6">
+                <div className="space-y-6">
+                  <React.Suspense
+                    fallback={
+                      <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500">
+                        {t('loading')}
+                      </div>
+                    }
+                  >
+                    <AdminEventsLazy lang={lang} t={t} adminUid={user?.uid ?? null} />
+                  </React.Suspense>
+                </div>
+              </div>
+            </SectionErrorBoundary>
+          ) : null}
+        </AppShell>
       ) : null}
 
 
-      {!useNewPublicHome && !useAppShellNonAdmin ? (
+      {!useNewPublicHome && !useAppShellNonAdmin && !useAppShellAdmin ? (
       <main
         className={cn(pageMainPad, isAdminRoute ? 'max-w-none' : 'max-w-7xl')}
       >

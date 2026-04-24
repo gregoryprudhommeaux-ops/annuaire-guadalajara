@@ -56,14 +56,14 @@ type AdminDashboardProps = {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex w-full min-w-0 items-baseline justify-between gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
+    <div className="flex w-full min-w-0 items-baseline justify-between gap-3 rounded-[var(--fn-radius-md)] border border-[var(--fn-border)] bg-[var(--fn-surface)] px-3 py-2 shadow-[var(--fn-shadow-sm)]">
       <p
-        className="min-w-0 flex-1 truncate text-[10px] font-semibold leading-tight tracking-wide text-stone-500 sm:text-[11px]"
+        className="min-w-0 flex-1 truncate text-[10px] font-semibold leading-tight tracking-wide text-[var(--fn-muted)] sm:text-[11px]"
         title={label}
       >
         {label}
       </p>
-      <p className="shrink-0 text-base font-bold tabular-nums leading-none text-stone-900 sm:text-lg">
+      <p className="shrink-0 text-base font-bold tabular-nums leading-none text-[var(--fn-fg)] sm:text-lg">
         {value}
       </p>
     </div>
@@ -108,9 +108,9 @@ function ScatterTooltipBody({
   const p = payload[0]?.payload;
   if (!p) return null;
   return (
-    <div className="admin-scatter-tooltip rounded-lg border border-stone-200 bg-white px-3 py-2 text-left shadow-lg">
-      <p className="text-[13px] font-semibold leading-snug text-stone-900">{p.name}</p>
-      <p className="mt-1 text-[11px] tabular-nums text-stone-600">
+    <div className="admin-scatter-tooltip rounded-[var(--fn-radius-md)] border border-[var(--fn-border)] bg-[var(--fn-surface)] px-3 py-2 text-left shadow-[var(--fn-shadow-md)]">
+      <p className="text-[13px] font-semibold leading-snug text-[var(--fn-fg)]">{p.name}</p>
+      <p className="mt-1 text-[11px] tabular-nums text-[var(--fn-muted)]">
         {adminScatterTooltipLine(p.views, p.clicks, lang)}
       </p>
     </div>
@@ -200,19 +200,19 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-0 flex-col rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+    <div className="relative flex min-h-0 flex-col rounded-[var(--fn-radius-lg)] border border-[var(--fn-border)] bg-[var(--fn-surface)] p-4 shadow-[var(--fn-shadow-sm)]">
       {onExpand ? (
         <button
           type="button"
           onClick={onExpand}
-          className="absolute right-2 top-2 z-10 rounded-md p-1.5 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+          className="absolute right-2 top-2 z-10 rounded-[var(--fn-radius-sm)] p-1.5 text-[var(--fn-muted)] transition-colors hover:bg-[var(--fn-surface-2)] hover:text-[var(--fn-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--fn-ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fn-surface)]"
           aria-label={expandLabel}
           title={expandLabel}
         >
           <Maximize2 className="h-4 w-4" strokeWidth={2} aria-hidden />
         </button>
       ) : null}
-      <h3 className="min-w-0 pr-10 text-sm font-semibold leading-snug text-stone-900">{title}</h3>
+      <h3 className="min-w-0 pr-10 text-sm font-semibold leading-snug text-[var(--fn-fg)]">{title}</h3>
       {/* Zone graphique dédiée : overflow hidden pour que rien ne dépasse du cadre */}
       <div className="mt-3 h-72 w-full min-h-0 overflow-hidden">{children}</div>
     </div>

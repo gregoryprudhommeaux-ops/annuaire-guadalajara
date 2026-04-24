@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardBody } from '@/components/ui/Card';
+import { Link } from 'react-router-dom';
 
 export type SocialProofStripProps = {
   memberCount?: number;
@@ -8,6 +9,8 @@ export type SocialProofStripProps = {
 
 export function SocialProofStrip({ memberCount, sectors }: SocialProofStripProps) {
   const chips = (sectors ?? []).slice(0, 6);
+  const chipClass =
+    'inline-flex items-center rounded-full border border-[var(--fn-border)] bg-[var(--fn-surface-2)] px-3 py-1.5 text-[11px] font-semibold text-[var(--fn-muted)] transition-colors hover:bg-[var(--fn-surface)] hover:text-[var(--fn-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--fn-ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fn-bg)]';
   return (
     <Card>
       <CardBody className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -25,23 +28,25 @@ export function SocialProofStrip({ memberCount, sectors }: SocialProofStripProps
         {chips.length ? (
           <div className="flex flex-wrap gap-2">
             {chips.map((s) => (
-              <span
+              <Link
                 key={s}
-                className="rounded-full border border-[var(--fn-border)] bg-[var(--fn-surface-2)] px-3 py-1.5 text-[11px] font-semibold text-[var(--fn-muted)]"
+                to={`/network?sector=${encodeURIComponent(s)}`}
+                className={chipClass}
               >
                 {s}
-              </span>
+              </Link>
             ))}
           </div>
         ) : (
           <div className="flex flex-wrap gap-2">
             {['Conseil', 'Industrie', 'Tech', 'Services', 'Immobilier', 'Commerce'].map((s) => (
-              <span
+              <Link
                 key={s}
-                className="rounded-full border border-[var(--fn-border)] bg-[var(--fn-surface-2)] px-3 py-1.5 text-[11px] font-semibold text-[var(--fn-muted)]"
+                to={`/network?sector=${encodeURIComponent(s)}`}
+                className={chipClass}
               >
                 {s}
-              </span>
+              </Link>
             ))}
           </div>
         )}

@@ -1,20 +1,20 @@
 .admin-dashboard-page {
   --admin-max-width: 1440px;
   --admin-gap: 24px;
-  --admin-radius: 18px;
-  --admin-border: #e5e7eb;
-  --admin-bg: #ffffff;
-  --admin-soft: #f8fafc;
-  --admin-text: #111827;
-  --admin-muted: #6b7280;
-  --admin-title: #0f172a;
-  --admin-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --admin-radius: var(--fn-radius-lg);
+  --admin-border: var(--fn-border);
+  --admin-bg: var(--fn-surface);
+  --admin-soft: var(--fn-surface-2);
+  --admin-text: var(--fn-fg);
+  --admin-muted: var(--fn-muted);
+  --admin-title: var(--fn-fg);
+  --admin-shadow: var(--fn-shadow-sm);
 }
 
 .admin-dashboard-page .admin-shell {
   max-width: var(--admin-max-width);
   margin: 0 auto;
-  padding: 24px 24px 56px;
+  padding: 8px 0 32px;
 }
 
 .admin-dashboard-page .admin-header {
@@ -58,9 +58,9 @@
   align-items: center;
   gap: 10px 12px;
   padding: 10px 10px;
-  border-radius: 18px;
+  border-radius: var(--admin-radius);
   border: 1px solid var(--admin-border);
-  background: #ffffff;
+  background: var(--admin-bg);
   box-shadow: var(--admin-shadow);
 }
 
@@ -77,9 +77,9 @@
   min-height: 32px;
   padding: 0 12px;
   border-radius: 999px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #475569;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-soft);
+  color: var(--admin-muted);
   font-size: 0.85rem;
   font-weight: 700;
   white-space: nowrap;
@@ -92,22 +92,22 @@
   min-height: 36px;
   padding: 0 14px;
   border-radius: 999px;
-  border: 1px solid #d1d5db;
-  background: #fff;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-bg);
   font-size: 0.9rem;
   font-weight: 700;
-  color: #374151;
+  color: var(--admin-text);
   transition: 0.18s ease;
 }
 
 .admin-dashboard-page .admin-pill:hover {
-  background: #f8fafc;
+  background: var(--admin-soft);
 }
 
 .admin-dashboard-page .admin-pill.is-active {
-  background: #111827;
-  border-color: #111827;
-  color: #fff;
+  background: var(--fn-accent);
+  border-color: var(--fn-accent);
+  color: var(--fn-accent-contrast);
 }
 
 .admin-dashboard-page .admin-kpi-grid {
@@ -172,9 +172,9 @@
 
 .admin-dashboard-page .admin-recommended-actions {
   margin-bottom: 28px;
-  border-color: #e7e5e4;
-  background: #fafaf9;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  border-color: var(--admin-border);
+  background: var(--admin-soft);
+  box-shadow: var(--admin-shadow);
 }
 
 .admin-dashboard-page .admin-recommended-actions .admin-chart-card__title.admin-recommended-actions__title,
@@ -187,7 +187,7 @@
   margin-bottom: 0;
   max-width: 68ch;
   line-height: 1.55;
-  color: #57534e;
+  color: var(--admin-muted);
   font-size: 0.88rem;
   font-weight: 500;
 }
@@ -209,7 +209,7 @@
   font: inherit;
   font-size: inherit;
   font-weight: 650;
-  color: #44403c;
+  color: var(--admin-text);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
@@ -218,7 +218,7 @@
 }
 
 .admin-dashboard-page .admin-recommended-actions__inline-action:hover {
-  color: #0c0a09;
+  color: var(--admin-title);
 }
 
 .admin-dashboard-page .admin-recommended-actions__body {
@@ -240,7 +240,7 @@
 .admin-dashboard-page .admin-rec-tier--secondary {
   margin-top: 4px;
   padding-top: 22px;
-  border-top: 1px solid #e7e5e4;
+  border-top: 1px solid var(--admin-border);
 }
 
 .admin-dashboard-page .admin-rec-tier__label {
@@ -249,7 +249,7 @@
   font-weight: 750;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #78716c;
+  color: var(--admin-muted);
 }
 
 .admin-dashboard-page .admin-recommended-actions__grid {
@@ -271,23 +271,23 @@
   min-height: 160px;
   min-width: 0;
   padding: 14px 14px 12px;
-  border-radius: 12px;
-  border: 1px solid #e7e5e4;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  border-radius: var(--fn-radius-md);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-bg);
+  box-shadow: var(--admin-shadow);
 }
 
 .admin-dashboard-page .admin-rec-card--primary {
-  border-color: #d6d3d1;
-  border-left: 3px solid #334155;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.07);
+  border-color: var(--admin-border);
+  border-left: 3px solid var(--fn-accent);
+  background: var(--admin-bg);
+  box-shadow: var(--admin-shadow);
 }
 
 .admin-dashboard-page .admin-rec-card--secondary {
   min-height: 148px;
-  background: #f8fafc;
-  border-color: #e7e5e4;
+  background: var(--admin-soft);
+  border-color: var(--admin-border);
 }
 
 .admin-dashboard-page .admin-rec-card--secondary .admin-rec-card__title {
@@ -304,7 +304,7 @@
   font-size: 0.9rem;
   font-weight: 650;
   line-height: 1.25;
-  color: #1c1917;
+  color: var(--admin-title);
 }
 
 .admin-dashboard-page .admin-rec-card__signal {
@@ -314,7 +314,7 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   line-height: 1.2;
-  color: #292524;
+  color: var(--admin-text);
 }
 
 .admin-dashboard-page .admin-rec-card__context {
@@ -331,13 +331,13 @@
   align-self: flex-start;
   margin-top: auto;
   padding: 5px 10px;
-  border-radius: 8px;
-  border: 1px solid #d6d3d1;
-  background: #fff;
+  border-radius: var(--fn-radius-sm);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-bg);
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: #44403c;
+  color: var(--admin-text);
   cursor: pointer;
   transition:
     background 0.15s ease,
@@ -347,9 +347,9 @@
 }
 
 .admin-dashboard-page .admin-rec-card__action:hover {
-  background: #f5f5f4;
-  border-color: #a8a29e;
-  color: #1c1917;
+  background: var(--admin-soft);
+  border-color: var(--admin-border);
+  color: var(--admin-title);
 }
 
 .admin-dashboard-page .admin-rec-card__action:active {
@@ -357,15 +357,15 @@
 }
 
 .admin-dashboard-page .admin-rec-card__action--emphasis {
-  border-color: #1c1917;
-  background: #1c1917;
-  color: #fff;
+  border-color: var(--fn-accent);
+  background: var(--fn-accent);
+  color: var(--fn-accent-contrast);
 }
 
 .admin-dashboard-page .admin-rec-card__action--emphasis:hover {
-  background: #292524;
-  border-color: #292524;
-  color: #fff;
+  background: var(--fn-accent-weak);
+  border-color: var(--fn-accent-weak);
+  color: var(--fn-accent-contrast);
 }
 
 .admin-dashboard-page [id^='admin-section-'] {
@@ -730,7 +730,7 @@
   margin: 0;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #57534e;
+  color: var(--admin-muted);
 }
 
 .admin-dashboard-page .admin-opportunity-passion-list__sep {

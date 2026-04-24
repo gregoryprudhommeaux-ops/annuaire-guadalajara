@@ -48,7 +48,9 @@ export function BottomNav({ items = DEFAULT_ITEMS, className }: BottomNavProps) 
                 }
               >
                 {it.icon}
-                <span className="w-full truncate text-[11px] font-semibold leading-none">{it.label}</span>
+                <span className="max-w-full truncate text-center text-[11px] font-semibold leading-none">
+                  {it.label}
+                </span>
               </NavLink>
             </li>
           ))}

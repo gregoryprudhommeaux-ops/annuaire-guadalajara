@@ -190,7 +190,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
         <div className="admin-card__body">
           <div className="admin-list">
             {recentRequests.length === 0 ? (
-              <p className="text-sm text-slate-600">{t('adminNoRequests')}</p>
+              <p className="text-sm text-[var(--fn-muted)]">{t('adminNoRequests')}</p>
             ) : (
               pageRows.map((r) => (
                 <a
@@ -258,7 +258,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
           <div className="admin-highlight-number">{unansweredCount}</div>
           <div className="admin-list">
             {unansweredNeeds.length === 0 ? (
-              <p className="text-sm text-slate-600">{t('adminNoUnansweredNeeds')}</p>
+              <p className="text-sm text-[var(--fn-muted)]">{t('adminNoUnansweredNeeds')}</p>
             ) : (
               pageRows.map((row) => (
                 <a
@@ -294,7 +294,13 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
           </div>
 
           {loadError ? (
-            <p className="admin-card" style={{ borderColor: '#fcd34d', background: '#fffbeb' }}>
+            <p
+              className="admin-card"
+              style={{
+                borderColor: 'rgb(251 191 36 / 0.7)',
+                background: 'rgb(255 251 235 / 0.9)',
+              }}
+            >
               <span className="admin-card__text">{loadError}</span>
             </p>
           ) : null}

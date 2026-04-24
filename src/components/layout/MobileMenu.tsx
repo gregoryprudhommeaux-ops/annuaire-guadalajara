@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Link, NavLink } from 'react-router-dom';
 import { cn } from '@/lib/cn';
@@ -46,7 +47,10 @@ export function MobileMenu({
 
   if (!open) return null;
 
-  return (
+  // Render into <body> to avoid stacking context / clipping issues.
+  const mount = typeof document !== 'undefined' ? document.body : null;
+
+  const ui = (
     <div className="fixed inset-0 z-[60] sm:hidden" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-slate-900/40" onClick={onClose} />
       <div
@@ -171,5 +175,7 @@ export function MobileMenu({
       </div>
     </div>
   );
+
+  return mount ? createPortal(ui, mount) : ui;
 }
 
