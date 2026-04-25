@@ -1,3 +1,28 @@
+/* Page /admin/internal : une carte par ligne (activité + complétion), plus de sous-colonnes trop étroites */
+.admin-dashboard-page--internal .admin-analytics-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+/* Sous le seuil 1200px, empiler Connexions / Nouveaux profils */
+.admin-dashboard-page--internal .admin-activity {
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 1200px) {
+  .admin-dashboard-page--internal .admin-activity {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-dashboard-page--internal .admin-activity {
+    grid-template-columns: 1fr;
+  }
+}
+
 .admin-dashboard-page {
   --admin-max-width: 1440px;
   --admin-gap: 24px;
@@ -631,7 +656,7 @@
   align-items: flex-start;
   gap: 12px;
   min-width: 0;
-  padding: 10px 8px;
+  padding: 10px 10px;
   margin: 0;
   border-radius: 10px;
   text-decoration: none;
@@ -640,6 +665,16 @@
   font-weight: 600;
   line-height: 1.3;
   transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Colonne texte : le parent doit être flex pour que nom / date se comportent correctement */
+.admin-dashboard-page .admin-activity__row-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+  flex: 1 1 0;
 }
 
 .admin-dashboard-page .admin-activity__row:hover {
@@ -676,29 +711,171 @@
 }
 
 .admin-dashboard-page .admin-activity__name {
-  flex: 1 1 auto;
-  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  width: 100%;
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 .admin-dashboard-page .admin-activity__time {
   flex: 0 0 auto;
-  max-width: 46%;
-  text-align: right;
-  font-size: 0.72rem;
+  align-self: flex-start;
+  text-align: left;
+  max-width: 100%;
+  font-size: 0.7rem;
   font-weight: 500;
   color: #64748b;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.35;
 }
 
-@media (max-width: 1100px) {
-  .admin-dashboard-page .admin-activity__time {
-    max-width: 44%;
-    font-size: 0.68rem;
-  }
+/* Bloc « Complétion des profils » (INTERNAL + dashboard) : structure et espacement */
+.admin-dashboard-page .admin-completion {
+  gap: 0;
+  min-height: 0;
+}
+
+.admin-dashboard-page .admin-chart-card--completion {
+  min-height: 0;
+}
+
+.admin-dashboard-page .admin-completion__head {
+  margin-bottom: 0.75rem;
+}
+
+.admin-dashboard-page .admin-completion__label {
+  margin: 0 0 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.admin-dashboard-page .admin-completion__kpi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 8px;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.admin-dashboard-page .admin-completion__kpi-pct {
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.admin-dashboard-page .admin-completion__kpi-sep {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.admin-dashboard-page .admin-completion__kpi-frac {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.admin-dashboard-page .admin-completion__goal {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.admin-dashboard-page .admin-completion__gauge-wrap {
+  width: 100%;
+  min-height: 0;
+  margin: 0.5rem 0 0.25rem;
+  padding: 4px 0 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-dashboard-page .admin-completion__incomplete-block {
+  margin-top: 4px;
+  padding-top: 14px;
+}
+
+.admin-dashboard-page .admin-completion__incomplete-title {
+  margin: 0 0 10px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.admin-dashboard-page .admin-completion__incomplete-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: min(220px, 40vh);
+  overflow-y: auto;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.admin-dashboard-page .admin-completion__incomplete-list li {
+  margin: 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-dashboard-page .admin-completion__incomplete-list li:last-child {
+  border-bottom: 0;
+}
+
+.admin-dashboard-page .admin-completion__incomplete-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  text-decoration: none;
+  color: #0f172a;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.admin-dashboard-page .admin-completion__incomplete-link:hover {
+  background: #f1f5f9;
+  color: #0f5132;
+}
+
+.admin-dashboard-page .admin-completion__incomplete-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+}
+
+.admin-dashboard-page .admin-completion__incomplete-chevron {
+  flex: 0 0 auto;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.admin-dashboard-page .admin-completion__incomplete-empty {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  color: #94a3b8;
+  text-align: center;
 }
 
 .admin-dashboard-page .admin-analytics-secondary {
@@ -1448,7 +1625,8 @@
   min-height: 320px;
 }
 
-.admin-dashboard-page .admin-chart-card--compact.admin-chart-card--activity {
+.admin-dashboard-page .admin-chart-card--compact.admin-chart-card--activity,
+.admin-dashboard-page .admin-chart-card--compact.admin-chart-card--completion {
   min-height: 0;
 }
 

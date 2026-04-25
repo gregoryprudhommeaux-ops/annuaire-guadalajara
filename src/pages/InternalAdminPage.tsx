@@ -5,6 +5,7 @@ import { TimePeriodProvider, useTimePeriod } from '@/contexts/TimePeriodContext'
 import { useAdminStats, type PeriodKey } from '@/hooks/useAdminStats';
 import { AdminHubNav } from '@/components/admin/AdminHubNav';
 import { AdminPeriodPills } from '@/components/admin/AdminPeriodPills';
+import { PriorityProfileCompletionTable } from '@/components/admin/PriorityProfileCompletionTable';
 import { AdminActivityAndCompletionBlocks } from '@/components/admin/AdminActivityAndCompletionBlocks';
 import { AdminRecommendedActionsBlock } from '@/components/admin/AdminRecommendedActionsBlock';
 import { AdminConnectPriorityBlock } from '@/components/admin/AdminConnectPriorityBlock';
@@ -38,7 +39,7 @@ function InternalAdminContent() {
   }, [location.hash, location.pathname]);
 
   return (
-    <div className="admin-dashboard-page">
+    <div className="admin-dashboard-page admin-dashboard-page--internal">
       <div className="admin-shell">
         <div className="admin-header">
           <div className="admin-header__copy">
@@ -50,6 +51,7 @@ function InternalAdminContent() {
             <AdminPeriodPills t={t} />
           </div>
         </div>
+        <PriorityProfileCompletionTable stats={stats} lang={lang} />
         <AdminActivityAndCompletionBlocks lang={lang} t={t} stats={stats} />
         <div className="mt-4">
           <AdminRecommendedActionsBlock stats={stats} />

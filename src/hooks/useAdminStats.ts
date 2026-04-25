@@ -10,6 +10,11 @@ import { db } from '../firebase';
 import { getProfileAiRecommendationReadiness, type UserProfile } from '../types';
 import { profileDistinctActivityCategories } from '../lib/companyActivities';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
+import {
+  getProfileCompletionItems,
+  profileCompletionDefaultLabels,
+  type ProfileCompletionKey,
+} from '@/lib/profileCompletion';
 import type { TimePeriod } from '@/contexts/TimePeriodContext';
 
 export type PeriodKey = TimePeriod;
@@ -20,32 +25,40 @@ export interface ProfileStat {
   clickCount: number;
 }
 
+/** Ligne « annuaire admin » (stats + relances /admin/internal) */
+export type AdminProfileDashboardRow = {
+  id: string;
+  nom: string;
+  entreprise?: string;
+  secteur?: string;
+  activityCategory?: string;
+  positionCategory?: string;
+  description?: string;
+  photo?: string;
+  latitude?: number;
+  longitude?: number;
+  neighborhood?: string;
+  district?: string;
+  city?: string;
+  passionIds?: string[];
+  status?: string;
+  links?: string[];
+  createdAt: Timestamp;
+  contactClicks: number;
+  highlightedNeeds?: string[];
+  lastSeen?: number;
+  profileViewCount: number;
+  /** 0–100 (poids getProfileCompletionItems) */
+  readinessPct: number;
+  /** Champs manquants prioritaires (tri poids) */
+  missingFieldKeys: ProfileCompletionKey[];
+};
+
 export interface AdminStats {
   /** Données brutes minimales pour certains graphiques (inscriptions, heatmap). */
   profilesCreatedAt: { id: string; createdAt: Timestamp }[];
   /** Profils minimaux pour carte / funnel / leaderboard. */
-  profilesForDashboard: Array<{
-    id: string;
-    nom: string;
-    entreprise?: string;
-    secteur?: string;
-    activityCategory?: string;
-    positionCategory?: string;
-    description?: string;
-    photo?: string;
-    latitude?: number;
-    longitude?: number;
-    neighborhood?: string;
-    district?: string;
-    city?: string;
-    passionIds?: string[];
-    status?: string;
-    links?: string[];
-    createdAt: Timestamp;
-    contactClicks: number;
-    /** Besoins mis en avant (legacy NEED_*). */
-    highlightedNeeds?: string[];
-  }>;
+  profilesForDashboard: AdminProfileDashboardRow[];
   /** Profils complets selon critères "dashboard" (nom + secteur + description + photo). */
   completedProfilesStrict: number;
   incompleteProfilesStrict: number;
@@ -533,6 +546,8 @@ export function useAdminStats(period: PeriodKey): AdminStats {
 
         const activeMembersWithContactClicks = Object.values(contactClicksByUid).filter((n) => n > 0).length;
 
+        const labelsFr = profileCompletionDefaultLabels('fr');
+
         const profilesForDashboard = allProfiles
           .map((p) => {
             const up = rowToUserProfile(p);
@@ -551,6 +566,17 @@ export function useAdminStats(period: PeriodKey): AdminStats {
             ]
               .map((x) => String(x ?? '').trim())
               .filter(Boolean);
+            const completionItems = getProfileCompletionItems(up, labelsFr);
+            const totalW = completionItems.reduce((s, i) => s + i.weight, 0);
+            const doneW = completionItems.reduce((s, i) => s + (i.done ? i.weight : 0), 0);
+            const readinessPct =
+              totalW > 0 ? Math.round((doneW / totalW) * 100) : Math.round(profileReadinessPct(p));
+            const missingFieldKeys = completionItems
+              .filter((i) => !i.done)
+              .sort((a, b) => b.weight - a.weight)
+              .slice(0, 5)
+              .map((i) => i.key) as ProfileCompletionKey[];
+
             return {
               id: up.uid,
               nom: String(up.fullName ?? '').trim() || String(up.email ?? '').trim() || up.uid,
@@ -577,7 +603,11 @@ export function useAdminStats(period: PeriodKey): AdminStats {
               highlightedNeeds: Array.isArray((up as any).highlightedNeeds)
                 ? (((up as any).highlightedNeeds as unknown[]) ?? []).map((x) => String(x)).filter(Boolean)
                 : undefined,
-            };
+              lastSeen: typeof (p as any).lastSeen === 'number' ? ((p as any).lastSeen as number) : undefined,
+              profileViewCount: viewCount[up.uid]?.count ?? 0,
+              readinessPct,
+              missingFieldKeys,
+            } as AdminProfileDashboardRow;
           })
           .filter((p) => Boolean(p.createdAt));
 
