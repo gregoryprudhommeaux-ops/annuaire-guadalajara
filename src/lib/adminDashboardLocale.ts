@@ -40,6 +40,7 @@ export function getAdminDashboardCopy(lang: Language) {
       'Los miembros expresan activamente estas necesidades',
       'Members are actively expressing these needs'
     ),
+    needsTopPillsTitle: L('Têtes de liste (top 3)', 'Top 3 búsquedas', 'Top 3 in demand'),
     chartCoverageTitle: L('Couverture secteurs / villes', 'Cobertura sectores / ciudades', 'Sector / city coverage'),
     chartCoverageSubtitle: L(
       'Identifier forces & zones faibles.',
@@ -58,42 +59,6 @@ export function getAdminDashboardCopy(lang: Language) {
       'Where to focus completion nudges.'
     ),
     barNameMissing: L('Manquants', 'Faltantes', 'Missing'),
-    chartAttentionTitle: L('Attention vs conversion', 'Atención vs conversión', 'Attention vs conversion'),
-    chartAttentionSubtitleScatter: L(
-      'Chaque point = un membre · axe X = vues profil, axe Y = clics contact.',
-      'Cada punto = un miembro · eje X = vistas de perfil, eje Y = clics de contacto.',
-      'Each point = one member · X = profile views, Y = contact clicks.'
-    ),
-    chartAttentionSubtitleEditorial: L(
-      'Vue segmentée (peu de signal sur la période) — priorités lisibles.',
-      'Vista segmentada (poca señal en el periodo) — prioridades claras.',
-      'Segmented view (little signal this period) — clear priorities.'
-    ),
-    attentionEmpty: L(
-      'Pas encore de vues ni de contacts sur cette période.',
-      'Aún no hay vistas ni contactos en este periodo.',
-      'No views or contacts yet for this period.'
-    ),
-    scatterAxisViews: L('Vues', 'Vistas', 'Views'),
-    scatterAxisProfileViews: L('Vues profil', 'Vistas de perfil', 'Profile views'),
-    scatterAxisContacts: L('Contacts', 'Contactos', 'Contacts'),
-    scatterAxisContactClicks: L('Clics contact', 'Clics de contacto', 'Contact clicks'),
-    attentionSegHighViewsLowContact: L('Très vus, peu contactés', 'Muy vistos, poco contactados', 'High views, low contact'),
-    attentionSegEngaged: L('Vus et contactés', 'Vistos y contactados', 'Viewed and contacted'),
-    attentionSegLowVis: L('Encore peu visibles', 'Aún poco visibles', 'Still low visibility'),
-    attentionSegLowMeta: (n: number) =>
-      L(
-        `${n} profil${n > 1 ? 's' : ''} sans signal`,
-        `${n} perfil${n !== 1 ? 'es' : ''} sin señal`,
-        `${n} profile${n === 1 ? '' : 's'} with no signal`
-      ),
-    attentionRowViewsContacts: (v: number, c: number) =>
-      L(
-        `${v} vue${v > 1 ? 's' : ''} · ${c} contact${c > 1 ? 's' : ''}`,
-        `${v} vista${v > 1 ? 's' : ''} · ${c} contacto${c > 1 ? 's' : ''}`,
-        `${v} view${v === 1 ? '' : 's'} · ${c} contact click${c === 1 ? '' : 's'}`
-      ),
-    attentionRowZero: L('0 vue · 0 contact', '0 vistas · 0 contactos', '0 views · 0 contact clicks'),
     connectPriorityTitle: L('Membres à connecter en priorité', 'Miembros a conectar primero', 'Members to connect first'),
     connectPrioritySubtitle: L(
       'Forte proximité de passions avec d’autres membres — utile pour intros ciblées.',
@@ -267,22 +232,6 @@ export function getAdminDashboardCopy(lang: Language) {
     dimPoste: L('Fonction', 'Función', 'Role'),
     dimIndustrie: L('Industrie', 'Industria', 'Industry'),
   };
-}
-
-export function adminScatterTooltipLine(views: number, clicks: number, lang: Language): string {
-  const v = pickLang(
-    `${views} vue${views > 1 ? 's' : ''}`,
-    `${views} vista${views > 1 ? 's' : ''}`,
-    `${views} view${views === 1 ? '' : 's'}`,
-    lang
-  );
-  const c = pickLang(
-    `${clicks} contact${clicks > 1 ? 's' : ''}`,
-    `${clicks} contacto${clicks > 1 ? 's' : ''}`,
-    `${clicks} contact click${clicks === 1 ? '' : 's'}`,
-    lang
-  );
-  return `${v} · ${c}`;
 }
 
 export function adminActivationSuggestion(

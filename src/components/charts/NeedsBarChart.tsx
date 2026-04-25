@@ -13,6 +13,8 @@ type Props = {
   subtitle?: string;
   /** Compact variant (e.g. Radar). */
   compact?: boolean;
+  /** Aligne avec les cartes admin (pas de bordure / titre propre, uniquement le graphique). */
+  embedded?: boolean;
   /** Override compact axis width (useful for mobile layouts). */
   compactYAxisWidth?: number;
   /** Override compact max chars per label line (tick renderer). */
@@ -57,6 +59,20 @@ function splitLabelForTick(full: string, maxSingleLine: number): string[] | null
   return [line1, b];
 }
 
+/** Coupure sur un espace proche de max pour éviter « partenaires commer… ». */
+function splitAtWordNear(full: string, max: number): [string, string] | null {
+  const s = String(full ?? '').trim();
+  if (s.length <= max) return null;
+  const head = s.slice(0, max);
+  const sp = head.lastIndexOf(' ');
+  if (sp > 10) {
+    const a = s.slice(0, sp);
+    const b = s.slice(sp + 1).trim();
+    if (b) return [a, b];
+  }
+  return null;
+}
+
 function NeedsYAxisTick({
   x,
   y,
@@ -74,7 +90,9 @@ function NeedsYAxisTick({
   const nx = typeof x === 'number' ? x : Number(x ?? 0);
   const ny = typeof y === 'number' ? y : Number(y ?? 0);
   const full = String(payload?.value ?? '');
-  const lines = splitLabelForTick(full, maxSingleLine);
+  const splitSlash = splitLabelForTick(full, maxSingleLine);
+  const splitWord = splitSlash ? null : splitAtWordNear(full, maxSingleLine);
+  const lines: string[] | null = splitSlash ?? (splitWord ? [splitWord[0], splitWord[1]] : null);
   const single =
     lines == null
       ? full.length > maxSingleLine
@@ -85,7 +103,7 @@ function NeedsYAxisTick({
   return (
     <g transform={`translate(${nx},${ny})`}>
       <title>{full}</title>
-      {lines ? (
+      {lines && lines[1] ? (
         <text textAnchor="end" fill="#334155" fontSize={fontSize}>
           <tspan x={0} dy="-0.55em" dominantBaseline="middle">
             {lines[0]}
@@ -113,6 +131,7 @@ export function NeedsBarChart({
   title = 'Besoins les plus exprimés',
   subtitle = 'Catégories de besoins actuellement les plus présentes dans le réseau',
   compact = false,
+  embedded = false,
   compactYAxisWidth,
   compactTickMaxChars,
   compactTickFontSize,
@@ -138,46 +157,45 @@ export function NeedsBarChart({
     [rows]
   );
 
-  const height = compact ? 280 : 420;
+  const height = embedded ? 248 : compact ? 280 : 420;
   const titleSize = compact ? 'text-[13px]' : 'text-base md:text-lg';
   const subtitleSize = compact ? 'text-[11px]' : 'text-sm';
   const yTickFontSize = compact ? (compactTickFontSize ?? 11) : 11;
   /** Wider axis + more chars per line so labels stay readable (Recharts clips if width is too small). */
   // Compact (Radar): keep the chart visually left-aligned on mobile.
   // A too-wide Y axis creates a large empty gutter and pushes bars to the right.
-  const yAxisWidth = compact ? (compactYAxisWidth ?? 160) : 300;
-  const yTickMaxLine = compact ? (compactTickMaxChars ?? 22) : 40;
+  const yAxisWidth = embedded
+    ? (compactYAxisWidth ?? 202)
+    : compact
+      ? (compactYAxisWidth ?? 160)
+      : 300;
+  const yTickMaxLine = embedded
+    ? (compactTickMaxChars ?? 30)
+    : compact
+      ? (compactTickMaxChars ?? 22)
+      : 40;
 
-  return (
-    <section className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm md:p-6">
-      {title || subtitle ? (
-        <header className={compact ? 'mb-3' : 'mb-4'}>
-          {title ? (
-            <h3 className={`${titleSize} font-semibold leading-snug text-zinc-900`}>
-              {title}
-            </h3>
-          ) : null}
-          {subtitle ? (
-            <p className={`${subtitleSize} mt-1 text-zinc-500`}>{subtitle}</p>
-          ) : null}
-        </header>
-      ) : null}
+  const marginLeft = embedded ? 4 : compact ? 6 : 20;
 
-      <div style={{ height }} className="w-full min-w-0">
-        {!hasData ? (
-          <div className="flex h-full w-full items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 text-sm text-zinc-500">
-            <p className="px-4 text-center font-semibold text-zinc-600">
-              Aucune donnée de besoins à afficher.
-            </p>
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={rows}
-              layout="vertical"
-              margin={{ top: 8, right: 16, left: compact ? 6 : 20, bottom: 8 }}
-              barCategoryGap={compact ? 12 : 16}
-            >
+  const chartInner = (
+    <div
+      style={{ height }}
+      className={embedded ? 'h-full w-full min-h-0 min-w-0 flex-1' : 'w-full min-w-0'}
+    >
+      {!hasData ? (
+        <div className="flex h-full w-full items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 text-sm text-zinc-500">
+          <p className="px-4 text-center font-semibold text-zinc-600">
+            Aucune donnée de besoins à afficher.
+          </p>
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={rows}
+            layout="vertical"
+            margin={{ top: 4, right: 12, left: marginLeft, bottom: 4 }}
+            barCategoryGap={compact ? 12 : 16}
+          >
               <XAxis
                 type="number"
                 domain={[0, maxCount]}
@@ -227,10 +245,32 @@ export function NeedsBarChart({
                   />
                 ))}
               </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+
+  if (embedded) {
+    return chartInner;
+  }
+
+  return (
+    <section className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm md:p-6">
+      {title || subtitle ? (
+        <header className={compact ? 'mb-3' : 'mb-4'}>
+          {title ? (
+            <h3 className={`${titleSize} font-semibold leading-snug text-zinc-900`}>
+              {title}
+            </h3>
+          ) : null}
+          {subtitle ? (
+            <p className={`${subtitleSize} mt-1 text-zinc-500`}>{subtitle}</p>
+          ) : null}
+        </header>
+      ) : null}
+
+      {chartInner}
     </section>
   );
 }

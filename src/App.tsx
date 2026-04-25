@@ -385,6 +385,7 @@ function primaryNavPillClass(active: boolean) {
 const loadNetworkRadarSection = () => import('./components/home/NetworkRadarSection');
 const loadDashboardPage = () => import('./components/dashboard/DashboardPage');
 const loadAdminPage = () => import('@/screens/AdminPage');
+const loadInternalAdminPage = () => import('@/pages/InternalAdminPage');
 const loadStatsPage = () => import('@/pages/StatsPage');
 const loadAdminEvents = () => import('./components/dashboard/AdminEvents');
 const loadPublicEventPage = () => import('./components/events/PublicEventPage');
@@ -392,6 +393,7 @@ const loadAdminMemberEventHistory = () => import('./components/admin/AdminMember
 const NetworkRadarSection = React.lazy(loadNetworkRadarSection);
 const DashboardPage = React.lazy(loadDashboardPage);
 const AdminPageLazy = React.lazy(loadAdminPage);
+const InternalAdminPageLazy = React.lazy(loadInternalAdminPage);
 const StatsPageLazy = React.lazy(loadStatsPage);
 const AdminEventsLazy = React.lazy(loadAdminEvents);
 const PublicEventPageLazy = React.lazy(loadPublicEventPage);
@@ -2286,6 +2288,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const isMembersDirectoryRoute = location.pathname === '/membres' || isNetworkRoute;
   const pathnameNorm = location.pathname.replace(/\/$/, '') || '/';
   const isEventsAdminRoute = pathnameNorm === '/evenements';
+  const isAdminInternalRoute = pathnameNorm === '/admin/internal';
 
   useEffect(() => {
     if (!isNetworkRoute) setShowSavedMembersOnly(false);
@@ -5597,7 +5600,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </div>
               }
             >
-              <AdminPageLazy lang={lang} t={t} />
+              {isAdminInternalRoute ? <InternalAdminPageLazy /> : <AdminPageLazy lang={lang} t={t} />}
             </React.Suspense>
           ) : isEventsAdminRoute ? (
             <SectionErrorBoundary
@@ -5644,7 +5647,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </div>
               }
             >
-              <AdminPageLazy lang={lang} t={t} />
+              {isAdminInternalRoute ? <InternalAdminPageLazy /> : <AdminPageLazy lang={lang} t={t} />}
             </React.Suspense>
           ) : (
             <Navigate to={user ? '/dashboard' : '/'} replace />
@@ -8306,6 +8309,7 @@ const App = () => {
             <Route path="/radar" element={<MainApp initialViewMode="radar" />} />
             <Route path="/stats" element={<MainApp />} />
             <Route path="/admin" element={<MainApp />} />
+            <Route path="/admin/internal" element={<MainApp />} />
             <Route path="/requests/:id" element={<RequestsRedirect />} />
             <Route path="/network/member/:slug" element={<MemberRedirect />} />
             <Route path="/onboarding" element={<MainApp />} />

@@ -552,6 +552,154 @@
   height: 100%;
 }
 
+/* Bloc « Activité récente » : colonnes, avatars, dates alignées */
+.admin-dashboard-page .admin-chart-card--activity {
+  min-height: 0;
+  background: #fff;
+  border-color: #e7e5e4;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.admin-dashboard-page .admin-chart-card--activity .admin-chart-card__subtitle {
+  max-width: none;
+  color: #64748b;
+}
+
+.admin-dashboard-page .admin-activity {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .admin-dashboard-page .admin-activity {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-dashboard-page .admin-activity__panel {
+  min-width: 0;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+  background: linear-gradient(180deg, #fafafa 0%, #fff 40%);
+  padding: 10px 10px 8px;
+}
+
+.admin-dashboard-page .admin-activity__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px 2px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-dashboard-page .admin-activity__head-icon {
+  width: 16px;
+  height: 16px;
+  color: #0f5132;
+  flex-shrink: 0;
+}
+
+.admin-dashboard-page .admin-activity__head-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.admin-dashboard-page .admin-activity__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-dashboard-page .admin-activity__empty {
+  margin: 0;
+  padding: 8px 6px;
+  font-size: 0.88rem;
+  color: #94a3b8;
+}
+
+.admin-dashboard-page .admin-activity__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 8px;
+  margin: 0 -2px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.25;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-dashboard-page .admin-activity__row:hover {
+  background: rgba(15, 81, 50, 0.06);
+  color: #0f5132;
+}
+
+.admin-dashboard-page .admin-activity__row:focus-visible {
+  outline: 2px solid #0f5132;
+  outline-offset: 2px;
+}
+
+.admin-dashboard-page .admin-activity__avatar {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #0f5132;
+  background: #ecfdf5;
+  border: 1px solid #d1fae5;
+}
+
+.admin-dashboard-page .admin-activity__avatar--signup {
+  color: #1e3a5f;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.admin-dashboard-page .admin-activity__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-dashboard-page .admin-activity__time {
+  flex: 0 0 auto;
+  max-width: 46%;
+  text-align: right;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .admin-dashboard-page .admin-activity__time {
+    max-width: 44%;
+    font-size: 0.68rem;
+  }
+}
+
 .admin-dashboard-page .admin-analytics-secondary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -589,6 +737,16 @@
 .admin-dashboard-page .admin-chart-frame--decision-bar {
   min-height: 200px;
   max-height: 220px;
+}
+
+/* Opportunités recherchées (NeedsBarChart embedded) : même logique de hauteur que les barres / scatter */
+.admin-dashboard-page .admin-chart-frame--needs-embed {
+  min-height: 220px;
+  max-height: 280px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
 }
 
 .admin-dashboard-page .admin-scatter-tooltip {
@@ -1287,6 +1445,10 @@
 
 .admin-dashboard-page .admin-chart-card--compact {
   min-height: 320px;
+}
+
+.admin-dashboard-page .admin-chart-card--compact.admin-chart-card--activity {
+  min-height: 0;
 }
 
 .admin-dashboard-page .admin-chart-card--table {

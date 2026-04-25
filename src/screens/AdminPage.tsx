@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { AdminHubNav } from '@/components/admin/AdminHubNav';
 import { collection, getDocs, orderBy, query, where, limit } from 'firebase/firestore';
 import type { Language, MemberNetworkRequest, NeedComment, UserProfile } from '@/types';
-import { cn } from '@/lib/cn';
-import { TimePeriodProvider, useTimePeriod } from '@/contexts/TimePeriodContext';
+import { TimePeriodProvider } from '@/contexts/TimePeriodContext';
+import { AdminPeriodPills } from '@/components/admin/AdminPeriodPills';
 import { db } from '@/firebase';
 import { MEMBER_REQUESTS_COLLECTION, mapMemberRequestDoc } from '@/lib/memberRequests';
 import AdminDashboard from '@/components/dashboard/AdminDashboard';
@@ -22,38 +23,6 @@ type UnansweredNeedRow = {
   company?: string;
   needsCount: number;
 };
-
-function AdminPeriodPills({ t }: { t: TFn }) {
-  const { period, setPeriod, getPeriodLabel } = useTimePeriod();
-  const items: Array<{ key: typeof period; labelKey: string }> = [
-    { key: 'today', labelKey: 'adminTimePeriodToday' },
-    { key: '7d', labelKey: 'adminTimePeriod7d' },
-    { key: '30d', labelKey: 'adminTimePeriod30d' },
-    { key: '90d', labelKey: 'adminTimePeriod90d' },
-    { key: 'all', labelKey: 'adminTimePeriodAll' },
-  ];
-  return (
-    <div className="admin-toolbar" aria-label={t('adminTimeToolbarAria')}>
-      <div className="admin-period">
-        <div className="admin-period__pills" role="group" aria-label={t('adminTimePeriodGroupAria')}>
-          {items.map((p) => (
-            <button
-              key={p.key}
-              type="button"
-              className={cn('admin-pill', p.key === period && 'is-active')}
-              onClick={() => setPeriod(p.key)}
-            >
-              {t(p.labelKey)}
-            </button>
-          ))}
-        </div>
-        <span className="admin-period__range" aria-label={t('adminTimeSelectedAria')}>
-          {getPeriodLabel()}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 export default function AdminPage({ lang, t }: AdminPageProps) {
   const [recentRequests, setRecentRequests] = useState<MemberNetworkRequest[] | null>(null);
@@ -308,20 +277,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
               <p className="admin-header__text">{t('adminPageLead')}</p>
             </div>
             <div className="admin-header__aside">
-              <div className="admin-header__actions">
-                <Link to="/stats" className="admin-pill" style={{ textDecoration: 'none', minHeight: 32 }}>
-                  {t('adminVitrineLink')}
-                </Link>
-                <a
-                  href="/stats"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="admin-pill"
-                  style={{ textDecoration: 'none', minHeight: 32 }}
-                >
-                  {t('adminVitrinePdf')}
-                </a>
-              </div>
+              <AdminHubNav />
               <AdminPeriodPills t={t} />
             </div>
           </div>

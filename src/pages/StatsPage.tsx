@@ -23,6 +23,7 @@ import { useLanguage } from '@/i18n/LanguageProvider';
 import { LanguageSwitch } from '@/components/layout/LanguageSwitch';
 import type { Language } from '@/types';
 import { NeedsBarChart } from '@/components/charts/NeedsBarChart';
+import francoLogoUrl from '../../favicon.svg?url';
 import './stats-page.css';
 
 const BRAND = '#1a3a2a';
@@ -437,7 +438,7 @@ export default function StatsPage() {
 
           <div className="mt-10 flex flex-col items-start gap-4 border-t border-slate-200 pt-8 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <img src="/favicon.svg" alt="FrancoNetwork" className="h-9 w-9" />
+              <img src={francoLogoUrl} alt="FrancoNetwork" className="h-9 w-9" width={36} height={36} />
               <div>
                 <p className="text-sm font-semibold text-slate-900">FrancoNetwork</p>
                 <p className="text-sm text-slate-600">

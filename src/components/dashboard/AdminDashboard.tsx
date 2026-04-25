@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -10,8 +10,6 @@ import {
   Pie,
   PieChart,
   ResponsiveContainer,
-  Scatter,
-  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
@@ -23,12 +21,10 @@ import AdminProfileInsights from '@/components/dashboard/AdminProfileInsights';
 import AdminSiteInsights from '@/components/dashboard/AdminSiteInsights';
 import AdminEvents from '@/components/dashboard/AdminEvents';
 import { useTimePeriod } from '@/contexts/TimePeriodContext';
-import ProfileCompletionGauge from '@/components/dashboard/ProfileCompletionGauge';
 import { getPassionEmoji, getPassionLabel, sanitizePassionIds } from '@/lib/passionConfig';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
 import PassionsCrossHeatmap, { type CrossPick } from '@/components/dashboard/PassionsCrossHeatmap';
-import TopActiveMembersTable from '@/components/dashboard/TopActiveMembersTable';
-import { pickLang, formatProfileLastSeen } from '@/lib/uiLocale';
+import { pickLang } from '@/lib/uiLocale';
 import { Link } from 'react-router-dom';
 import { NeedsBarChart } from '@/components/charts/NeedsBarChart';
 import { aggregateNeedsFromMembers } from '@/lib/needs';
@@ -36,11 +32,10 @@ import { NEED_CATEGORY_LABELS } from '@/lib/needLabels';
 import { NEED_OPTION_VALUE_SET, sanitizeHighlightedNeeds } from '@/needOptions';
 import {
   getAdminDashboardCopy,
-  adminScatterTooltipLine,
   adminActivationSuggestion,
   adminAffinityViewMembers,
-  adminPluralProfiles,
 } from '@/lib/adminDashboardLocale';
+import { FRANCO_ADMIN_KEY_AFFINITY, FRANCO_ADMIN_KEY_SCROLL } from '@/lib/adminClientBridge';
 
 type TFn = (key: string, params?: Record<string, string | number>) => string;
 
@@ -81,40 +76,6 @@ const legendProps = {
   },
   iconSize: 8,
 };
-
-/** Décalage déterministe pour éviter les points superposés (pas de Math.random). */
-function scatterJitter(id: string): { dx: number; dy: number } {
-  let h = 2166136261;
-  for (let i = 0; i < id.length; i++) {
-    h ^= id.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  const u = (h >>> 0) / 0xffffffff;
-  const v = (Math.imul(h, 31) >>> 0) / 0xffffffff;
-  return { dx: (u - 0.5) * 0.42, dy: (v - 0.5) * 0.42 };
-}
-
-function ScatterTooltipBody({
-  active,
-  payload,
-  lang,
-}: {
-  active?: boolean;
-  payload?: Array<{ payload?: { name: string; views: number; clicks: number } }>;
-  lang: Language;
-}) {
-  if (!active || !payload?.length) return null;
-  const p = payload[0]?.payload;
-  if (!p) return null;
-  return (
-    <div className="admin-scatter-tooltip rounded-[var(--fn-radius-md)] border border-[var(--fn-border)] bg-[var(--fn-surface)] px-3 py-2 text-left shadow-[var(--fn-shadow-md)]">
-      <p className="text-[13px] font-semibold leading-snug text-[var(--fn-fg)]">{p.name}</p>
-      <p className="mt-1 text-[11px] tabular-nums text-[var(--fn-muted)]">
-        {adminScatterTooltipLine(p.views, p.clicks, lang)}
-      </p>
-    </div>
-  );
-}
 
 function compactLabel(label: string, max = 14): string {
   const text = String(label ?? '').trim();
@@ -221,53 +182,6 @@ function ChartCard({
 type AdminInsightTab = 'overview' | 'profiles' | 'site' | 'events';
 type AffinityExploreKey = 'detail' | 'matrix';
 
-type AdminRecommendedPayload =
-  | { type: 'scroll'; id: string }
-  | { type: 'affinity'; cross: CrossPick };
-
-type AdminRecommendedItem = {
-  key: string;
-  priority: number;
-  title: string;
-  /** Métrique ou signal clé (ligne courte, chiffres). */
-  signal: string;
-  /** Une ligne de contexte, sans paragraphe. */
-  context: string;
-  ctaLabel: string;
-  /** CTA plein uniquement si l’action est critique (ex. validation, matrice). */
-  ctaEmphasis?: boolean;
-  payload: AdminRecommendedPayload;
-};
-
-function clipAdminRecText(s: string, max: number): string {
-  const t = s.trim();
-  if (t.length <= max) return t;
-  return `${t.slice(0, max - 1)}…`;
-}
-
-function missingFieldRecTitle(field: string, lang: Language): string {
-  switch (field) {
-    case 'Photo':
-      return pickLang('Photo manquante', 'Foto faltante', 'Missing photo', lang);
-    case 'Description':
-      return pickLang('Bio courte', 'Bio corta', 'Short bio', lang);
-    case 'Secteur':
-      return pickLang('Secteur manquant', 'Sector faltante', 'Missing sector', lang);
-    case 'Société':
-      return pickLang('Société manquante', 'Empresa faltante', 'Missing company', lang);
-    case 'Ville':
-      return pickLang('Ville manquante', 'Ciudad faltante', 'Missing city', lang);
-    default:
-      return pickLang(`${field} manquant`, `${field} faltante`, `${field} missing`, lang);
-  }
-}
-
-function scrollAdminSectionIntoView(id: string) {
-  requestAnimationFrame(() => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-}
-
 export default function AdminDashboard(props: AdminDashboardProps) {
   return <AdminDashboardInner {...props} />;
 }
@@ -348,6 +262,45 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       // ignore
     }
   }, [affinityShortlist]);
+
+  /** CTA dépuis `/admin/internal` (file d’attente + scroll une fois le tableau rendu). */
+  useEffect(() => {
+    if (stats.loading || stats.error) return;
+    let id: string | null = null;
+    try {
+      id = window.sessionStorage.getItem(FRANCO_ADMIN_KEY_SCROLL);
+      if (id) window.sessionStorage.removeItem(FRANCO_ADMIN_KEY_SCROLL);
+    } catch {
+      // ignore
+    }
+    if (id) {
+      const elId = id;
+      const run = () => document.getElementById(elId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      requestAnimationFrame(() => requestAnimationFrame(run));
+    }
+  }, [stats.loading, stats.error]);
+
+  useEffect(() => {
+    if (stats.loading || stats.error) return;
+    let raw: string | null = null;
+    try {
+      raw = window.sessionStorage.getItem(FRANCO_ADMIN_KEY_AFFINITY);
+      if (raw) window.sessionStorage.removeItem(FRANCO_ADMIN_KEY_AFFINITY);
+    } catch {
+      // ignore
+    }
+    if (!raw) return;
+    try {
+      const cross = JSON.parse(raw) as CrossPick;
+      setPickedCross(cross);
+      const run = () =>
+        document.getElementById('admin-section-affinities')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      requestAnimationFrame(() => requestAnimationFrame(run));
+    } catch {
+      // ignore
+    }
+  }, [stats.loading, stats.error]);
+
   const bySectorData = useMemo(
     () =>
       Object.entries(stats.profilesBySector)
@@ -386,6 +339,15 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
     return aggregateNeedsFromMembers(members, NEED_CATEGORY_LABELS, { limit: 8 });
   }, [stats.profilesForDashboard]);
+
+  const topNeedsPills = useMemo(
+    () =>
+      [...needsData]
+        .filter((d) => d.count > 0)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3),
+    [needsData]
+  );
 
   const byCityData = useMemo(
     () => Object.entries(stats.profilesByCity).map(([name, value]) => ({ name, value })),
@@ -591,29 +553,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     return rows;
   }, [stats.profilesForDashboard]);
 
-  const completionGoalDate = useMemo(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() + 3);
-    return d;
-  }, []);
-
-  const incompleteProfileLinks = useMemo(() => {
-    const profiles = (stats.profilesForDashboard ?? []) as any[];
-    const scored = profiles
-      .map((p) => {
-        const hasPhoto = Boolean(String(p.photo ?? '').trim());
-        const hasSector = Boolean(String(p.secteur ?? '').trim());
-        const hasDesc = String(p.description ?? '').trim().length >= 30;
-        const complete = hasPhoto && hasSector && hasDesc;
-        const score =
-          (hasPhoto ? 1 : 0) + (hasSector ? 1 : 0) + (hasDesc ? 1 : 0);
-        return { p, complete, score };
-      })
-      .filter((x) => !x.complete)
-      .sort((a, b) => a.score - b.score);
-    return scored.slice(0, 12).map((x) => x.p);
-  }, [stats.profilesForDashboard]);
-
   const sectorCoverageRows = useMemo(() => {
     const rows = Object.entries(stats.profilesBySector ?? {})
       .map(([name, value]) => ({ name, value }))
@@ -634,77 +573,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     };
   }, [stats.profilesBySector, stats.profilesByCity]);
 
-  const attentionViewContact = useMemo(() => {
-    const profiles = (stats.profilesForDashboard ?? []) as any[];
-    const viewsMap = stats.profileViewsByUid ?? {};
-    const byId = new Map<string, any>(profiles.map((p: any) => [String(p.id), p]));
-
-    const ids = new Set<string>();
-    Object.keys(viewsMap).forEach((id) => ids.add(id));
-    profiles.forEach((p) => {
-      if ((p.contactClicks ?? 0) > 0) ids.add(String(p.id));
-    });
-
-    const rawPoints = Array.from(ids)
-      .map((id) => {
-        const p = byId.get(id);
-        const views = viewsMap[id] ?? 0;
-        const clicks = p?.contactClicks ?? 0;
-        const name = p
-          ? formatPersonName(String(p.nom ?? '').trim())
-          : String(viewsMap[id] !== undefined ? 'Membre' : id);
-        return { id, name, views, clicks };
-      })
-      .filter((pt) => pt.views > 0 || pt.clicks > 0);
-
-    const jittered = rawPoints.map((pt) => {
-      const { dx, dy } = scatterJitter(pt.id);
-      return {
-        ...pt,
-        x: pt.views + dx,
-        y: pt.clicks + dy,
-      };
-    });
-
-    const useScatter = jittered.length >= 5;
-
-    const viewedNotContacted: typeof profiles = [];
-    const viewedAndContacted: typeof profiles = [];
-    const lowVisibility: typeof profiles = [];
-    for (const p of profiles) {
-      const id = String(p.id);
-      const v = viewsMap[id] ?? 0;
-      const c = p.contactClicks ?? 0;
-      if (c >= 1) viewedAndContacted.push(p);
-      else if (v >= 1) viewedNotContacted.push(p);
-      else lowVisibility.push(p);
-    }
-
-    const byScore = (a: any, b: any) => {
-      const va = viewsMap[String(a.id)] ?? 0;
-      const vb = viewsMap[String(b.id)] ?? 0;
-      return vb - va;
-    };
-    viewedNotContacted.sort(byScore);
-    viewedAndContacted.sort((a, b) => (b.contactClicks ?? 0) - (a.contactClicks ?? 0) || byScore(a, b));
-    lowVisibility.sort((a, b) => String(a.nom ?? '').localeCompare(String(b.nom ?? '')));
-
-    return {
-      scatter: jittered,
-      useScatter,
-      editorial: {
-        highAttentionLowContact: viewedNotContacted.slice(0, 5),
-        engaged: viewedAndContacted.slice(0, 5),
-        lowVisibility: lowVisibility.slice(0, 5),
-        counts: {
-          highAttentionLowContact: viewedNotContacted.length,
-          engaged: viewedAndContacted.length,
-          lowVisibility: lowVisibility.length,
-        },
-      },
-    };
-  }, [stats.profilesForDashboard, stats.profileViewsByUid]);
-
   const coverageGapMatrixRows = useMemo(() => {
     const sectors = Object.entries(stats.profilesBySector ?? {}).map(([label, value]) => ({
       label,
@@ -721,273 +589,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       .sort((a, b) => a.value - b.value || a.label.localeCompare(b.label))
       .slice(0, 10);
   }, [stats.profilesBySector, stats.profilesByCity]);
-
-  const relationshipPotential = useMemo(() => {
-    const profiles = (stats.profilesForDashboard ?? []) as any[];
-    const passionToMembers = new Map<string, Set<string>>();
-    const memberToPassions = new Map<string, string[]>();
-    const passionToSectors = new Map<string, Set<string>>();
-
-    for (const p of profiles) {
-      const id = String(p.id);
-      const sector = String(p.secteur ?? '').trim() || '—';
-      const passions = sanitizePassionIds(p.passionIds);
-      memberToPassions.set(id, passions);
-      for (const pid of passions) {
-        if (!passionToMembers.has(pid)) passionToMembers.set(pid, new Set());
-        passionToMembers.get(pid)!.add(id);
-        if (!passionToSectors.has(pid)) passionToSectors.set(pid, new Set());
-        passionToSectors.get(pid)!.add(sector);
-      }
-    }
-
-    const memberScores = profiles
-      .map((p) => {
-        const id = String(p.id);
-        const passions = memberToPassions.get(id) ?? [];
-        const overlap = new Set<string>();
-        passions.forEach((pid) => {
-          passionToMembers.get(pid)?.forEach((otherId) => {
-            if (otherId !== id) overlap.add(otherId);
-          });
-        });
-        return { id, nom: p.nom, entreprise: p.entreprise, secteur: p.secteur, city: p.city, score: overlap.size };
-      })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5);
-
-    const locale = lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr';
-    const topOverlapPassions = Array.from(passionToSectors.entries())
-      .map(([pid, sectors]) => ({
-        pid,
-        sectorCount: sectors.size,
-        memberCount: passionToMembers.get(pid)?.size ?? 0,
-        label: `${getPassionEmoji(pid)} ${getPassionLabel(pid, locale)}`,
-      }))
-      .sort((a, b) => b.sectorCount - a.sectorCount || b.memberCount - a.memberCount)
-      .slice(0, 5);
-
-    return { memberScores, topOverlapPassions };
-  }, [stats.profilesForDashboard, lang]);
-
-  const runRecommendedAction = useCallback((payload: AdminRecommendedPayload) => {
-    if (payload.type === 'affinity') {
-      setPickedCross(payload.cross);
-      return;
-    }
-    scrollAdminSectionIntoView(payload.id);
-  }, []);
-
-  const { primaryRecommended, secondaryRecommended } = useMemo(() => {
-    const out: AdminRecommendedItem[] = [];
-    const total = stats.totalProfiles;
-    const none = { primaryRecommended: [] as AdminRecommendedItem[], secondaryRecommended: [] as AdminRecommendedItem[] };
-    if (total <= 0) return none;
-
-    if (stats.pendingReviewProfiles > 0) {
-      const n = stats.pendingReviewProfiles;
-      out.push({
-        key: 'pending-review',
-        priority: 12,
-        title: pickLang('Validation en attente', 'Validaciones pendientes', 'Pending validation', lang),
-        signal: pickLang(`${n} fiche${n > 1 ? 's' : ''}`, `${n} ficha(s)`, `${n} profile(s)`, lang),
-        context: pickLang('Revue admin requise.', 'Requiere revisión.', 'Admin review needed.', lang),
-        ctaLabel: pickLang('Voir les KPI', 'Ver KPI', 'View KPIs', lang),
-        ctaEmphasis: true,
-        payload: { type: 'scroll', id: 'admin-section-kpi' },
-      });
-    }
-
-    const topMissing = missingFieldRows[0];
-    if (topMissing && topMissing.missing > 0) {
-      const pct = Math.round((topMissing.missing / Math.max(1, total)) * 100);
-      if (topMissing.missing >= 4 || pct >= 12) {
-        out.push({
-          key: `missing-${topMissing.field}`,
-          priority: 18,
-          title: missingFieldRecTitle(topMissing.field, lang),
-          signal: pickLang(
-            `${topMissing.missing} profils · ${pct} %`,
-            `${topMissing.missing} perfiles · ${pct} %`,
-            `${topMissing.missing} profiles · ${pct}%`,
-            lang
-          ),
-          context: pickLang('Part du réseau concernée.', 'Parte de la red.', 'Share of network.', lang),
-          ctaLabel: pickLang('Champs à compléter', 'Campos', 'Missing fields', lang),
-          payload: { type: 'scroll', id: 'admin-section-missing-fields' },
-        });
-      }
-    }
-
-    if (stats.incompleteProfilesStrict >= 3) {
-      const pctStrict = Math.round((stats.incompleteProfilesStrict / total) * 100);
-      out.push({
-        key: 'strict-completion',
-        priority: 22,
-        title: pickLang('Complétion stricte', 'Completitud estricta', 'Strict completion', lang),
-        signal: pickLang(
-          `${stats.incompleteProfilesStrict} profils · ${pctStrict} %`,
-          `${stats.incompleteProfilesStrict} perfiles · ${pctStrict} %`,
-          `${stats.incompleteProfilesStrict} profiles · ${pctStrict}%`,
-          lang
-        ),
-        context: pickLang(
-          'Nom, secteur, bio 30+, photo.',
-          'Nombre, sector, bio 30+, foto.',
-          'Name, sector, 30+ bio, photo.',
-          lang
-        ),
-        ctaLabel: pickLang('Voir la jauge', 'Ver medidor', 'View gauge', lang),
-        payload: { type: 'scroll', id: 'admin-section-completion' },
-      });
-    }
-
-    const hnc = attentionViewContact.editorial.counts.highAttentionLowContact;
-    if (hnc > 0) {
-      const sample = attentionViewContact.editorial.highAttentionLowContact[0];
-      const sampleName = sample ? formatPersonName(String(sample.nom ?? '').trim()) : '';
-      out.push({
-        key: 'attention-low-conversion',
-        priority: 28,
-        title: pickLang('Attention sans contact', 'Vistas sin contacto', 'Views, no contact', lang),
-        signal: pickLang(`${hnc} profil${hnc > 1 ? 's' : ''}`, `${hnc} perfil(es)`, `${hnc} profile(s)`, lang),
-        context: sampleName
-          ? clipAdminRecText(
-              pickLang(`Ex. ${sampleName}`, `Ej. ${sampleName}`, `e.g. ${sampleName}`, lang),
-              72
-            )
-          : pickLang('Vues sans clic contact.', 'Vistas sin clic.', 'Views without contact clicks.', lang),
-        ctaLabel: pickLang('Graphique attention', 'Gráfico', 'Attention chart', lang),
-        payload: { type: 'scroll', id: 'admin-section-attention' },
-      });
-    }
-
-    const topHub = relationshipPotential.memberScores[0];
-    const hubThreshold = total < 35 ? 2 : 4;
-    if (topHub && topHub.score >= hubThreshold) {
-      const name = formatPersonName(String(topHub.nom ?? '').trim());
-      out.push({
-        key: 'connect-hub',
-        priority: 32,
-        title: pickLang('Membre pivot', 'Miembro pivote', 'Connector member', lang),
-        signal: pickLang(
-          `${topHub.score} liens passion`,
-          `${topHub.score} vínculos`,
-          `${topHub.score} passion ties`,
-          lang
-        ),
-        context: clipAdminRecText(name, 48),
-        ctaLabel: pickLang('Voir connexions', 'Ver vínculos', 'See connections', lang),
-        payload: { type: 'scroll', id: 'admin-section-connect' },
-      });
-    }
-
-    if (coverageGapMatrixRows.length > 0) {
-      const g = coverageGapMatrixRows[0];
-      out.push({
-        key: 'coverage-gaps',
-        priority: 38,
-        title: pickLang('Gaps de couverture', 'Brechas de cobertura', 'Coverage gaps', lang),
-        signal: pickLang(
-          `${coverageGapMatrixRows.length} zones ≤ 2`,
-          `${coverageGapMatrixRows.length} zonas ≤ 2`,
-          `${coverageGapMatrixRows.length} thin zones`,
-          lang
-        ),
-        context: clipAdminRecText(`${g.kind} « ${g.label} »`, 56),
-        ctaLabel: pickLang('Carte des écarts', 'Mapa', 'Gap map', lang),
-        payload: { type: 'scroll', id: 'admin-section-gaps' },
-      });
-    }
-
-    const affTop = affinityTop3[0];
-    if (affTop && affTop.members >= 2) {
-      out.push({
-        key: 'affinity-activate',
-        priority: 42,
-        title: pickLang('Affinité forte', 'Afinidad fuerte', 'Strong affinity', lang),
-        signal: pickLang(
-          `${affTop.members} membres`,
-          `${affTop.members} miembros`,
-          `${affTop.members} members`,
-          lang
-        ),
-        context: clipAdminRecText(`${affTop.passionLabel} × ${affTop.sector}`, 58),
-        ctaLabel: pickLang('Ouvrir la matrice', 'Abrir matriz', 'Open matrix', lang),
-        ctaEmphasis: true,
-        payload: {
-          type: 'affinity',
-          cross: { passionId: affTop.passionId, dimValue: affTop.sector, dimension: 'sector' },
-        },
-      });
-    }
-
-    const topPassion = relationshipPotential.topOverlapPassions[0];
-    if (topPassion && topPassion.sectorCount >= 3 && (!affTop || topPassion.pid !== affTop.passionId)) {
-      out.push({
-        key: 'passion-transverse',
-        priority: 46,
-        title: pickLang('Passion transversale', 'Pasión transversal', 'Cross-cutting passion', lang),
-        signal: pickLang(
-          `${topPassion.sectorCount} secteurs`,
-          `${topPassion.sectorCount} sectores`,
-          `${topPassion.sectorCount} sectors`,
-          lang
-        ),
-        context: clipAdminRecText(topPassion.label, 52),
-        ctaLabel: pickLang('Affinités (bas de page)', 'Afinidad (abajo)', 'Affinities (bottom)', lang),
-        payload: { type: 'scroll', id: 'admin-section-affinities' },
-      });
-    }
-
-    const lv = attentionViewContact.editorial.counts.lowVisibility;
-    if (lv >= Math.max(6, Math.ceil(total * 0.15))) {
-      out.push({
-        key: 'visibility-lift',
-        priority: 48,
-        title: pickLang('Visibilité basse', 'Baja visibilidad', 'Low visibility', lang),
-        signal: pickLang(`${lv} profils`, `${lv} perfiles`, `${lv} profiles`, lang),
-        context: pickLang('Aucune vue ni contact (période).', 'Sin vistas ni contactos.', 'No views or contacts.', lang),
-        ctaLabel: pickLang('Vue attention', 'Vista', 'View chart', lang),
-        payload: { type: 'scroll', id: 'admin-section-attention' },
-      });
-    }
-
-    if (out.length < 4) {
-      out.push({
-        key: 'active-members-follow',
-        priority: 72,
-        title: pickLang('Membres engagés', 'Miembros activos', 'Engaged members', lang),
-        signal: pickLang('Période en cours', 'Periodo actual', 'Current period', lang),
-        context: pickLang('Qui porte le réseau.', 'Quién mueve la red.', 'Who drives the network.', lang),
-        ctaLabel: pickLang('Liste active', 'Lista', 'Active list', lang),
-        payload: { type: 'scroll', id: 'admin-section-active-members' },
-      });
-    }
-
-    const seen = new Set<string>();
-    const deduped: AdminRecommendedItem[] = [];
-    for (const item of [...out].sort((a, b) => a.priority - b.priority)) {
-      if (seen.has(item.key)) continue;
-      seen.add(item.key);
-      deduped.push(item);
-    }
-    const all = deduped.slice(0, 6);
-    return {
-      primaryRecommended: all.slice(0, 3),
-      secondaryRecommended: all.slice(3),
-    };
-  }, [
-    lang,
-    stats.totalProfiles,
-    stats.pendingReviewProfiles,
-    stats.incompleteProfilesStrict,
-    missingFieldRows,
-    attentionViewContact,
-    relationshipPotential,
-    coverageGapMatrixRows,
-    affinityTop3,
-  ]);
 
   // STEP 1 (today): focus on a clean decision-oriented overview. Keep other tabs intact for later.
   useEffect(() => {
@@ -1115,258 +716,38 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
             </div>
           </div>
 
-          <div className="admin-analytics-grid">
-            <article className="admin-chart-card admin-chart-card--compact" id="admin-section-activity">
-              <p className="admin-chart-card__title">
-                {pickLang('Activité récente', 'Actividad reciente', 'Recent activity', lang)}
-              </p>
-              <p className="admin-chart-card__subtitle">
-                {pickLang('Dernières connexions (lastSeen) et derniers profils créés.', 'lastSeen y altas', 'logins and new profiles', lang)}
-              </p>
-              <div className="admin-chart-card__body">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
-                      {pickLang('Connexions', 'Conexiones', 'Logins', lang)}
-                    </p>
-                    <ul className="mt-2 space-y-2 text-sm">
-                      {stats.recentLogins.length === 0 ? (
-                        <li className="text-slate-500">—</li>
-                      ) : (
-                        stats.recentLogins.map((r) => (
-                          <li key={r.id} className="flex items-center justify-between gap-2">
-                            <Link className="font-semibold text-slate-900 underline" to={`/profil/${encodeURIComponent(r.id)}`}>
-                              {r.name}
-                            </Link>
-                            <span className="tabular-nums text-xs text-slate-500">
-                              {formatProfileLastSeen(r.at, lang) ?? '—'}
-                            </span>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </div>
-                  <div>
-                    <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
-                      {pickLang('Nouveaux profils', 'Nuevos perfiles', 'New profiles', lang)}
-                    </p>
-                    <ul className="mt-2 space-y-2 text-sm">
-                      {stats.recentSignups.length === 0 ? (
-                        <li className="text-slate-500">—</li>
-                      ) : (
-                        stats.recentSignups.map((r) => (
-                          <li key={r.id} className="flex items-center justify-between gap-2">
-                            <Link className="font-semibold text-slate-900 underline" to={`/profil/${encodeURIComponent(r.id)}`}>
-                              {r.name}
-                            </Link>
-                            <span className="tabular-nums text-xs text-slate-500">
-                              {formatProfileLastSeen(r.at, lang) ?? '—'}
-                            </span>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </article>
-
-            <article className="admin-chart-card admin-chart-card--compact" id="admin-section-completion">
-              <p className="admin-chart-card__title">{ad.chartCompletionTitle}</p>
-              <p className="admin-chart-card__subtitle">{ad.chartCompletionSubtitle}</p>
-              <div className="admin-chart-card__body space-y-4">
-                <div>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-sm font-semibold text-slate-800">
-                      {pickLang('Complétion (stricte)', 'Completitud (estricta)', 'Strict completion', lang)}
-                    </p>
-                    <p className="text-sm font-extrabold tabular-nums text-slate-900">
-                      {stats.completedProfilesStrict}/{stats.totalProfiles} (
-                      {stats.totalProfiles > 0
-                        ? Math.round((stats.completedProfilesStrict / stats.totalProfiles) * 100)
-                        : 0}
-                      %)
-                    </p>
-                  </div>
-                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                    <div
-                      className="h-full rounded-full bg-emerald-700"
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          Math.max(0, stats.totalProfiles > 0 ? (stats.completedProfilesStrict / stats.totalProfiles) * 100 : 0)
-                        )}%`,
-                      }}
-                    />
-                  </div>
-                  <p className="mt-2 text-xs text-slate-500">
-                    {pickLang('Objectif 80% d’ici le', 'Objetivo 80% para el', 'Target 80% by', lang)}{' '}
-                    {completionGoalDate.toLocaleDateString(lang === 'es' ? 'es-MX' : lang === 'en' ? 'en-US' : 'fr-FR', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                    .
-                  </p>
-                </div>
-                <div className="admin-chart-frame">
-                  <MiniErrorBoundary label="ProfileCompletionGauge" t={t}>
-                    <ProfileCompletionGauge
-                      totalMembers={stats.totalProfiles}
-                      completedProfiles={stats.completedProfilesStrict}
-                      embedded
-                      showHeader={false}
-                    />
-                  </MiniErrorBoundary>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {pickLang('Profils à compléter (aperçu)', 'Perfiles incompletos', 'Incomplete profiles', lang)}
-                  </p>
-                  <ul className="mt-2 space-y-1 text-sm">
-                    {incompleteProfileLinks.length === 0 ? (
-                      <li className="text-slate-500">—</li>
-                    ) : (
-                      incompleteProfileLinks.map((p: any) => (
-                        <li key={p.id}>
-                          <Link className="text-slate-900 underline" to={`/profil/${encodeURIComponent(String(p.id))}`}>
-                            {formatPersonName(String(p.nom ?? '').trim())}
-                          </Link>
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                </div>
-              </div>
-            </article>
-          </div>
-
-          <article className="admin-chart-card admin-recommended-actions" id="admin-section-recommended">
-            <div className="admin-recommended-actions__head">
-              <div>
-                <p className="admin-chart-card__title admin-recommended-actions__title">
-                  {pickLang('Actions recommandées', 'Acciones recomendadas', 'Recommended actions', lang)}
-                </p>
-                <p className="admin-chart-card__subtitle admin-recommended-actions__subtitle">
-                  {pickLang(
-                    'Signaux forts du tableau de bord, par ordre d’impact.',
-                    'Señales claras del panel, por impacto.',
-                    'High-impact signals from your dashboard, in order.',
-                    lang
-                  )}{' '}
-                  <button
-                    type="button"
-                    className="admin-recommended-actions__inline-action"
-                    onClick={() => scrollAdminSectionIntoView('admin-section-priority')}
-                    title={pickLang(
-                      'Aller aux besoins sans réponse et dernières demandes.',
-                      'Ir a necesidades sin respuesta y últimas solicitudes.',
-                      'Jump to unanswered needs and latest requests.',
-                      lang
-                    )}
-                  >
-                    {pickLang('Besoins & demandes', 'Necesidades y solicitudes', 'Needs & requests', lang)}
-                  </button>
-                </p>
-              </div>
-            </div>
-            <div className="admin-recommended-actions__body">
-              {primaryRecommended.length === 0 && secondaryRecommended.length === 0 ? (
-                <p className="admin-recommended-actions__empty">
-                  {pickLang(
-                    'Pas assez de données pour proposer des actions sur cette période.',
-                    'Datos insuficientes para acciones en este periodo.',
-                    'Not enough data to suggest actions for this period.',
-                    lang
-                  )}
-                </p>
-              ) : (
-                <>
-                  <div className="admin-rec-tier">
-                    <p className="admin-rec-tier__label" aria-label={pickLang('Priorité 1', 'Prioridad 1', 'Priority 1', lang)}>
-                      {pickLang('P1 — À traiter maintenant', 'P1 — Ahora', 'P1 — Address now', lang)}
-                    </p>
-                    <ul className="admin-recommended-actions__grid admin-recommended-actions__grid--primary">
-                      {primaryRecommended.map((item) => (
-                        <li key={item.key} className="admin-rec-card admin-rec-card--primary">
-                          <p className="admin-rec-card__title">{item.title}</p>
-                          <p className="admin-rec-card__signal">{item.signal}</p>
-                          <p className="admin-rec-card__context">{item.context}</p>
-                          <button
-                            type="button"
-                            className={
-                              item.ctaEmphasis
-                                ? 'admin-rec-card__action admin-rec-card__action--emphasis'
-                                : 'admin-rec-card__action'
-                            }
-                            onClick={() => runRecommendedAction(item.payload)}
-                          >
-                            {item.ctaLabel}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  {secondaryRecommended.length > 0 ? (
-                    <div className="admin-rec-tier admin-rec-tier--secondary">
-                      <p className="admin-rec-tier__label" aria-label={pickLang('Priorité 2', 'Prioridad 2', 'Priority 2', lang)}>
-                        {pickLang('P2 — Ensuite', 'P2 — Después', 'P2 — Next', lang)}
-                      </p>
-                      <ul className="admin-recommended-actions__grid admin-recommended-actions__grid--secondary">
-                        {secondaryRecommended.map((item) => (
-                          <li key={item.key} className="admin-rec-card admin-rec-card--secondary">
-                            <p className="admin-rec-card__title">{item.title}</p>
-                            <p className="admin-rec-card__signal">{item.signal}</p>
-                            <p className="admin-rec-card__context">{item.context}</p>
-                            <button
-                              type="button"
-                              className={
-                                item.ctaEmphasis
-                                  ? 'admin-rec-card__action admin-rec-card__action--emphasis'
-                                  : 'admin-rec-card__action'
-                              }
-                              onClick={() => runRecommendedAction(item.payload)}
-                            >
-                              {item.ctaLabel}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                </>
-              )}
-            </div>
-          </article>
-
           {/* C. Priority action zone */}
           <div className="admin-priority-grid" id="admin-section-priority">
             <div className="min-w-0">{priorityLeft ?? null}</div>
             <div className="min-w-0">{priorityRight ?? null}</div>
           </div>
 
-          <div className="admin-analytics-wide">
-            <article className="admin-chart-card admin-chart-card--table" id="admin-section-active-members">
-              <p className="admin-chart-card__title">{ad.chartTopActiveTitle}</p>
-              <p className="admin-chart-card__subtitle">{ad.chartTopActiveSubtitle}</p>
-              <div className="admin-chart-card__body">
-                <div className="admin-table-wrap">
-                  <MiniErrorBoundary label="TopActiveMembersTable" t={t}>
-                    <TopActiveMembersTable members={stats.profilesForDashboard as any} lang={lang} />
-                  </MiniErrorBoundary>
-                </div>
-              </div>
-            </article>
-          </div>
-
           <div className="admin-analytics-secondary">
             <div className="min-w-0">
-              <NeedsBarChart
-                data={needsData}
-                title={ad.needsBarTitle}
-                subtitle={ad.needsBarSubtitle}
-                compact
-              />
+              <article className="admin-chart-card admin-chart-card--compact">
+                <p className="admin-chart-card__title">{ad.needsBarTitle}</p>
+                <p className="admin-chart-card__subtitle">{ad.needsBarSubtitle}</p>
+                <div className="admin-chart-card__body">
+                  <div className="admin-chart-frame admin-chart-frame--needs-embed">
+                    <NeedsBarChart
+                      data={needsData}
+                      compact
+                      embedded
+                      limit={8}
+                    />
+                  </div>
+                  {topNeedsPills.length > 0 ? (
+                    <div className="admin-gaps">
+                      <p className="admin-gaps__title">{ad.needsTopPillsTitle}</p>
+                      <ul className="admin-gaps__list">
+                        {topNeedsPills.map((row) => (
+                          <li key={row.key}>{row.label}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              </article>
             </div>
 
             <article className="admin-chart-card admin-chart-card--compact">
@@ -1428,168 +809,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
-            </article>
-
-            <article className="admin-chart-card admin-chart-card--compact" id="admin-section-attention">
-              <p className="admin-chart-card__title">{ad.chartAttentionTitle}</p>
-              <p className="admin-chart-card__subtitle">
-                {attentionViewContact.useScatter
-                  ? ad.chartAttentionSubtitleScatter
-                  : ad.chartAttentionSubtitleEditorial}
-              </p>
-              <div className="admin-chart-card__body">
-                {attentionViewContact.scatter.length === 0 ? (
-                  <p className="admin-decision-empty">{ad.attentionEmpty}</p>
-                ) : attentionViewContact.useScatter ? (
-                  <div className="admin-chart-frame admin-chart-frame--scatter">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <ScatterChart margin={{ top: 10, right: 14, bottom: 22, left: 16 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                        <XAxis
-                          type="number"
-                          dataKey="x"
-                          name={ad.scatterAxisViews}
-                          tick={{ fontSize: 11, fill: '#64748b' }}
-                          allowDecimals={false}
-                          label={{
-                            value: ad.scatterAxisProfileViews,
-                            position: 'insideBottom',
-                            offset: -4,
-                            style: { fontSize: 11, fill: '#78716c' },
-                          }}
-                        />
-                        <YAxis
-                          type="number"
-                          dataKey="y"
-                          name={ad.scatterAxisContacts}
-                          tick={{ fontSize: 11, fill: '#64748b' }}
-                          allowDecimals={false}
-                          label={{
-                            value: ad.scatterAxisContactClicks,
-                            angle: -90,
-                            position: 'insideLeft',
-                            style: { fontSize: 11, fill: '#78716c', textAnchor: 'middle' },
-                          }}
-                        />
-                        <Tooltip
-                          content={(tp) => (
-                            <ScatterTooltipBody active={tp.active} payload={tp.payload as any} lang={lang} />
-                          )}
-                          cursor={{ strokeDasharray: '4 4' }}
-                        />
-                        <Scatter data={attentionViewContact.scatter} fill="#4f46e5" fillOpacity={0.75} />
-                      </ScatterChart>
-                    </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <div className="admin-attention-editorial">
-                    <div className="admin-attention-segment">
-                      <p className="admin-attention-segment__title">{ad.attentionSegHighViewsLowContact}</p>
-                      <p className="admin-attention-segment__meta">
-                        {adminPluralProfiles(attentionViewContact.editorial.counts.highAttentionLowContact, lang)}
-                      </p>
-                      <ul className="admin-decision-rows">
-                        {attentionViewContact.editorial.highAttentionLowContact.length === 0 ? (
-                          <li className="admin-decision-rows__empty">—</li>
-                        ) : (
-                          attentionViewContact.editorial.highAttentionLowContact.map((m: any) => {
-                            const v = stats.profileViewsByUid?.[String(m.id)] ?? 0;
-                            return (
-                              <li key={m.id} className="admin-decision-rows__item">
-                                <span className="admin-decision-rows__primary">
-                                  {formatPersonName(String(m.nom ?? '').trim())}
-                                </span>
-                                <span className="admin-decision-rows__secondary">
-                                  {ad.attentionRowViewsContacts(v, 0)}
-                                </span>
-                              </li>
-                            );
-                          })
-                        )}
-                      </ul>
-                    </div>
-                    <div className="admin-attention-segment">
-                      <p className="admin-attention-segment__title">{ad.attentionSegEngaged}</p>
-                      <p className="admin-attention-segment__meta">
-                        {adminPluralProfiles(attentionViewContact.editorial.counts.engaged, lang)}
-                      </p>
-                      <ul className="admin-decision-rows">
-                        {attentionViewContact.editorial.engaged.length === 0 ? (
-                          <li className="admin-decision-rows__empty">—</li>
-                        ) : (
-                          attentionViewContact.editorial.engaged.map((m: any) => {
-                            const v = stats.profileViewsByUid?.[String(m.id)] ?? 0;
-                            const c = m.contactClicks ?? 0;
-                            return (
-                              <li key={m.id} className="admin-decision-rows__item">
-                                <span className="admin-decision-rows__primary">
-                                  {formatPersonName(String(m.nom ?? '').trim())}
-                                </span>
-                                <span className="admin-decision-rows__secondary">
-                                  {ad.attentionRowViewsContacts(v, c)}
-                                </span>
-                              </li>
-                            );
-                          })
-                        )}
-                      </ul>
-                    </div>
-                    <div className="admin-attention-segment">
-                      <p className="admin-attention-segment__title">{ad.attentionSegLowVis}</p>
-                      <p className="admin-attention-segment__meta">
-                        {ad.attentionSegLowMeta(attentionViewContact.editorial.counts.lowVisibility)}
-                      </p>
-                      <ul className="admin-decision-rows">
-                        {attentionViewContact.editorial.lowVisibility.length === 0 ? (
-                          <li className="admin-decision-rows__empty">—</li>
-                        ) : (
-                          attentionViewContact.editorial.lowVisibility.map((m: any) => (
-                            <li key={m.id} className="admin-decision-rows__item">
-                              <span className="admin-decision-rows__primary">
-                                {formatPersonName(String(m.nom ?? '').trim())}
-                              </span>
-                              <span className="admin-decision-rows__secondary">{ad.attentionRowZero}</span>
-                            </li>
-                          ))
-                        )}
-                      </ul>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </article>
-
-            <article className="admin-chart-card admin-chart-card--compact" id="admin-section-connect">
-              <p className="admin-chart-card__title">{ad.connectPriorityTitle}</p>
-              <p className="admin-chart-card__subtitle">{ad.connectPrioritySubtitle}</p>
-              <div className="admin-chart-card__body">
-                {relationshipPotential.memberScores.length === 0 ? (
-                  <p className="admin-decision-empty">{ad.connectPriorityEmpty}</p>
-                ) : (
-                  <ul className="admin-opportunity-member-list">
-                    {relationshipPotential.memberScores.map((m) => (
-                      <li key={m.id} className="admin-opportunity-member-list__row">
-                        <div className="admin-opportunity-member-list__text">
-                          <p className="admin-opportunity-member-list__name">
-                            {formatPersonName(String(m.nom ?? '').trim())}
-                          </p>
-                          {(m.entreprise || m.city) && (
-                            <p className="admin-opportunity-member-list__meta">
-                              {[String(m.entreprise ?? '').trim(), String(m.city ?? '').trim()]
-                                .filter(Boolean)
-                                .join(' · ')}
-                            </p>
-                          )}
-                        </div>
-                        <p className="admin-opportunity-member-list__score tabular-nums" title={ad.overlapScoreTitle}>
-                          {m.score}
-                          <span className="admin-opportunity-member-list__score-label">{ad.overlapScoreSuffix}</span>
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </div>
             </article>
 

@@ -509,6 +509,20 @@ export const TRANSLATIONS: Translations = {
   },
   adminVitrineLink: { fr: "Voir la vitrine publique", es: "Ver vitrina pública" },
   adminVitrinePdf: { fr: "Ouvrir /stats (PDF)", es: "Abrir /stats (PDF)" },
+  adminInternalTab: { fr: "Internal", es: "Internal" },
+  adminBackToDashboard: { fr: "Tableau de bord", es: "Panel" },
+  adminInternalTitle: {
+    fr: "Données internes",
+    es: "Datos internos",
+  },
+  adminInternalLead: {
+    fr: "Espace réservé à l’équipe — le contenu sera complété ici.",
+    es: "Espacio reservado al equipo: el contenido se irá completando aquí.",
+  },
+  adminInternalPlaceholder: {
+    fr: "Aucun bloc interne pour l’instant — dites-moi quoi afficher ici.",
+    es: "Sin bloque interno por ahora: indique qué mostrar aquí.",
+  },
   adminTimePeriodToday: { fr: "Aujourd'hui", es: "Hoy" },
   adminTimePeriod7d: { fr: "7 jours", es: "7 días" },
   adminTimePeriod30d: { fr: "30 jours", es: "30 días" },
