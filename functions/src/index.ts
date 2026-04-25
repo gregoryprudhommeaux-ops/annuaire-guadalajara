@@ -11,6 +11,8 @@
  *  5) dispatchScheduledCampaigns — onSchedule toutes les 5 min, envoie les campagnes
  *     `emailCampaigns/{id}` programmées par l'admin via la page /admin/internal.
  *  6) sendCampaignNow — Callable HTTPS, envoi immédiat d'une campagne (admin only).
+ *  7) sendCampaignTest — Callable HTTPS, envoi d'un email de TEST (sujet préfixé [TEST])
+ *     vers une adresse arbitraire (par défaut gregory.prudhommeaux@gmail.com), admin only.
  *
  * Prérequis : plan Blaze, API Google Sheets activée, classeur partagé avec le compte de service
  * des Cloud Functions, paramètres dans functions/.env (voir sheet-config.example.env et
@@ -179,3 +181,4 @@ export { onUserCreatedSendWelcome } from './triggers/onUserCreated';
 export { weeklyDigest } from './triggers/weeklyDigest';
 export { dispatchScheduledCampaigns } from './triggers/dispatchScheduledCampaigns';
 export { sendCampaignNow } from './callables/sendCampaignNow';
+export { sendCampaignTest } from './callables/sendCampaignTest';

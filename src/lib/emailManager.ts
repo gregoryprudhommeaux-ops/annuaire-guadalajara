@@ -193,3 +193,29 @@ export async function sendCampaignNowCallable(
   const res = await fn({ campaignId });
   return res.data;
 }
+
+export const DEFAULT_TEST_EMAIL = 'gregory.prudhommeaux@gmail.com';
+
+export type SendCampaignTestResult = {
+  ok: boolean;
+  to: string;
+  id: string | null;
+};
+
+export type SendCampaignTestInput = {
+  subject: string;
+  bodyHtml: string;
+  name?: string;
+  to?: string;
+};
+
+export async function sendCampaignTestCallable(
+  input: SendCampaignTestInput
+): Promise<SendCampaignTestResult> {
+  const fn = httpsCallable<SendCampaignTestInput, SendCampaignTestResult>(
+    functions,
+    'sendCampaignTest'
+  );
+  const res = await fn(input);
+  return res.data;
+}

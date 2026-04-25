@@ -5,6 +5,7 @@ import {
   Eye,
   EyeOff,
   FileText,
+  FlaskConical,
   Loader2,
   Mail,
   Plus,
@@ -16,9 +17,11 @@ import { EmailPreview } from './EmailPreview';
 import {
   createCampaign,
   createTemplate,
+  DEFAULT_TEST_EMAIL,
   deleteCampaign,
   deleteTemplate,
   sendCampaignNowCallable,
+  sendCampaignTestCallable,
   subscribeToCampaigns,
   subscribeToTemplates,
   updateCampaign,
@@ -168,6 +171,7 @@ export function AdminEmailManager() {
   const [composerOpen, setComposerOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [testEmail, setTestEmail] = useState<string>(DEFAULT_TEST_EMAIL);
 
   useEffect(() => {
     const unsubC = subscribeToCampaigns(
@@ -257,6 +261,32 @@ export function AdminEmailManager() {
       setComposerOpen(false);
     } catch (err) {
       setToast(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleSendTest = async () => {
+    if (!composer.subject.trim() || !composer.bodyHtml.trim()) {
+      setToast('Sujet et corps obligatoires pour un test.');
+      return;
+    }
+    const to = testEmail.trim() || DEFAULT_TEST_EMAIL;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+      setToast(`Adresse de test invalide : ${to}`);
+      return;
+    }
+    setBusy('test');
+    try {
+      const res = await sendCampaignTestCallable({
+        subject: composer.subject,
+        bodyHtml: composer.bodyHtml,
+        name: composer.name || composer.subject,
+        to,
+      });
+      setToast(`Test envoyé à ${res.to}.`);
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : 'Envoi de test échoué.');
     } finally {
       setBusy(null);
     }
@@ -434,6 +464,9 @@ export function AdminEmailManager() {
                 onUseTemplate={handleUseTemplate}
                 audienceCount={audienceCount}
                 busy={busy}
+                testEmail={testEmail}
+                onChangeTestEmail={setTestEmail}
+                onSendTest={handleSendTest}
                 onCancel={() => {
                   setComposer(EMPTY_COMPOSER);
                   setComposerOpen(false);
@@ -641,6 +674,9 @@ function Composer({
   onUseTemplate,
   audienceCount,
   busy,
+  testEmail,
+  onChangeTestEmail,
+  onSendTest,
   onCancel,
   onSaveDraft,
   onSaveTemplate,
@@ -653,6 +689,9 @@ function Composer({
   onUseTemplate: (t: EmailTemplateDoc) => void;
   audienceCount: number | null;
   busy: string | null;
+  testEmail: string;
+  onChangeTestEmail: (v: string) => void;
+  onSendTest: () => void;
   onCancel: () => void;
   onSaveDraft: () => void;
   onSaveTemplate: () => void;
@@ -843,6 +882,42 @@ function Composer({
           </div>
         ) : null}
       </div>
+
+      <fieldset className="mt-4 rounded-xl border border-dashed border-amber-300 bg-amber-50/40 p-3">
+        <legend className="px-2 text-[11px] font-bold uppercase tracking-wide text-amber-800">
+          Envoi de test
+        </legend>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="flex flex-1 min-w-[220px] flex-col gap-1 text-xs font-semibold text-stone-700">
+            Adresse de test
+            <input
+              type="email"
+              value={testEmail}
+              onChange={(e) => onChangeTestEmail(e.target.value)}
+              placeholder={DEFAULT_TEST_EMAIL}
+              className="rounded-lg border border-stone-200 px-3 py-2 text-sm font-normal text-stone-900"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={onSendTest}
+            disabled={busy === 'test'}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-200 disabled:opacity-60"
+          >
+            {busy === 'test' ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            ) : (
+              <FlaskConical className="h-4 w-4" aria-hidden />
+            )}
+            Envoyer un test
+          </button>
+        </div>
+        <p className="mt-2 text-[11px] text-stone-600">
+          Envoie une copie unique à l&apos;adresse ci-dessus avec le sujet préfixé
+          <span className="font-mono"> [TEST]</span>. Aucun impact sur l&apos;audience
+          réelle ni sur la base.
+        </p>
+      </fieldset>
 
       <div className="mt-4 flex flex-wrap gap-2">
         <button
