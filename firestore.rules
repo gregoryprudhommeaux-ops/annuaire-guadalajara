@@ -335,5 +335,14 @@ service cloud.firestore {
     match /emailCampaigns/{campaignId} {
       allow read, create, update, delete: if isAdmin();
     }
+
+    /**
+     * Automations emails (welcome, weekly digest, …) — admin only.
+     * Lues côté Cloud Functions avec les credentials admin SDK qui bypassent
+     * ces règles, donc ce verrou ne gêne pas les triggers automatiques.
+     */
+    match /emailAutomations/{automationId} {
+      allow read, create, update, delete: if isAdmin();
+    }
   }
 }

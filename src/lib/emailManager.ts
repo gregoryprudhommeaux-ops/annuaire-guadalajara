@@ -219,3 +219,149 @@ export async function sendCampaignTestCallable(
   const res = await fn(input);
   return res.data;
 }
+
+// ============================================================================
+// EMAIL AUTOMATIONS — synchro logique avec functions/src/lib/automations.ts
+// ============================================================================
+
+export type AutomationTrigger = 'userCreated' | 'weeklySchedule';
+
+export const AUTOMATION_TRIGGERS: {
+  id: AutomationTrigger;
+  label: string;
+  description: string;
+}[] = [
+  {
+    id: 'userCreated',
+    label: 'Nouvel inscrit',
+    description:
+      'Envoyé automatiquement à chaque nouveau compte créé sur FrancoNetwork.',
+  },
+  {
+    id: 'weeklySchedule',
+    label: 'Récap hebdo (lundi 9h)',
+    description:
+      'Envoyé chaque lundi à 9h (heure de Guadalajara) à tous les membres ayant un email valide.',
+  },
+];
+
+/**
+ * Variables disponibles dans le sujet et le corps des automations.
+ * Source synchronisée avec `functions/src/lib/templateVars.ts:AVAILABLE_VARS`.
+ */
+export const AUTOMATION_VARIABLES: { name: string; description: string }[] = [
+  { name: 'firstName', description: 'Prénom du destinataire' },
+  { name: 'fullName', description: 'Nom complet' },
+  { name: 'displayName', description: 'Nom d\'affichage' },
+  { name: 'email', description: 'Adresse email' },
+  { name: 'companyName', description: 'Société (si renseignée)' },
+  { name: 'appUrl', description: 'URL de l\'app' },
+  { name: 'profileEditUrl', description: 'Lien vers /profile/edit' },
+  { name: 'networkUrl', description: 'Lien vers /network' },
+  { name: 'completionRate', description: 'Taux de complétion (0-100)' },
+  { name: 'completionPercent', description: 'Taux de complétion avec %' },
+];
+
+export type AutomationDoc = {
+  id: string;
+  name: string;
+  trigger: AutomationTrigger;
+  enabled: boolean;
+  subject: string;
+  bodyHtml: string;
+  delayMinutes?: number;
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+  updatedBy: string;
+};
+
+const AUTOMATIONS = 'emailAutomations';
+
+export function subscribeToAutomations(
+  cb: (rows: AutomationDoc[]) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  const q = query(collection(db, AUTOMATIONS), orderBy('createdAt', 'desc'));
+  return onSnapshot(
+    q,
+    (snap) => {
+      cb(
+        snap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as Omit<AutomationDoc, 'id'>),
+        }))
+      );
+    },
+    (err) => onError?.(err)
+  );
+}
+
+export async function createAutomation(input: {
+  name: string;
+  trigger: AutomationTrigger;
+  enabled: boolean;
+  subject: string;
+  bodyHtml: string;
+  updatedBy: string;
+}): Promise<string> {
+  const ref = await addDoc(collection(db, AUTOMATIONS), {
+    name: input.name,
+    trigger: input.trigger,
+    enabled: input.enabled,
+    subject: input.subject,
+    bodyHtml: input.bodyHtml,
+    delayMinutes: 0,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    updatedBy: input.updatedBy,
+  });
+  return ref.id;
+}
+
+export async function updateAutomation(
+  id: string,
+  patch: Partial<
+    Pick<
+      AutomationDoc,
+      'name' | 'trigger' | 'enabled' | 'subject' | 'bodyHtml' | 'delayMinutes'
+    >
+  > & { updatedBy?: string }
+): Promise<void> {
+  const data: Record<string, unknown> = { updatedAt: serverTimestamp() };
+  if ('name' in patch) data.name = patch.name;
+  if ('trigger' in patch) data.trigger = patch.trigger;
+  if ('enabled' in patch) data.enabled = patch.enabled;
+  if ('subject' in patch) data.subject = patch.subject;
+  if ('bodyHtml' in patch) data.bodyHtml = patch.bodyHtml;
+  if ('delayMinutes' in patch) data.delayMinutes = patch.delayMinutes;
+  if (patch.updatedBy) data.updatedBy = patch.updatedBy;
+  await updateDoc(doc(db, AUTOMATIONS, id), data);
+}
+
+export async function deleteAutomation(id: string): Promise<void> {
+  await deleteDoc(doc(db, AUTOMATIONS, id));
+}
+
+export type SendAutomationTestInput = {
+  subject: string;
+  bodyHtml: string;
+  name?: string;
+  to?: string;
+};
+
+export type SendAutomationTestResult = {
+  ok: boolean;
+  to: string;
+  id: string | null;
+};
+
+export async function sendAutomationTestCallable(
+  input: SendAutomationTestInput
+): Promise<SendAutomationTestResult> {
+  const fn = httpsCallable<SendAutomationTestInput, SendAutomationTestResult>(
+    functions,
+    'sendAutomationTest'
+  );
+  const res = await fn(input);
+  return res.data;
+}

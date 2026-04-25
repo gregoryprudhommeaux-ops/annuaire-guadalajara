@@ -11,9 +11,11 @@ import {
   Plus,
   Send,
   Trash2,
+  Zap,
 } from 'lucide-react';
 import { auth } from '@/firebase';
 import { EmailPreview } from './EmailPreview';
+import { AdminAutomationsTab } from './AdminAutomationsTab';
 import {
   createCampaign,
   createTemplate,
@@ -32,7 +34,7 @@ import {
   type EmailTemplateDoc,
 } from '@/lib/emailManager';
 
-type Tab = 'campaigns' | 'templates';
+type Tab = 'campaigns' | 'templates' | 'automations';
 
 type AudienceType = AudienceFilter['type'];
 
@@ -402,10 +404,11 @@ export function AdminEmailManager() {
         </p>
       </header>
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         {(
           [
             { id: 'campaigns', label: 'Campagnes', icon: Mail },
+            { id: 'automations', label: 'Automatisations', icon: Zap },
             { id: 'templates', label: 'Templates', icon: FileText },
           ] as const
         ).map((t) => {
@@ -441,7 +444,9 @@ export function AdminEmailManager() {
         </div>
       ) : null}
 
-      {tab === 'campaigns' ? (
+      {tab === 'automations' ? (
+        <AdminAutomationsTab />
+      ) : tab === 'campaigns' ? (
         <>
           <div className="mb-4">
             {!composerOpen ? (

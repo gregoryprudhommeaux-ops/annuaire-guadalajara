@@ -13,6 +13,8 @@
  *  6) sendCampaignNow — Callable HTTPS, envoi immédiat d'une campagne (admin only).
  *  7) sendCampaignTest — Callable HTTPS, envoi d'un email de TEST (sujet préfixé [TEST])
  *     vers une adresse arbitraire (par défaut gregory.prudhommeaux@gmail.com), admin only.
+ *  8) sendAutomationTest — Callable HTTPS, envoi de TEST pour une automation en cours
+ *     d'édition (variables {{firstName}}, etc. interpolées avec des valeurs de démo).
  *
  * Prérequis : plan Blaze, API Google Sheets activée, classeur partagé avec le compte de service
  * des Cloud Functions, paramètres dans functions/.env (voir sheet-config.example.env et
@@ -182,3 +184,4 @@ export { weeklyDigest } from './triggers/weeklyDigest';
 export { dispatchScheduledCampaigns } from './triggers/dispatchScheduledCampaigns';
 export { sendCampaignNow } from './callables/sendCampaignNow';
 export { sendCampaignTest } from './callables/sendCampaignTest';
+export { sendAutomationTest } from './callables/sendAutomationTest';
