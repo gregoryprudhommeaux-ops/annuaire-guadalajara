@@ -91,7 +91,12 @@ export const Header: React.FC<HeaderProps> = ({
               <a
                 href="/"
                 onClick={onHomeClick}
-                className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg pr-[4.25rem] outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:pr-1"
+                className={cn(
+                  'flex min-w-0 cursor-pointer items-center gap-3 rounded-lg outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 sm:pr-1',
+                  /* Réserve d’espace seulement quand le sélecteur de langue est en overlay mobile (pas de topRight). */
+                  !topRight && 'pr-[4.25rem]',
+                  topRight && 'pr-1'
+                )}
                 aria-label={homeAriaLabel}
               >
                 <div className="relative shrink-0">
@@ -112,12 +117,12 @@ export const Header: React.FC<HeaderProps> = ({
                   </p>
                 </div>
               </a>
-              {/* Mobile only : si pas de topRight. Dès sm : même composant en barre (voir ligne suivante) sauf doublon. */}
-              <div
-                className={cn('absolute right-0 top-0', topRight ? 'hidden' : 'sm:hidden')}
-              >
-                <LanguageSwitch value={lang} onChange={onLangChange} />
-              </div>
+              {/* Mobile uniquement, et seulement si la langue n’est pas déjà dans topRight (évite double globe + FR). */}
+              {!topRight ? (
+                <div className="absolute right-0 top-0 sm:hidden">
+                  <LanguageSwitch value={lang} onChange={onLangChange} />
+                </div>
+              ) : null}
             </div>
 
             {topRight ? <div className="flex shrink-0 items-center gap-2">{topRight}</div> : null}
