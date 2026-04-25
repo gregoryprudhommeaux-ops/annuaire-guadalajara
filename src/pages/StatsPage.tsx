@@ -278,26 +278,6 @@ export default function StatsPage() {
                   ? `Comunidad en cifras — ${monthTitle}`
                   : `Découvrez la communauté en chiffres — ${monthTitle}`}
             </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <a
-                href="/inscription"
-                className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-sm"
-                style={{ background: BRAND }}
-              >
-                {lang === 'en'
-                  ? 'Join the network (free)'
-                  : lang === 'es'
-                    ? 'Unirse (gratis)'
-                    : 'Rejoindre le réseau gratuitement'}
-              </a>
-              <button
-                type="button"
-                onClick={() => void handlePdf()}
-                className="no-print inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-800"
-              >
-                {lang === 'en' ? 'Download the one-pager (PDF)' : 'Télécharger la fiche réseau (PDF)'}
-              </button>
-            </div>
           </header>
 
           <section className="mt-8">

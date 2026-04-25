@@ -3,7 +3,7 @@ import { LogIn, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { AdminStats } from '@/hooks/useAdminStats';
 import type { Language } from '@/types';
-import ProfileCompletionGauge from '@/components/dashboard/ProfileCompletionGauge';
+import ProfileCompletionGauge, { getGaugeColor } from '@/components/dashboard/ProfileCompletionGauge';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
 import { pickLang, formatProfileLastSeen } from '@/lib/uiLocale';
 import { getAdminDashboardCopy } from '@/lib/adminDashboardLocale';
@@ -65,6 +65,13 @@ export function AdminActivityAndCompletionBlocks({
     d.setMonth(d.getMonth() + 3);
     return d;
   }, []);
+
+  const strictPct = useMemo(() => {
+    const n = stats.totalProfiles;
+    return n > 0 ? Math.round((stats.completedProfilesStrict / n) * 100) : 0;
+  }, [stats.totalProfiles, stats.completedProfilesStrict]);
+
+  const completionAccent = useMemo(() => getGaugeColor(strictPct), [strictPct]);
 
   const incompleteProfileLinks = useMemo(() => {
     const profiles = (stats.profilesForDashboard ?? []) as Array<{
@@ -150,10 +157,12 @@ export function AdminActivityAndCompletionBlocks({
                         <span className="admin-activity__avatar" aria-hidden>
                           {activityInitials(r.name)}
                         </span>
-                        <span className="admin-activity__name">{r.name}</span>
-                        <time className="admin-activity__time" dateTime={new Date(r.at).toISOString()}>
-                          {formatProfileLastSeen(r.at, lang) ?? '—'}
-                        </time>
+                        <div className="admin-activity__row-text">
+                          <span className="admin-activity__name">{r.name}</span>
+                          <time className="admin-activity__time" dateTime={new Date(r.at).toISOString()}>
+                            {formatProfileLastSeen(r.at, lang) ?? '—'}
+                          </time>
+                        </div>
                       </Link>
                     </li>
                   ))
@@ -187,10 +196,12 @@ export function AdminActivityAndCompletionBlocks({
                         >
                           {activityInitials(r.name)}
                         </span>
-                        <span className="admin-activity__name">{r.name}</span>
-                        <time className="admin-activity__time" dateTime={new Date(r.at).toISOString()}>
-                          {formatProfileLastSeen(r.at, lang) ?? '—'}
-                        </time>
+                        <div className="admin-activity__row-text">
+                          <span className="admin-activity__name">{r.name}</span>
+                          <time className="admin-activity__time" dateTime={new Date(r.at).toISOString()}>
+                            {formatProfileLastSeen(r.at, lang) ?? '—'}
+                          </time>
+                        </div>
                       </Link>
                     </li>
                   ))
@@ -201,40 +212,33 @@ export function AdminActivityAndCompletionBlocks({
         </div>
       </article>
 
-      <article className="admin-chart-card admin-chart-card--compact" id="admin-section-completion">
+      <article
+        className="admin-chart-card admin-chart-card--compact admin-chart-card--completion"
+        id="admin-section-completion"
+      >
         <p className="admin-chart-card__title">{ad.chartCompletionTitle}</p>
         <p className="admin-chart-card__subtitle">{ad.chartCompletionSubtitle}</p>
-        <div className="admin-chart-card__body space-y-4">
-          <div>
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="text-sm font-semibold text-slate-800">
-                {pickLang('Complétion (stricte)', 'Completitud (estricta)', 'Strict completion', lang)}
-              </p>
-              <p className="text-sm font-extrabold tabular-nums text-slate-900">
-                {stats.completedProfilesStrict}/{stats.totalProfiles} (
-                {stats.totalProfiles > 0
-                  ? Math.round((stats.completedProfilesStrict / stats.totalProfiles) * 100)
-                  : 0}
-                %)
-              </p>
+        <div className="admin-chart-card__body admin-completion">
+          <div className="admin-completion__head">
+            <p className="admin-completion__label">
+              {pickLang('Complétion (stricte)', 'Completitud (estricta)', 'Strict completion', lang)}
+            </p>
+            <div className="admin-completion__kpi">
+              <span
+                className="admin-completion__kpi-pct tabular-nums"
+                style={{ color: completionAccent }}
+              >
+                {strictPct}%
+              </span>
+              <span className="admin-completion__kpi-sep" aria-hidden>
+                ·
+              </span>
+              <span className="admin-completion__kpi-frac">
+                {stats.completedProfilesStrict}/{stats.totalProfiles}{' '}
+                {pickLang('profils complets', 'perfiles completos', 'complete profiles', lang)}
+              </span>
             </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="h-full rounded-full bg-emerald-700"
-                style={{
-                  width: `${Math.min(
-                    100,
-                    Math.max(
-                      0,
-                      stats.totalProfiles > 0
-                        ? (stats.completedProfilesStrict / stats.totalProfiles) * 100
-                        : 0
-                    )
-                  )}%`,
-                }}
-              />
-            </div>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="admin-completion__goal">
               {pickLang('Objectif 80% d’ici le', 'Objetivo 80% para el', 'Target 80% by', lang)}{' '}
               {completionGoalDate.toLocaleDateString(
                 lang === 'es' ? 'es-MX' : lang === 'en' ? 'en-US' : 'fr-FR',
@@ -243,31 +247,38 @@ export function AdminActivityAndCompletionBlocks({
               .
             </p>
           </div>
-          <div className="admin-chart-frame">
+          <div className="admin-completion__gauge-wrap">
             <MiniErrorBoundary label="ProfileCompletionGauge" t={t}>
               <ProfileCompletionGauge
                 totalMembers={stats.totalProfiles}
                 completedProfiles={stats.completedProfilesStrict}
                 embedded
                 showHeader={false}
+                accentColor={completionAccent}
+                hideEmbedStatsLine
               />
             </MiniErrorBoundary>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-slate-800">
+          <div className="admin-completion__incomplete-block">
+            <p className="admin-completion__incomplete-title">
               {pickLang('Profils à compléter (aperçu)', 'Perfiles incompletos', 'Incomplete profiles', lang)}
             </p>
-            <ul className="mt-2 space-y-1 text-sm">
+            <ul className="admin-completion__incomplete-list" role="list">
               {incompleteProfileLinks.length === 0 ? (
-                <li className="text-slate-500">—</li>
+                <li className="admin-completion__incomplete-empty">—</li>
               ) : (
                 incompleteProfileLinks.map((p) => (
                   <li key={p.id}>
                     <Link
-                      className="text-slate-900 underline"
+                      className="admin-completion__incomplete-link"
                       to={`/profil/${encodeURIComponent(String(p.id))}`}
                     >
-                      {formatPersonName(String(p.nom ?? '').trim())}
+                      <span className="admin-completion__incomplete-name">
+                        {formatPersonName(String(p.nom ?? '').trim())}
+                      </span>
+                      <span className="admin-completion__incomplete-chevron" aria-hidden>
+                        →
+                      </span>
                     </Link>
                   </li>
                 ))

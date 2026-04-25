@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageProvider';
 
 /**
- * Raccourcis admin : vitrine publique (stats), PDF, et bascule Pilotage ↔ Internal.
+ * Raccourcis admin : vitrine publique (stats) et bascule Pilotage ↔ Internal.
  */
 export function AdminHubNav() {
   const { t } = useLanguage();
@@ -19,15 +19,6 @@ export function AdminHubNav() {
       >
         {t('adminVitrineLink')}
       </Link>
-      <a
-        href="/stats"
-        target="_blank"
-        rel="noreferrer"
-        className="admin-pill"
-        style={{ textDecoration: 'none', minHeight: 32 }}
-      >
-        {t('adminVitrinePdf')}
-      </a>
       {isInternal ? (
         <Link
           to="/admin"

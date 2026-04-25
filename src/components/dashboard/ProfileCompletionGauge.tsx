@@ -12,6 +12,10 @@ export default function ProfileCompletionGauge({
   compact = false,
   embedded = false,
   showHeader = true,
+  /** When set, use this color for the ring (e.g. match a parent progress bar). */
+  accentColor,
+  /** Embedded + no showHeader: hide the redundant “X/Y profils complets” line when the parent shows stats. */
+  hideEmbedStatsLine = false,
 }: {
   totalMembers: number;
   completedProfiles: number;
@@ -20,9 +24,11 @@ export default function ProfileCompletionGauge({
   embedded?: boolean;
   /** Hide internal heading when parent card already has one. */
   showHeader?: boolean;
+  accentColor?: string;
+  hideEmbedStatsLine?: boolean;
 }) {
   const pct = totalMembers > 0 ? Math.round((completedProfiles / totalMembers) * 100) : 0;
-  const color = getGaugeColor(pct);
+  const color = accentColor ?? getGaugeColor(pct);
   const incomplete = Math.max(0, totalMembers - completedProfiles);
   const [open, setOpen] = useState(false);
 
@@ -61,17 +67,24 @@ export default function ProfileCompletionGauge({
       colors: [color],
       stroke: { lineCap: 'round' as const },
     }),
-    [color, compact]
+    [color, compact, embedded]
   );
 
   const legend = (
     <div className="mt-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
       <p className="text-stone-700">
-        <span className="mr-2 text-green-600">●</span>
+        <span
+          className="mr-2 inline-block h-2.5 w-2.5 shrink-0 rounded-full align-middle"
+          style={{ backgroundColor: color }}
+          aria-hidden
+        />
         <strong className="font-extrabold tabular-nums">{completedProfiles}</strong> profils complets
       </p>
       <p className="text-stone-700">
-        <span className="mr-2 text-red-500">●</span>
+        <span
+          className="mr-2 inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-rose-500 align-middle"
+          aria-hidden
+        />
         <strong className="font-extrabold tabular-nums">{incomplete}</strong> profils incomplets
       </p>
     </div>
@@ -99,7 +112,7 @@ export default function ProfileCompletionGauge({
             <HelpCircle className="h-4 w-4" aria-hidden />
           </button>
         </div>
-      ) : (
+      ) : hideEmbedStatsLine ? null : (
         <p className="text-sm font-semibold text-stone-700">
           {totalMembers === 0 ? 'Aucun membre' : `${completedProfiles}/${totalMembers} profils complets`}
         </p>
@@ -115,7 +128,12 @@ export default function ProfileCompletionGauge({
         </div>
       ) : null}
 
-      <div className={`${compact ? 'mt-2' : 'mt-3'} w-full`} style={{ height: chartHeight }}>
+      <div
+        className={`w-full ${
+          showHeader || !hideEmbedStatsLine ? (compact ? 'mt-2' : 'mt-3') : 'mt-0'
+        }`}
+        style={{ height: chartHeight }}
+      >
         <ReactApexChart options={options as any} series={series as any} type="radialBar" height={chartHeight} />
       </div>
 
