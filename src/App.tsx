@@ -254,7 +254,6 @@ import {
   ProfileCardEmailContact,
   ProfileCardWhatsappContactFooter,
 } from './components/profile/ProfileCardUi';
-import { Header as AppHeader } from './components/Header';
 import { LanguageSwitch } from '@/components/layout/LanguageSwitch';
 import SignupInviteCard from './components/home/SignupInviteCard';
 import WhyJoinSection from './components/home/WhyJoinSection';
@@ -319,7 +318,6 @@ import {
   Calendar, 
   MapPin, 
   Briefcase, 
-  LogOut, 
   User as UserIcon, 
   Linkedin,
   Download,
@@ -371,18 +369,8 @@ import { HomePage as MarketingHomePage } from '@/components/home/HomePage';
 import PublicHomePage from '@/pages/PublicHomePage';
 import AppShell from '@/components/layout/AppShell';
 import { AppHeader as FrancoNetworkAppHeader } from '@/components/layout/AppHeader';
-import { getPrimaryNav } from '@/routes/primaryNav';
 import { canAccessRoute, getAppRole } from '@/auth/roleModel';
-import { HeroTopActions } from '@/components/hero/HeroTopActions';
 import { StatsPdfHeaderButton } from '@/components/stats/StatsPdfHeaderButton';
-
-/** Même style que la navigation principale (pilules grises / actif noir). */
-function primaryNavPillClass(active: boolean) {
-  return cn(
-    'inline-flex min-h-[40px] min-w-0 max-w-full shrink-0 items-center justify-center rounded-lg px-3 py-2 text-center text-xs font-semibold transition-colors sm:text-sm',
-    active ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-  );
-}
 
 const loadNetworkRadarSection = () => import('./components/home/NetworkRadarSection');
 const loadDashboardPage = () => import('./components/dashboard/DashboardPage');
@@ -2123,7 +2111,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const signupAuthOpenedRef = useRef(false);
 
   const isPublicEventRoute = location.pathname.startsWith('/e/');
-  /** Politique / CGU courtes : même coquille que le reste du site (`AppHeader` + pied de page). */
+  /** Politique / CGU courtes : contenu court + pied de page ; le bandeau `fn` est `showFrancoNetworkTopHeader` hors `AppShell`. */
   const shortLegalPage = useMemo((): null | 'privacy' | 'terms' => {
     const p = location.pathname;
     if (p === '/privacy' || p === '/confidentialite') return 'privacy';
@@ -2291,8 +2279,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const pathnameNorm = location.pathname.replace(/\/$/, '') || '/';
   const isEventsAdminRoute = pathnameNorm === '/evenements';
   const isAdminInternalRoute = pathnameNorm === '/admin/internal';
-  const isMembresRoute = pathnameNorm === '/membres';
-  const isOnboardingRoute = pathnameNorm === '/onboarding';
 
   useEffect(() => {
     if (!isNetworkRoute) setShowSavedMembersOnly(false);
@@ -4309,27 +4295,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     }
   };
 
-  const exportToExcel = async () => {
-    if (profile?.role !== 'admin') return;
-    const XLSX = await import('xlsx');
-
-    const data = await Promise.all(
-      allProfiles.map(async (p) => {
-        const priv = await loadUserAdminPrivate(p.uid, p);
-        return {
-          ...p,
-          ...priv,
-          createdAt: p.createdAt.toDate().toISOString(),
-        };
-      })
-    );
-    
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Profiles");
-    XLSX.writeFile(workbook, "Annuaire_Guadalajara.xlsx");
-  };
-
   const filteredProfiles = useMemo(() => {
     return allProfiles.filter(p => {
       // Only show validated profiles to non-admins
@@ -4816,7 +4781,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
     );
   }
 
-  const headerAdminLayout = Boolean(user && viewerIsAdmin && isAdminRoute);
   const useNewPublicHome = Boolean(
     !shortLegalPage &&
       !isSignupMinimal &&
@@ -4826,10 +4790,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       !isAdminRoute &&
       !isStatsRoute
   );
-  // AppShell: member frame only (header + bottom bar + safe area) when a shell body exists below.
-  // Excludes `/admin` (intentional: back-office trame, no BottomNav) and other MainApp paths that keep legacy
-  // <main> — /onboarding, /membres, /evenements, /e/:…, /inscription (if logged in), etc. — so no empty shell.
-  // Mobile hardening of admin should follow product/analytics, not the member app shell.
+  // AppShell : trame membre (BottomNav) ou admin (sans BottomNav) — le bandeau `fn` est dans le shell, pas en doublon au-dessus de `<main>`.
   const useAppShellMemberContent =
     isEditProfileRoute ||
     isDashboardRoute ||
@@ -4851,17 +4812,12 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       (isAdminRoute || isEventsAdminRoute)
   );
 
-  /** Même barre d’outils que `AppShell` (menu FrancoNetwork) pour les pages encore rendues dans le `<main>` historique. */
-  const useFrancoNavStandalone = Boolean(
-    !isSignupMinimal &&
-      !useNewPublicHome &&
-      (shortLegalPage != null ||
-        isHomeRoute ||
-        isMembresRoute ||
-        isEventsAdminRoute ||
-        isPublicEventRoute ||
-        isOnboardingRoute)
-  );
+  /**
+   * Bandeau unique **FrancoNetwork** (design system `fn`) : toute page `MainApp` l’utilise, sauf :
+   * - `AppShell` — le header `fn` est déjà fourni par le shell (membre : réseau, stats, profil, etc. ; admin : /admin, /evenements).
+   * - `PublicHomePage` sur `/` — en-tête propre à la vitrine, sans doubler le bandeau ici.
+   */
+  const showFrancoNetworkTopHeader = !useNewPublicHome && !useAppShellNonAdmin && !useAppShellAdmin;
 
   const requestSubmitProfileForm = () => {
     window.requestAnimationFrame(() => {
@@ -4882,7 +4838,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
   return (
     <div className="flex min-h-screen min-w-0 flex-col bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
-      {useNewPublicHome ? null : useAppShellNonAdmin || useAppShellAdmin ? null : useFrancoNavStandalone ? (
+      {showFrancoNetworkTopHeader ? (
         <FrancoNetworkAppHeader
           user={user ? { displayName: user.displayName, email: user.email, photoURL: user.photoURL } : null}
           isAdmin={viewerIsAdmin}
@@ -4890,182 +4846,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           onSignOut={handleLogout}
           rightSlot={languageControlsTopRight}
         />
-      ) : (
-        <AppHeader
-          title={t('title')}
-          subtitle={t('subtitle')}
-          // Admin: show the "new profiles" badge on the dedicated button, not on the logo.
-          notificationCount={headerAdminLayout ? 0 : viewerIsAdmin ? pendingProfiles.length : 0}
-          homeAriaLabel={t('nav.backHome')}
-          onHomeClick={(e) => {
-            e.preventDefault();
-            window.location.assign('/');
-          }}
-          lang={lang}
-          onLangChange={setLang}
-          // Keep login + language controls in the top-right header (like before),
-          // rather than pushing guest CTA into a full-width mobile bar.
-          guestMobileFullWidthCta={false}
-          // Language controls are always top-right to avoid duplicates.
-          hideDesktopLanguageSwitch
-          topRight={
-            headerAdminLayout && user ? (
-              <div className="flex shrink-0 items-center gap-2">
-                {languageControlsTopRight}
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="inline-flex rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
-                  title={t('logout')}
-                >
-                  <LogOut size={18} />
-                </button>
-                <div className="block h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200">
-                  <ProfileAvatar
-                    photoURL={user.photoURL}
-                    fullName={user.displayName || user.email || ''}
-                    className="h-full w-full"
-                    initialsClassName="text-[10px] font-bold text-slate-600"
-                    iconSize={16}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="flex shrink-0 items-center gap-2">{languageControlsTopRight}</div>
-            )
-          }
-          fullWidthRow={
-            headerAdminLayout ? (
-              <nav
-                className="flex w-full min-w-0 flex-wrap items-center gap-2"
-                aria-label={pickLang(
-                  'Navigation du site et outils admin',
-                  'Navegación del sitio y herramientas admin',
-                  'Site navigation and admin tools',
-                  lang
-                )}
-              >
-                <Link to="/" className={primaryNavPillClass(isHomeRoute)}>
-                  {t('nav.home')}
-                </Link>
-                <Link to="/network" className={primaryNavPillClass(isNetworkRoute)}>
-                  {t('nav.network')}
-                </Link>
-                <Link to="/requests" className={primaryNavPillClass(isRequestsRoute)}>
-                  {t('nav.requests')}
-                </Link>
-                <Link to="/radar" className={primaryNavPillClass(isRadarRoute)}>
-                  {t('nav.radar')}
-                </Link>
-                <Link to="/stats" className={primaryNavPillClass(isStatsRoute)}>
-                  {pickLang('Vitrine', 'Vitrina', 'Showcase', lang)}
-                </Link>
-                <Link to="/admin" className={primaryNavPillClass(isAdminRoute)}>
-                  {t('nav.admin')}
-                </Link>
-                <span className="mx-0.5 hidden h-6 w-px shrink-0 bg-stone-900/10 sm:inline-block" aria-hidden />
-                <button
-                  type="button"
-                  onClick={() => setShowValidationPanel(true)}
-                  className={cn('relative', primaryNavPillClass(false))}
-                  title={t('newProfiles')}
-                >
-                  <span className="truncate">{t('newProfiles')}</span>
-                  {pendingProfiles.length > 0 ? (
-                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-bold text-white">
-                      {pendingProfiles.length > 99 ? '99+' : pendingProfiles.length}
-                    </span>
-                  ) : null}
-                </button>
-                <button type="button" onClick={exportToExcel} className={primaryNavPillClass(false)} title={t('exportData')}>
-                  <span className="truncate">{t('exportData')}</span>
-                </button>
-                <Link
-                  to="/evenements"
-                  onClick={() => setDashboardInitialAdminTab('events')}
-                  className={primaryNavPillClass(isEventsAdminRoute)}
-                  title={pickLang('Ouvrir la page Événements', 'Abrir la página de Eventos', 'Open Events page', lang)}
-                >
-                  {t('adminTabEvents')}
-                </Link>
-                {isAdminEmail(user?.email) && !adminUserDocExists ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedProfile(null);
-                      setEditingProfile(null);
-                      setAdminSelfProfileOptIn(true);
-                      setIsEditing(true);
-                      setIsProfileExpanded(true);
-                      window.requestAnimationFrame(() => {
-                        profileFormLayoutRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      });
-                    }}
-                    className={primaryNavPillClass(false)}
-                    title={pickLang(
-                      "Créer votre fiche annuaire (optionnel)",
-                      'Crear tu ficha del directorio (opcional)',
-                      'Create your directory profile (optional)',
-                      lang
-                    )}
-                  >
-                    {pickLang('Créer mon profil', 'Crear mi perfil', 'Create my profile', lang)}
-                  </button>
-                ) : null}
-              </nav>
-            ) : (
-              <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <nav className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto">
-                  {getPrimaryNav(role).map((item) => {
-                    const href = item.href;
-                    const active = location.pathname === href || (href !== '/' && location.pathname.startsWith(href));
-                    return (
-                      <Link key={href} to={href} className={primaryNavPillClass(active)}>
-                        {t(item.labelKey)}
-                      </Link>
-                    );
-                  })}
-                </nav>
-                <div className="w-full min-w-0 sm:w-auto sm:max-w-[420px] sm:shrink-0 sm:pl-3 sm:flex sm:justify-end">
-                  <HeroTopActions
-                    currentLocale={lang}
-                    isAuthenticated={Boolean(user)}
-                    onChangeLocale={setLang}
-                    onLogout={handleLogout}
-                    onLogin={openAuthModal}
-                    leadingSlot={isStatsRoute ? <StatsPdfHeaderButton lang={lang} /> : undefined}
-                  />
-                </div>
-              </div>
-            )
-          }
-          trailing={
-            user ? (
-              headerAdminLayout ? null : (
-                <div className="flex items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
-                    title={t('logout')}
-                  >
-                    <LogOut size={18} />
-                  </button>
-                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-slate-200">
-                    <ProfileAvatar
-                      photoURL={user.photoURL}
-                      fullName={user.displayName || user.email || ''}
-                      className="h-full w-full"
-                      initialsClassName="text-[10px] font-bold text-slate-600"
-                      iconSize={16}
-                    />
-                  </div>
-                </div>
-              )
-            ) : null
-          }
-        />
-      )}
+      ) : null}
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <AnimatePresence>
