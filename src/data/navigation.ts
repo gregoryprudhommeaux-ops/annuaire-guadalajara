@@ -1,4 +1,4 @@
-import { Home, Users, Handshake, Radar, LineChart, Info, UserRound, Shield, CalendarDays } from 'lucide-react';
+import { Home, Users, Handshake, Radar, LineChart, Info, UserRound, Shield, CalendarDays, Mail } from 'lucide-react';
 import React from 'react';
 
 export type NavAudience = 'visitor' | 'member';
@@ -33,6 +33,7 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
           ? ([
               { id: 'admin', href: '/admin', label: 'Admin', audience: 'member', placement: 'primary' },
               { id: 'events', href: '/evenements', label: 'Événements', audience: 'member', placement: 'primary' },
+              { id: 'communication', href: '/communication', label: 'Communication', audience: 'member', placement: 'primary' },
             ] satisfies NavItem[])
           : []),
       ]
@@ -57,6 +58,7 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
     stats: React.createElement(LineChart, iconProps),
     admin: React.createElement(Shield, iconProps),
     events: React.createElement(CalendarDays, iconProps),
+    communication: React.createElement(Mail, iconProps),
     discover: React.createElement(Users, iconProps),
     how: React.createElement(Info, iconProps),
     about: React.createElement(Info, iconProps),

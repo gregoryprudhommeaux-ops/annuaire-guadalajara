@@ -378,6 +378,7 @@ const loadAdminPage = () => import('@/screens/AdminPage');
 const loadInternalAdminPage = () => import('@/pages/InternalAdminPage');
 const loadStatsPage = () => import('@/pages/StatsPage');
 const loadAdminEvents = () => import('./components/dashboard/AdminEvents');
+const loadCommunicationAdminPage = () => import('@/pages/CommunicationAdminPage');
 const loadPublicEventPage = () => import('./components/events/PublicEventPage');
 const loadAdminMemberEventHistory = () => import('./components/admin/AdminMemberEventHistory');
 const NetworkRadarSection = React.lazy(loadNetworkRadarSection);
@@ -386,6 +387,7 @@ const AdminPageLazy = React.lazy(loadAdminPage);
 const InternalAdminPageLazy = React.lazy(loadInternalAdminPage);
 const StatsPageLazy = React.lazy(loadStatsPage);
 const AdminEventsLazy = React.lazy(loadAdminEvents);
+const CommunicationAdminPageLazy = React.lazy(loadCommunicationAdminPage);
 const PublicEventPageLazy = React.lazy(loadPublicEventPage);
 const AdminMemberEventHistoryLazy = React.lazy(loadAdminMemberEventHistory);
 
@@ -2278,6 +2280,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const isMembersDirectoryRoute = location.pathname === '/membres' || isNetworkRoute;
   const pathnameNorm = location.pathname.replace(/\/$/, '') || '/';
   const isEventsAdminRoute = pathnameNorm === '/evenements';
+  const isCommunicationAdminRoute = pathnameNorm === '/communication';
   const isAdminInternalRoute = pathnameNorm === '/admin/internal';
 
   useEffect(() => {
@@ -4809,7 +4812,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       !isSignupMinimal &&
       !useNewPublicHome &&
       viewerIsAdmin &&
-      (isAdminRoute || isEventsAdminRoute)
+      (isAdminRoute || isEventsAdminRoute || isCommunicationAdminRoute)
   );
 
   /**
@@ -5451,6 +5454,29 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   </React.Suspense>
                 </div>
               </div>
+            </SectionErrorBoundary>
+          ) : isCommunicationAdminRoute ? (
+            <SectionErrorBoundary
+              fallback={
+                <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+                  {pickLang(
+                    'La page Communication a rencontré une erreur.',
+                    'La página de Comunicación encontró un error.',
+                    'Communication page crashed.',
+                    lang
+                  )}
+                </div>
+              }
+            >
+              <React.Suspense
+                fallback={
+                  <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                    {lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…'}
+                  </div>
+                }
+              >
+                <CommunicationAdminPageLazy />
+              </React.Suspense>
             </SectionErrorBoundary>
           ) : null}
         </AppShell>
@@ -8156,6 +8182,7 @@ const App = () => {
             />
             <Route path="/dashboard" element={<MainApp initialViewMode="dashboard" />} />
             <Route path="/evenements" element={<MainApp initialViewMode="dashboard" />} />
+            <Route path="/communication" element={<MainApp initialViewMode="dashboard" />} />
             <Route path="/e/:slug" element={<MainApp />} />
             <Route path="/profil/:profileId" element={<ProfilePage />} />
             <Route path="/besoin/:needId" element={<NeedPage />} />
