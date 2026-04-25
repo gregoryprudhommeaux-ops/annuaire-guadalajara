@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Calendar,
   Copy,
+  Eye,
+  EyeOff,
   FileText,
   Loader2,
   Mail,
@@ -10,6 +12,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { auth } from '@/firebase';
+import { EmailPreview } from './EmailPreview';
 import {
   createCampaign,
   createTemplate,
@@ -657,33 +660,57 @@ function Composer({
   onSendNow: () => void;
 }) {
   const set = (patch: Partial<ComposerState>) => onChange({ ...state, ...patch });
+  const [showPreview, setShowPreview] = useState(true);
 
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-5">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-extrabold text-stone-900">
           {state.campaignId ? 'Modifier la campagne' : 'Nouvelle campagne'}
         </h3>
-        {templates.length > 0 ? (
-          <select
-            className="rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs"
-            defaultValue=""
-            onChange={(e) => {
-              const t = templates.find((x) => x.id === e.target.value);
-              if (t) onUseTemplate(t);
-              e.target.value = '';
-            }}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowPreview((v) => !v)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-xs font-semibold text-stone-700 hover:bg-stone-50"
+            aria-pressed={showPreview}
           >
-            <option value="">Insérer un template…</option>
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        ) : null}
+            {showPreview ? (
+              <EyeOff className="h-3.5 w-3.5" aria-hidden />
+            ) : (
+              <Eye className="h-3.5 w-3.5" aria-hidden />
+            )}
+            {showPreview ? 'Masquer l\'aperçu' : 'Afficher l\'aperçu'}
+          </button>
+          {templates.length > 0 ? (
+            <select
+              className="rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs"
+              defaultValue=""
+              onChange={(e) => {
+                const t = templates.find((x) => x.id === e.target.value);
+                if (t) onUseTemplate(t);
+                e.target.value = '';
+              }}
+            >
+              <option value="">Insérer un template…</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          ) : null}
+        </div>
       </div>
 
+      <div
+        className={
+          showPreview
+            ? 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'
+            : 'block'
+        }
+      >
+        <div>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-xs font-semibold text-stone-700">
           Nom interne (optionnel)
@@ -796,6 +823,26 @@ function Composer({
           />
         ) : null}
       </fieldset>
+        </div>
+
+        {showPreview ? (
+          <div>
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-stone-600">
+              Aperçu
+            </p>
+            <div className="lg:sticky lg:top-4">
+              <EmailPreview
+                subject={state.subject}
+                bodyHtml={state.bodyHtml}
+              />
+              <p className="mt-2 text-[11px] text-stone-500">
+                Approximation visuelle. Le rendu final est généré côté serveur
+                par React Email + Resend.
+              </p>
+            </div>
+          </div>
+        ) : null}
+      </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
         <button
