@@ -74,3 +74,23 @@ export async function getAutomationById(
   const d = snap.data() as Omit<AutomationDoc, 'id'>;
   return { id: snap.id, ...d };
 }
+
+/**
+ * Interrupteur maître par déclencheur — stocké dans `appConfig/emailAutomations`.
+ * Si le doc ou le champ est absent, on considère l'envoi comme ACTIVÉ par défaut
+ * (préserve le comportement historique).
+ */
+export type AutomationSettings = Record<AutomationTrigger, boolean>;
+
+const SETTINGS_PATH = 'appConfig/emailAutomations';
+
+export async function isTriggerEnabled(
+  trigger: AutomationTrigger
+): Promise<boolean> {
+  const db = getFirestore(getApps()[0]!, FIRESTORE_DATABASE_ID);
+  const snap = await db.doc(SETTINGS_PATH).get();
+  if (!snap.exists) return true;
+  const d = snap.data() as Partial<AutomationSettings> | undefined;
+  const v = d?.[trigger];
+  return v !== false;
+}

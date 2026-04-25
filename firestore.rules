@@ -344,5 +344,14 @@ service cloud.firestore {
     match /emailAutomations/{automationId} {
       allow read, create, update, delete: if isAdmin();
     }
+
+    /**
+     * Configuration globale — admin only.
+     * Sert notamment d'interrupteur maître par déclencheur d'automation
+     * (`appConfig/emailAutomations` : { userCreated: bool, weeklySchedule: bool }).
+     */
+    match /appConfig/{document} {
+      allow read, create, update, delete: if isAdmin();
+    }
   }
 }

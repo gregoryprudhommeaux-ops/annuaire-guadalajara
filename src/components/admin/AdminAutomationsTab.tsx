@@ -14,13 +14,17 @@ import { EmailPreview } from './EmailPreview';
 import {
   AUTOMATION_TRIGGERS,
   AUTOMATION_VARIABLES,
+  DEFAULT_AUTOMATION_SETTINGS,
   DEFAULT_TEST_EMAIL,
   createAutomation,
   deleteAutomation,
   sendAutomationTestCallable,
+  setAutomationTriggerEnabled,
   subscribeToAutomations,
+  subscribeToAutomationSettings,
   updateAutomation,
   type AutomationDoc,
+  type AutomationSettings,
   type AutomationTrigger,
 } from '@/lib/emailManager';
 
@@ -95,6 +99,9 @@ export function AdminAutomationsTab() {
   const [toast, setToast] = useState<string | null>(null);
   const [testEmail, setTestEmail] = useState<string>(DEFAULT_TEST_EMAIL);
   const [showPreview, setShowPreview] = useState(true);
+  const [settings, setSettings] = useState<AutomationSettings>(
+    DEFAULT_AUTOMATION_SETTINGS
+  );
 
   useEffect(() => {
     const unsub = subscribeToAutomations(
@@ -107,8 +114,34 @@ export function AdminAutomationsTab() {
         setLoading(false);
       }
     );
-    return unsub;
+    const unsubSettings = subscribeToAutomationSettings(
+      (s) => setSettings(s),
+      (e) => setError(e.message)
+    );
+    return () => {
+      unsub();
+      unsubSettings();
+    };
   }, []);
+
+  const handleToggleTrigger = async (
+    trigger: AutomationTrigger,
+    enabled: boolean
+  ) => {
+    setBusy(`switch-${trigger}`);
+    try {
+      await setAutomationTriggerEnabled(trigger, enabled);
+      setToast(
+        enabled
+          ? 'Déclencheur activé.'
+          : 'Déclencheur désactivé : aucun email automatique ne partira pour celui-ci.'
+      );
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : 'Erreur.');
+    } finally {
+      setBusy(null);
+    }
+  };
 
   useEffect(() => {
     if (!toast) return;
@@ -261,11 +294,12 @@ export function AdminAutomationsTab() {
           ça parte aux vrais destinataires.
         </p>
         <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50/60 p-3 text-xs text-amber-900">
-          <strong>Comportement de fallback :</strong> tant qu&apos;aucune
-          automation n&apos;est créée pour un déclencheur, le contenu par
-          défaut (codé en dur) continue d&apos;être envoyé. Dès qu&apos;au
-          moins une automation existe pour ce déclencheur, seules les
-          automations <em>activées</em> sont envoyées.
+          <strong>Comment ça marche :</strong> chaque déclencheur a un
+          interrupteur maître <em>(coché par défaut)</em>. Coché : tant
+          qu&apos;aucune automation n&apos;est créée, le contenu par défaut
+          est envoyé ; dès qu&apos;une automation existe, seules celles
+          <em> activées</em> partent. Décoché : aucun email automatique
+          n&apos;est envoyé pour ce déclencheur, peu importe les automations.
         </p>
       </header>
 
@@ -301,29 +335,76 @@ export function AdminAutomationsTab() {
         <div className="space-y-5">
           {AUTOMATION_TRIGGERS.map((trig) => {
             const list = grouped.get(trig.id) ?? [];
+            const triggerOn = settings[trig.id];
             return (
               <div
                 key={trig.id}
-                className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm"
+                className={`overflow-hidden rounded-2xl border bg-white shadow-sm ${
+                  triggerOn ? 'border-stone-200' : 'border-stone-200 opacity-90'
+                }`}
               >
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-200 bg-stone-50/80 px-4 py-3">
-                  <div className="min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200 bg-stone-50/80 px-4 py-3">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <Zap className="h-4 w-4 text-[#01696f]" aria-hidden />
                       <h3 className="text-sm font-extrabold text-stone-900">
                         {trig.label}
                       </h3>
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                          triggerOn
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                            : 'border-rose-200 bg-rose-50 text-rose-800'
+                        }`}
+                      >
+                        {triggerOn ? 'En marche' : 'Suspendu'}
+                      </span>
                     </div>
-                    <p className="text-xs text-stone-600">{trig.description}</p>
+                    <p className="mt-0.5 text-xs text-stone-600">
+                      {trig.description}
+                    </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => openNew(trig.id)}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#01696f] px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#015c61]"
-                  >
-                    <Plus className="h-3.5 w-3.5" aria-hidden />
-                    Nouvelle automation
-                  </button>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label
+                      className="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-stone-700"
+                      title={
+                        triggerOn
+                          ? 'Décoche pour suspendre tous les envois sur ce déclencheur'
+                          : 'Coche pour réactiver les envois sur ce déclencheur'
+                      }
+                    >
+                      <span className="relative inline-block h-5 w-9">
+                        <input
+                          type="checkbox"
+                          className="peer absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                          checked={triggerOn}
+                          disabled={busy === `switch-${trig.id}`}
+                          onChange={(e) =>
+                            handleToggleTrigger(trig.id, e.target.checked)
+                          }
+                        />
+                        <span
+                          aria-hidden
+                          className="block h-5 w-9 rounded-full bg-stone-300 transition-colors peer-checked:bg-[#01696f]"
+                        />
+                        <span
+                          aria-hidden
+                          className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4"
+                        />
+                      </span>
+                      <span className="select-none">
+                        {triggerOn ? 'Activé' : 'Désactivé'}
+                      </span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => openNew(trig.id)}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#01696f] px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#015c61]"
+                    >
+                      <Plus className="h-3.5 w-3.5" aria-hidden />
+                      Nouvelle automation
+                    </button>
+                  </div>
                 </div>
 
                 {loading ? (
@@ -332,8 +413,9 @@ export function AdminAutomationsTab() {
                   </div>
                 ) : list.length === 0 ? (
                   <div className="px-4 py-6 text-sm text-stone-500">
-                    Aucune automation. Le contenu par défaut est envoyé tant
-                    que tu n&apos;en crées pas.
+                    {triggerOn
+                      ? 'Aucune automation. Le contenu par défaut est envoyé tant que tu n\'en crées pas.'
+                      : 'Déclencheur suspendu. Aucun email ne partira (ni le contenu par défaut, ni d\'éventuelles automations).'}
                   </div>
                 ) : (
                   <ul className="divide-y divide-stone-100">

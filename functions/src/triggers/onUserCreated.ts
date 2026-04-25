@@ -8,7 +8,11 @@ import { getResend, RESEND_FROM_PARAM, APP_URL_PARAM } from '../lib/resend';
 import { computeCompletionRate, pickDisplayName } from '../lib/profileCompletion';
 import { WelcomeEmail } from '../emails/WelcomeEmail';
 import { CampaignEmail } from '../emails/CampaignEmail';
-import { hasAutomationFor, loadEnabledAutomations } from '../lib/automations';
+import {
+  hasAutomationFor,
+  isTriggerEnabled,
+  loadEnabledAutomations,
+} from '../lib/automations';
 import { buildVariables, interpolate } from '../lib/templateVars';
 
 /**
@@ -42,6 +46,14 @@ export const onUserCreatedSendWelcome = onDocumentCreated(
     }
     if (data.welcomeEmailSentAt) {
       logger.info('Welcome déjà envoyé, skip', { uid: event.params.uid });
+      return;
+    }
+
+    const triggerOn = await isTriggerEnabled('userCreated');
+    if (!triggerOn) {
+      logger.info('Welcome désactivé via appConfig, skip', {
+        uid: event.params.uid,
+      });
       return;
     }
 

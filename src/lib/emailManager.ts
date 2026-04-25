@@ -7,6 +7,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   Timestamp,
   updateDoc,
   type Unsubscribe,
@@ -365,3 +366,49 @@ export async function sendAutomationTestCallable(
   const res = await fn(input);
   return res.data;
 }
+
+/**
+ * Interrupteur maître par déclencheur — doc `appConfig/emailAutomations`.
+ * Champ absent ou `true` → déclencheur actif (comportement par défaut).
+ * `false` → on saute tout (ni hardcodé, ni automation Firestore).
+ */
+export type AutomationSettings = Record<AutomationTrigger, boolean>;
+
+const APP_CONFIG_AUTOMATIONS = 'appConfig/emailAutomations';
+
+const DEFAULT_AUTOMATION_SETTINGS: AutomationSettings = {
+  userCreated: true,
+  weeklySchedule: true,
+};
+
+export function subscribeToAutomationSettings(
+  cb: (settings: AutomationSettings) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  return onSnapshot(
+    doc(db, APP_CONFIG_AUTOMATIONS),
+    (snap) => {
+      const data = (snap.exists() ? snap.data() : null) as
+        | Partial<AutomationSettings>
+        | null;
+      cb({
+        userCreated: data?.userCreated !== false,
+        weeklySchedule: data?.weeklySchedule !== false,
+      });
+    },
+    (err) => onError?.(err)
+  );
+}
+
+export async function setAutomationTriggerEnabled(
+  trigger: AutomationTrigger,
+  enabled: boolean
+): Promise<void> {
+  await setDoc(
+    doc(db, APP_CONFIG_AUTOMATIONS),
+    { [trigger]: enabled, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
+}
+
+export { DEFAULT_AUTOMATION_SETTINGS };

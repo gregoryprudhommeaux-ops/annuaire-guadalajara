@@ -5,7 +5,11 @@ import { renderTemplate } from '../lib/sendEmail';
 import { resolveAudience } from '../lib/audience';
 import { WeeklyDigestEmail } from '../emails/WeeklyDigestEmail';
 import { CampaignEmail } from '../emails/CampaignEmail';
-import { hasAutomationFor, loadEnabledAutomations } from '../lib/automations';
+import {
+  hasAutomationFor,
+  isTriggerEnabled,
+  loadEnabledAutomations,
+} from '../lib/automations';
 import { buildVariables, interpolate } from '../lib/templateVars';
 
 const BATCH_SIZE = 100;
@@ -27,6 +31,12 @@ export const weeklyDigest = onSchedule(
     memory: '512MiB',
   },
   async () => {
+    const triggerOn = await isTriggerEnabled('weeklySchedule');
+    if (!triggerOn) {
+      logger.info('Digest hebdo désactivé via appConfig, skip.');
+      return;
+    }
+
     const audience = await resolveAudience({ type: 'all' });
     if (audience.length === 0) {
       logger.info('Digest hebdo : aucune audience.');
