@@ -10,6 +10,7 @@ import { AdminActivityAndCompletionBlocks } from '@/components/admin/AdminActivi
 import { AdminRecommendedActionsBlock } from '@/components/admin/AdminRecommendedActionsBlock';
 import { AdminConnectPriorityBlock } from '@/components/admin/AdminConnectPriorityBlock';
 import { AdminTopActiveMembersBlock } from '@/components/admin/AdminTopActiveMembersBlock';
+import { AdminEmailManager } from '@/components/admin/AdminEmailManager';
 import '@/features/admin/admin-dashboard.css';
 
 /**
@@ -58,6 +59,7 @@ function InternalAdminContent() {
         </div>
         <AdminConnectPriorityBlock stats={stats} lang={lang} t={t} />
         <AdminTopActiveMembersBlock stats={stats} lang={lang} t={t} />
+        <AdminEmailManager />
       </div>
     </div>
   );

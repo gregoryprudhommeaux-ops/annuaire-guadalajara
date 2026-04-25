@@ -323,5 +323,17 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
+
+    /**
+     * Templates et campagnes emails — gestion 100% admin (dashboard /admin/internal).
+     * Les envois réels passent par Cloud Functions (clé Resend serveur uniquement).
+     */
+    match /emailTemplates/{templateId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /emailCampaigns/{campaignId} {
+      allow read, create, update, delete: if isAdmin();
+    }
   }
 }

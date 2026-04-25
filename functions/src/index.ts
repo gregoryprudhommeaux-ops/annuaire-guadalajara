@@ -1,9 +1,20 @@
 /**
- * 1) appendNewUserToGoogleSheet — à chaque nouveau compte Firebase Auth, une ligne est ajoutée.
- * 2) backfillMembersToGoogleSheet — import ponctuel de tous les profils `users` (HTTP POST sécurisé).
+ * Cloud Functions du projet :
+ *
+ * Google Sheet (existants) :
+ *  1) appendNewUserToGoogleSheet — Auth onCreate, ajoute une ligne au Sheet.
+ *  2) backfillMembersToGoogleSheet — POST sécurisé : sync complète des profils `users`.
+ *
+ * Emails Resend (nouveaux) :
+ *  3) onUserCreatedSendWelcome — Firestore onDocumentCreated `users/{uid}` (base nommée).
+ *  4) weeklyDigest — onSchedule lundi 9h America/Mexico_City.
+ *  5) dispatchScheduledCampaigns — onSchedule toutes les 5 min, envoie les campagnes
+ *     `emailCampaigns/{id}` programmées par l'admin via la page /admin/internal.
+ *  6) sendCampaignNow — Callable HTTPS, envoi immédiat d'une campagne (admin only).
  *
  * Prérequis : plan Blaze, API Google Sheets activée, classeur partagé avec le compte de service
- * des Cloud Functions, paramètres dans functions/.env (voir sheet-config.example.env).
+ * des Cloud Functions, paramètres dans functions/.env (voir sheet-config.example.env et
+ * email-config.example.env).
  */
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
@@ -163,3 +174,8 @@ export const backfillMembersToGoogleSheet = functions
       res.status(500).json({ ok: false, error: String(err) });
     }
   });
+
+export { onUserCreatedSendWelcome } from './triggers/onUserCreated';
+export { weeklyDigest } from './triggers/weeklyDigest';
+export { dispatchScheduledCampaigns } from './triggers/dispatchScheduledCampaigns';
+export { sendCampaignNow } from './callables/sendCampaignNow';
