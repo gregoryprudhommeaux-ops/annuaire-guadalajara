@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import {
   Building2,
@@ -18,15 +17,12 @@ import {
 } from '@/lib/recentMembersActivityUtils';
 import type { Language } from '@/types';
 import type { UserProfile } from '@/types';
-
-const BRAND = '#1a3a2a';
+import { StatsCard, StatsSectionHeader, StatsSectionShell } from '@/components/stats/ui';
 
 type Copy = {
   eyebrow: string;
   title: string;
   lead: string;
-  ctaLine: string;
-  cta: string;
   empty: string;
   sectorFallback: string;
 };
@@ -37,8 +33,6 @@ function tcopy(lang: Language): Copy {
       eyebrow: 'Recent activity',
       title: 'They recently joined the network',
       lead: 'Varied profiles, concrete needs, and visible momentum.',
-      ctaLine: 'Every day, new qualified profiles join the network.',
-      cta: 'Join the network',
       empty: 'The first members are building the network’s foundation.',
       sectorFallback: 'Professional activity',
     };
@@ -48,8 +42,6 @@ function tcopy(lang: Language): Copy {
       eyebrow: 'Actividad reciente',
       title: 'Se unieron a nosotros en los últimos días',
       lead: 'Perfiles variados, necesidades concretas, dinamismo visible.',
-      ctaLine: 'Cada día, nuevos perfiles cualificados se unen a la red.',
-      cta: 'Unirse a la red',
       empty: 'Los primeros miembros están construyendo la base de la red.',
       sectorFallback: 'Actividad profesional',
     };
@@ -58,8 +50,6 @@ function tcopy(lang: Language): Copy {
     eyebrow: 'Activité récente',
     title: 'Ils nous ont rejoints ces derniers jours',
     lead: 'Des profils variés, des besoins concrets, une dynamique visible.',
-    ctaLine: 'Chaque jour, de nouveaux profils qualifiés rejoignent le réseau.',
-    cta: 'Rejoindre le réseau',
     empty: 'Les premiers membres construisent actuellement la base du réseau.',
     sectorFallback: 'Activité professionnelle',
   };
@@ -74,50 +64,30 @@ type SectorVisual = {
 const SECTOR_ATLAS: { test: (s: string) => boolean; v: SectorVisual }[] = [
   {
     test: (s) => /agriculture|agroaliment|aliment/i.test(s),
-    v: {
-      Icon: UtensilsCrossed,
-      bgColor: 'bg-green-50',
-      iconColor: 'text-green-600',
-    },
+    v: { Icon: UtensilsCrossed, bgColor: 'bg-[#e6f5f5]/50', iconColor: 'text-[#01696f]' },
   },
   {
     test: (s) => /technolog|informatique|it\b/i.test(s),
-    v: {
-      Icon: Laptop,
-      bgColor: 'bg-blue-50',
-      iconColor: 'text-blue-600',
-    },
+    v: { Icon: Laptop, bgColor: 'bg-[#e6f5f5]/50', iconColor: 'text-[#01696f]' },
   },
   {
     test: (s) => /commerce|distribution|détail|retail|hôtell|restaur|tourisme/i.test(s),
-    v: {
-      Icon: Package,
-      bgColor: 'bg-orange-50',
-      iconColor: 'text-orange-600',
-    },
+    v: { Icon: Package, bgColor: 'bg-[#e6f5f5]/50', iconColor: 'text-[#01696f]' },
   },
   {
     test: (s) => /conseil|services aux entreprises|banque|finance|juridique/i.test(s),
-    v: {
-      Icon: Briefcase,
-      bgColor: 'bg-purple-50',
-      iconColor: 'text-purple-600',
-    },
+    v: { Icon: Briefcase, bgColor: 'bg-[#e6f5f5]/50', iconColor: 'text-[#01696f]' },
   },
   {
     test: (s) => /industrie|manufactur|automobile|énergie|bâtiment|immobilier|santé/i.test(s),
-    v: {
-      Icon: Factory,
-      bgColor: 'bg-slate-50',
-      iconColor: 'text-slate-600',
-    },
+    v: { Icon: Factory, bgColor: 'bg-[#e6f5f5]/50', iconColor: 'text-[#01696f]' },
   },
 ];
 
 const SECTOR_DEFAULT: SectorVisual = {
   Icon: Building2,
-  bgColor: 'bg-gray-50',
-  iconColor: 'text-gray-600',
+  bgColor: 'bg-slate-50',
+  iconColor: 'text-[#01696f]',
 };
 
 function getSectorVisualSector(storedKey: string): SectorVisual {
@@ -145,9 +115,8 @@ function CardRow({
   const when = getRelativeTimeLabel(profile.createdAt, lang);
 
   return (
-    <div
-      className="flex items-start gap-3 rounded-lg border border-slate-100 bg-white p-4 transition-shadow duration-200 motion-reduce:transition-none print:break-inside-avoid hover:shadow-sm"
-    >
+    <StatsCard className="!p-4 transition-shadow duration-200 motion-reduce:transition-none print:break-inside-avoid motion-safe:hover:shadow-md">
+      <div className="flex items-start gap-3">
       <div
         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${bgColor}`}
         aria-hidden
@@ -157,17 +126,18 @@ function CardRow({
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-slate-900">{sector}</p>
         <p className="text-xs text-slate-600">{need}</p>
-        <p className="mt-1 text-xs text-slate-400">{when}</p>
+        <p className="mt-1 text-xs text-slate-500">{when}</p>
       </div>
-    </div>
+      </div>
+    </StatsCard>
   );
 }
 
 function CardSkeleton() {
   return (
+    <StatsCard className="!p-4" aria-hidden>
     <div
-      className="flex items-start gap-3 rounded-lg border border-slate-100 bg-white p-4"
-      aria-hidden
+      className="flex items-start gap-3"
     >
       <div className="h-11 w-11 shrink-0 rounded-full bg-slate-200 motion-reduce:animate-none animate-pulse" />
       <div className="min-w-0 flex-1 space-y-2">
@@ -176,6 +146,7 @@ function CardSkeleton() {
         <div className="h-2.5 w-1/3 max-w-full rounded bg-slate-100 motion-reduce:animate-none animate-pulse" />
       </div>
     </div>
+    </StatsCard>
   );
 }
 
@@ -232,24 +203,16 @@ export function RecentMembersActivity({ lang }: { lang: Language }) {
       className="recent-members-activity mt-10 print:break-inside-avoid"
       aria-labelledby="recent-members-activity-title"
     >
-      <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-6">
-        <header className="mb-5 sm:mb-6">
-          <p
-            className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 sm:text-xs"
-            style={{ color: BRAND }}
-          >
-            {c.eyebrow}
-          </p>
-          <h2
-            id="recent-members-activity-title"
-            className="mt-2 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl"
-          >
-            {c.title}
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-[15px]">
-            {c.lead}
-          </p>
-        </header>
+      <StatsSectionShell>
+        <div className="border-b border-slate-100 px-4 py-5 sm:px-6 sm:py-6">
+          <StatsSectionHeader
+            eyebrow={c.eyebrow}
+            title={c.title}
+            titleId="recent-members-activity-title"
+            description={c.lead}
+          />
+        </div>
+        <div className="p-4 sm:p-6">
 
         {loading ? (
           <ul
@@ -263,7 +226,7 @@ export function RecentMembersActivity({ lang }: { lang: Language }) {
             ))}
           </ul>
         ) : showEmpty ? (
-          <p className="rounded-lg border border-slate-100 bg-slate-50/80 px-4 py-4 text-sm text-slate-600">
+          <p className="rounded-xl border border-slate-200/90 bg-slate-50/80 px-4 py-4 text-sm text-slate-600">
             {c.empty}
           </p>
         ) : (
@@ -279,24 +242,8 @@ export function RecentMembersActivity({ lang }: { lang: Language }) {
             ))}
           </ul>
         )}
-
-        {!loading && (
-          <div className="mt-5 border-t border-slate-100 pt-5 sm:mt-6 sm:pt-6">
-            <p className="text-center text-sm text-slate-700 sm:text-left">
-              {c.ctaLine}
-            </p>
-            <div className="mt-3 flex justify-center sm:justify-start print:justify-start">
-              <Link
-                to="/inscription"
-                className="inline-flex w-full items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 sm:w-auto"
-                style={{ background: BRAND }}
-              >
-                {c.cta}
-              </Link>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      </StatsSectionShell>
     </section>
   );
 }

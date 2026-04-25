@@ -3,6 +3,7 @@ import { BarChart2, Globe, TrendingUp, Users } from 'lucide-react';
 import type { Language } from '@/types';
 import { useCountUp, usePrefersReducedMotion } from '@/hooks/useCountUp';
 import { useStatsHeroKpis } from '@/hooks/useStatsHeroKpis';
+import { statsCardClassName } from '@/components/stats/ui';
 
 type HeroCopy = {
   mLabel: string;
@@ -33,7 +34,7 @@ function copy(lang: Language): HeroCopy {
       mLabel: 'Personas en la red',
       mSubl: 'Una comunidad que crece cada semana',
       oLabel: 'Oportunidades activas',
-      oSubl: 'Oportunidades reales, right now',
+      oSubl: 'Oportunidades reales, en curso',
       gLabel: 'Crecimiento este mes',
       gSubl: 'El dinamismo más fuerte de Jalisco',
       sLabel: 'Sectores representados',
@@ -44,7 +45,7 @@ function copy(lang: Language): HeroCopy {
     mLabel: 'Membres dans le réseau',
     mSubl: 'Une communauté qui grandit chaque semaine',
     oLabel: 'Opportunités actives',
-    oSubl: 'Des opportunités concrètes, right now',
+    oSubl: 'Des opportunités concrètes, dès maintenant',
     gLabel: 'Croissance ce mois',
     gSubl: 'La dynamique la plus forte de Jalisco',
     sLabel: 'Secteurs représentés',
@@ -72,7 +73,9 @@ function KpiCard({
   isError: boolean;
 }) {
   return (
-    <div className="relative rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md md:p-5">
+    <div
+      className={`${statsCardClassName} relative transition-shadow motion-safe:hover:shadow-md md:p-5`}
+    >
       <div className="absolute right-3 top-3 text-[#01696f] md:right-4 md:top-4" aria-hidden>
         <Icon className="h-6 w-6" strokeWidth={1.75} />
       </div>

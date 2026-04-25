@@ -7,6 +7,27 @@
   flex-wrap: wrap;
 }
 
+/* PDF + déconnexion sur une même ligne (ex. /stats) : pas de min-width 220px sur chaque côté. */
+.hero-top-actions--tight {
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .hero-top-actions--tight {
+    flex-wrap: wrap;
+  }
+
+  .hero-top-actions--tight .account-btn {
+    min-width: 0;
+    flex: 1 1 160px;
+  }
+
+  .hero-top-actions--tight .stats-pdf-header-btn {
+    flex: 1 1 140px;
+  }
+}
+
 .language-switcher {
   display: inline-flex;
   align-items: center;

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -15,9 +15,8 @@ import {
 import { Eye, Handshake, Network, TrendingUp, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useVitrineStats } from '@/hooks/useVitrineStats';
-import { getPassionEmoji, getPassionLabel } from '@/lib/passionConfig';
+import { setStatsPagePdfState } from '@/lib/statsPagePdfBridge';
 import { useLanguage } from '@/i18n/LanguageProvider';
-import { LanguageSwitch } from '@/components/layout/LanguageSwitch';
 import type { Language } from '@/types';
 import { StatsHero } from '@/components/StatsHero';
 import { NetworkGrowthSection } from '@/components/stats/NetworkGrowthSection';
@@ -25,10 +24,15 @@ import { ActiveOpportunitiesSection } from '@/components/stats/ActiveOpportuniti
 import { RecentMembersActivity } from '@/components/stats/RecentMembersActivity';
 import { RecentRequestsFeed } from '@/components/stats/RecentRequestsFeed';
 import { SegmentedJoinCTA } from '@/components/stats/SegmentedJoinCTA';
+import { SharedAffinitiesSection } from '@/components/stats/SharedAffinitiesSection';
+import {
+  STATS_CHART_BAR_COLORS,
+  StatsCard,
+  StatsSectionHeader,
+  StatsSectionShell,
+} from '@/components/stats/ui';
 import francoLogoUrl from '../../favicon.svg?url';
 import './stats-page.css';
-
-const BRAND = '#1a3a2a';
 
 function formatMonthYear(d: Date, lang: Language) {
   return d.toLocaleDateString(lang === 'es' ? 'es-MX' : lang === 'en' ? 'en-US' : 'fr-FR', {
@@ -47,12 +51,12 @@ function formatShortDate(d: Date, lang: Language) {
 
 function TrendPill({ text, tone }: { text: string; tone: 'up' | 'down' | 'flat' }) {
   const cls =
-    tone === 'up' ? 'text-emerald-700' : tone === 'down' ? 'text-rose-700' : 'text-slate-500';
+    tone === 'up' ? 'text-[#0a5c61]' : tone === 'down' ? 'text-rose-700' : 'text-slate-500';
   return <p className={`mt-1 text-xs font-semibold ${cls}`}>{text}</p>;
 }
 
 export default function StatsPage() {
-  const { lang, setLang } = useLanguage();
+  const { lang } = useLanguage();
   const vitrine = useVitrineStats();
   const printRef = useRef<HTMLDivElement | null>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
@@ -60,8 +64,6 @@ export default function StatsPage() {
   const now = useMemo(() => new Date(), []);
   const monthTitle = useMemo(() => formatMonthYear(now, lang), [now, lang]);
   const dataDateLabel = useMemo(() => formatShortDate(now, lang), [now, lang]);
-
-  const locale = lang === 'es' ? 'es' : lang === 'en' ? 'en' : 'fr';
 
   const newMemberDelta = vitrine.newMembersLast30d - vitrine.prevNewMembers30d;
   const newMemberTone: 'up' | 'down' | 'flat' =
@@ -88,10 +90,10 @@ export default function StatsPage() {
           ? 'Contadores agregados en perfiles'
           : 'Agrégats sécurisés (sans journaux bruts)'
       : lang === 'en'
-        ? 'Configure `public_vitrine` to publish view totals'
+        ? 'No public total yet. Aggregated profile view counts can be published on this page.'
         : lang === 'es'
-          ? 'Publica totales vía `public_vitrine`'
-          : 'Publiez des totaux via `public_vitrine` (recommandé)';
+          ? 'Aún no hay cifra pública. Pueden publicarse visitas agregadas a ficha, sin datos personales.'
+          : 'Aucun total public pour l’instant. Des indicateurs agrégés de consultation peuvent être proposés sur l’annuaire.';
 
   const contactTrend =
     vitrine.contactClicksCumul > 0
@@ -99,10 +101,13 @@ export default function StatsPage() {
         ? 'Sum of contact actions stored on member docs'
         : lang === 'es'
           ? 'Suma de acciones en documentos de miembros'
-          : 'Somme des actions (docs membres) — pas d’e-mails exposés'
+          : 'Somme des actions (fiches Membres) — pas d’e-mails exposés'
       : lang === 'en'
-        ? 'Add safe counters to profiles or use `public_vitrine`'
-        : 'Ajoutez des compteurs sûrs sur les fiches (ou `public_vitrine`)';
+        ? 'No public total yet. Privacy-safe aggregate action counts can be published at profile level.'
+        : lang === 'es'
+          ? 'Aún no hay cifra pública. Pueden publicarse acciones de contacto agregadas, sin exponer datos sensibles.'
+          : 'Aucun indicateur public à ce jour. Des comptages d’actions agrégés peuvent apparaître sur les fiches.';
+
 
   const potentialTrend =
     lang === 'en'
@@ -157,7 +162,7 @@ export default function StatsPage() {
 
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(9);
-        pdf.setTextColor(26, 58, 42);
+        pdf.setTextColor(1, 105, 111);
         pdf.text(header, margin, headerY, { maxWidth: w });
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(7.5);
@@ -193,12 +198,22 @@ export default function StatsPage() {
     }
   }, [monthTitle, now]);
 
+  useEffect(() => {
+    if (vitrine.loading || vitrine.error) {
+      setStatsPagePdfState(null);
+      return;
+    }
+    setStatsPagePdfState({ print: () => void handlePdf(), busy: pdfBusy });
+    return () => {
+      setStatsPagePdfState(null);
+    };
+  }, [vitrine.error, vitrine.loading, handlePdf, pdfBusy]);
+
   const topSectorsChart = useMemo(
     () => vitrine.topSectors.map((s) => ({ name: s.name, value: s.value })),
     [vitrine.topSectors]
   );
-  const sectorColor = (idx: number) =>
-    ['#1a3a2a', '#166534', '#0f766e', '#1d4ed8', '#b45309', '#be123c', '#7c3aed', '#334155'][idx % 8];
+  const sectorColor = (idx: number) => STATS_CHART_BAR_COLORS[idx % STATS_CHART_BAR_COLORS.length]!;
 
   if (vitrine.loading) {
     return (
@@ -212,7 +227,7 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="relative min-w-0 bg-slate-50">
+    <div className="relative min-w-0 bg-[#f4f6f7]">
       <Helmet>
         <title>{`FrancoNetwork · Vitrine réseau · ${monthTitle}`}</title>
         <meta
@@ -221,46 +236,21 @@ export default function StatsPage() {
         />
       </Helmet>
 
-      <div className="no-print pointer-events-auto fixed right-4 top-4 z-[300] flex items-center gap-2">
-        <div className="rounded-xl border border-slate-200 bg-white/90 px-2 py-1 shadow-sm backdrop-blur">
-          <LanguageSwitch value={lang} onChange={setLang} />
-        </div>
-        <button
-          type="button"
-          onClick={() => void handlePdf()}
-          disabled={pdfBusy}
-          className="rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
-          style={{ background: BRAND }}
-        >
-          {pdfBusy
-            ? lang === 'en'
-              ? 'Preparing…'
-              : lang === 'es'
-                ? 'Preparando…'
-                : 'Préparation…'
-            : lang === 'en'
-              ? 'Download PDF'
-              : lang === 'es'
-                ? 'Descargar PDF'
-                : 'Télécharger en PDF'}
-        </button>
-      </div>
-
       <div className="mx-auto max-w-5xl px-4 py-10">
         <div
           ref={printRef}
-          className="stats-print-root overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10"
+          className="stats-ds stats-print-root overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10"
         >
           <header className="stats-pdf-header">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">FrancoNetwork</p>
-            <h1 className="mt-1 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#01696f]">FrancoNetwork</p>
+            <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
               {lang === 'en'
                 ? 'The Francophone business network in Guadalajara'
                 : lang === 'es'
                   ? 'La red de negocios francófona en Guadalajara'
                   : 'Le réseau francophone d’affaires de Guadalajara'}
             </h1>
-            <p className="mt-2 text-slate-600">
+            <p className="mt-2 max-w-3xl text-slate-600 sm:text-[15px]">
               {lang === 'en'
                 ? `Community snapshot — ${monthTitle}`
                 : lang === 'es'
@@ -271,11 +261,19 @@ export default function StatsPage() {
 
           <StatsHero lang={lang} />
 
-          <section className="mt-8">
-            <h2 className="text-lg font-extrabold text-slate-900">
-              {lang === 'en' ? 'The network in numbers' : 'Le réseau en chiffres'}
-            </h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <section className="mt-10 print:break-inside-avoid">
+            <StatsSectionHeader
+              eyebrow={lang === 'en' ? 'KPI' : lang === 'es' ? 'Indicadores' : 'Indicateurs'}
+              title={lang === 'en' ? 'The network in numbers' : lang === 'es' ? 'La red en cifras' : 'Le réseau en chiffres'}
+              description={
+                lang === 'en'
+                  ? 'Key metrics from the public directory, updated regularly.'
+                  : lang === 'es'
+                    ? 'Indicadores clave del directorio público, actualizados con regularidad.'
+                    : 'Indicateurs clés issus de l’annuaire public, actualisés régulièrement.'
+              }
+            />
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <Kpi
                 icon={<Users className="h-5 w-5" />}
                 value={vitrine.totalMembers}
@@ -312,68 +310,58 @@ export default function StatsPage() {
                 trend={<TrendPill text={potentialTrend} tone="flat" />}
               />
             </div>
-            <p className="mt-2 text-xs text-slate-500">
-              {lang === 'en'
-                ? 'Aggregated metrics only — no emails or UIDs in this page.'
-                : 'Agrégats uniquement — aucun e-mail / UID sur cette page.'}
-            </p>
           </section>
 
-          <section className="mt-10">
-            <h2 className="text-xl font-extrabold text-slate-900">
-              {lang === 'en'
-                ? 'More than business: what connects us'
-                : 'Des professionnels qui partagent plus que les affaires'}
-            </h2>
-            <p className="mt-1 text-slate-600">
-              {lang === 'en' ? 'Cross-cutting interests across the network' : 'Ce qui unit notre communauté au-delà du business'}
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {vitrine.topPassions.map((p) => {
-                const textLabel = `${getPassionEmoji(p.passionId)} ${getPassionLabel(p.passionId, locale)} · ${p.memberCount} ${
-                  lang === 'en' ? 'members' : 'membres'
-                } · ${p.sectorCount} ${
-                  lang === 'en' ? 'sectors' : lang === 'es' ? 'sectores' : 'secteurs'
-                }`;
-                return (
-                  <span
-                    key={p.passionId}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-800"
-                  >
-                    {textLabel}
-                  </span>
-                );
-              })}
-            </div>
-          </section>
+          <SharedAffinitiesSection passions={vitrine.topPassions} lang={lang} />
 
-          <section className="mt-10">
-            <h2 className="text-xl font-extrabold text-slate-900">
-              {lang === 'en' ? '8 activity sectors — multi-sector by design' : '8 secteurs d’activité · Un réseau multi-sectoriel'}
-            </h2>
-            <p className="mt-1 text-slate-600">
-              {lang === 'en' ? 'Top sectors represented in the directory' : 'Principaux secteurs représentés dans l’annuaire'}
-            </p>
-            <div className="mt-4 h-72 w-full min-w-0 max-w-full">
-              <ResponsiveContainer>
-                <BarChart data={topSectorsChart} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 6 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={140}
-                    tick={{ fontSize: 11, fill: '#0f172a' }}
-                  />
-                  <Tooltip />
-                  <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={16}>
-                    {topSectorsChart.map((_, idx) => (
-                      <Cell key={`${idx}`} fill={sectorColor(idx)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <section className="mt-10 print:break-inside-avoid">
+            <StatsSectionShell>
+              <div className="border-b border-slate-100 px-4 py-5 sm:px-6 sm:py-6">
+                <StatsSectionHeader
+                  eyebrow={lang === 'en' ? 'Sectors' : lang === 'es' ? 'Sectores' : 'Secteurs'}
+                  title={
+                    lang === 'en'
+                      ? '8 activity sectors — multi-sector by design'
+                      : lang === 'es'
+                        ? '8 sectores de actividad — multi-sectorial por diseño'
+                        : '8 secteurs d’activité · un réseau multi-sectoriel'
+                  }
+                  description={
+                    lang === 'en'
+                      ? 'Top sectors represented in the directory (aggregated).'
+                      : lang === 'es'
+                        ? 'Sectores principales representados en el directorio (datos agregados).'
+                        : 'Principaux secteurs représentés dans l’annuaire (agrégés).'
+                  }
+                />
+              </div>
+              <div className="h-72 w-full min-w-0 max-w-full px-2 pb-4 pt-2 sm:px-4 sm:pb-5">
+                <ResponsiveContainer>
+                  <BarChart data={topSectorsChart} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 6 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={140}
+                      tick={{ fontSize: 11, fill: '#0f172a' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 8,
+                        border: '1px solid #e2e8f0',
+                        fontSize: 12,
+                      }}
+                    />
+                    <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={16}>
+                      {topSectorsChart.map((_, idx) => (
+                        <Cell key={`${idx}`} fill={sectorColor(idx)} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </StatsSectionShell>
           </section>
 
           <NetworkGrowthSection
@@ -411,11 +399,19 @@ export default function StatsPage() {
             </div>
           </div>
 
-          {vitrine.source === 'firestore' ? (
-            <p className="mt-3 text-center text-[11px] text-slate-400">Source: public_vitrine + profils (agrégats)</p>
-          ) : (
-            <p className="mt-3 text-center text-[11px] text-slate-400">Source: profils (agrégats) — vues/contacts si compteurs présents</p>
-          )}
+          <p className="mt-3 text-center text-[11px] text-slate-400">
+            {lang === 'en'
+              ? vitrine.source === 'firestore'
+                ? 'Source: aggregated directory data, including public showcase totals when published.'
+                : 'Source: aggregated directory data (views and contact actions when those metrics are active).'
+              : lang === 'es'
+                ? vitrine.source === 'firestore'
+                  ? 'Fuente: datos agregados del directorio, incluidos totales públicos cuando están publicados.'
+                  : 'Fuente: datos agregados (vistas y acciones de contacto cuando esos indicadores existen).'
+                : vitrine.source === 'firestore'
+                  ? 'Source : données agrégées (annuaire), y compris totaux publics lorsqu’ils sont actifs.'
+                  : 'Source : agrégats annuaire (vues et mises en relation si ces indicateurs sont actifs).'}
+          </p>
         </div>
       </div>
     </div>
@@ -434,16 +430,13 @@ function Kpi({
   trend: React.ReactNode;
 }) {
   return (
-    <div
-      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-      style={{ boxShadow: '0 1px 2px rgba(15, 23, 42, 0.06)' }}
-    >
-      <div className="flex items-center justify-between gap-2" style={{ color: BRAND }}>
+    <StatsCard className="p-4 sm:p-4">
+      <div className="flex items-center justify-between gap-2 text-[#01696f]">
         {icon}
         <p className="text-2xl font-extrabold tabular-nums text-slate-900">{value.toLocaleString('fr-FR')}</p>
       </div>
       <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       {trend}
-    </div>
+    </StatsCard>
   );
 }

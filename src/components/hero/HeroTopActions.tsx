@@ -9,6 +9,8 @@ export type HeroTopActionsProps = {
   onChangeLocale: (locale: Locale) => void;
   onLogout: () => void;
   onLogin?: () => void;
+  /** Ex. export PDF sur `/stats`, affiché à gauche de connexion / déconnexion. */
+  leadingSlot?: React.ReactNode;
 };
 
 const LANGUAGES: { key: Locale; label: string }[] = [
@@ -18,16 +20,15 @@ const LANGUAGES: { key: Locale; label: string }[] = [
 ];
 
 export function HeroTopActions({
-  currentLocale,
   isAuthenticated,
-  onChangeLocale,
   onLogout,
   onLogin,
+  leadingSlot,
 }: HeroTopActionsProps) {
   return (
-    <div className="hero-top-actions">
-      {/* Language switch lives in the global header (top-right). */}
-
+    <div className={leadingSlot ? 'hero-top-actions hero-top-actions--tight' : 'hero-top-actions'}>
+      {/* Language switch : bandeau principal (AppHeader) ; pas de doublon ici. */}
+      {leadingSlot}
       {isAuthenticated ? (
         <button type="button" className="account-btn logout-btn" onClick={onLogout}>
           Se déconnecter

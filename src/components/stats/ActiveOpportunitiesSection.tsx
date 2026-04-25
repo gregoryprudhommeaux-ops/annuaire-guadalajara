@@ -3,9 +3,15 @@ import { Link } from 'react-router-dom';
 import type { NeedChartRow } from '@/lib/needs';
 import type { Language } from '@/types';
 import { getOpportunitySubline } from '@/lib/activeOpportunitiesEditorial';
-
-const TEAL = '#01696f';
-const TEAL_SOFT = 'rgb(230 245 245)';
+import {
+  StatsBadge,
+  StatsInsightCard,
+  StatsPrimaryButton,
+  StatsSecondaryButton,
+  StatsSectionHeader,
+  StatsSectionShell,
+  statsListRowClassName,
+} from '@/components/stats/ui';
 
 type Copy = {
   eyebrow: string;
@@ -105,34 +111,15 @@ function OpportunityCategoryRow({ row, max, rank, lang, c, index, onCategoryClic
           <p className="text-sm font-semibold leading-snug text-slate-900">{row.label}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {isTop && (
-            <span
-              className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-              style={{ color: TEAL, background: TEAL_SOFT }}
-            >
-              {c.badgeTop}
-            </span>
-          )}
-          {isSecond && !isTop && (
-            <span
-              className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-              style={{ color: TEAL, background: TEAL_SOFT }}
-            >
-              {c.badgeSecond}
-            </span>
-          )}
-          <span
-            className="tabular-nums text-sm font-bold"
-            style={{ color: TEAL }}
-          >
-            {c.demandes(row.count)}
-          </span>
+          {isTop && <StatsBadge>{c.badgeTop}</StatsBadge>}
+          {isSecond && !isTop && <StatsBadge>{c.badgeSecond}</StatsBadge>}
+          <span className="tabular-nums text-sm font-bold text-[#01696f]">{c.demandes(row.count)}</span>
         </div>
       </div>
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
         <div
-          className="h-full rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none"
-          style={{ width: `${w}%`, background: TEAL }}
+          className="h-full rounded-full bg-[#01696f] transition-[width] duration-500 ease-out motion-reduce:transition-none"
+          style={{ width: `${w}%` }}
         />
       </div>
       <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{sub}</p>
@@ -142,7 +129,7 @@ function OpportunityCategoryRow({ row, max, rank, lang, c, index, onCategoryClic
   const to = `/requests?category=${encodeURIComponent(row.key)}`;
   return (
     <li
-      className="active-opp-row active-opp-row-anim rounded-xl border border-slate-200/80 bg-slate-50/40 p-3 transition-colors hover:border-slate-300/90 sm:p-4"
+      className={`active-opp-row active-opp-row-anim ${statsListRowClassName} transition-colors motion-safe:hover:border-slate-300/90`}
       style={{ animationDelay: `${index * 55}ms` }}
     >
       <Link
@@ -158,7 +145,7 @@ function OpportunityCategoryRow({ row, max, rank, lang, c, index, onCategoryClic
 
 function RowSkeleton() {
   return (
-    <li className="rounded-xl border border-slate-200/80 p-3 sm:p-4">
+    <li className={statsListRowClassName}>
       <div className="mb-2 flex justify-between">
         <div className="h-4 w-[40%] animate-pulse rounded bg-slate-200" />
         <div className="h-4 w-12 animate-pulse rounded bg-slate-200" />
@@ -202,20 +189,9 @@ export function ActiveOpportunitiesSection({
     <section
       className={`active-opportunities mt-10 print:break-inside-avoid ${reveal ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500 motion-reduce:opacity-100 motion-reduce:duration-0`}
     >
-      <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
+      <StatsSectionShell>
         <div className="border-b border-slate-100 px-4 py-5 sm:px-6 sm:py-6">
-          <p
-            className="text-[11px] font-bold uppercase tracking-[0.2em] sm:text-xs"
-            style={{ color: TEAL }}
-          >
-            {c.eyebrow}
-          </p>
-          <h2 className="mt-2 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
-            {c.title}
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-[15px]">
-            {c.lead}
-          </p>
+          <StatsSectionHeader eyebrow={c.eyebrow} title={c.title} description={c.lead} />
         </div>
 
         <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-12 lg:items-stretch">
@@ -246,44 +222,36 @@ export function ActiveOpportunitiesSection({
             )}
           </div>
 
-          <aside className="flex min-h-0 flex-col border-t border-slate-100 pt-5 sm:pt-6 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-            <h3 className="text-sm font-extrabold text-slate-900">{c.whyTitle}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">{c.whyBody}</p>
-            <ul className="mt-3 space-y-1.5 text-sm text-slate-700">
-              <li className="flex gap-2">
-                <span className="mt-0.5 shrink-0" style={{ color: TEAL }}>
-                  ·
-                </span>
-                <span>{c.whyB1}</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="mt-0.5 shrink-0" style={{ color: TEAL }}>
-                  ·
-                </span>
-                <span>{c.whyB2}</span>
-              </li>
-            </ul>
+          <aside className="min-h-0 border-t border-slate-100 pt-5 sm:pt-6 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+            <StatsInsightCard className="!shadow-none">
+              <h3 className="text-sm font-extrabold text-slate-900">{c.whyTitle}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{c.whyBody}</p>
+              <ul className="mt-3 space-y-1.5 text-sm text-slate-700">
+                <li className="flex gap-2">
+                  <span className="mt-0.5 shrink-0 text-[#01696f]">·</span>
+                  <span>{c.whyB1}</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="mt-0.5 shrink-0 text-[#01696f]">·</span>
+                  <span>{c.whyB2}</span>
+                </li>
+              </ul>
+            </StatsInsightCard>
           </aside>
         </div>
 
         <div className="border-t border-slate-100 px-4 py-5 sm:px-6">
-          <p className="text-center text-sm leading-relaxed text-slate-700 sm:text-left">{c.conv}</p>
-          <div className="mt-4 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-center print:flex-row">
-            <Link
-              to="/inscription"
-              className="inline-flex w-full items-center justify-center rounded-xl border border-transparent bg-[#01696f] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#015a5f] sm:w-auto"
-            >
+          <p className="text-sm leading-relaxed text-slate-700">{c.conv}</p>
+          <div className="mt-4 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-start print:flex-row">
+            <StatsPrimaryButton to="/inscription" className="w-full sm:w-auto print:w-auto">
               {c.ctaPrimary}
-            </Link>
-            <Link
-              to="/requests"
-              className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 sm:w-auto"
-            >
+            </StatsPrimaryButton>
+            <StatsSecondaryButton to="/requests" className="w-full sm:w-auto print:w-auto">
               {c.ctaSecondary}
-            </Link>
+            </StatsSecondaryButton>
           </div>
         </div>
-      </div>
+      </StatsSectionShell>
     </section>
   );
 }

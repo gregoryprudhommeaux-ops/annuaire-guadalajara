@@ -373,6 +373,7 @@ import AppShell from '@/components/layout/AppShell';
 import { getPrimaryNav } from '@/routes/primaryNav';
 import { canAccessRoute, getAppRole } from '@/auth/roleModel';
 import { HeroTopActions } from '@/components/hero/HeroTopActions';
+import { StatsPdfHeaderButton } from '@/components/stats/StatsPdfHeaderButton';
 
 /** Même style que la navigation principale (pilules grises / actif noir). */
 function primaryNavPillClass(active: boolean) {
@@ -5008,6 +5009,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     onChangeLocale={setLang}
                     onLogout={handleLogout}
                     onLogin={openAuthModal}
+                    leadingSlot={isStatsRoute ? <StatsPdfHeaderButton lang={lang} /> : undefined}
                   />
                 </div>
               </div>

@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Compass, Handshake, Radar } from 'lucide-react';
 import type { Language } from '@/types';
-
-const TEAL = '#01696f';
+import { StatsCard, StatsPrimaryButton, StatsSectionHeader, StatsSectionShell } from '@/components/stats/ui';
 
 type Persona = {
   title: string;
@@ -136,29 +134,22 @@ type CardProps = {
 function PersonaCard({ persona, index }: CardProps) {
   const { title, body, micro, cta, to, Icon } = persona;
   return (
-    <div
-      className="seg-join-card flex h-full flex-col seg-join-card-anim overflow-hidden rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm transition hover:border-slate-300/90 hover:shadow sm:p-6"
+    <StatsCard
+      className="seg-join-card seg-join-card-anim !flex h-full !flex-col !sm:p-6 overflow-hidden transition motion-safe:hover:border-slate-300/90 motion-safe:hover:shadow-md"
       style={{ animationDelay: `${80 + index * 70}ms` }}
     >
-      <div
-        className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50"
-        style={{ color: TEAL }}
-        aria-hidden
-      >
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#e6f5f5]/60 text-[#01696f]" aria-hidden>
         <Icon className="h-5 w-5" />
       </div>
       <h3 className="text-base font-extrabold leading-snug text-slate-900">{title}</h3>
       <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{body}</p>
       <p className="mt-3 text-xs leading-relaxed text-slate-500">{micro}</p>
       <div className="mt-4 pt-1">
-        <Link
-          to={to}
-          className="inline-flex w-full min-h-[2.5rem] items-center justify-center rounded-xl border border-transparent bg-[#01696f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#015a5f] sm:w-full"
-        >
+        <StatsPrimaryButton to={to} className="w-full">
           {cta}
-        </Link>
+        </StatsPrimaryButton>
       </div>
-    </div>
+    </StatsCard>
   );
 }
 
@@ -182,22 +173,16 @@ export function SegmentedJoinCTA({ lang }: { lang: Language }) {
       } transition-opacity duration-500 motion-reduce:opacity-100 motion-reduce:duration-0`}
       aria-labelledby="seg-join-cta-title"
     >
-      <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-50/40 p-4 sm:p-6">
-        <header className="mb-6 sm:mb-8">
-          <p
-            className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 sm:text-xs"
-            style={{ color: TEAL }}
-          >
-            {c.eyebrow}
-          </p>
-          <h2
-            id="seg-join-cta-title"
-            className="mt-2 max-w-3xl text-xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-2xl"
-          >
-            {c.title}
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-[15px]">{c.lead}</p>
-        </header>
+      <StatsSectionShell>
+        <div className="border-b border-slate-100 px-4 py-5 sm:px-6 sm:py-6">
+          <StatsSectionHeader
+            eyebrow={c.eyebrow}
+            title={c.title}
+            titleId="seg-join-cta-title"
+            description={c.lead}
+          />
+        </div>
+        <div className="p-4 sm:p-6">
 
         <ul className="m-0 grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
           {personas.map((p, i) => (
@@ -206,21 +191,19 @@ export function SegmentedJoinCTA({ lang }: { lang: Language }) {
             </li>
           ))}
         </ul>
+        </div>
 
-        <div className="mt-8 border-t border-slate-200/80 pt-6 sm:pt-8">
-          <p className="text-center text-sm leading-relaxed text-slate-700 sm:text-left">
+        <div className="border-t border-slate-100 px-4 py-6 sm:px-6 sm:py-8">
+          <p className="text-sm leading-relaxed text-slate-700">
             {c.footer}
           </p>
           <div className="mt-4 flex justify-center sm:justify-center print:justify-center">
-            <Link
-              to="/inscription"
-              className="inline-flex w-full max-w-md items-center justify-center rounded-xl border border-transparent bg-[#01696f] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#015a5f] sm:w-auto"
-            >
+            <StatsPrimaryButton to="/inscription" className="w-full max-w-md sm:w-auto">
               {c.brandCta}
-            </Link>
+            </StatsPrimaryButton>
           </div>
         </div>
-      </div>
+      </StatsSectionShell>
     </section>
   );
 }

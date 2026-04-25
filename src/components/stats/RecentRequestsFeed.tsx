@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  StatsBadge,
+  StatsInsightCard,
+  StatsPrimaryButton,
+  StatsSecondaryButton,
+  StatsSectionHeader,
+  StatsSectionShell,
+  statsListRowClassName,
+} from '@/components/stats/ui';
 import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import { Briefcase, Handshake, MapPin, Package, Search, Clock3 } from 'lucide-react';
 import { db } from '@/firebase';
@@ -10,9 +19,6 @@ import {
 } from '@/lib/formatPublicMemberRequest';
 import { mapMemberRequestDoc, MEMBER_REQUESTS_COLLECTION } from '@/lib/memberRequests';
 import type { Language, MemberNetworkRequest } from '@/types';
-
-const TEAL = '#01696f';
-const TEAL_SOFT = 'rgb(230 245 245)';
 
 type Copy = {
   eyebrow: string;
@@ -144,7 +150,7 @@ function RequestRow({ r, lang, c, index, onRequestClick }: RowProps) {
     >
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <div
-          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600"
+          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#e6f5f5]/60 text-[#01696f]"
           aria-hidden
         >
           <Icon className="h-4 w-4" />
@@ -154,14 +160,7 @@ function RequestRow({ r, lang, c, index, onRequestClick }: RowProps) {
         </div>
       </div>
       <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-col sm:items-end sm:gap-1">
-        {isNew && (
-          <span
-            className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-            style={{ color: TEAL, background: TEAL_SOFT }}
-          >
-            {c.badgeNew}
-          </span>
-        )}
+        {isNew && <StatsBadge className="shrink-0">{c.badgeNew}</StatsBadge>}
         <p className="inline-flex items-center gap-1 text-right text-xs tabular-nums text-slate-500">
           <Clock3 className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
           {when}
@@ -170,8 +169,7 @@ function RequestRow({ r, lang, c, index, onRequestClick }: RowProps) {
     </div>
   );
 
-  const liClass =
-    'recent-req-row recent-req-row-anim block rounded-lg border border-slate-100 p-4 text-left text-sm transition hover:border-slate-200 print:break-inside-avoid';
+  const liClass = `recent-req-row recent-req-row-anim block ${statsListRowClassName} text-left text-sm transition motion-safe:hover:border-slate-200 print:break-inside-avoid`;
 
   if (onRequestClick) {
     return (
@@ -203,10 +201,7 @@ function RequestRow({ r, lang, c, index, onRequestClick }: RowProps) {
 
 function RequestRowSkeleton() {
   return (
-    <li
-      className="rounded-lg border border-gray-100 p-4 motion-reduce:animate-none"
-      style={{ borderColor: 'rgb(241 245 249)' }}
-    >
+    <li className={`${statsListRowClassName} motion-reduce:animate-none`}>
       <div className="flex items-start gap-3">
         <div className="h-8 w-8 shrink-0 rounded-lg bg-slate-200 motion-reduce:animate-none animate-pulse" />
         <div className="min-w-0 flex-1 space-y-2">
@@ -283,23 +278,14 @@ export function RecentRequestsFeed({
       className={`recent-requests-feed mt-10 print:break-inside-avoid ${reveal ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500 motion-reduce:opacity-100 motion-reduce:duration-0`}
       aria-labelledby="recent-requests-feed-title"
     >
-      <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
+      <StatsSectionShell>
         <div className="border-b border-slate-100 px-4 py-5 sm:px-6 sm:py-6">
-          <p
-            className="text-[11px] font-bold uppercase tracking-[0.2em] sm:text-xs"
-            style={{ color: TEAL }}
-          >
-            {c.eyebrow}
-          </p>
-          <h2
-            id="recent-requests-feed-title"
-            className="mt-2 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl"
-          >
-            {c.title}
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-[15px]">
-            {c.lead}
-          </p>
+          <StatsSectionHeader
+            eyebrow={c.eyebrow}
+            title={c.title}
+            titleId="recent-requests-feed-title"
+            description={c.lead}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-12">
@@ -331,42 +317,35 @@ export function RecentRequestsFeed({
           </div>
 
           <aside className="min-h-0 border-t border-slate-100 pt-5 sm:pt-5 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-            <h3 className="text-sm font-extrabold text-slate-900">{c.whyTitle}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">{c.whyBody}</p>
-            <ul className="mt-3 space-y-1.5 text-sm text-slate-700">
-              {[c.b1, c.b2, c.b3].map((b) => (
-                <li key={b} className="flex gap-2">
-                  <span className="mt-0.5 shrink-0" style={{ color: TEAL }} aria-hidden>
-                    ·
-                  </span>
-                  <span>{b}</span>
-                </li>
-              ))}
-            </ul>
+            <StatsInsightCard className="!shadow-none">
+              <h3 className="text-sm font-extrabold text-slate-900">{c.whyTitle}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{c.whyBody}</p>
+              <ul className="mt-3 space-y-1.5 text-sm text-slate-700">
+                {[c.b1, c.b2, c.b3].map((b) => (
+                  <li key={b} className="flex gap-2">
+                    <span className="mt-0.5 shrink-0 text-[#01696f]" aria-hidden>
+                      ·
+                    </span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </StatsInsightCard>
           </aside>
         </div>
 
         <div className="border-t border-slate-100 px-4 py-5 sm:px-6">
-          <p className="text-center text-sm text-slate-700 sm:text-left">
-            {c.ctaLine}
-          </p>
-          <div className="mt-4 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-center print:flex-row">
-            <Link
-              to="/inscription"
-              className="inline-flex w-full items-center justify-center rounded-xl border border-transparent px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 sm:w-auto"
-              style={{ background: TEAL }}
-            >
+          <p className="text-sm text-slate-700">{c.ctaLine}</p>
+          <div className="mt-4 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-start print:flex-row">
+            <StatsPrimaryButton to="/inscription" className="w-full sm:w-auto print:w-auto">
               {c.ctaPrimary}
-            </Link>
-            <Link
-              to="/requests"
-              className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 sm:w-auto"
-            >
+            </StatsPrimaryButton>
+            <StatsSecondaryButton to="/requests" className="w-full sm:w-auto print:w-auto">
               {c.ctaSecondary}
-            </Link>
+            </StatsSecondaryButton>
           </div>
         </div>
-      </div>
+      </StatsSectionShell>
     </section>
   );
 }

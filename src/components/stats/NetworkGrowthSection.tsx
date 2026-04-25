@@ -1,5 +1,4 @@
 import React, { useEffect, useId, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Area,
   CartesianGrid,
@@ -15,6 +14,13 @@ import {
   formatGrowthAxisDate,
   formatGrowthTooltipDate,
 } from '@/lib/statsGrowthDateFormat';
+import {
+  StatsBadge,
+  StatsInsightCard,
+  StatsPrimaryButton,
+  StatsSectionHeader,
+  StatsSectionShell,
+} from '@/components/stats/ui';
 
 const BRAND = '#01696f';
 const FILL_MID = '#01696f';
@@ -139,15 +145,9 @@ export function NetworkGrowthSection({
     <section
       className={`network-growth-section mt-10 print:break-inside-avoid ${entered ? 'opacity-100' : 'opacity-0 translate-y-2 motion-reduce:translate-y-0 motion-reduce:opacity-100'} transition-all duration-500 ease-out motion-reduce:duration-0`}
     >
-      <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
+      <StatsSectionShell>
         <div className="border-b border-slate-100 px-4 py-5 sm:px-6 sm:py-6">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#01696f] sm:text-xs">{c.eyebrow}</p>
-          <h2 className="mt-2 text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
-            {c.title}
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-[15px]">
-            {c.lead}
-          </p>
+          <StatsSectionHeader eyebrow={c.eyebrow} title={c.title} description={c.lead} />
         </div>
 
         {data.length === 0 ? (
@@ -234,36 +234,35 @@ export function NetworkGrowthSection({
               </div>
             </div>
 
-            <aside className="flex flex-col gap-4 border-t border-slate-100 pt-5 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-              <h3 className="text-sm font-extrabold text-slate-900">{c.insightTitle}</h3>
-              <p className="text-sm leading-relaxed text-slate-600">{c.insightBody}</p>
-              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-2">
-                <span className="inline-flex w-full items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-800 sm:w-auto">
-                  {c.badge1(newMembersLast30d)}
-                </span>
-                <span className="inline-flex w-full items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-800 sm:w-auto">
-                  {c.badge2(totalMembers)}
-                </span>
-              </div>
+            <aside className="border-t border-slate-100 pt-5 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+              <StatsInsightCard className="!shadow-none">
+                <h3 className="text-sm font-extrabold text-slate-900">{c.insightTitle}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{c.insightBody}</p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-2">
+                  <StatsBadge variant="neutral" caps={false} className="w-full justify-center !text-xs !font-semibold sm:w-auto">
+                    {c.badge1(newMembersLast30d)}
+                  </StatsBadge>
+                  <StatsBadge variant="neutral" caps={false} className="w-full justify-center !text-xs !font-semibold sm:w-auto">
+                    {c.badge2(totalMembers)}
+                  </StatsBadge>
+                </div>
+              </StatsInsightCard>
             </aside>
           </div>
         )}
 
         {data.length > 0 && (
           <div className="border-t border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
-            <p className="text-center text-sm text-slate-600">{c.transition}</p>
-            <div className="mt-4 flex justify-center print:hidden">
-              <Link
-                to="/inscription"
-                className="inline-flex items-center justify-center rounded-xl border border-transparent bg-[#01696f] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#015a5f] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#01696f]"
-              >
+            <p className="text-sm text-slate-600">{c.transition}</p>
+            <div className="mt-4 print:hidden">
+              <StatsPrimaryButton to="/inscription" className="w-full sm:w-auto">
                 {c.cta}
-              </Link>
+              </StatsPrimaryButton>
             </div>
-            <p className="mt-2 hidden text-center text-xs text-slate-500 print:block">franconetwork.app / inscription</p>
+            <p className="mt-2 hidden text-xs text-slate-500 print:block">franconetwork.app / inscription</p>
           </div>
         )}
-      </div>
+      </StatsSectionShell>
     </section>
   );
 }

@@ -1,3 +1,15 @@
+/* Design tokens locaux /stats (complément aux utilitaires Tailwind) */
+.stats-ds {
+  --stats-primary: #01696f;
+  --stats-primary-hover: #015a5f;
+  --stats-accent-bg: #e6f5f5;
+  --stats-text: #0f172a;
+  --stats-text-secondary: #64748b;
+  --stats-border: #e2e8f0;
+  --stats-surface: #ffffff;
+  --stats-surface-muted: #f9fafb;
+}
+
 /* Vitrine /stats : PDF + impression */
 @media print {
   .no-print {
@@ -65,6 +77,16 @@
 
 @media (prefers-reduced-motion: reduce) {
   .seg-join-card-anim {
+    animation: none;
+  }
+}
+
+.shared-aff-row-anim {
+  animation: activeOppRowIn 0.45s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shared-aff-row-anim {
     animation: none;
   }
 }
