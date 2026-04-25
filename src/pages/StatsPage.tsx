@@ -3,13 +3,10 @@ import { Helmet } from 'react-helmet-async';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import {
-  Area,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  ComposedChart,
-  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -22,7 +19,12 @@ import { getPassionEmoji, getPassionLabel } from '@/lib/passionConfig';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { LanguageSwitch } from '@/components/layout/LanguageSwitch';
 import type { Language } from '@/types';
-import { NeedsBarChart } from '@/components/charts/NeedsBarChart';
+import { StatsHero } from '@/components/StatsHero';
+import { NetworkGrowthSection } from '@/components/stats/NetworkGrowthSection';
+import { ActiveOpportunitiesSection } from '@/components/stats/ActiveOpportunitiesSection';
+import { RecentMembersActivity } from '@/components/stats/RecentMembersActivity';
+import { RecentRequestsFeed } from '@/components/stats/RecentRequestsFeed';
+import { SegmentedJoinCTA } from '@/components/stats/SegmentedJoinCTA';
 import francoLogoUrl from '../../favicon.svg?url';
 import './stats-page.css';
 
@@ -108,19 +110,6 @@ export default function StatsPage() {
       : lang === 'es'
         ? 'Crece con el tamaño de la red'
         : 'Augmente avec le nombre de décideurs';
-
-  const opportunitiesTitle =
-    lang === 'en'
-      ? 'What members are actively looking for'
-      : lang === 'es'
-        ? 'Lo que nuestros miembros buscan activamente'
-        : 'Ce que nos membres recherchent activement';
-  const opportunitiesSubtitle =
-    lang === 'en'
-      ? 'Join the network and access these opportunities'
-      : lang === 'es'
-        ? 'Únete y accede a estas oportunidades'
-        : 'Rejoignez le réseau et accédez à ces opportunités';
 
   const handlePdf = useCallback(async () => {
     const el = printRef.current;
@@ -280,6 +269,8 @@ export default function StatsPage() {
             </p>
           </header>
 
+          <StatsHero lang={lang} />
+
           <section className="mt-8">
             <h2 className="text-lg font-extrabold text-slate-900">
               {lang === 'en' ? 'The network in numbers' : 'Le réseau en chiffres'}
@@ -385,36 +376,20 @@ export default function StatsPage() {
             </div>
           </section>
 
-          <section className="mt-10">
-            <h2 className="text-xl font-extrabold text-slate-900">
-              {lang === 'en' ? 'A community on the rise' : 'Une communauté en pleine croissance'}
-            </h2>
-            <p className="mt-1 text-slate-600">
-              {lang === 'en' ? 'Cumulative signups over time' : 'Courbe des inscriptions cumulées (historique)'}
-            </p>
-            <div className="mt-4 h-72 rounded-2xl border border-slate-100 bg-emerald-50/40 p-2">
-              <ResponsiveContainer>
-                <ComposedChart data={vitrine.growthCumulative} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="vitrineGrowth" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#166534" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#166534" stopOpacity={0.02} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#64748b' }} minTickGap={18} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="count" stroke="transparent" fill="url(#vitrineGrowth)" />
-                  <Line type="monotone" dataKey="count" stroke="#166534" strokeWidth={2} dot={false} />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          </section>
+          <NetworkGrowthSection
+            growthCumulative={vitrine.growthCumulative}
+            totalMembers={vitrine.totalMembers}
+            newMembersLast30d={vitrine.newMembersLast30d}
+            lang={lang}
+          />
 
-          <section className="mt-10">
-            <NeedsBarChart data={vitrine.needs} title={opportunitiesTitle} subtitle={opportunitiesSubtitle} />
-          </section>
+          <RecentMembersActivity lang={lang} />
+
+          <ActiveOpportunitiesSection needs={vitrine.needs} lang={lang} />
+
+          <RecentRequestsFeed lang={lang} />
+
+          <SegmentedJoinCTA lang={lang} />
 
           <div className="mt-10 flex flex-col items-start gap-4 border-t border-slate-200 pt-8 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
@@ -424,21 +399,16 @@ export default function StatsPage() {
                 <p className="text-sm text-slate-600">
                   {lang === 'en'
                     ? 'Francophone business network · Guadalajara, Jalisco, Mexico'
-                    : 'Réseau francophone d’affaires · Guadalajara, Jalisco, Mexique'}
+                    : lang === 'es'
+                      ? 'Red de negocios francófona · Guadalajara, Jalisco, México'
+                      : 'Réseau francophone d’affaires · Guadalajara, Jalisco, Mexique'}
                 </p>
-                <p className="text-xs text-slate-500">franconetwork.app · {lang === 'en' ? 'Free signup' : 'Inscription gratuite'}</p>
+                <p className="text-xs text-slate-500">franconetwork.app · {lang === 'en' ? 'Free signup' : lang === 'es' ? 'Inscripción gratuita' : 'Inscription gratuite'}</p>
                 <p className="mt-1 text-xs text-slate-500">
-                  {lang === 'en' ? 'Data as of' : 'Données au'} {dataDateLabel}
+                  {lang === 'en' ? 'Data as of' : lang === 'es' ? 'Datos al' : 'Données au'} {dataDateLabel}
                 </p>
               </div>
             </div>
-            <Link
-              to="/inscription"
-              className="inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-sm sm:w-auto"
-              style={{ background: BRAND }}
-            >
-              {lang === 'en' ? 'Join the network' : 'Rejoindre le réseau'}
-            </Link>
           </div>
 
           {vitrine.source === 'firestore' ? (
