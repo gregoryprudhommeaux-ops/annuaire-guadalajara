@@ -1,4 +1,4 @@
-import { Home, Users, Handshake, Radar, Info, UserRound, Shield, CalendarDays } from 'lucide-react';
+import { Home, Users, Handshake, Radar, LineChart, Info, UserRound, Shield, CalendarDays } from 'lucide-react';
 import React from 'react';
 
 export type NavAudience = 'visitor' | 'member';
@@ -28,6 +28,7 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
         { id: 'network', href: '/network', label: 'Réseau', audience: 'member', placement: 'primary' },
         { id: 'requests', href: '/requests', label: 'Demandes', audience: 'member', placement: 'primary' },
         { id: 'radar', href: '/radar', label: 'Radar', audience: 'member', placement: 'primary' },
+        { id: 'stats', href: '/stats', label: 'Vitrine', audience: 'member', placement: 'primary' },
         ...(isAdmin
           ? ([
               { id: 'admin', href: '/admin', label: 'Admin', audience: 'member', placement: 'primary' },
@@ -37,6 +38,7 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
       ]
     : [
         { id: 'discover', href: '/network', label: 'Découvrir', audience: 'visitor', placement: 'primary' },
+        { id: 'stats', href: '/stats', label: 'Vitrine', audience: 'visitor', placement: 'primary' },
         { id: 'how', href: '/#comment-ca-marche', label: 'Comment ça marche', audience: 'visitor', placement: 'primary' },
         { id: 'about', href: '/#', label: 'À propos', audience: 'visitor', placement: 'primary' },
       ];
@@ -52,6 +54,7 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
     network: React.createElement(Users, iconProps),
     requests: React.createElement(Handshake, iconProps),
     radar: React.createElement(Radar, iconProps),
+    stats: React.createElement(LineChart, iconProps),
     admin: React.createElement(Shield, iconProps),
     events: React.createElement(CalendarDays, iconProps),
     discover: React.createElement(Users, iconProps),

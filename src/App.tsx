@@ -370,6 +370,7 @@ import EmailAuthPanel from './components/EmailAuthPanel';
 import { HomePage as MarketingHomePage } from '@/components/home/HomePage';
 import PublicHomePage from '@/pages/PublicHomePage';
 import AppShell from '@/components/layout/AppShell';
+import { AppHeader as FrancoNetworkAppHeader } from '@/components/layout/AppHeader';
 import { getPrimaryNav } from '@/routes/primaryNav';
 import { canAccessRoute, getAppRole } from '@/auth/roleModel';
 import { HeroTopActions } from '@/components/hero/HeroTopActions';
@@ -2279,7 +2280,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const isNetworkRoute = location.pathname === '/network';
   const isRequestsRoute = location.pathname === '/requests';
   const isRadarRoute = location.pathname === '/radar';
-  /** `/admin` and `/admin/*` — not the member `AppShell`. Admin uses the legacy `AppHeader` (nav row) + full-width `<main>`. */
+  /** `/admin` and `/admin/*` — contenu back-office. Admin connecté : `useAppShellAdmin` (même `AppHeader` que le shell membre, sans BottomNav). */
   const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
   // Kept for naming clarity elsewhere; admin is not the same surface as the member "dashboard" route.
   const isAdminDashboard = false;
@@ -2290,6 +2291,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const pathnameNorm = location.pathname.replace(/\/$/, '') || '/';
   const isEventsAdminRoute = pathnameNorm === '/evenements';
   const isAdminInternalRoute = pathnameNorm === '/admin/internal';
+  const isMembresRoute = pathnameNorm === '/membres';
+  const isOnboardingRoute = pathnameNorm === '/onboarding';
 
   useEffect(() => {
     if (!isNetworkRoute) setShowSavedMembersOnly(false);
@@ -4832,7 +4835,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
     isDashboardRoute ||
     isNetworkRoute ||
     isRequestsRoute ||
-    isRadarRoute;
+    isRadarRoute ||
+    isStatsRoute;
   const useAppShellNonAdmin = Boolean(
     !shortLegalPage && !isSignupMinimal && !useNewPublicHome && !isAdminRoute
   ) && useAppShellMemberContent;
@@ -4845,6 +4849,18 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       !useNewPublicHome &&
       viewerIsAdmin &&
       (isAdminRoute || isEventsAdminRoute)
+  );
+
+  /** Même barre d’outils que `AppShell` (menu FrancoNetwork) pour les pages encore rendues dans le `<main>` historique. */
+  const useFrancoNavStandalone = Boolean(
+    !isSignupMinimal &&
+      !useNewPublicHome &&
+      (shortLegalPage != null ||
+        isHomeRoute ||
+        isMembresRoute ||
+        isEventsAdminRoute ||
+        isPublicEventRoute ||
+        isOnboardingRoute)
   );
 
   const requestSubmitProfileForm = () => {
@@ -4866,7 +4882,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
 
   return (
     <div className="flex min-h-screen min-w-0 flex-col bg-slate-50 text-slate-900 font-sans selection:bg-slate-200">
-      {useNewPublicHome || useAppShellNonAdmin || useAppShellAdmin ? null : (
+      {useNewPublicHome ? null : useAppShellNonAdmin || useAppShellAdmin ? null : useFrancoNavStandalone ? (
+        <FrancoNetworkAppHeader
+          user={user ? { displayName: user.displayName, email: user.email, photoURL: user.photoURL } : null}
+          isAdmin={viewerIsAdmin}
+          onSignIn={openAuthModal}
+          onSignOut={handleLogout}
+          rightSlot={languageControlsTopRight}
+        />
+      ) : (
         <AppHeader
           title={t('title')}
           subtitle={t('subtitle')}
@@ -5138,7 +5162,15 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             isAdmin: viewerIsAdmin,
             onSignIn: openAuthModal,
             onSignOut: handleLogout,
-            rightSlot: languageControlsTopRight,
+            rightSlot:
+              isStatsRoute ? (
+                <div className="flex shrink-0 items-center gap-2">
+                  <StatsPdfHeaderButton lang={lang} />
+                  {languageControlsTopRight}
+                </div>
+              ) : (
+                languageControlsTopRight
+              ),
           }}
           showBottomNav={Boolean(user)}
           contentClassName={cn(
@@ -5579,9 +5611,17 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   />
                 </React.Suspense>
               </SectionErrorBoundary>
-          ) : // Defensive: when `useAppShellNonAdmin` is true, one of the branches above should always match
-          // (see `useAppShellMemberContent`). If this renders, a route was added to the shell without a case here.
-          null}
+          ) : isStatsRoute ? (
+            <React.Suspense
+              fallback={
+                <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                  {lang === 'es' ? 'Cargando…' : lang === 'en' ? 'Loading…' : 'Chargement…'}
+                </div>
+              }
+            >
+              <StatsPageLazy />
+            </React.Suspense>
+          ) : null}
         </AppShell>
       ) : useAppShellAdmin ? (
         <AppShell
