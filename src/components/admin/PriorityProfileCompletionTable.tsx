@@ -268,9 +268,6 @@ function Row({
             </li>
           ))}
         </ul>
-        <p className="mt-2 text-[11px] leading-snug text-stone-500" title={row.suggestedMessage}>
-          {row.suggestedMessage}
-        </p>
       </td>
       <td className="px-3 py-3 text-right sm:px-4">
         <span className="text-lg font-extrabold tabular-nums text-[#01696f]">
