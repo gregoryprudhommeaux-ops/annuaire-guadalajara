@@ -889,6 +889,22 @@
   min-width: 0;
 }
 
+/* Deux cartes "besoins" + "couverture" : le graphique ne doit pas s'écraser ; les ticks X ne doivent pas être masqués */
+.admin-dashboard-page .admin-chart-card--needs-opportunity .admin-chart-frame--needs-embed {
+  flex: 0 0 auto;
+  min-height: 252px;
+  max-height: none;
+  overflow: visible;
+}
+
+.admin-dashboard-page .admin-chart-card--sector-coverage .admin-chart-frame--sm {
+  flex: 1 1 auto;
+  min-height: 300px;
+  max-height: none;
+  overflow: visible;
+  padding-bottom: 4px;
+}
+
 .admin-dashboard-page .admin-chart-frame--center {
   display: flex;
   align-items: center;

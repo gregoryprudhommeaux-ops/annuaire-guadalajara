@@ -373,14 +373,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
     });
     return map;
   }, [bySectorData]);
-  const chartTick = { fontSize: 10, fill: '#64748b' };
   const modalTick = { fontSize: 12, fill: '#475569' };
-  const xTickCardAngled = (props: { x: number | string; y: number | string; payload?: { value?: string | number } }) => (
-    <AdminXAxisTickCompactAngled {...props} maxChars={14} fontSize={10} fill="#64748b" />
-  );
-  const xTickCardFlat = (props: { x: number | string; y: number | string; payload?: { value?: string | number } }) => (
-    <AdminXAxisTickCompactFlat {...props} maxChars={14} fontSize={10} fill="#64748b" />
-  );
   const xTickModalAngled = (props: { x: number | string; y: number | string; payload?: { value?: string | number } }) => (
     <AdminXAxisTickCompactAngled {...props} maxChars={18} fontSize={12} fill="#475569" />
   );
@@ -724,7 +717,7 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
           <div className="admin-analytics-secondary">
             <div className="min-w-0">
-              <article className="admin-chart-card admin-chart-card--compact">
+              <article className="admin-chart-card admin-chart-card--compact admin-chart-card--needs-opportunity">
                 <p className="admin-chart-card__title">{ad.needsBarTitle}</p>
                 <p className="admin-chart-card__subtitle">{ad.needsBarSubtitle}</p>
                 <div className="admin-chart-card__body">
@@ -750,16 +743,31 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
               </article>
             </div>
 
-            <article className="admin-chart-card admin-chart-card--compact">
+            <article className="admin-chart-card admin-chart-card--compact admin-chart-card--sector-coverage">
               <p className="admin-chart-card__title">{ad.chartCoverageTitle}</p>
               <p className="admin-chart-card__subtitle">{ad.chartCoverageSubtitle}</p>
               <div className="admin-chart-card__body">
                 <div className="admin-chart-frame admin-chart-frame--sm admin-chart-frame--center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={sectorCoverageRows} margin={{ top: 6, right: 10, bottom: 30, left: 6 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={xTickCardAngled as any} interval={0} height={52} />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                  <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                    <BarChart
+                      data={sectorCoverageRows}
+                      margin={{ top: 10, right: 10, bottom: 6, left: 4 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        type="category"
+                        interval={0}
+                        tick={{ fontSize: 10, fill: '#64748b' }}
+                        tickLine={false}
+                        axisLine={{ stroke: '#e2e8f0' }}
+                        height={78}
+                        angle={-32}
+                        textAnchor="end"
+                        tickMargin={4}
+                        tickFormatter={(v) => compactLabel(String(v ?? ''), 14)}
+                      />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} width={32} />
                       <Tooltip contentStyle={{ fontSize: 12 }} />
                       <Bar dataKey="value" name={t('members')} radius={[6, 6, 0, 0]}>
                         {sectorCoverageRows.map((row, idx) => (

@@ -183,8 +183,8 @@ export function NeedsBarChart({
       className={embedded ? 'h-full w-full min-h-0 min-w-0 flex-1' : 'w-full min-w-0'}
     >
       {!hasData ? (
-        <div className="flex h-full w-full items-center justify-center rounded-xl border border-zinc-100 bg-zinc-50 text-sm text-zinc-500">
-          <p className="px-4 text-center font-semibold text-zinc-600">
+        <div className="flex h-full min-h-[220px] w-full items-center justify-center rounded-xl border border-zinc-200/90 bg-zinc-50/90 px-3 text-sm text-zinc-600">
+          <p className="text-center font-semibold leading-snug">
             Aucune donnée de besoins à afficher.
           </p>
         </div>
