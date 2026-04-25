@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Copy, ExternalLink, MessageCircle } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Copy, ExternalLink, MessageCircle } from 'lucide-react';
 import type { AdminStats } from '@/hooks/useAdminStats';
 import type { Language } from '@/types';
 import { pickLang, formatProfileLastSeen } from '@/lib/uiLocale';
@@ -14,6 +14,38 @@ import {
   type AdminPriorityFilter,
   type PriorityProfileRow,
 } from '@/lib/adminPriorityScoring';
+
+type SortKey = 'member' | 'company' | 'lastSeen' | 'completion' | 'score';
+type SortDir = 'asc' | 'desc';
+
+function compareRows(a: PriorityProfileRow, b: PriorityProfileRow, key: SortKey, dir: SortDir): number {
+  const sign = dir === 'asc' ? 1 : -1;
+  switch (key) {
+    case 'member': {
+      const x = String(a.profile.nom ?? '').trim().toLocaleLowerCase();
+      const y = String(b.profile.nom ?? '').trim().toLocaleLowerCase();
+      return sign * x.localeCompare(y);
+    }
+    case 'company': {
+      const x = String(a.profile.entreprise ?? '').trim().toLocaleLowerCase();
+      const y = String(b.profile.entreprise ?? '').trim().toLocaleLowerCase();
+      return sign * x.localeCompare(y);
+    }
+    case 'lastSeen': {
+      const x = a.profile.lastSeen ?? 0;
+      const y = b.profile.lastSeen ?? 0;
+      return sign * (x - y);
+    }
+    case 'completion': {
+      return sign * (a.profile.readinessPct - b.profile.readinessPct);
+    }
+    case 'score': {
+      return sign * (a.priorityCompletionScore - b.priorityCompletionScore);
+    }
+    default:
+      return 0;
+  }
+}
 
 const FILTERS: Array<{ id: AdminPriorityFilter; fr: string; es: string; en: string }> = [
   { id: 'all', fr: 'Tous', es: 'Todos', en: 'All' },
@@ -56,6 +88,8 @@ export function PriorityProfileCompletionTable({
   lang: Language;
 }) {
   const [filter, setFilter] = useState<AdminPriorityFilter>('all');
+  const [sortKey, setSortKey] = useState<SortKey>('score');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
   const pick = useCallback((f: string, s: string, e: string) => tr(lang, f, s, e), [lang]);
 
   const allRows = useMemo(
@@ -63,7 +97,24 @@ export function PriorityProfileCompletionTable({
     [stats, lang, pick]
   );
 
-  const rows = useMemo(() => filterPriorityRows(allRows, filter), [allRows, filter]);
+  const filteredRows = useMemo(() => filterPriorityRows(allRows, filter), [allRows, filter]);
+
+  const rows = useMemo(() => {
+    const copy = [...filteredRows];
+    copy.sort((a, b) => compareRows(a, b, sortKey, sortDir));
+    return copy;
+  }, [filteredRows, sortKey, sortDir]);
+
+  const toggleSort = useCallback((key: SortKey, defaultDir: SortDir) => {
+    setSortKey((prevKey) => {
+      if (prevKey === key) {
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+        return prevKey;
+      }
+      setSortDir(defaultDir);
+      return key;
+    });
+  }, []);
 
   const kpis = useMemo(() => {
     if (stats.loading) return null;
@@ -159,33 +210,53 @@ export function PriorityProfileCompletionTable({
 
       <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[960px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[760px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-stone-200 bg-stone-50/90">
-                <th className="px-3 py-3 font-bold text-stone-700 sm:px-4">
-                  {tr(lang, 'Membre', 'Miembro', 'Member')}
-                </th>
-                <th className="px-3 py-3 font-bold text-stone-700 sm:px-4">
-                  {tr(lang, 'Entreprise', 'Empresa', 'Company')}
-                </th>
-                <th className="px-3 py-3 font-bold text-stone-700 sm:px-4">
-                  {tr(lang, 'Ville', 'Ciudad', 'City')}
-                </th>
-                <th className="px-3 py-3 font-bold text-stone-700 sm:px-4">
-                  {tr(lang, 'Inscription', 'Alta', 'Signed up')}
-                </th>
-                <th className="px-3 py-3 font-bold text-stone-700 sm:px-4">
-                  {tr(lang, 'Dernière act.', 'Últ. actividad', 'Last activity')}
-                </th>
-                <th className="px-3 py-3 font-bold text-stone-700 sm:px-4">
-                  {tr(lang, 'Complétion', 'Completitud', 'Completion')}
-                </th>
+                <SortableTh
+                  label={tr(lang, 'Membre', 'Miembro', 'Member')}
+                  active={sortKey === 'member'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('member', 'asc')}
+                  numeric={false}
+                  ariaLang={lang}
+                />
+                <SortableTh
+                  label={tr(lang, 'Entreprise', 'Empresa', 'Company')}
+                  active={sortKey === 'company'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('company', 'asc')}
+                  numeric={false}
+                  ariaLang={lang}
+                />
+                <SortableTh
+                  label={tr(lang, 'Dernière act.', 'Últ. actividad', 'Last activity')}
+                  active={sortKey === 'lastSeen'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('lastSeen', 'desc')}
+                  numeric
+                  ariaLang={lang}
+                />
+                <SortableTh
+                  label={tr(lang, 'Complétion', 'Completitud', 'Completion')}
+                  active={sortKey === 'completion'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('completion', 'desc')}
+                  numeric
+                  ariaLang={lang}
+                />
                 <th className="min-w-[200px] px-3 py-3 font-bold text-stone-700 sm:px-4">
                   {tr(lang, 'Manques', 'Faltas', 'Missing')}
                 </th>
-                <th className="px-3 py-3 text-right font-bold text-stone-700 sm:px-4">
-                  {tr(lang, 'Score', 'Puntuación', 'Score')}
-                </th>
+                <SortableTh
+                  label={tr(lang, 'Score', 'Puntuación', 'Score')}
+                  active={sortKey === 'score'}
+                  dir={sortDir}
+                  onClick={() => toggleSort('score', 'desc')}
+                  numeric
+                  align="right"
+                  ariaLang={lang}
+                />
                 <th className="min-w-[200px] px-3 py-3 font-bold text-stone-700 sm:px-4">
                   {tr(lang, 'Action', 'Acción', 'Action')}
                 </th>
@@ -194,7 +265,7 @@ export function PriorityProfileCompletionTable({
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-stone-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-stone-500">
                     {tr(lang, 'Aucun profil ne correspond à ce filtre.', 'Ningún perfil con este filtro.', 'No profiles match this filter.')}
                   </td>
                 </tr>
@@ -225,6 +296,57 @@ export function PriorityProfileCompletionTable({
   );
 }
 
+function SortableTh({
+  label,
+  active,
+  dir,
+  onClick,
+  numeric,
+  align = 'left',
+  ariaLang,
+}: {
+  label: string;
+  active: boolean;
+  dir: SortDir;
+  onClick: () => void;
+  numeric: boolean;
+  align?: 'left' | 'right';
+  ariaLang: Language;
+}) {
+  const Icon = active ? (dir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+  const ariaHint = active
+    ? numeric
+      ? dir === 'asc'
+        ? pickLang('croissant', 'ascendente', 'ascending', ariaLang)
+        : pickLang('décroissant', 'descendente', 'descending', ariaLang)
+      : dir === 'asc'
+        ? 'A-Z'
+        : 'Z-A'
+    : pickLang('non trié', 'sin orden', 'unsorted', ariaLang);
+  const justify = align === 'right' ? 'justify-end' : 'justify-start';
+  const textAlign = align === 'right' ? 'text-right' : 'text-left';
+  return (
+    <th className={`px-3 py-3 font-bold text-stone-700 sm:px-4 ${textAlign}`}>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`${label} (${ariaHint})`}
+        className={`group inline-flex w-full items-center gap-1.5 ${justify} font-bold transition-colors ${
+          active ? 'text-[#01696f]' : 'text-stone-700 hover:text-stone-900'
+        }`}
+      >
+        <span>{label}</span>
+        <Icon
+          className={`h-3.5 w-3.5 shrink-0 ${
+            active ? 'text-[#01696f]' : 'text-stone-400 group-hover:text-stone-600'
+          }`}
+          aria-hidden
+        />
+      </button>
+    </th>
+  );
+}
+
 function Row({
   row,
   lang,
@@ -237,14 +359,6 @@ function Row({
   tr: (lang: Language, f: string, s: string, e: string) => string;
 }) {
   const p = row.profile;
-  const created = p.createdAt?.toDate?.();
-  const dateStr = created
-    ? created.toLocaleDateString(lang === 'es' ? 'es-MX' : lang === 'en' ? 'en-US' : 'fr-FR', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      })
-    : '—';
   const last = formatProfileLastSeen(p.lastSeen, lang) ?? '—';
   return (
     <tr className="border-b border-stone-100 align-top last:border-0 hover:bg-stone-50/60">
@@ -252,8 +366,6 @@ function Row({
       <td className="max-w-[160px] truncate px-3 py-3 text-stone-700 sm:px-4" title={p.entreprise}>
         {p.entreprise ?? '—'}
       </td>
-      <td className="px-3 py-3 text-stone-600 sm:px-4">{p.city ?? '—'}</td>
-      <td className="whitespace-nowrap px-3 py-3 text-stone-600 sm:px-4">{dateStr}</td>
       <td className="px-3 py-3 text-stone-600 sm:px-4">{last}</td>
       <td className="px-3 py-3 sm:px-4">
         <span className="inline-flex min-w-[3rem] justify-center rounded-md bg-stone-100 px-2 py-0.5 text-xs font-bold tabular-nums text-stone-800">
