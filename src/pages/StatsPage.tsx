@@ -122,7 +122,7 @@ export default function StatsPage() {
     ok: boolean;
     presentationId: string;
     url: string;
-    debug?: { templateId?: string; lang?: string };
+    debug?: { templateId?: string; lang?: string; leftoverPlaceholders?: string[] };
   };
 
   const handleExportSlides = useCallback(async () => {
@@ -138,6 +138,9 @@ export default function StatsPage() {
       if (!url) {
         throw new Error('URL Slides manquante.');
       }
+      const leftovers = Array.isArray(res.data?.debug?.leftoverPlaceholders)
+        ? res.data.debug.leftoverPlaceholders
+        : [];
       const w = window.open(url, '_blank', 'noopener,noreferrer');
       if (!w) {
         alert(
@@ -146,6 +149,17 @@ export default function StatsPage() {
             : lang === 'es'
               ? 'Autoriza las ventanas emergentes para abrir la exportación de Google Slides.'
               : "Autorisez les popups pour ouvrir l’export Google Slides."
+        );
+      }
+      if (leftovers.length > 0) {
+        alert(
+          (lang === 'en'
+            ? 'Slides generated, but some placeholders were not filled:\n\n'
+            : lang === 'es'
+              ? 'Slides generadas, pero faltan algunos campos:\n\n'
+              : 'Slides générées, mais certains champs ne sont pas remplis :\n\n') +
+            leftovers.slice(0, 40).join('\n') +
+            (leftovers.length > 40 ? `\n… (+${leftovers.length - 40})` : '')
         );
       }
     } catch (e) {

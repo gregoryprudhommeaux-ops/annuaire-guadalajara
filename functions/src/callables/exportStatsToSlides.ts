@@ -680,6 +680,37 @@ async function fillPresentation(
   });
 }
 
+function collectTextFromPresentation(pres: any): string {
+  const out: string[] = [];
+  const slides = pres?.slides ?? [];
+  for (const s of slides) {
+    const pageElements = s?.pageElements ?? [];
+    for (const pe of pageElements) {
+      const shape = pe?.shape;
+      const textElements = shape?.text?.textElements;
+      if (Array.isArray(textElements)) {
+        for (const te of textElements) {
+          const tr = te?.textRun;
+          const content = typeof tr?.content === 'string' ? tr.content : '';
+          if (content) out.push(content);
+        }
+      }
+    }
+  }
+  return out.join('');
+}
+
+function extractPlaceholders(text: string): string[] {
+  const re = /\{\{[^}]{1,120}\}\}/g;
+  const found = new Set<string>();
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    found.add(m[0] ?? '');
+    if (found.size > 500) break;
+  }
+  return Array.from(found).sort();
+}
+
 export const exportStatsToSlides = onCall(
   {
     region: 'us-central1',
@@ -729,8 +760,13 @@ export const exportStatsToSlides = onCall(
       await fillPresentation(slides, presentationId, stats, lang);
 
       const url = slidesUrl(presentationId, { templateId, lang });
+
+      // Diagnostics: detect leftover {{...}} placeholders in the copied deck.
+      const pres = await slides.presentations.get({ presentationId });
+      const text = collectTextFromPresentation(pres.data);
+      const leftover = extractPlaceholders(text);
       logger.info('Slides deck generated', { presentationId, templateId, lang });
-      return { ok: true, presentationId, url, debug: { templateId, lang } };
+      return { ok: true, presentationId, url, debug: { templateId, lang, leftoverPlaceholders: leftover } };
     } catch (err) {
       const anyErr = err as any;
       const status = Number(anyErr?.response?.status ?? anyErr?.code ?? 0) || undefined;
