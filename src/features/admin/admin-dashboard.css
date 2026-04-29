@@ -106,6 +106,8 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 12px;
+  width: 100%;
+  justify-content: space-between;
   padding: 10px 10px;
   border-radius: var(--admin-radius);
   border: 1px solid var(--admin-border);
