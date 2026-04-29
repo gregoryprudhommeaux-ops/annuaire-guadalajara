@@ -7,6 +7,7 @@ import { sanitizePassionIds } from '@/lib/passionConfig';
 import { aggregateNeedsFromMembers, type NeedChartRow } from '@/lib/needs';
 import { NEED_CATEGORY_LABELS } from '@/lib/needLabels';
 import { NEED_OPTION_VALUE_SET, sanitizeHighlightedNeeds } from '@/needOptions';
+import { isAdminProfileLike } from '@/lib/isAdminProfile';
 
 export type VitrinePassionRow = {
   passionId: string;
@@ -87,7 +88,8 @@ export function useVitrineStats(): VitrineStats {
           Record<string, unknown> & { id: string }
         >;
 
-        let totalMembers = rows.length;
+        const memberRows = rows.filter((r) => !isAdminProfileLike(rowToUserProfile(r)));
+        let totalMembers = memberRows.length;
         let newMembersLast30d = 0;
         let prevNewMembers30d = 0;
         const bySector: Record<string, number> = {};
@@ -113,7 +115,7 @@ export function useVitrineStats(): VitrineStats {
         let profileViewsCumul = 0;
         let contactClicksCumul = 0;
 
-        for (const p of rows) {
+        for (const p of memberRows) {
           const up = rowToUserProfile(p);
           const createdAt = (p.createdAt as Timestamp)?.toDate?.();
           if (createdAt) {
@@ -198,7 +200,8 @@ export function useVitrineStats(): VitrineStats {
         if (publicDoc && typeof publicDoc === 'object') {
           const d = publicDoc as Record<string, unknown>;
           const pickNum = (k: string) => (typeof d[k] === 'number' ? (d[k] as number) : Number(d[k]));
-          if (Number.isFinite(pickNum('totalMembers'))) totalMembers = Math.max(0, Math.floor(pickNum('totalMembers')));
+          // Intentionally do NOT override `totalMembers` from publicDoc:
+          // it may include admin/test profiles, while our counters exclude them.
           if (Number.isFinite(pickNum('newMembersLast30d')))
             newMembersLast30d = Math.max(0, Math.floor(pickNum('newMembersLast30d')));
           if (Number.isFinite(pickNum('prevNewMembers30d')))

@@ -4,6 +4,7 @@ import { db } from '@/firebase';
 import { MEMBER_REQUESTS_COLLECTION } from '@/lib/memberRequests';
 import { profileDistinctActivityCategories } from '@/lib/companyActivities';
 import type { UserProfile } from '@/types';
+import { isAdminProfileLike } from '@/lib/isAdminProfile';
 
 function toDateMs(v: unknown): number | null {
   if (v == null) return null;
@@ -72,12 +73,15 @@ export function useStatsHeroKpis(): LoadState {
         ]);
 
         const sectorSet = new Set<string>();
+        let members = 0;
         let thisMonth = 0;
         let lastMonth = 0;
 
         for (const d of usersSnap.docs) {
           const raw = d.data() as Record<string, unknown>;
           const p = rowToUserProfile(d.id, raw);
+          if (isAdminProfileLike(p)) continue;
+          members += 1;
           const created = toDateMs(raw.createdAt);
           if (created != null) {
             if (created >= startThisMs && created <= nowMs) thisMonth += 1;
@@ -100,7 +104,6 @@ export function useStatsHeroKpis(): LoadState {
           }
         }
 
-        const members = usersSnap.size;
         const monthOverMonthGrowthPct =
           lastMonth === 0 ? (thisMonth > 0 ? 100 : 0) : Math.round(((thisMonth - lastMonth) / lastMonth) * 100);
         const distinctSectors = sectorSet.size;
