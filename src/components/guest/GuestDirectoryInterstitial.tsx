@@ -18,7 +18,7 @@ export function GuestDirectoryInterstitial({ hiddenCount, onJoin, t, className }
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-b from-white to-blue-50/90 p-4 text-center shadow-sm sm:p-6',
+        'relative overflow-hidden rounded-xl border border-teal-100 bg-gradient-to-b from-white to-teal-50/80 p-4 text-center shadow-sm sm:p-6',
         className
       )}
     >
@@ -29,8 +29,8 @@ export function GuestDirectoryInterstitial({ hiddenCount, onJoin, t, className }
         </div>
       </div>
 
-      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-        <Lock className="h-5 w-5 text-blue-700" strokeWidth={2} aria-hidden />
+      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-teal-100">
+        <Lock className="h-5 w-5 text-teal-700" strokeWidth={2} aria-hidden />
       </div>
 
       <p className="mt-3 text-sm font-semibold text-slate-900">
@@ -41,7 +41,7 @@ export function GuestDirectoryInterstitial({ hiddenCount, onJoin, t, className }
       <button
         type="button"
         onClick={onJoin}
-        className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-800"
+        className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#01696f] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0a5c61]"
       >
         {t('guestInterstitialCta')}
         <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>

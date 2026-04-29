@@ -117,11 +117,17 @@ export function NetworkGrowthSection({
   totalMembers,
   newMembersLast30d,
   lang,
+  pdfMode = false,
 }: {
   growthCumulative: Row[];
   totalMembers: number;
   newMembersLast30d: number;
   lang: Language;
+  /**
+   * When true, render a PDF-safe version of the chart.
+   * html2canvas can fail on SVG `foreignObject` and some filters.
+   */
+  pdfMode?: boolean;
 }) {
   const c = tcopy(lang, newMembersLast30d, totalMembers);
   const chartBase = useId().replace(/:/g, '');
@@ -135,7 +141,10 @@ export function NetworkGrowthSection({
   }, []);
 
   const data = useMemo(() => growthCumulative.map((r) => ({ ...r })), [growthCumulative]);
-  const annotIndex = useMemo(() => (data.length ? findAccelerationIndex(data) : -1), [data]);
+  const annotIndex = useMemo(
+    () => (pdfMode ? -1 : data.length ? findAccelerationIndex(data) : -1),
+    [data, pdfMode]
+  );
   const maxY = useMemo(() => {
     if (data.length === 0) return 1;
     return Math.max(...data.map((d) => d.count), 1);
@@ -167,16 +176,18 @@ export function NetworkGrowthSection({
                         <stop offset="0%" stopColor={FILL_MID} stopOpacity={0.2} />
                         <stop offset="100%" stopColor={FILL_MID} stopOpacity={0.02} />
                       </linearGradient>
-                      <filter
-                        id={dropId}
-                        x="-100%"
-                        y="-100%"
-                        width="300%"
-                        height="300%"
-                        colorInterpolationFilters="sRGB"
-                      >
-                        <feDropShadow dx="0" dy="1" stdDeviation="1.2" floodOpacity="0.1" />
-                      </filter>
+                      {!pdfMode ? (
+                        <filter
+                          id={dropId}
+                          x="-100%"
+                          y="-100%"
+                          width="300%"
+                          height="300%"
+                          colorInterpolationFilters="sRGB"
+                        >
+                          <feDropShadow dx="0" dy="1" stdDeviation="1.2" floodOpacity="0.1" />
+                        </filter>
+                      ) : null}
                     </defs>
                     <CartesianGrid
                       vertical={false}
@@ -226,7 +237,8 @@ export function NetworkGrowthSection({
                         c.annotTitle,
                         c.annotSub,
                         data.length,
-                        dropId
+                        dropId,
+                        pdfMode
                       )}
                     />
                   </ComposedChart>
@@ -272,7 +284,8 @@ function lineDot(
   title: string,
   sub: string,
   nPoints: number,
-  dropFilterId: string
+  dropFilterId: string,
+  pdfMode: boolean
 ) {
   function GrowthAnnotDot(props: {
     cx?: number;
@@ -282,6 +295,7 @@ function lineDot(
     [k: string]: unknown;
   }) {
     if (annotIndex < 0 || props.index !== annotIndex) return null;
+    if (pdfMode) return null;
     const { cx, cy, index = 0 } = props;
     if (typeof cx !== 'number' || typeof cy !== 'number') return null;
     return (
@@ -293,6 +307,7 @@ function lineDot(
         title={title}
         sub={sub}
         dropFilterId={dropFilterId}
+        pdfMode={pdfMode}
       />
     );
   }
@@ -344,6 +359,7 @@ function AnnotationPoint({
   nPoints,
   index,
   dropFilterId,
+  pdfMode,
 }: {
   cx: number;
   cy: number;
@@ -352,11 +368,27 @@ function AnnotationPoint({
   nPoints: number;
   index: number;
   dropFilterId: string;
+  pdfMode: boolean;
 }) {
   if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null;
   const placeRight = index < (nPoints - 1) * 0.55;
   const boxW = 158;
   const yOff = 52;
+
+  if (pdfMode) {
+    return (
+      <g>
+        <circle
+          r={5}
+          fill={BRAND}
+          stroke="#fff"
+          strokeWidth={2}
+          cx={cx}
+          cy={cy}
+        />
+      </g>
+    );
+  }
 
   return (
     <g>

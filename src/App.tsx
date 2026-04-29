@@ -596,7 +596,7 @@ function HeaderSocialLoginButtons({
         type="button"
         onClick={onEmail}
         disabled={disabled}
-        className={`${btn} bg-blue-700 text-white hover:bg-blue-800`}
+        className={`${btn} bg-[#01696f] text-white hover:bg-[#0a5c61]`}
         title={t('continueEmail')}
         aria-label={t('continueEmail')}
       >
@@ -1031,7 +1031,7 @@ const ProfileCard = ({
               e.stopPropagation();
               onGuestJoin?.();
             }}
-            className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-800 active:bg-blue-800"
+            className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-[#01696f] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0a5c61] active:bg-[#0a5c61]"
           >
             {t('guestJoinCta')}
           </button>
@@ -1434,7 +1434,7 @@ const ProfilePage = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/')}
-                  className="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
+                  className="rounded-xl bg-[#01696f] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0a5c61]"
                 >
                   {t('guestJoinCta')}
                 </button>
@@ -1847,7 +1847,7 @@ const NeedPage = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/')}
-                  className="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
+                  className="rounded-xl bg-[#01696f] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0a5c61]"
                 >
                   {t('guestJoinCta')}
                 </button>
@@ -5232,7 +5232,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               <button
                 type="button"
                 onClick={() => openAuthModal()}
-                className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white"
+                className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[#01696f] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0a5c61]"
               >
                 {t('authEmailSignIn')}
               </button>
@@ -5918,7 +5918,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 <div className="mt-3">
                                   <Link
                                     to={`/e/${encodeURIComponent(String(ev.slug ?? ''))}`}
-                                    className="inline-flex items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800"
+                                    className="inline-flex items-center justify-center rounded-lg bg-[#01696f] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0a5c61]"
                                   >
                                     {pickLang('Voir', 'Ver', 'View', lang)}
                                   </Link>
@@ -6439,7 +6439,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                                 { replace: true }
                               );
                             }}
-                            className="w-full max-w-md rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-medium text-stone-800 outline-none transition-all focus:ring-2 focus:ring-blue-600"
+                            className="w-full max-w-md rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-medium text-stone-800 outline-none transition-all focus:ring-2 focus:ring-[#01696f]"
                           >
                             <option value="recent">{t('membersSortOptionRecent')}</option>
                             <option value="alphabetical">{t('membersSortOptionAlphabetical')}</option>
@@ -6855,7 +6855,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             e.stopPropagation();
                             onGuestDirectoryJoin();
                           }}
-                          className="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
+                          className="rounded-xl bg-[#01696f] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0a5c61]"
                         >
                           {t('guestJoinCta')}
                         </button>
@@ -7416,7 +7416,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         openAuthModal();
                       }}
                       disabled={authProviderBusy !== null || authEmailBusy}
-                      className="w-full rounded-xl bg-blue-700 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full rounded-xl bg-[#01696f] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0a5c61] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {t('register')}
                     </button>
@@ -7459,7 +7459,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         {canEmail ? (
                           <a
                             href={mailto}
-                            className="flex min-h-[44px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-700 px-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800"
+                            className="flex min-h-[44px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-[#01696f] px-3 text-sm font-semibold text-white transition-colors hover:bg-[#0a5c61]"
                           >
                             <Mail className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
                             <span className="truncate">{t('cardContactByEmail')}</span>

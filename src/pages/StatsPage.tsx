@@ -60,6 +60,7 @@ export default function StatsPage() {
   const vitrine = useVitrineStats();
   const printRef = useRef<HTMLDivElement | null>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfMode, setPdfMode] = useState(false);
 
   const now = useMemo(() => new Date(), []);
   const monthTitle = useMemo(() => formatMonthYear(now, lang), [now, lang]);
@@ -131,6 +132,7 @@ export default function StatsPage() {
       return;
     }
     setPdfBusy(true);
+    setPdfMode(true);
     try {
       const scale = 2;
       const canvas = await html2canvas(el, {
@@ -247,6 +249,7 @@ export default function StatsPage() {
       );
     } finally {
       setPdfBusy(false);
+      setPdfMode(false);
       if (maybePopup && !maybePopup.closed && maybePopup.location.href === 'about:blank') {
         maybePopup.close();
       }
@@ -424,6 +427,7 @@ export default function StatsPage() {
             totalMembers={vitrine.totalMembers}
             newMembersLast30d={vitrine.newMembersLast30d}
             lang={lang}
+            pdfMode={pdfMode}
           />
 
           <RecentMembersActivity lang={lang} />
