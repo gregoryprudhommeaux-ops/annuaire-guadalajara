@@ -4,6 +4,27 @@
   gap: 1.5rem;
 }
 
+/* /admin/internal: align header controls with body width */
+.admin-dashboard-page--internal .admin-header {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.admin-dashboard-page--internal .admin-header__copy {
+  max-width: none;
+}
+
+.admin-dashboard-page--internal .admin-header__aside {
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.admin-dashboard-page--internal .admin-header__actions {
+  width: 100%;
+  justify-content: flex-start;
+}
+
 /* Sous le seuil 1200px, empiler Connexions / Nouveaux profils */
 .admin-dashboard-page--internal .admin-activity {
   grid-template-columns: 1fr;

@@ -1,4 +1,4 @@
-import { Home, Users, Handshake, Radar, LineChart, Info, UserRound, Shield, CalendarDays, Mail } from 'lucide-react';
+import { Home, Users, Handshake, Radar, LineChart, Info, UserRound, Shield, CalendarDays, Mail, LayoutDashboard } from 'lucide-react';
 import React from 'react';
 
 export type NavAudience = 'visitor' | 'member';
@@ -31,6 +31,7 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
         ...(isAdmin
           ? ([
               { id: 'stats', href: '/stats', label: 'Vitrine', audience: 'member', placement: 'primary' },
+              { id: 'dashboard', href: '/admin/internal', label: 'DASHBOARD', audience: 'member', placement: 'primary' },
               { id: 'admin', href: '/admin', label: 'Admin', audience: 'member', placement: 'primary' },
               { id: 'events', href: '/evenements', label: 'Événements', audience: 'member', placement: 'primary' },
               { id: 'communication', href: '/communication', label: 'Communication', audience: 'member', placement: 'primary' },
@@ -51,6 +52,7 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
     requests: React.createElement(Handshake, iconProps),
     radar: React.createElement(Radar, iconProps),
     stats: React.createElement(LineChart, iconProps),
+    dashboard: React.createElement(LayoutDashboard, iconProps),
     admin: React.createElement(Shield, iconProps),
     events: React.createElement(CalendarDays, iconProps),
     communication: React.createElement(Mail, iconProps),

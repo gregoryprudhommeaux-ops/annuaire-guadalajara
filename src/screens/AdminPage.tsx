@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AdminHubNav } from '@/components/admin/AdminHubNav';
 import { collection, getDocs, orderBy, query, where, limit } from 'firebase/firestore';
 import type { Language, MemberNetworkRequest, NeedComment, UserProfile } from '@/types';
 import { TimePeriodProvider } from '@/contexts/TimePeriodContext';
@@ -277,7 +276,6 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
               <p className="admin-header__text">{t('adminPageLead')}</p>
             </div>
             <div className="admin-header__aside">
-              <AdminHubNav />
             </div>
           </div>
 

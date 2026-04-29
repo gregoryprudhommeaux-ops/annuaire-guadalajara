@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import { TimePeriodProvider, useTimePeriod } from '@/contexts/TimePeriodContext';
 import { useAdminStats, type PeriodKey } from '@/hooks/useAdminStats';
-import { AdminHubNav } from '@/components/admin/AdminHubNav';
 import { AdminPeriodPills } from '@/components/admin/AdminPeriodPills';
 import { PriorityProfileCompletionTable } from '@/components/admin/PriorityProfileCompletionTable';
 import { AdminActivityAndCompletionBlocks } from '@/components/admin/AdminActivityAndCompletionBlocks';
@@ -47,7 +46,6 @@ function InternalAdminContent() {
             <p className="admin-header__text">{t('adminInternalLead')}</p>
           </div>
           <div className="admin-header__aside">
-            <AdminHubNav />
             <AdminPeriodPills t={t} />
           </div>
         </div>
