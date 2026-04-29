@@ -10,6 +10,12 @@ import { isCallerAdmin } from '../lib/admin';
 const SLIDES_TEMPLATE_ID = defineString('GOOGLE_SLIDES_TEMPLATE_ID', { default: '' });
 const SLIDES_EXPORT_FOLDER_ID = defineString('GOOGLE_SLIDES_EXPORT_FOLDER_ID', { default: '' });
 
+// Optional: run Drive/Slides operations as a real Google user (OAuth) instead of the
+// Cloud Functions service account (avoids service-account Drive quota issues).
+const GOOGLE_OAUTH_CLIENT_ID = defineString('GOOGLE_OAUTH_CLIENT_ID', { default: '' });
+const GOOGLE_OAUTH_CLIENT_SECRET = defineString('GOOGLE_OAUTH_CLIENT_SECRET', { default: '' });
+const GOOGLE_OAUTH_REFRESH_TOKEN = defineString('GOOGLE_OAUTH_REFRESH_TOKEN', { default: '' });
+
 type VitrineStats = {
   totalMembers: number;
   newMembersLast30d: number;
@@ -52,13 +58,23 @@ const GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/presentations',
 ] as const;
 
-function getDrive() {
-  const auth = getGoogleAuth([...GOOGLE_SCOPES]);
+function getEffectiveAuth() {
+  const clientId = String(GOOGLE_OAUTH_CLIENT_ID.value() ?? '').trim();
+  const clientSecret = String(GOOGLE_OAUTH_CLIENT_SECRET.value() ?? '').trim();
+  const refreshToken = String(GOOGLE_OAUTH_REFRESH_TOKEN.value() ?? '').trim();
+  if (clientId && clientSecret && refreshToken) {
+    const oauth2 = new google.auth.OAuth2(clientId, clientSecret);
+    oauth2.setCredentials({ refresh_token: refreshToken });
+    return oauth2;
+  }
+  return getGoogleAuth([...GOOGLE_SCOPES]);
+}
+
+function getDrive(auth: any) {
   return google.drive({ version: 'v3', auth });
 }
 
-function getSlides() {
-  const auth = getGoogleAuth([...GOOGLE_SCOPES]);
+function getSlides(auth: any) {
   return google.slides({ version: 'v1', auth });
 }
 
@@ -179,10 +195,13 @@ function slidesUrl(presentationId: string): string {
   return `https://docs.google.com/presentation/d/${presentationId}/edit`;
 }
 
-async function createPresentationFromScratch(title: string, folderId: string): Promise<string> {
+async function createPresentationFromScratch(
+  drive: ReturnType<typeof google.drive>,
+  title: string,
+  folderId: string
+): Promise<string> {
   // Creating a Slides file is a Drive operation. With service accounts, using Drive API is
   // the most reliable way to create the file, then we can update it via Slides API.
-  const drive = getDrive();
   const res = await drive.files.create({
     requestBody: {
       name: title,
@@ -196,8 +215,12 @@ async function createPresentationFromScratch(title: string, folderId: string): P
   return id;
 }
 
-async function copyTemplatePresentation(templateId: string, title: string, folderId: string): Promise<string> {
-  const drive = getDrive();
+async function copyTemplatePresentation(
+  drive: ReturnType<typeof google.drive>,
+  templateId: string,
+  title: string,
+  folderId: string
+): Promise<string> {
   const res = await drive.files.copy({
     fileId: templateId,
     requestBody: {
@@ -240,8 +263,7 @@ function ptRect(pos: Pt, size: SizePt) {
   };
 }
 
-async function buildScratchDeck(presentationId: string) {
-  const slides = getSlides();
+async function buildScratchDeck(slides: ReturnType<typeof google.slides>, presentationId: string) {
   const pres = await slides.presentations.get({ presentationId });
   const existingSlideIds = (pres.data.slides ?? []).map((s) => s.objectId).filter(Boolean) as string[];
 
@@ -404,8 +426,11 @@ function chartUrlLine(points: number[]): string {
   );
 }
 
-async function fillPresentation(presentationId: string, stats: VitrineStats) {
-  const slides = getSlides();
+async function fillPresentation(
+  slides: ReturnType<typeof google.slides>,
+  presentationId: string,
+  stats: VitrineStats
+) {
   const now = new Date();
   const month = monthTitleFr(now);
 
@@ -491,14 +516,18 @@ export const exportStatsToSlides = onCall(
 
       const stats = await loadVitrineStats();
 
+      const auth = getEffectiveAuth();
+      const drive = getDrive(auth);
+      const slides = getSlides(auth);
+
       const presentationId = templateId
-        ? await copyTemplatePresentation(templateId, title, folderId)
-        : await createPresentationFromScratch(title, folderId);
+        ? await copyTemplatePresentation(drive, templateId, title, folderId)
+        : await createPresentationFromScratch(drive, title, folderId);
 
       if (!templateId) {
-        await buildScratchDeck(presentationId);
+        await buildScratchDeck(slides, presentationId);
       }
-      await fillPresentation(presentationId, stats);
+      await fillPresentation(slides, presentationId, stats);
 
       const url = slidesUrl(presentationId);
       logger.info('Slides deck generated', { presentationId });
