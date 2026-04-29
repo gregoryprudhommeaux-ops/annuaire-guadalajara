@@ -488,8 +488,30 @@ export const exportStatsToSlides = onCall(
       logger.info('Slides deck generated', { presentationId });
       return { ok: true, presentationId, url };
     } catch (err) {
-      logger.error('exportStatsToSlides failed', { err });
-      throw new HttpsError('internal', err instanceof Error ? err.message : 'Export Slides échoué.');
+      const anyErr = err as any;
+      const status = Number(anyErr?.response?.status ?? anyErr?.code ?? 0) || undefined;
+      const apiMessage =
+        anyErr?.response?.data?.error?.message ??
+        anyErr?.response?.data?.error_description ??
+        anyErr?.errors?.[0]?.message ??
+        undefined;
+      const apiReason =
+        anyErr?.response?.data?.error?.errors?.[0]?.reason ??
+        anyErr?.errors?.[0]?.reason ??
+        undefined;
+      const debug = {
+        status,
+        apiMessage,
+        apiReason,
+        name: typeof anyErr?.name === 'string' ? anyErr.name : undefined,
+        message: typeof anyErr?.message === 'string' ? anyErr.message : undefined,
+        hint:
+          apiReason === 'accessNotConfigured' || String(apiMessage ?? '').includes('has not been used')
+            ? 'Activer Google Drive API + Google Slides API dans Google Cloud du projet.'
+            : undefined,
+      };
+      logger.error('exportStatsToSlides failed', { debug, err: anyErr });
+      throw new HttpsError('internal', 'Export Slides échoué.', debug);
     }
   }
 );
