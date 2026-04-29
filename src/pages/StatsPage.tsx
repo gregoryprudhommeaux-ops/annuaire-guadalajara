@@ -21,6 +21,7 @@ import type { Language } from '@/types';
 import { StatsHero } from '@/components/StatsHero';
 import { NetworkGrowthSection } from '@/components/stats/NetworkGrowthSection';
 import { ActiveOpportunitiesSection } from '@/components/stats/ActiveOpportunitiesSection';
+import { NeedsBarChart } from '@/components/charts/NeedsBarChart';
 import { RecentMembersActivity } from '@/components/stats/RecentMembersActivity';
 import { RecentRequestsFeed } from '@/components/stats/RecentRequestsFeed';
 import { SegmentedJoinCTA } from '@/components/stats/SegmentedJoinCTA';
@@ -150,6 +151,27 @@ export default function StatsPage() {
           // Defensive: html2canvas can crash on SVG `foreignObject` and some filters.
           doc.querySelectorAll('foreignObject').forEach((n) => n.remove());
           doc.querySelectorAll('[filter]').forEach((n) => n.removeAttribute('filter'));
+
+          // Defensive: html2canvas does not support modern `oklch()` colors in some environments.
+          // Force a PDF-safe palette (RGB/hex) inside the cloned document.
+          const style = doc.createElement('style');
+          style.setAttribute('data-pdf-safe', 'true');
+          style.textContent = `
+            :root { color-scheme: light; }
+            html, body { background: #ffffff !important; }
+            * {
+              /* Avoid unsupported color functions in computed styles */
+              color: #0f172a !important;
+              border-color: #e2e8f0 !important;
+              outline-color: #2563eb !important;
+              text-decoration-color: currentColor !important;
+              box-shadow: none !important;
+              filter: none !important;
+            }
+            /* Keep brand teal accents where explicitly used */
+            .stats-ds { --stats-primary: #01696f; --stats-primary-hover: #015a5f; }
+          `;
+          doc.head.appendChild(style);
         },
       });
 
@@ -438,6 +460,28 @@ export default function StatsPage() {
           />
 
           <RecentMembersActivity lang={lang} />
+
+          <div className="mt-10 print:break-inside-avoid">
+            <NeedsBarChart
+              data={vitrine.needs}
+              title={
+                lang === 'en'
+                  ? 'Most sought opportunities'
+                  : lang === 'es'
+                    ? 'Oportunidades más buscadas'
+                    : 'Opportunités les plus recherchées'
+              }
+              subtitle={
+                lang === 'en'
+                  ? 'The most expressed needs in the community right now.'
+                  : lang === 'es'
+                    ? 'Las necesidades más expresadas actualmente en la comunidad.'
+                    : 'Les besoins les plus exprimés actuellement dans la communauté.'
+              }
+              compact
+              limit={8}
+            />
+          </div>
 
           <ActiveOpportunitiesSection needs={vitrine.needs} lang={lang} />
 
