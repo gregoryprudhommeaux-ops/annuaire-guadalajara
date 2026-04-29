@@ -278,8 +278,11 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
             </div>
             <div className="admin-header__aside">
               <AdminHubNav />
-              <AdminPeriodPills t={t} />
             </div>
+          </div>
+
+          <div className="admin-header__toolbar">
+            <AdminPeriodPills t={t} />
           </div>
 
           {loadError ? (

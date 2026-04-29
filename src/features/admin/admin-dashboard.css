@@ -78,6 +78,14 @@
   min-width: min(520px, 100%);
 }
 
+.admin-dashboard-page .admin-header__toolbar {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-start;
+  margin: 12px 0 18px;
+}
+
 .admin-dashboard-page .admin-header__actions {
   display: flex;
   flex-wrap: wrap;
@@ -90,6 +98,7 @@
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+  width: 100%;
 }
 
 .admin-dashboard-page .admin-period {
