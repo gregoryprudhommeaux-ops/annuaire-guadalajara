@@ -144,7 +144,18 @@ export default function StatsPage() {
       }
     } catch (e) {
       console.error(e);
-      const detail = e instanceof Error ? e.message : String(e);
+      const anyE = e as any;
+      const code = typeof anyE?.code === 'string' ? anyE.code : '';
+      const msg = typeof anyE?.message === 'string' ? anyE.message : e instanceof Error ? e.message : String(e);
+      let details = '';
+      try {
+        if (anyE?.details !== undefined) details = JSON.stringify(anyE.details);
+      } catch {
+        details = String(anyE?.details ?? '');
+      }
+      const detail = [code && `code: ${code}`, msg && `message: ${msg}`, details && `details: ${details}`]
+        .filter(Boolean)
+        .join('\n');
       alert(
         lang === 'en'
           ? `Slides export failed.\n\n${detail}`
