@@ -6,6 +6,7 @@ import { resolveAudience } from '../lib/audience';
 import { WeeklyDigestEmail } from '../emails/WeeklyDigestEmail';
 import { CampaignEmail } from '../emails/CampaignEmail';
 import {
+  automationMatchesLanguage,
   hasAutomationFor,
   isTriggerEnabled,
   loadEnabledAutomations,
@@ -84,15 +85,21 @@ export const weeklyDigest = onSchedule(
               },
             ];
           }
+          const matching = automations.filter((a) =>
+            automationMatchesLanguage(a, m.communicationLanguage)
+          );
+          if (matching.length === 0) return [];
           const vars = buildVariables({
             uid: m.uid,
             email: m.email,
             displayName: m.displayName,
             fullName: m.fullName,
+            companyName: m.companyName,
             completionRate: m.completionRate,
+            communicationLanguage: m.communicationLanguage,
           });
           return Promise.all(
-            automations.map(async (a) => {
+            matching.map(async (a) => {
               const subject = interpolate(a.subject, vars);
               const bodyHtml = interpolate(a.bodyHtml, vars);
               const { html, text } = await renderTemplate(

@@ -35,6 +35,7 @@ export function getAppRole(ctx: RoleContext): AppRole {
 export type RouteAccess = 'public' | 'member' | 'admin';
 
 export function routeAccessForPath(pathname: string): RouteAccess {
+  if (pathname === '/stats' || pathname.startsWith('/stats/')) return 'admin';
   if (pathname === '/admin' || pathname.startsWith('/admin/')) return 'admin';
   if (pathname === '/communication' || pathname.startsWith('/communication/')) return 'admin';
   if (pathname === '/dashboard' || pathname === '/onboarding' || pathname === '/profile/edit')

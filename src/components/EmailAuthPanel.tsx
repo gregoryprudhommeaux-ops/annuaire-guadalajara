@@ -13,6 +13,11 @@ import {
   getAuthActionCodeSettings,
 } from '../lib/firebaseAuthUi';
 import { pickLang } from '../lib/uiLocale';
+import {
+  COMMUNICATION_LANGUAGES,
+  DEFAULT_COMMUNICATION_LANGUAGE,
+  setPendingCommunicationLanguage,
+} from '../lib/communicationLanguage';
 
 type Step = 'signin' | 'signup' | 'forgot';
 
@@ -46,6 +51,9 @@ export default function EmailAuthPanel({
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [signupLang, setSignupLang] = useState<Language>(
+    DEFAULT_COMMUNICATION_LANGUAGE
+  );
 
   useEffect(() => {
     setStep('signin');
@@ -53,6 +61,7 @@ export default function EmailAuthPanel({
     setPassword('');
     setConfirm('');
     setInfoMessage(null);
+    setSignupLang(DEFAULT_COMMUNICATION_LANGUAGE);
   }, [resetToken]);
 
   const disabled = socialBusy || emailBusy;
@@ -107,6 +116,7 @@ export default function EmailAuthPanel({
     }
     setEmailBusy(true);
     try {
+      setPendingCommunicationLanguage(signupLang);
       const cred = await createUserWithEmailAndPassword(auth, em, password);
       await sendEmailVerification(cred.user, getAuthActionCodeSettings());
       setPassword('');
@@ -261,6 +271,57 @@ export default function EmailAuthPanel({
               required
               minLength={6}
             />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-stone-500">
+              {pickLang(
+                'Langue des emails',
+                'Idioma de los correos',
+                'Email language',
+                lang
+              )}
+            </label>
+            <div
+              role="radiogroup"
+              aria-label={pickLang(
+                'Langue des emails',
+                'Idioma de los correos',
+                'Email language',
+                lang
+              )}
+              className="grid grid-cols-3 gap-1 rounded-xl border border-stone-200 bg-stone-50 p-1"
+            >
+              {COMMUNICATION_LANGUAGES.map((opt) => {
+                const active = signupLang === opt.code;
+                return (
+                  <button
+                    key={opt.code}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    disabled={disabled}
+                    onClick={() => setSignupLang(opt.code)}
+                    className={cn(
+                      'flex items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-semibold transition-colors',
+                      active
+                        ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-300'
+                        : 'text-stone-600 hover:bg-white/60'
+                    )}
+                  >
+                    <span aria-hidden>{opt.flag}</span>
+                    <span>{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1 text-[11px] text-stone-500">
+              {pickLang(
+                'Modifiable plus tard depuis ton profil.',
+                'Lo puedes cambiar más tarde desde tu perfil.',
+                'You can change it later from your profile.',
+                lang
+              )}
+            </p>
           </div>
           <button
             type="submit"

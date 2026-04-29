@@ -9,6 +9,7 @@ import { computeCompletionRate, pickDisplayName } from '../lib/profileCompletion
 import { WelcomeEmail } from '../emails/WelcomeEmail';
 import { CampaignEmail } from '../emails/CampaignEmail';
 import {
+  automationMatchesLanguage,
   hasAutomationFor,
   isTriggerEnabled,
   loadEnabledAutomations,
@@ -69,6 +70,9 @@ export const onUserCreatedSendWelcome = onDocumentCreated(
       memberBio: (data.memberBio ?? data.bio) as string,
       activityDescription: data.activityDescription as string,
     });
+    const rawLang = data.communicationLanguage;
+    const communicationLanguage: 'fr' | 'es' | 'en' =
+      rawLang === 'fr' || rawLang === 'es' || rawLang === 'en' ? rawLang : 'es';
     const recipient = {
       uid: event.params.uid,
       email,
@@ -76,6 +80,7 @@ export const onUserCreatedSendWelcome = onDocumentCreated(
       displayName,
       companyName: (data.companyName as string) ?? null,
       completionRate,
+      communicationLanguage,
     };
     const vars = buildVariables(recipient);
 
@@ -90,11 +95,19 @@ export const onUserCreatedSendWelcome = onDocumentCreated(
           tags: [{ name: 'category', value: 'welcome' }],
         });
       } else {
-        const automations = await loadEnabledAutomations('userCreated');
+        const allAutomations = await loadEnabledAutomations('userCreated');
+        const automations = allAutomations.filter((a) =>
+          automationMatchesLanguage(a, communicationLanguage)
+        );
         if (automations.length === 0) {
-          logger.info('Aucune automation userCreated activée, aucun envoi.', {
-            uid: event.params.uid,
-          });
+          logger.info(
+            'Aucune automation userCreated activée pour cette langue, aucun envoi.',
+            {
+              uid: event.params.uid,
+              communicationLanguage,
+              totalEnabled: allAutomations.length,
+            }
+          );
         } else {
           const resend = getResend();
           const from = RESEND_FROM_PARAM.value();

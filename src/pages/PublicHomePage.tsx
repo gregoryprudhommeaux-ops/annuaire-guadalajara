@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useLayoutEffect } from 'react';
 import type { User } from 'firebase/auth';
+import { useLocation } from 'react-router-dom';
 import AppShell from '@/components/layout/AppShell';
 import { MarketingSection } from '@/components/marketing/MarketingSection';
 import { PublicHero } from '@/components/marketing/PublicHero';
@@ -38,6 +39,7 @@ export default function PublicHomePage({
   headerRightSlot,
 }: PublicHomePageProps) {
   const { t } = useLanguage();
+  const location = useLocation();
   const isAuthenticated = Boolean(user);
 
   // If unauthenticated, prefer opening the auth modal (stay on page) when available.
@@ -50,6 +52,22 @@ export default function PublicHomePage({
   const secondaryLabel = isAuthenticated
     ? t('marketing.publicHome.secondaryAuthenticated')
     : t('marketing.publicHome.secondaryVisitor');
+
+  useLayoutEffect(() => {
+    // Visitors should land on "Comment ça marche" by default (treat as home page).
+    // Use layout effect + non-smooth scroll to avoid a visible "jump".
+    if (isAuthenticated) return;
+    if (location.pathname !== '/') return;
+    if (location.hash && location.hash !== '#') return;
+    try {
+      window.history.replaceState(null, '', '/#comment-ca-marche');
+      // Prefer explicit scroll (hash scrolling can be inconsistent with sticky headers).
+      const el = document.getElementById('comment-ca-marche');
+      if (el) el.scrollIntoView({ block: 'start', behavior: 'auto' });
+    } catch {
+      // ignore
+    }
+  }, [isAuthenticated, location.pathname, location.hash]);
 
   return (
     <AppShell

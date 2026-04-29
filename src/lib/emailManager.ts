@@ -263,6 +263,9 @@ export const AUTOMATION_VARIABLES: { name: string; description: string }[] = [
   { name: 'completionPercent', description: 'Taux de complétion avec %' },
 ];
 
+/** Langue cible d'une automation (`null` = toutes). */
+export type AutomationLanguage = 'fr' | 'es' | 'en' | null;
+
 export type AutomationDoc = {
   id: string;
   name: string;
@@ -270,6 +273,12 @@ export type AutomationDoc = {
   enabled: boolean;
   subject: string;
   bodyHtml: string;
+  /**
+   * Si défini, restreint l'envoi aux destinataires dont
+   * `users/{uid}.communicationLanguage` correspond.
+   * `null` ou absent = toutes langues.
+   */
+  targetLanguage?: AutomationLanguage;
   delayMinutes?: number;
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
@@ -303,6 +312,7 @@ export async function createAutomation(input: {
   enabled: boolean;
   subject: string;
   bodyHtml: string;
+  targetLanguage?: AutomationLanguage;
   updatedBy: string;
 }): Promise<string> {
   const ref = await addDoc(collection(db, AUTOMATIONS), {
@@ -311,6 +321,7 @@ export async function createAutomation(input: {
     enabled: input.enabled,
     subject: input.subject,
     bodyHtml: input.bodyHtml,
+    targetLanguage: input.targetLanguage ?? null,
     delayMinutes: 0,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -324,7 +335,13 @@ export async function updateAutomation(
   patch: Partial<
     Pick<
       AutomationDoc,
-      'name' | 'trigger' | 'enabled' | 'subject' | 'bodyHtml' | 'delayMinutes'
+      | 'name'
+      | 'trigger'
+      | 'enabled'
+      | 'subject'
+      | 'bodyHtml'
+      | 'delayMinutes'
+      | 'targetLanguage'
     >
   > & { updatedBy?: string }
 ): Promise<void> {
@@ -335,6 +352,7 @@ export async function updateAutomation(
   if ('subject' in patch) data.subject = patch.subject;
   if ('bodyHtml' in patch) data.bodyHtml = patch.bodyHtml;
   if ('delayMinutes' in patch) data.delayMinutes = patch.delayMinutes;
+  if ('targetLanguage' in patch) data.targetLanguage = patch.targetLanguage ?? null;
   if (patch.updatedBy) data.updatedBy = patch.updatedBy;
   await updateDoc(doc(db, AUTOMATIONS, id), data);
 }

@@ -119,6 +119,17 @@ export default function StatsPage() {
   const handlePdf = useCallback(async () => {
     const el = printRef.current;
     if (!el) return;
+    // Important: some browsers (notably Safari) may block downloads that happen
+    // after an async boundary. We open a blank tab synchronously (user gesture),
+    // then navigate it to the generated PDF blob URL when ready.
+    const maybePopup = window.open('', '_blank');
+    const popupBlocked = !maybePopup;
+    if (popupBlocked) {
+      // Universal fallback: native print dialog lets the user "Save as PDF".
+      // This runs in the click gesture stack, so it isn't blocked by async rules.
+      window.print();
+      return;
+    }
     setPdfBusy(true);
     try {
       const scale = 2;
@@ -188,15 +199,59 @@ export default function StatsPage() {
         yMm += hDraw;
       }
 
-      const fname = `FrancoNetwork-Stats-${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}.pdf`
+      const fname = `FrancoNetwork-Stats-${now.toLocaleDateString(lang === 'es' ? 'es-MX' : lang === 'en' ? 'en-US' : 'fr-FR', { month: 'long', year: 'numeric' })}.pdf`
         .replace(/\s+/g, '-');
-      pdf.save(fname);
+      const blob = pdf.output('blob');
+      const blobUrl = URL.createObjectURL(blob);
+
+      if (maybePopup && !maybePopup.closed) {
+        // Some browsers refuse navigating to a blob URL; fallback to data URI.
+        try {
+          maybePopup.location.href = blobUrl;
+        } catch {
+          maybePopup.location.href = pdf.output('datauristring');
+        }
+      }
+
+      // Best-effort: direct download via <a download>, then fallback to jsPDF's save().
+      try {
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = fname;
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch {
+        pdf.save(fname);
+      }
+      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
+
+      if (popupBlocked) {
+        alert(
+          lang === 'en'
+            ? 'Your browser blocked the PDF popup/download. Please allow popups for this site, then try again.'
+            : lang === 'es'
+              ? 'Tu navegador bloqueó la descarga/ventana del PDF. Autoriza las ventanas emergentes para este sitio y vuelve a intentar.'
+              : 'Votre navigateur a bloqué la fenêtre/téléchargement du PDF. Autorisez les popups pour ce site puis réessayez.'
+        );
+      }
     } catch (e) {
       console.error(e);
+      alert(
+        lang === 'en'
+          ? 'PDF export failed. Please try again.'
+          : lang === 'es'
+            ? 'La exportación PDF falló. Inténtalo de nuevo.'
+            : "L’export PDF a échoué. Réessayez."
+      );
     } finally {
       setPdfBusy(false);
+      if (maybePopup && !maybePopup.closed && maybePopup.location.href === 'about:blank') {
+        maybePopup.close();
+      }
     }
-  }, [monthTitle, now]);
+  }, [lang, monthTitle, now]);
 
   useEffect(() => {
     if (vitrine.loading || vitrine.error) {

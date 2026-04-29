@@ -18,13 +18,27 @@ function label(busy: boolean, lang: Language) {
 export function StatsPdfHeaderButton({ lang }: { lang: Language }) {
   const state = useStatsPagePdfState();
   if (!state) return null;
+
+  const run = () => {
+    try {
+      const r = state.print();
+      if (r && typeof (r as Promise<unknown>).catch === 'function') {
+        void (r as Promise<unknown>).catch((e) => console.error(e));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <button
       type="button"
-      onClick={() => void state.print()}
+      // `pointerdown` is more reliable than `click` on some browsers with sticky/backdrop-filter.
+      onPointerDown={run}
+      onClick={run}
       disabled={state.busy}
-      className="stats-pdf-header-btn shrink-0 rounded-xl px-3 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
-      style={{ background: BRAND }}
+      className="stats-pdf-header-btn shrink-0 select-none rounded-xl px-3 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+      style={{ background: BRAND, touchAction: 'manipulation' }}
     >
       {label(state.busy, lang)}
     </button>

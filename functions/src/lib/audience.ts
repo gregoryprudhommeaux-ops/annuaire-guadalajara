@@ -13,8 +13,15 @@ export type AudienceMember = {
   email: string;
   displayName: string;
   fullName: string;
+  companyName?: string;
   completionRate: number;
+  /** `users/{uid}.communicationLanguage` ; défaut côté serveur = `'es'`. */
+  communicationLanguage: 'fr' | 'es' | 'en';
 };
+
+function pickLanguage(v: unknown): 'fr' | 'es' | 'en' {
+  return v === 'fr' || v === 'es' || v === 'en' ? v : 'es';
+}
 
 function isValidEmail(s: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
@@ -55,7 +62,9 @@ export async function resolveAudience(
         fullName: d.fullName as string,
       }),
       fullName: String(d.fullName ?? '').trim(),
+      companyName: String(d.companyName ?? '').trim() || undefined,
       completionRate: completion,
+      communicationLanguage: pickLanguage(d.communicationLanguage),
     });
   }
 
@@ -83,6 +92,7 @@ export async function resolveAudience(
           displayName: 'cher membre',
           fullName: '',
           completionRate: 0,
+          communicationLanguage: 'es',
         });
       });
       return dedupe([...fromUsers, ...extras]);

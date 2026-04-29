@@ -27,6 +27,8 @@ export type ProfileEditExpandedFormCtx = {
   profilePhotoUrlDraft: string;
   passionIdsDraft: string[];
   workingLanguagesDraft: string[];
+  communicationLanguageDraft: Language;
+  setCommunicationLanguageDraft: React.Dispatch<React.SetStateAction<Language>>;
   highlightedNeedsDraft: string[];
   companyActivitiesDraft: CompanyActivitySlot[];
   companyActivityEditCollapsed: Record<string, boolean | undefined>;
@@ -161,6 +163,8 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
     workingLanguagesDraft,
     toggleWorkingLanguageDraft,
     WORKING_LANGUAGE_OPTIONS,
+    communicationLanguageDraft,
+    setCommunicationLanguageDraft,
     profilePhotoUrlDraft,
     ProfileEditPersonBioBlock,
     ProfileEditorialMemberBioField,
@@ -294,6 +298,8 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
                   workingLanguagesDraft={workingLanguagesDraft}
                   toggleWorkingLanguageDraft={toggleWorkingLanguageDraft}
                   workingLanguageOptions={WORKING_LANGUAGE_OPTIONS}
+                  communicationLanguageDraft={communicationLanguageDraft}
+                  setCommunicationLanguageDraft={setCommunicationLanguageDraft}
                 />
 
                 <input type="hidden" name="photoURL" value={profilePhotoUrlDraft} />

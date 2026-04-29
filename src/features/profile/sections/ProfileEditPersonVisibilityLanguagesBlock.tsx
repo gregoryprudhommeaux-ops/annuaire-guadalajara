@@ -2,6 +2,10 @@ import React from 'react';
 import type { Language, UserProfile } from '@/types';
 import { cn } from '@/lib/cn';
 import { ProfileFieldHint } from '@/features/profile/components/ProfileFieldHint';
+import {
+  COMMUNICATION_LANGUAGES,
+  DEFAULT_COMMUNICATION_LANGUAGE,
+} from '@/lib/communicationLanguage';
 
 type WorkingLanguageOption = {
   code: string;
@@ -21,6 +25,8 @@ export type ProfileEditPersonVisibilityLanguagesBlockProps = {
   workingLanguagesDraft: string[];
   toggleWorkingLanguageDraft: (code: string) => void;
   workingLanguageOptions: ReadonlyArray<WorkingLanguageOption>;
+  communicationLanguageDraft: Language;
+  setCommunicationLanguageDraft: (next: Language) => void;
 };
 
 export default function ProfileEditPersonVisibilityLanguagesBlock({
@@ -36,7 +42,21 @@ export default function ProfileEditPersonVisibilityLanguagesBlock({
   workingLanguagesDraft,
   toggleWorkingLanguageDraft,
   workingLanguageOptions,
+  communicationLanguageDraft,
+  setCommunicationLanguageDraft,
 }: ProfileEditPersonVisibilityLanguagesBlockProps) {
+  const commLangLabel: Record<Language, string> = {
+    fr: 'Langue des emails que je reçois',
+    es: 'Idioma de los correos que recibo',
+    en: 'Language for the emails I receive',
+  };
+  const commLangHint: Record<Language, string> = {
+    fr: 'Sert pour les emails automatiques (bienvenue, récap hebdo) et les campagnes envoyées par l\'équipe FrancoNetwork. Par défaut espagnol.',
+    es: 'Se usa para los correos automáticos (bienvenida, resumen semanal) y las campañas del equipo FrancoNetwork. Por defecto español.',
+    en: 'Used for automated emails (welcome, weekly digest) and FrancoNetwork team campaigns. Default Spanish.',
+  };
+  const commLangCurrent: Language =
+    communicationLanguageDraft ?? DEFAULT_COMMUNICATION_LANGUAGE;
   return (
     <>
       <div
@@ -103,6 +123,45 @@ export default function ProfileEditPersonVisibilityLanguagesBlock({
           })}
         </div>
         <ProfileFieldHint>{profileEditFrUx ? help.languages : t('contactPrefsWorkingLangTip')}</ProfileFieldHint>
+      </div>
+
+      <div className="mb-4 space-y-1" id="profile-communication-language">
+        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+          {commLangLabel[lang]}
+        </span>
+        <input
+          type="hidden"
+          name="communicationLanguage"
+          value={commLangCurrent}
+        />
+        <div
+          role="radiogroup"
+          aria-label={commLangLabel[lang]}
+          className="flex flex-wrap gap-2"
+        >
+          {COMMUNICATION_LANGUAGES.map((opt) => {
+            const selected = commLangCurrent === opt.code;
+            return (
+              <button
+                key={opt.code}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setCommunicationLanguageDraft(opt.code)}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all',
+                  selected
+                    ? 'border-blue-600 bg-blue-700 text-white shadow-sm'
+                    : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
+                )}
+              >
+                <span aria-hidden>{opt.flag}</span>
+                <span>{opt.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <ProfileFieldHint>{commLangHint[lang]}</ProfileFieldHint>
       </div>
     </>
   );

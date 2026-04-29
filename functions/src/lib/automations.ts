@@ -5,6 +5,9 @@ import { FIRESTORE_DATABASE_ID } from '../constants';
 /** Déclencheurs supportés. Synchronisé avec `src/lib/emailManager.ts` côté front. */
 export type AutomationTrigger = 'userCreated' | 'weeklySchedule';
 
+/** Langue cible d'une automation (`null` = toutes). */
+export type AutomationLanguage = 'fr' | 'es' | 'en' | null;
+
 export type AutomationDoc = {
   id: string;
   name: string;
@@ -12,12 +15,29 @@ export type AutomationDoc = {
   enabled: boolean;
   subject: string;
   bodyHtml: string;
+  /**
+   * Restreint l'envoi aux destinataires dont `users/{uid}.communicationLanguage`
+   * vaut cette langue. `null` ou absent = toutes langues (comportement historique).
+   */
+  targetLanguage?: AutomationLanguage;
   /** Délai d'envoi après le déclenchement (réservé, non implémenté côté functions). */
   delayMinutes?: number;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
   updatedBy?: string;
 };
+
+/**
+ * Vrai si l'automation peut être envoyée à un destinataire dont la langue
+ * de communication est `lang`. `targetLanguage` absent / `null` = toutes langues.
+ */
+export function automationMatchesLanguage(
+  a: Pick<AutomationDoc, 'targetLanguage'>,
+  lang: 'fr' | 'es' | 'en'
+): boolean {
+  const t = a.targetLanguage ?? null;
+  return t === null || t === lang;
+}
 
 const COLLECTION = 'emailAutomations';
 

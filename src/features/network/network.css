@@ -52,10 +52,10 @@
 .fn-network-page .launch-card,
 .fn-network-page .network-directory-header,
 .fn-network-page .network-sort-panel {
-  background: #fff;
-  border: 1px solid rgb(226 232 240); /* slate-200 — comme SearchBlock */
+  background: rgb(var(--fn-surface));
+  border: 1px solid rgb(var(--fn-border));
   border-radius: 18px;
-  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+  box-shadow: var(--fn-shadow-sm);
 }
 
 .fn-network-page .network-panel {
@@ -72,7 +72,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgb(100 116 139); /* slate-500 */
+  color: rgb(var(--fn-muted-2));
 }
 
 .fn-network-page .network-panel__title {
@@ -81,7 +81,7 @@
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.02em;
-  color: rgb(30 41 59); /* slate-800 */
+  color: rgb(var(--fn-fg));
 }
 
 @media (min-width: 640px) {
@@ -94,7 +94,7 @@
   margin: 0;
   font-size: 0.875rem; /* text-sm */
   line-height: 1.375;
-  color: rgb(71 85 105); /* slate-600 */
+  color: rgb(var(--fn-muted));
 }
 
 .fn-network-page .network-search-panel__searchRow {
@@ -108,20 +108,20 @@
 .fn-network-page .network-select {
   width: 100%;
   min-height: 2.75rem;
-  border: 1px solid rgb(226 232 240);
+  border: 1px solid rgb(var(--fn-border));
   border-radius: 0.75rem;
   padding: 0 0.875rem;
-  background: #fff;
-  color: rgb(15 23 42); /* slate-900 */
+  background: rgb(var(--fn-surface));
+  color: rgb(var(--fn-fg));
   font-size: 0.875rem; /* text-sm */
   line-height: 1.25;
 }
 
 .fn-network-page .network-input:focus,
 .fn-network-page .network-select:focus {
-  outline: 2px solid rgb(29 78 216); /* blue-700 */
+  outline: 2px solid rgb(var(--fn-ring));
   outline-offset: 0;
-  border-color: rgb(29 78 216);
+  border-color: rgb(var(--fn-ring));
 }
 
 .fn-network-page .network-search-panel__filters {
@@ -150,23 +150,23 @@
 }
 
 .fn-network-page .network-primary-btn {
-  background: rgb(29 78 216); /* blue-700 */
-  color: #fff;
+  background: var(--fn-accent);
+  color: var(--fn-accent-contrast);
 }
 
 .fn-network-page .network-primary-btn:hover {
-  background: rgb(30 64 175); /* blue-800 */
+  background: var(--fn-accent-weak);
 }
 
 .fn-network-page .network-secondary-btn {
   width: 100%;
-  background: rgb(239 246 255);
-  color: rgb(29 78 216);
-  border: 1px solid rgb(191 219 254);
+  background: rgb(var(--fn-surface-2));
+  color: var(--fn-accent);
+  border: 1px solid rgb(var(--fn-border));
 }
 
 .fn-network-page .network-secondary-btn:hover:not(:disabled) {
-  background: #dbeafe;
+  filter: brightness(0.98);
 }
 
 .fn-network-page .network-secondary-btn:disabled {
@@ -189,20 +189,20 @@
   background: none;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: rgb(37 99 235);
+  color: var(--fn-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
 }
 
 .fn-network-page .network-clear-filters:hover {
-  color: rgb(30 64 175);
+  color: var(--fn-accent-weak);
 }
 
 .fn-network-page .launch-card {
   padding: 14px;
-  border-color: #b7e4da;
-  background: linear-gradient(180deg, #f5fffb 0%, #ffffff 100%);
+  border-color: rgb(var(--fn-border));
+  background: linear-gradient(180deg, rgb(var(--fn-surface-2)) 0%, rgb(var(--fn-surface)) 100%);
 }
 
 .fn-network-page .launch-card__toggle {
@@ -428,14 +428,12 @@
 }
 
 .fn-network-page .network-saved-panel:hover:not(:disabled) {
-  border-color: rgb(203 213 225);
-  box-shadow:
-    0 10px 28px -18px rgba(15, 23, 42, 0.12),
-    0 1px 2px rgba(16, 24, 40, 0.06);
+  filter: brightness(0.99);
+  box-shadow: var(--fn-shadow-md);
 }
 
 .fn-network-page .network-saved-panel:focus-visible {
-  outline: 2px solid rgb(29 78 216);
+  outline: 2px solid rgb(var(--fn-ring));
   outline-offset: 2px;
 }
 
@@ -445,9 +443,9 @@
 }
 
 .fn-network-page .network-saved-panel--active:not(:disabled) {
-  border-color: rgb(96 165 250);
-  background: rgb(239 246 255);
-  box-shadow: 0 0 0 1px rgb(59 130 246);
+  border-color: rgb(var(--fn-border));
+  background: rgb(var(--fn-surface-2));
+  box-shadow: 0 0 0 1px rgba(31, 95, 91, 0.25);
 }
 
 .fn-network-page .network-saved-panel__iconWrap {
@@ -458,16 +456,16 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 0.75rem;
-  background: rgb(239 246 255);
-  color: rgb(29 78 216);
+  background: rgb(var(--fn-surface-2));
+  color: var(--fn-accent);
 }
 
 .fn-network-page .network-saved-panel--active:not(:disabled) .network-saved-panel__iconWrap {
-  background: rgb(219 234 254);
+  background: rgb(var(--fn-surface));
 }
 
 .fn-network-page .network-saved-panel__icon--active {
-  fill: rgb(29 78 216);
+  fill: var(--fn-accent);
 }
 
 .fn-network-page .network-saved-panel__body {
@@ -489,7 +487,7 @@
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.02em;
-  color: rgb(30 41 59);
+  color: rgb(var(--fn-fg));
 }
 
 .fn-network-page .network-saved-panel__count {
@@ -501,19 +499,19 @@
   font-weight: 700;
   line-height: 1.25;
   text-align: center;
-  background: rgb(241 245 249);
-  color: rgb(51 65 85);
+  background: rgb(var(--fn-surface-2));
+  color: rgb(var(--fn-fg));
 }
 
 .fn-network-page .network-saved-panel--active:not(:disabled) .network-saved-panel__count {
-  background: rgb(219 234 254);
-  color: rgb(30 64 175);
+  background: rgb(var(--fn-surface));
+  color: var(--fn-accent);
 }
 
 .fn-network-page .network-saved-panel__description {
   font-size: 0.8125rem;
   line-height: 1.45;
-  color: rgb(100 116 139);
+  color: rgb(var(--fn-muted));
 }
 
 .fn-network-page .member-grid {
@@ -544,7 +542,7 @@
 }
 
 .fn-network-page .member-card--interactive:focus-visible {
-  outline: 2px solid rgb(29 78 216);
+  outline: 2px solid rgb(var(--fn-ring));
   outline-offset: 2px;
 }
 
@@ -677,29 +675,29 @@
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.25;
-  color: rgb(120 53 15); /* amber-900 */
-  background: rgb(255 251 235); /* amber-50 */
-  border: 1px solid rgb(253 230 138); /* amber-200 */
+  color: rgb(var(--fn-fg));
+  background: rgb(var(--fn-surface-2));
+  border: 1px solid rgb(var(--fn-border));
 }
 
 .fn-network-page .member-card__contactPref {
   margin: 0 0 12px;
   font-size: 0.75rem;
   line-height: 1.45;
-  color: rgb(100 116 139); /* slate-500 */
+  color: rgb(var(--fn-muted));
 }
 
 .fn-network-page .member-card__footer {
   margin-top: 18px;
   padding-top: 14px;
-  border-top: 1px solid rgb(241 245 249);
+  border-top: 1px solid rgb(var(--fn-border));
 }
 
 .fn-network-page .member-card__link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: rgb(29 78 216);
+  color: var(--fn-accent);
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;

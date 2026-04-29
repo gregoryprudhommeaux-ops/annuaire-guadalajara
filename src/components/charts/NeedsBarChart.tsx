@@ -189,7 +189,15 @@ export function NeedsBarChart({
           </p>
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          // Recharts can mount with 0x0 when the container is initially hidden
+          // (tabs/panels). A min size makes the first measurement non-zero and
+          // avoids a blank chart until a resize occurs.
+          minHeight={height}
+          minWidth={320}
+        >
           <BarChart
             data={rows}
             layout="vertical"

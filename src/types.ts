@@ -209,6 +209,12 @@ export interface UserProfile {
   latitude?: number;
   longitude?: number;
   geocodedAt?: unknown;
+  /**
+   * Langue préférée pour les emails / communications internes envoyés par
+   * la plateforme (welcome, digest hebdo, campagnes ad-hoc).
+   * Par défaut `'es'` à l’inscription (peut être modifiée via le formulaire d’édition de profil).
+   */
+  communicationLanguage?: Language;
 }
 
 export interface MatchSuggestion {

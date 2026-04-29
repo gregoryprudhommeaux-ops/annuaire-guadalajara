@@ -14,7 +14,24 @@ export type RecipientLike = {
   displayName?: string | null;
   companyName?: string | null;
   completionRate?: number | null;
+  /**
+   * Langue préférée pour les communications internes (`'fr' | 'es' | 'en'`).
+   * Stockée dans `users/{uid}.communicationLanguage`. Par défaut `'es'` côté
+   * formulaire d'inscription.
+   */
+  communicationLanguage?: 'fr' | 'es' | 'en' | null;
 };
+
+/** Langue par défaut côté serveur si le profil n'a pas la préférence. */
+export const DEFAULT_COMMUNICATION_LANGUAGE: 'fr' | 'es' | 'en' = 'es';
+
+function resolveLanguage(
+  v: unknown
+): 'fr' | 'es' | 'en' {
+  return v === 'fr' || v === 'es' || v === 'en'
+    ? v
+    : DEFAULT_COMMUNICATION_LANGUAGE;
+}
 
 function firstName(full: string | undefined | null): string {
   const s = (full ?? '').trim();
@@ -40,6 +57,7 @@ export function buildVariables(recipient: RecipientLike): TemplateVars {
     Math.min(100, Math.round(recipient.completionRate ?? 0))
   );
 
+  const language = resolveLanguage(recipient.communicationLanguage);
   return {
     firstName: firstName(fullName) || display,
     fullName: fullName || display,
@@ -51,6 +69,7 @@ export function buildVariables(recipient: RecipientLike): TemplateVars {
     networkUrl: `${appUrl}/network`,
     completionRate: String(completion),
     completionPercent: `${completion}%`,
+    language,
   };
 }
 
@@ -68,6 +87,7 @@ export function buildSampleVariables(adminEmail: string): TemplateVars {
     networkUrl: `${appUrl}/network`,
     completionRate: '87',
     completionPercent: '87%',
+    language: DEFAULT_COMMUNICATION_LANGUAGE,
   };
 }
 
@@ -101,4 +121,5 @@ export const AVAILABLE_VARS: { name: string; description: string }[] = [
   { name: 'networkUrl', description: 'Lien vers le répertoire /network' },
   { name: 'completionRate', description: 'Taux de complétion (0–100)' },
   { name: 'completionPercent', description: 'Taux de complétion avec %' },
+  { name: 'language', description: "Langue de communication choisie (fr/es/en, défaut es)" },
 ];

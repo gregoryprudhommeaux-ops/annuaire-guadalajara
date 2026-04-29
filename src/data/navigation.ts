@@ -28,21 +28,16 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
         { id: 'network', href: '/network', label: 'Réseau', audience: 'member', placement: 'primary' },
         { id: 'requests', href: '/requests', label: 'Demandes', audience: 'member', placement: 'primary' },
         { id: 'radar', href: '/radar', label: 'Radar', audience: 'member', placement: 'primary' },
-        { id: 'stats', href: '/stats', label: 'Vitrine', audience: 'member', placement: 'primary' },
         ...(isAdmin
           ? ([
+              { id: 'stats', href: '/stats', label: 'Vitrine', audience: 'member', placement: 'primary' },
               { id: 'admin', href: '/admin', label: 'Admin', audience: 'member', placement: 'primary' },
               { id: 'events', href: '/evenements', label: 'Événements', audience: 'member', placement: 'primary' },
               { id: 'communication', href: '/communication', label: 'Communication', audience: 'member', placement: 'primary' },
             ] satisfies NavItem[])
           : []),
       ]
-    : [
-        { id: 'discover', href: '/network', label: 'Découvrir', audience: 'visitor', placement: 'primary' },
-        { id: 'stats', href: '/stats', label: 'Vitrine', audience: 'visitor', placement: 'primary' },
-        { id: 'how', href: '/#comment-ca-marche', label: 'Comment ça marche', audience: 'visitor', placement: 'primary' },
-        { id: 'about', href: '/#', label: 'À propos', audience: 'visitor', placement: 'primary' },
-      ];
+    : [];
 
   const account: NavItem[] = isAuthed
     ? [{ id: 'profile', href: '/profile/edit', label: 'Mon profil', audience: 'member', placement: 'account' }]
@@ -59,9 +54,6 @@ export function getNavigation(ctx: NavCtx): { primary: NavItem[]; account: NavIt
     admin: React.createElement(Shield, iconProps),
     events: React.createElement(CalendarDays, iconProps),
     communication: React.createElement(Mail, iconProps),
-    discover: React.createElement(Users, iconProps),
-    how: React.createElement(Info, iconProps),
-    about: React.createElement(Info, iconProps),
     profile: React.createElement(UserRound, iconProps),
     learn: React.createElement(Info, iconProps),
   };

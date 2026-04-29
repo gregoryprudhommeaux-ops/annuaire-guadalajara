@@ -210,6 +210,12 @@ import {
   workingLanguageLabel,
 } from './lib/contactPreferences';
 import {
+  DEFAULT_COMMUNICATION_LANGUAGE,
+  clearPendingCommunicationLanguage,
+  getPendingCommunicationLanguage,
+  resolveCommunicationLanguage,
+} from './lib/communicationLanguage';
+import {
   profileMeetsPublicationRequirements,
   AI_OPTIMIZATION_READINESS_TARGET,
   PUBLICATION_BIO_MIN_LEN,
@@ -2150,6 +2156,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [highlightedNeedsDraft, setHighlightedNeedsDraft] = useState<string[]>([]);
   const [passionIdsDraft, setPassionIdsDraft] = useState<string[]>([]);
   const [workingLanguagesDraft, setWorkingLanguagesDraft] = useState<string[]>([]);
+  const [communicationLanguageDraft, setCommunicationLanguageDraft] = useState<Language>(
+    DEFAULT_COMMUNICATION_LANGUAGE
+  );
   const profileWhatsappSplit = useMemo(
     () => splitStoredPhone(editingProfile?.whatsapp ?? profile?.whatsapp),
     [editingProfile?.whatsapp, profile?.whatsapp]
@@ -2744,6 +2753,12 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     setHighlightedNeedsDraft(sanitizeHighlightedNeeds(src.highlightedNeeds));
     setPassionIdsDraft(sanitizePassionIds(src.passionIds));
     setWorkingLanguagesDraft(sanitizeWorkingLanguageCodes(src.workingLanguageCodes));
+    setCommunicationLanguageDraft(
+      resolveCommunicationLanguage(
+        src.communicationLanguage,
+        getPendingCommunicationLanguage() ?? DEFAULT_COMMUNICATION_LANGUAGE
+      )
+    );
   }, [isEditing, editingProfile?.uid]);
 
   /** Si le profil charge après l’ouverture du formulaire : hydrate une seule fois par uid sans écraser si l’utilisateur a déjà choisi. */
@@ -2759,6 +2774,11 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     );
     setWorkingLanguagesDraft((prev) =>
       prev.length > 0 ? prev : sanitizeWorkingLanguageCodes(profile.workingLanguageCodes)
+    );
+    setCommunicationLanguageDraft((prev) =>
+      profile.communicationLanguage
+        ? resolveCommunicationLanguage(profile.communicationLanguage, prev)
+        : prev
     );
   }, [isEditing, editingProfile, profile]);
 
@@ -4090,6 +4110,15 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       contactPreferenceCta: deleteField(),
       contactPreferenceCtaTranslations: deleteField(),
       workingLanguageCodes: sanitizeWorkingLanguageCodes(workingLanguagesDraft),
+      communicationLanguage: resolveCommunicationLanguage(
+        (formData.get('communicationLanguage') as string | null) ??
+          communicationLanguageDraft,
+        resolveCommunicationLanguage(
+          (isSelf ? profile?.communicationLanguage : editingProfile?.communicationLanguage) ??
+            getPendingCommunicationLanguage() ??
+            DEFAULT_COMMUNICATION_LANGUAGE
+        )
+      ),
       typicalClientSizes: typicalClientSizesField,
       typicalClientSize: typicalClientSizeLegacy,
       openToMentoring: formData.get('openToMentoring') === 'on',
@@ -4121,6 +4150,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       await setDoc(doc(db, 'users', targetUid), sanitizedProfile as Partial<UserProfile>, {
         merge: true,
       });
+      if (isSelf) clearPendingCommunicationLanguage();
       await saveUserAdminPrivate(targetUid, {
         genderStat,
         nationality,
@@ -5119,6 +5149,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   workingLanguagesDraft,
                   toggleWorkingLanguageDraft,
                   WORKING_LANGUAGE_OPTIONS,
+                  communicationLanguageDraft,
+                  setCommunicationLanguageDraft,
                   profilePhotoUrlDraft,
                   ProfileEditPersonBioBlock,
                   ProfileEditorialMemberBioField,

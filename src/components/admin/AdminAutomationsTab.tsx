@@ -24,9 +24,27 @@ import {
   subscribeToAutomationSettings,
   updateAutomation,
   type AutomationDoc,
+  type AutomationLanguage,
   type AutomationSettings,
   type AutomationTrigger,
 } from '@/lib/emailManager';
+
+const LANGUAGE_OPTIONS: { value: AutomationLanguage; label: string; flag: string }[] = [
+  { value: null, label: 'Toutes les langues', flag: '🌐' },
+  { value: 'es', label: 'Español', flag: '🇲🇽' },
+  { value: 'fr', label: 'Français', flag: '🇫🇷' },
+  { value: 'en', label: 'English', flag: '🇬🇧' },
+];
+
+function languageBadge(lang: AutomationLanguage | undefined): {
+  label: string;
+  flag: string;
+} {
+  const opt =
+    LANGUAGE_OPTIONS.find((o) => o.value === (lang ?? null)) ??
+    LANGUAGE_OPTIONS[0];
+  return { label: opt.label, flag: opt.flag };
+}
 
 type EditorState = {
   id: string | null;
@@ -35,6 +53,7 @@ type EditorState = {
   enabled: boolean;
   subject: string;
   bodyHtml: string;
+  targetLanguage: AutomationLanguage;
 };
 
 const EMPTY_EDITOR: EditorState = {
@@ -44,6 +63,7 @@ const EMPTY_EDITOR: EditorState = {
   enabled: true,
   subject: '',
   bodyHtml: '',
+  targetLanguage: null,
 };
 
 const PRESETS: Record<AutomationTrigger, { subject: string; bodyHtml: string; name: string }> = {
@@ -171,6 +191,7 @@ export function AdminAutomationsTab() {
       enabled: true,
       subject: preset.subject,
       bodyHtml: preset.bodyHtml,
+      targetLanguage: null,
     });
     setEditorOpen(true);
   };
@@ -183,6 +204,7 @@ export function AdminAutomationsTab() {
       enabled: a.enabled,
       subject: a.subject,
       bodyHtml: a.bodyHtml,
+      targetLanguage: a.targetLanguage ?? null,
     });
     setEditorOpen(true);
   };
@@ -201,6 +223,7 @@ export function AdminAutomationsTab() {
           enabled: editor.enabled,
           subject: editor.subject,
           bodyHtml: editor.bodyHtml,
+          targetLanguage: editor.targetLanguage,
           updatedBy: uid,
         });
         setToast('Automation mise à jour.');
@@ -211,6 +234,7 @@ export function AdminAutomationsTab() {
           enabled: editor.enabled,
           subject: editor.subject,
           bodyHtml: editor.bodyHtml,
+          targetLanguage: editor.targetLanguage,
           updatedBy: uid,
         });
         setToast('Automation créée.');
@@ -435,6 +459,18 @@ export function AdminAutomationsTab() {
                             >
                               {a.enabled ? 'Activée' : 'Désactivée'}
                             </span>
+                            {(() => {
+                              const b = languageBadge(a.targetLanguage);
+                              return (
+                                <span
+                                  className="inline-flex items-center gap-1 rounded-full border border-stone-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-stone-700"
+                                  title={`Langue cible : ${b.label}`}
+                                >
+                                  <span aria-hidden>{b.flag}</span>
+                                  <span>{b.label}</span>
+                                </span>
+                              );
+                            })()}
                             <span className="font-semibold text-stone-900">
                               {a.name}
                             </span>
@@ -547,7 +583,7 @@ function Editor({
         }
       >
         <div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <label className="flex flex-col gap-1 text-xs font-semibold text-stone-700">
               Nom interne
               <input
@@ -572,6 +608,31 @@ function Editor({
                   </option>
                 ))}
               </select>
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-stone-700">
+              Langue cible
+              <select
+                value={state.targetLanguage ?? ''}
+                onChange={(e) =>
+                  set({
+                    targetLanguage:
+                      e.target.value === ''
+                        ? null
+                        : (e.target.value as Exclude<AutomationLanguage, null>),
+                  })
+                }
+                className="rounded-lg border border-stone-200 px-3 py-2 text-sm font-normal text-stone-900"
+              >
+                {LANGUAGE_OPTIONS.map((opt) => (
+                  <option key={opt.value ?? 'all'} value={opt.value ?? ''}>
+                    {opt.flag} {opt.label}
+                  </option>
+                ))}
+              </select>
+              <span className="text-[11px] font-normal text-stone-500">
+                Cet email ne partira qu&apos;aux membres ayant choisi cette
+                langue dans leur profil.
+              </span>
             </label>
           </div>
 
