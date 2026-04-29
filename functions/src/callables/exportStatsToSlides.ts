@@ -45,13 +45,20 @@ function getGoogleAuth(scopes: string[]) {
   return new google.auth.GoogleAuth({ scopes });
 }
 
+const GOOGLE_SCOPES = [
+  // Needed to create/copy the presentation file in Drive.
+  'https://www.googleapis.com/auth/drive',
+  // Needed to batchUpdate Slides content.
+  'https://www.googleapis.com/auth/presentations',
+] as const;
+
 function getDrive() {
-  const auth = getGoogleAuth(['https://www.googleapis.com/auth/drive']);
+  const auth = getGoogleAuth([...GOOGLE_SCOPES]);
   return google.drive({ version: 'v3', auth });
 }
 
 function getSlides() {
-  const auth = getGoogleAuth(['https://www.googleapis.com/auth/presentations']);
+  const auth = getGoogleAuth([...GOOGLE_SCOPES]);
   return google.slides({ version: 'v1', auth });
 }
 
@@ -172,11 +179,20 @@ function slidesUrl(presentationId: string): string {
   return `https://docs.google.com/presentation/d/${presentationId}/edit`;
 }
 
-async function createPresentationFromScratch(title: string): Promise<string> {
-  const slides = getSlides();
-  const res = await slides.presentations.create({ requestBody: { title } });
-  const id = res.data.presentationId;
-  if (!id) throw new Error('presentationId manquant');
+async function createPresentationFromScratch(title: string, folderId: string): Promise<string> {
+  // Creating a Slides file is a Drive operation. With service accounts, using Drive API is
+  // the most reliable way to create the file, then we can update it via Slides API.
+  const drive = getDrive();
+  const res = await drive.files.create({
+    requestBody: {
+      name: title,
+      mimeType: 'application/vnd.google-apps.presentation',
+      ...(folderId ? { parents: [folderId] } : {}),
+    },
+    fields: 'id',
+  });
+  const id = res.data.id;
+  if (!id) throw new Error('Drive create: id manquant');
   return id;
 }
 
@@ -477,7 +493,7 @@ export const exportStatsToSlides = onCall(
 
       const presentationId = templateId
         ? await copyTemplatePresentation(templateId, title, folderId)
-        : await createPresentationFromScratch(title);
+        : await createPresentationFromScratch(title, folderId);
 
       if (!templateId) {
         await buildScratchDeck(presentationId);
