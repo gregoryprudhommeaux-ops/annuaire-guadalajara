@@ -11,7 +11,8 @@ import {
   YAxis,
 } from 'recharts';
 import { Eye, Handshake, Network, TrendingUp, Users } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { httpsCallable } from 'firebase/functions';
+import { Link } from 'react-router-dom';
 import { useVitrineStats } from '@/hooks/useVitrineStats';
 import { setStatsPagePdfState } from '@/lib/statsPagePdfBridge';
 import { useLanguage } from '@/i18n/LanguageProvider';
@@ -30,6 +31,7 @@ import {
   StatsSectionHeader,
   StatsSectionShell,
 } from '@/components/stats/ui';
+import { functions } from '@/firebase';
 import francoLogoUrl from '../../favicon.svg?url';
 import './stats-page.css';
 
@@ -56,18 +58,9 @@ function TrendPill({ text, tone }: { text: string; tone: 'up' | 'down' | 'flat' 
 
 export default function StatsPage() {
   const { lang } = useLanguage();
-  const location = useLocation();
   const vitrine = useVitrineStats();
   const printRef = useRef<HTMLDivElement | null>(null);
-  const [pdfBusy, setPdfBusy] = useState(false);
-  const [pdfMode, setPdfMode] = useState(false);
-  const isPdfPrintView = useMemo(() => {
-    try {
-      return new URLSearchParams(location.search).get('pdf') === '1';
-    } catch {
-      return false;
-    }
-  }, [location.search]);
+  const [exportBusy, setExportBusy] = useState(false);
 
   const now = useMemo(() => new Date(), []);
   const monthTitle = useMemo(() => formatMonthYear(now, lang), [now, lang]);
@@ -124,48 +117,55 @@ export default function StatsPage() {
         ? 'Crece con el tamaño de la red'
         : 'Augmente avec le nombre de décideurs';
 
-  const handlePdf = useCallback(async () => {
-    // New approach: use a dedicated print-friendly view and let the browser
-    // generate the PDF ("Save as PDF") for correct pagination and typography.
-    const url = `${window.location.origin}/stats?pdf=1`;
-    const w = window.open(url, '_blank');
-    if (!w) {
+  type ExportStatsToSlidesResult = { ok: boolean; presentationId: string; url: string };
+
+  const handleExportSlides = useCallback(async () => {
+    if (exportBusy) return;
+    setExportBusy(true);
+    try {
+      const fn = httpsCallable<Record<string, never>, ExportStatsToSlidesResult>(
+        functions,
+        'exportStatsToSlides'
+      );
+      const res = await fn({});
+      const url = String(res.data?.url ?? '').trim();
+      if (!url) {
+        throw new Error('URL Slides manquante.');
+      }
+      const w = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!w) {
+        alert(
+          lang === 'en'
+            ? 'Please allow popups to open the Google Slides export.'
+            : lang === 'es'
+              ? 'Autoriza las ventanas emergentes para abrir la exportación de Google Slides.'
+              : "Autorisez les popups pour ouvrir l’export Google Slides."
+        );
+      }
+    } catch (e) {
+      console.error(e);
       alert(
         lang === 'en'
-          ? 'Please allow popups for this site to export the PDF.'
+          ? 'Slides export failed.'
           : lang === 'es'
-            ? 'Autoriza las ventanas emergentes para exportar el PDF.'
-            : 'Autorisez les popups pour exporter le PDF.'
+            ? 'La exportación Slides falló.'
+            : "L’export Slides a échoué."
       );
+    } finally {
+      setExportBusy(false);
     }
-  }, [lang, monthTitle, now]);
-
-  useEffect(() => {
-    if (!isPdfPrintView) return;
-    setPdfMode(true);
-    // Auto-print in the dedicated view.
-    const run = () => {
-      try {
-        window.print();
-      } finally {
-        // Close the tab after printing when possible.
-        window.setTimeout(() => window.close(), 250);
-      }
-    };
-    const id = window.setTimeout(run, 600);
-    return () => window.clearTimeout(id);
-  }, [isPdfPrintView]);
+  }, [exportBusy, lang]);
 
   useEffect(() => {
     if (vitrine.loading || vitrine.error) {
       setStatsPagePdfState(null);
       return;
     }
-    setStatsPagePdfState({ print: () => void handlePdf(), busy: pdfBusy });
+    setStatsPagePdfState({ print: () => void handleExportSlides(), busy: exportBusy });
     return () => {
       setStatsPagePdfState(null);
     };
-  }, [vitrine.error, vitrine.loading, handlePdf, pdfBusy]);
+  }, [vitrine.error, vitrine.loading, handleExportSlides, exportBusy]);
 
   const topSectorsChart = useMemo(
     () => vitrine.topSectors.map((s) => ({ name: s.name, value: s.value })),
@@ -327,7 +327,7 @@ export default function StatsPage() {
             totalMembers={vitrine.totalMembers}
             newMembersLast30d={vitrine.newMembersLast30d}
             lang={lang}
-            pdfMode={pdfMode}
+            pdfMode={false}
           />
 
           <RecentMembersActivity lang={lang} />

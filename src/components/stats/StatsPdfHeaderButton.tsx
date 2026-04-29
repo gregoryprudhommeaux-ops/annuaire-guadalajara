@@ -6,14 +6,18 @@ const BRAND = '#1a3a2a';
 
 function label(busy: boolean, lang: Language) {
   if (busy) {
-    return lang === 'en' ? 'Preparing…' : lang === 'es' ? 'Preparando…' : 'Préparation…';
+    return lang === 'en' ? 'Exporting…' : lang === 'es' ? 'Exportando…' : 'Export…';
   }
-  return lang === 'en' ? 'Download PDF' : lang === 'es' ? 'Descargar PDF' : 'Télécharger en PDF';
+  return lang === 'en'
+    ? 'Export Google Slides'
+    : lang === 'es'
+      ? 'Exportar Google Slides'
+      : 'Exporter Google Slides';
 }
 
 /**
- * Bouton d’export PDF affiché dans le bandeau (à gauche de « Se déconnecter » sur `/stats`).
- * L’action est fournie par {@link setStatsPagePdfState} dans `StatsPage`.
+ * Bouton d’export Google Slides affiché dans le bandeau (à gauche de « Se déconnecter » sur `/stats`).
+ * L’action est fournie par {@link setStatsPagePdfState} dans `StatsPage` (bridge).
  */
 export function StatsPdfHeaderButton({ lang }: { lang: Language }) {
   const state = useStatsPagePdfState();
