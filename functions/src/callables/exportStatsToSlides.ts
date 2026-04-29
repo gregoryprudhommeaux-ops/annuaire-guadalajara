@@ -314,6 +314,34 @@ function slidesUrl(presentationId: string, opts?: { templateId?: string; lang?: 
   return s ? `${base}?${s}` : base;
 }
 
+function setToken(tokens: Map<string, string>, key: string, value: unknown) {
+  const v = value === undefined || value === null ? '' : String(value);
+  tokens.set(`{{${key}}}`, v);
+}
+
+function flattenTokens(
+  tokens: Map<string, string>,
+  value: unknown,
+  prefix: string,
+  arrayLimits: Record<string, number>
+) {
+  if (value == null) return;
+  if (typeof value !== 'object') {
+    setToken(tokens, prefix, value);
+    return;
+  }
+  if (Array.isArray(value)) {
+    const lim = arrayLimits[prefix] ?? value.length;
+    for (let i = 0; i < Math.min(value.length, lim); i++) {
+      flattenTokens(tokens, value[i], `${prefix}.${i}`, arrayLimits);
+    }
+    return;
+  }
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    flattenTokens(tokens, v, `${prefix}.${k}`, arrayLimits);
+  }
+}
+
 async function copyTemplatePresentation(
   drive: ReturnType<typeof google.drive>,
   templateId: string,
@@ -478,7 +506,7 @@ async function fillPresentation(
       ? listDash
       : stats.recentMembers
           .map((m) => {
-            const when = m.createdAtMs ? new Date(m.createdAtMs).toLocaleDateString('fr-FR') : '';
+            const when = m.createdAtMs ? new Date(m.createdAtMs).toLocaleDateString(localeForLang(lang)) : '';
             const need = m.primaryNeed ? ` — besoin: ${m.primaryNeed}` : '';
             return `• ${when} — ${m.sector}${need}`;
           })
@@ -507,7 +535,7 @@ async function fillPresentation(
       : stats.recentRequests
           .slice(0, 5)
           .map((r) => {
-            const when = r.createdAtMs ? new Date(r.createdAtMs).toLocaleDateString('fr-FR') : '';
+            const when = r.createdAtMs ? new Date(r.createdAtMs).toLocaleDateString(localeForLang(lang)) : '';
             return `• ${when} — ${r.title}`;
           })
           .join('\n');
@@ -579,6 +607,72 @@ async function fillPresentation(
       },
     },
   ];
+
+  // ---------------------------------------------------------------------------
+  // Also support VitrineData-style placeholders (contract-based masters).
+  // Examples: {{report_month_year_fr}}, {{extraction_date_fr_long}}, {{hero_stats.members_count}}
+  // This makes exports resilient even if the master doesn't use the legacy {{KPI_*}} placeholders.
+  // ---------------------------------------------------------------------------
+  const vitrineDataLike = {
+    report_month_year_fr: month,
+    extraction_date_fr_long: extractDateLong,
+    hero_stats: {
+      members_count: kpiMembers,
+      active_opportunities_count: stats.recentRequests.length ? String(stats.recentRequests.length) : '0',
+      month_growth_percent: '',
+      sectors_count: String(stats.topSectors.length || 0),
+    },
+    indicators: {
+      active_decision_makers: kpiMembers,
+      new_this_month: kpiNew,
+      profile_views: kpiViews,
+      introductions_started: kpiClicks,
+      potential_connections: kpiPotentialConnections,
+    },
+    affinities: stats.topPassions.slice(0, 5).map((p) => ({
+      name: p.passionId,
+      badge: '',
+      members: p.memberCount,
+      sectors_or_universes: p.sectorCount,
+      sectors_or_universes_label: 'secteurs',
+      insight: '',
+    })),
+    sectors: stats.topSectors.slice(0, 8).map((s) => ({ name: s.name, count: s.value })),
+    recent_activity: stats.recentMembers.slice(0, 4).map((m) => ({
+      sector: m.sector,
+      need: m.primaryNeed,
+      relative_date: m.createdAtMs ? new Date(m.createdAtMs).toLocaleDateString(localeForLang(lang)) : '',
+    })),
+    top_requested_opportunities: stats.needs.slice(0, 8).map((n) => ({ category: n.label, count: n.count })),
+    active_opportunities: stats.needs.slice(0, 6).map((n) => ({ category: n.label, badge: '', requests: n.count, insight: '', url: '' })),
+    footer: {
+      website: 'franconetwork.app',
+      date_value: extractDateLong,
+      source: footerSource,
+    },
+  };
+
+  const tokens = new Map<string, string>();
+  const arrayLimits: Record<string, number> = {
+    affinities: 5,
+    sectors: 8,
+    recent_activity: 4,
+    top_requested_opportunities: 6,
+    active_opportunities: 6,
+    cta_blocks: 3,
+  };
+  for (const [k, v] of Object.entries(vitrineDataLike)) {
+    flattenTokens(tokens, v, k, arrayLimits);
+  }
+  for (const [token, value] of tokens.entries()) {
+    if (!value) continue;
+    requests.push({
+      replaceAllText: {
+        containsText: { text: token, matchCase: true },
+        replaceText: value,
+      },
+    });
+  }
 
   await slides.presentations.batchUpdate({
     presentationId,
