@@ -404,26 +404,74 @@ async function buildScratchDeck(slides: ReturnType<typeof google.slides>, presen
   await slides.presentations.batchUpdate({ presentationId, requestBody: { requests } });
 }
 
+function quickChartUrl(config: unknown, width: number, height: number): string {
+  // QuickChart returns a public PNG image from a URL-encoded Chart.js config.
+  // This is reliably fetchable by Google Slides for replaceAllShapesWithImage.
+  const c = encodeURIComponent(JSON.stringify(config));
+  return `https://quickchart.io/chart?format=png&backgroundColor=white&width=${width}&height=${height}&c=${c}`;
+}
+
 function chartUrlBar(labels: string[], values: number[], colors: string[]): string {
-  // Google Image Charts: horizontal bar chart
-  const chd = `t:${values.map((v) => Math.max(0, Math.round(v))).join(',')}`;
-  const chl = labels.map((s) => encodeURIComponent(s)).join('|');
-  const chco = colors.map((c) => c.replace('#', '')).join('|');
-  const url =
-    `https://chart.googleapis.com/chart?cht=bhs&chs=780x360&chd=${encodeURIComponent(chd)}` +
-    `&chco=${encodeURIComponent(chco)}&chxt=x,y&chxl=1:|${chl}&chbh=22` +
-    `&chds=0,${Math.max(1, ...values)}&chma=40,10,20,10&chxs=0,555555,12,0,t,555555|1,555555,12,0,l,555555`;
-  return url;
+  const safe = values.length ? values : [0];
+  const safeLabels = labels.length ? labels : ['—'];
+  const palette = colors.length ? colors : ['#01696f'];
+  const cfg = {
+    type: 'bar',
+    data: {
+      labels: safeLabels,
+      datasets: [
+        {
+          data: safe,
+          backgroundColor: safe.map((_: number, i: number) => palette[i % palette.length]),
+          borderWidth: 0,
+          barThickness: 16,
+        },
+      ],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false },
+      },
+      scales: {
+        x: { ticks: { color: '#475569', font: { size: 12 } }, grid: { color: '#e2e8f0' } },
+        y: { ticks: { color: '#0f172a', font: { size: 12 } }, grid: { display: false } },
+      },
+    },
+  };
+  return quickChartUrl(cfg, 820, 380);
 }
 
 function chartUrlLine(points: number[]): string {
-  const max = Math.max(1, ...points);
-  const chd = `t:${points.map((v) => Math.max(0, Math.round(v))).join(',')}`;
-  return (
-    `https://chart.googleapis.com/chart?cht=lc&chs=780x300&chd=${encodeURIComponent(chd)}` +
-    `&chco=01696f&chds=0,${max}&chxt=y&chxr=0,0,${max}` +
-    `&chm=o,01696f,0,-1,6&chls=3`
-  );
+  const safe = points.length ? points : [0, 1];
+  const cfg = {
+    type: 'line',
+    data: {
+      labels: safe.map((_: number, i: number) => String(i + 1)),
+      datasets: [
+        {
+          data: safe,
+          borderColor: '#01696f',
+          backgroundColor: 'rgba(1,105,111,0.15)',
+          fill: false,
+          tension: 0.25,
+          pointRadius: 3,
+          pointBackgroundColor: '#01696f',
+        },
+      ],
+    },
+    options: {
+      responsive: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: { display: false },
+        y: { ticks: { color: '#475569', font: { size: 12 } }, grid: { color: '#e2e8f0' } },
+      },
+    },
+  };
+  return quickChartUrl(cfg, 820, 300);
 }
 
 async function fillPresentation(
