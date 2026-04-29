@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import {
   Bar,
   BarChart,
@@ -13,7 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 import { Eye, Handshake, Network, TrendingUp, Users } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useVitrineStats } from '@/hooks/useVitrineStats';
 import { setStatsPagePdfState } from '@/lib/statsPagePdfBridge';
 import { useLanguage } from '@/i18n/LanguageProvider';
@@ -58,10 +56,18 @@ function TrendPill({ text, tone }: { text: string; tone: 'up' | 'down' | 'flat' 
 
 export default function StatsPage() {
   const { lang } = useLanguage();
+  const location = useLocation();
   const vitrine = useVitrineStats();
   const printRef = useRef<HTMLDivElement | null>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfMode, setPdfMode] = useState(false);
+  const isPdfPrintView = useMemo(() => {
+    try {
+      return new URLSearchParams(location.search).get('pdf') === '1';
+    } catch {
+      return false;
+    }
+  }, [location.search]);
 
   const now = useMemo(() => new Date(), []);
   const monthTitle = useMemo(() => formatMonthYear(now, lang), [now, lang]);
@@ -119,183 +125,36 @@ export default function StatsPage() {
         : 'Augmente avec le nombre de décideurs';
 
   const handlePdf = useCallback(async () => {
-    const el = printRef.current;
-    if (!el) return;
-    // Important: some browsers (notably Safari) may block downloads that happen
-    // after an async boundary. We open a blank tab synchronously (user gesture),
-    // then navigate it to the generated PDF blob URL when ready.
-    const maybePopup = window.open('', '_blank');
-    const popupBlocked = !maybePopup;
-    if (popupBlocked) {
-      // Universal fallback: native print dialog lets the user "Save as PDF".
-      // This runs in the click gesture stack, so it isn't blocked by async rules.
-      window.print();
-      return;
-    }
-    setPdfBusy(true);
-    setPdfMode(true);
-    try {
-      // Ensure the PDF-safe render has applied before html2canvas clones the DOM.
-      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
-      const scale = 2;
-      const canvas = await html2canvas(el, {
-        scale,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        windowWidth: el.scrollWidth,
-        windowHeight: el.scrollHeight,
-        onclone: (doc) => {
-          doc.querySelectorAll('.no-print').forEach((n) => {
-            (n as HTMLElement).style.display = 'none';
-          });
-          // Defensive: html2canvas can crash on SVG `foreignObject` and some filters.
-          doc.querySelectorAll('foreignObject').forEach((n) => n.remove());
-          doc.querySelectorAll('[filter]').forEach((n) => n.removeAttribute('filter'));
-
-          // Defensive: html2canvas does not support modern `oklch()` colors in some environments.
-          // Force a PDF-safe palette (RGB/hex) inside the cloned document.
-          const style = doc.createElement('style');
-          style.setAttribute('data-pdf-safe', 'true');
-          style.textContent = `
-            :root { color-scheme: light; }
-            html, body { background: #ffffff !important; }
-            * {
-              /* Avoid unsupported color functions in computed styles */
-              color: #0f172a !important;
-              background: transparent !important;
-              background-color: transparent !important;
-              background-image: none !important;
-              border-color: #e2e8f0 !important;
-              outline-color: #2563eb !important;
-              text-decoration-color: currentColor !important;
-              box-shadow: none !important;
-              filter: none !important;
-            }
-            svg, svg * {
-              fill: #0f172a !important;
-              stroke: #0f172a !important;
-              filter: none !important;
-            }
-            .stats-print-root,
-            .stats-print-root * {
-              background-color: #ffffff !important;
-            }
-            /* Keep brand teal accents where explicitly used */
-            .stats-ds { --stats-primary: #01696f; --stats-primary-hover: #015a5f; }
-          `;
-          doc.head.appendChild(style);
-        },
-      });
-
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const margin = 8;
-      const header = `FrancoNetwork · Annuaire d'Affaires de Guadalajara · ${monthTitle}`;
-      const footer = 'franconetwork.app · Rejoignez le réseau';
-
-      const w = pageW - margin * 2;
-      const headerBlock = 10;
-      const footerBlock = 8;
-      const mmPerPxW = w / canvas.width;
-      const imgH_mm = canvas.height * mmPerPxW;
-      const usableH = pageH - margin * 2 - headerBlock - footerBlock;
-      const headerY = margin + 4;
-      const footerY = pageH - margin - 3;
-      const drawW = w;
-      const drawX = margin;
-      const drawY0 = margin + headerBlock;
-
-      let yMm = 0;
-      let first = true;
-      while (yMm < imgH_mm - 0.0001) {
-        if (!first) pdf.addPage();
-        first = false;
-
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(9);
-        pdf.setTextColor(1, 105, 111);
-        pdf.text(header, margin, headerY, { maxWidth: w });
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(7.5);
-        pdf.setTextColor(100, 116, 139);
-        pdf.text(footer, margin, footerY, { maxWidth: w });
-
-        const remaining = imgH_mm - yMm;
-        const hDraw = Math.min(usableH, remaining);
-        if (hDraw <= 0) break;
-
-        const srcYpx = (yMm / imgH_mm) * canvas.height;
-        const srcHpx = (hDraw / imgH_mm) * canvas.height;
-
-        const one = document.createElement('canvas');
-        one.width = canvas.width;
-        one.height = Math.max(1, Math.floor(srcHpx));
-        const ctx = one.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(canvas, 0, srcYpx, canvas.width, srcHpx, 0, 0, one.width, one.height);
-        }
-        const part = one.toDataURL('image/jpeg', 0.92);
-        pdf.addImage(part, 'JPEG', drawX, drawY0, drawW, hDraw, undefined, 'FAST');
-        yMm += hDraw;
-      }
-
-      const fname = `FrancoNetwork-Stats-${now.toLocaleDateString(lang === 'es' ? 'es-MX' : lang === 'en' ? 'en-US' : 'fr-FR', { month: 'long', year: 'numeric' })}.pdf`
-        .replace(/\s+/g, '-');
-      const blob = pdf.output('blob');
-      const blobUrl = URL.createObjectURL(blob);
-
-      if (maybePopup && !maybePopup.closed) {
-        // Some browsers refuse navigating to a blob URL; fallback to data URI.
-        try {
-          maybePopup.location.href = blobUrl;
-        } catch {
-          maybePopup.location.href = pdf.output('datauristring');
-        }
-      }
-
-      // Best-effort: direct download via <a download>, then fallback to jsPDF's save().
-      try {
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = fname;
-        a.rel = 'noopener';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      } catch {
-        pdf.save(fname);
-      }
-      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
-
-      if (popupBlocked) {
-        alert(
-          lang === 'en'
-            ? 'Your browser blocked the PDF popup/download. Please allow popups for this site, then try again.'
-            : lang === 'es'
-              ? 'Tu navegador bloqueó la descarga/ventana del PDF. Autoriza las ventanas emergentes para este sitio y vuelve a intentar.'
-              : 'Votre navigateur a bloqué la fenêtre/téléchargement du PDF. Autorisez les popups pour ce site puis réessayez.'
-        );
-      }
-    } catch (e) {
-      console.error(e);
-      const msg =
-        typeof e === 'object' && e && 'message' in e ? String((e as { message?: unknown }).message) : String(e);
+    // New approach: use a dedicated print-friendly view and let the browser
+    // generate the PDF ("Save as PDF") for correct pagination and typography.
+    const url = `${window.location.origin}/stats?pdf=1`;
+    const w = window.open(url, '_blank');
+    if (!w) {
       alert(
         lang === 'en'
-          ? `PDF export failed. Please try again.\n\n${msg}`
+          ? 'Please allow popups for this site to export the PDF.'
           : lang === 'es'
-            ? `La exportación PDF falló. Inténtalo de nuevo.\n\n${msg}`
-            : `L’export PDF a échoué. Réessayez.\n\n${msg}`
+            ? 'Autoriza las ventanas emergentes para exportar el PDF.'
+            : 'Autorisez les popups pour exporter le PDF.'
       );
-    } finally {
-      setPdfBusy(false);
-      setPdfMode(false);
-      if (maybePopup && !maybePopup.closed && maybePopup.location.href === 'about:blank') {
-        maybePopup.close();
-      }
     }
   }, [lang, monthTitle, now]);
+
+  useEffect(() => {
+    if (!isPdfPrintView) return;
+    setPdfMode(true);
+    // Auto-print in the dedicated view.
+    const run = () => {
+      try {
+        window.print();
+      } finally {
+        // Close the tab after printing when possible.
+        window.setTimeout(() => window.close(), 250);
+      }
+    };
+    const id = window.setTimeout(run, 600);
+    return () => window.clearTimeout(id);
+  }, [isPdfPrintView]);
 
   useEffect(() => {
     if (vitrine.loading || vitrine.error) {
