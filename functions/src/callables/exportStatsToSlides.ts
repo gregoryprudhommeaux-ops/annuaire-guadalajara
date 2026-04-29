@@ -305,8 +305,13 @@ function longDate(now: Date, lang: UiLang): string {
   return now.toLocaleDateString(localeForLang(lang), { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-function slidesUrl(presentationId: string): string {
-  return `https://docs.google.com/presentation/d/${presentationId}/edit`;
+function slidesUrl(presentationId: string, opts?: { templateId?: string; lang?: string }): string {
+  const base = `https://docs.google.com/presentation/d/${presentationId}/edit`;
+  const qp = new URLSearchParams();
+  if (opts?.templateId) qp.set('templateId', opts.templateId);
+  if (opts?.lang) qp.set('lang', opts.lang);
+  const s = qp.toString();
+  return s ? `${base}?${s}` : base;
 }
 
 async function copyTemplatePresentation(
@@ -629,7 +634,7 @@ export const exportStatsToSlides = onCall(
       const presentationId = await copyTemplatePresentation(drive, templateId, title, folderId);
       await fillPresentation(slides, presentationId, stats, lang);
 
-      const url = slidesUrl(presentationId);
+      const url = slidesUrl(presentationId, { templateId, lang });
       logger.info('Slides deck generated', { presentationId, templateId, lang });
       return { ok: true, presentationId, url, debug: { templateId, lang } };
     } catch (err) {
