@@ -561,58 +561,33 @@ async function fillPresentation(
         ? 'Fuente: agregados del directorio'
         : 'Source : agrégats annuaire';
 
-  // We rely on placeholders if present. If not present, the deck will still be created,
-  // but will remain empty until a template is provided.
-  const requests: any[] = [
-    { replaceAllText: { containsText: { text: '{{DOC_TITLE}}', matchCase: true }, replaceText: docTitle } },
-    { replaceAllText: { containsText: { text: '{{MONTH_TITLE}}', matchCase: true }, replaceText: month } },
-    { replaceAllText: { containsText: { text: '{{EXTRACT_DATE_LONG}}', matchCase: true }, replaceText: extractDateLong } },
-    { replaceAllText: { containsText: { text: '{{FOOTER_DATE_LONG}}', matchCase: true }, replaceText: extractDateLong } },
-    { replaceAllText: { containsText: { text: '{{FOOTER_SOURCE}}', matchCase: true }, replaceText: footerSource } },
-    { replaceAllText: { containsText: { text: '{{KPI_MEMBERS}}', matchCase: true }, replaceText: kpiMembers } },
-    { replaceAllText: { containsText: { text: '{{KPI_NEW_30D}}', matchCase: true }, replaceText: kpiNew } },
-    { replaceAllText: { containsText: { text: '{{KPI_PROFILE_VIEWS}}', matchCase: true }, replaceText: kpiViews } },
-    { replaceAllText: { containsText: { text: '{{KPI_CONTACT_CLICKS}}', matchCase: true }, replaceText: kpiClicks } },
-    { replaceAllText: { containsText: { text: '{{KPI_POTENTIAL_CONNECTIONS}}', matchCase: true }, replaceText: kpiPotentialConnections } },
-    { replaceAllText: { containsText: { text: '{{AFFINITIES_LIST}}', matchCase: true }, replaceText: affinitiesList || dash } },
-    { replaceAllText: { containsText: { text: '{{AFFINITIES_INSIGHTS}}', matchCase: true }, replaceText: affinitiesInsights || dash } },
-    { replaceAllText: { containsText: { text: '{{SECTORS_LIST}}', matchCase: true }, replaceText: sectorsList || dash } },
-    { replaceAllText: { containsText: { text: '{{GROWTH_SUMMARY}}', matchCase: true }, replaceText: growthSummary || dash } },
-    { replaceAllText: { containsText: { text: '{{RECENT_ACTIVITY_LIST}}', matchCase: true }, replaceText: recentActivityList || dash } },
-    { replaceAllText: { containsText: { text: '{{MOST_SOUGHT_LIST}}', matchCase: true }, replaceText: mostSoughtList || dash } },
-    { replaceAllText: { containsText: { text: '{{ACTIVE_OPPS_LIST}}', matchCase: true }, replaceText: activeOppsList || dash } },
-    { replaceAllText: { containsText: { text: '{{ACTIVE_OPPS_WHY}}', matchCase: true }, replaceText: activeOppsWhy || dash } },
-    { replaceAllText: { containsText: { text: '{{RECENT_REQUESTS_LIST}}', matchCase: true }, replaceText: recentRequestsList || dash } },
-    { replaceAllText: { containsText: { text: '{{RECENT_REQUESTS_WHY}}', matchCase: true }, replaceText: recentRequestsWhy || dash } },
-    { replaceAllText: { containsText: { text: '{{CTA_CARDS}}', matchCase: true }, replaceText: ctaCards || dash } },
-    {
-      replaceAllShapesWithImage: {
-        imageUrl: chartSectors,
-        replaceMethod: 'CENTER_INSIDE',
-        containsText: { text: '{{CHART_SECTORS}}', matchCase: true },
-      },
-    },
-    {
-      replaceAllShapesWithImage: {
-        imageUrl: chartGrowth,
-        replaceMethod: 'CENTER_INSIDE',
-        containsText: { text: '{{CHART_GROWTH}}', matchCase: true },
-      },
-    },
-    {
-      replaceAllShapesWithImage: {
-        imageUrl: chartNeeds,
-        replaceMethod: 'CENTER_INSIDE',
-        containsText: { text: '{{CHART_NEEDS}}', matchCase: true },
-      },
-    },
-  ];
+  // ---------------------------------------------------------------------------
+  // Token map: legacy {{KPI_*}} + VitrineData-style placeholders.
+  // We rewrite whole text boxes/table cells so styled runs cannot break matching.
+  // ---------------------------------------------------------------------------
+  const tokenMap = new Map<string, string>();
+  tokenMap.set('{{DOC_TITLE}}', docTitle);
+  tokenMap.set('{{MONTH_TITLE}}', month);
+  tokenMap.set('{{EXTRACT_DATE_LONG}}', extractDateLong);
+  tokenMap.set('{{FOOTER_DATE_LONG}}', extractDateLong);
+  tokenMap.set('{{FOOTER_SOURCE}}', footerSource);
+  tokenMap.set('{{KPI_MEMBERS}}', kpiMembers);
+  tokenMap.set('{{KPI_NEW_30D}}', kpiNew);
+  tokenMap.set('{{KPI_PROFILE_VIEWS}}', kpiViews);
+  tokenMap.set('{{KPI_CONTACT_CLICKS}}', kpiClicks);
+  tokenMap.set('{{KPI_POTENTIAL_CONNECTIONS}}', kpiPotentialConnections);
+  tokenMap.set('{{AFFINITIES_LIST}}', affinitiesList || dash);
+  tokenMap.set('{{AFFINITIES_INSIGHTS}}', affinitiesInsights || dash);
+  tokenMap.set('{{SECTORS_LIST}}', sectorsList || dash);
+  tokenMap.set('{{GROWTH_SUMMARY}}', growthSummary || dash);
+  tokenMap.set('{{RECENT_ACTIVITY_LIST}}', recentActivityList || dash);
+  tokenMap.set('{{MOST_SOUGHT_LIST}}', mostSoughtList || dash);
+  tokenMap.set('{{ACTIVE_OPPS_LIST}}', activeOppsList || dash);
+  tokenMap.set('{{ACTIVE_OPPS_WHY}}', activeOppsWhy || dash);
+  tokenMap.set('{{RECENT_REQUESTS_LIST}}', recentRequestsList || dash);
+  tokenMap.set('{{RECENT_REQUESTS_WHY}}', recentRequestsWhy || dash);
+  tokenMap.set('{{CTA_CARDS}}', ctaCards || dash);
 
-  // ---------------------------------------------------------------------------
-  // Also support VitrineData-style placeholders (contract-based masters).
-  // Examples: {{report_month_year_fr}}, {{extraction_date_fr_long}}, {{hero_stats.members_count}}
-  // This makes exports resilient even if the master doesn't use the legacy {{KPI_*}} placeholders.
-  // ---------------------------------------------------------------------------
   const vitrineDataLike = {
     report_month_year_fr: month,
     extraction_date_fr_long: extractDateLong,
@@ -666,18 +641,51 @@ async function fillPresentation(
   }
   for (const [token, value] of tokens.entries()) {
     if (!value) continue;
-    requests.push({
-      replaceAllText: {
-        containsText: { text: token, matchCase: true },
-        replaceText: value,
-      },
-    });
+    tokenMap.set(token, value);
   }
+
+  const pres = await slides.presentations.get({ presentationId });
+  const requests: any[] = buildWholeShapeReplaceRequests(pres.data, tokenMap);
+  requests.push(
+    {
+      replaceAllShapesWithImage: {
+        imageUrl: chartSectors,
+        replaceMethod: 'CENTER_INSIDE',
+        containsText: { text: '{{CHART_SECTORS}}', matchCase: true },
+      },
+    },
+    {
+      replaceAllShapesWithImage: {
+        imageUrl: chartGrowth,
+        replaceMethod: 'CENTER_INSIDE',
+        containsText: { text: '{{CHART_GROWTH}}', matchCase: true },
+      },
+    },
+    {
+      replaceAllShapesWithImage: {
+        imageUrl: chartNeeds,
+        replaceMethod: 'CENTER_INSIDE',
+        containsText: { text: '{{CHART_NEEDS}}', matchCase: true },
+      },
+    }
+  );
 
   await slides.presentations.batchUpdate({
     presentationId,
     requestBody: { requests },
   });
+}
+
+/** Concatenate text runs only (same as Slides “logical” text for placeholders split across runs). */
+function shapeTextFromTextElements(textElements: any[] | undefined): string {
+  if (!Array.isArray(textElements)) return '';
+  let out = '';
+  for (const te of textElements) {
+    const tr = te?.textRun;
+    const content = typeof tr?.content === 'string' ? tr.content : '';
+    if (content) out += content;
+  }
+  return out;
 }
 
 function collectTextFromPresentation(pres: any): string {
@@ -686,18 +694,149 @@ function collectTextFromPresentation(pres: any): string {
   for (const s of slides) {
     const pageElements = s?.pageElements ?? [];
     for (const pe of pageElements) {
-      const shape = pe?.shape;
-      const textElements = shape?.text?.textElements;
-      if (Array.isArray(textElements)) {
-        for (const te of textElements) {
-          const tr = te?.textRun;
-          const content = typeof tr?.content === 'string' ? tr.content : '';
-          if (content) out.push(content);
+      collectTextFromPageElement(pe, out);
+    }
+  }
+  return out.join('');
+}
+
+function collectTextFromPageElement(pe: any, out: string[]) {
+  const shape = pe?.shape;
+  const textElements = shape?.text?.textElements;
+  if (Array.isArray(textElements)) {
+    const t = shapeTextFromTextElements(textElements);
+    if (t) out.push(t);
+  }
+  const table = pe?.table;
+  const rows = table?.tableRows;
+  if (Array.isArray(rows)) {
+    for (const row of rows) {
+      const cells = row?.tableCells;
+      if (!Array.isArray(cells)) continue;
+      for (const cell of cells) {
+        const te = cell?.text?.textElements;
+        if (Array.isArray(te)) {
+          const t = shapeTextFromTextElements(te);
+          if (t) out.push(t);
         }
       }
     }
   }
-  return out.join('');
+  const children = pe?.elementGroup?.children ?? pe?.group?.children;
+  if (Array.isArray(children)) {
+    for (const ch of children) collectTextFromPageElement(ch, out);
+  }
+}
+
+type TableCellLoc = { rowIndex: number; columnIndex: number };
+
+/** Shapes that only hold chart tokens still need a rewrite so one text run contains `{{CHART_*}}` (API image replace matches contiguous shape text poorly across runs). */
+const CHART_PLACEHOLDER_MARKERS = ['{{CHART_SECTORS}}', '{{CHART_GROWTH}}', '{{CHART_NEEDS}}'] as const;
+
+function applyReplacementsLongestFirst(text: string, tokenMap: Map<string, string>): string {
+  const keys = Array.from(tokenMap.keys()).sort((a, b) => b.length - a.length);
+  let out = text;
+  for (const key of keys) {
+    const val = tokenMap.get(key);
+    if (val === undefined) continue;
+    if (!key) continue;
+    if (!out.includes(key)) continue;
+    out = out.split(key).join(val);
+  }
+  return out;
+}
+
+/**
+ * Google Slides `replaceAllText` often fails when a placeholder is split across multiple styled
+ * text runs. Rewriting the whole text box / table cell fixes that.
+ */
+function buildWholeShapeReplaceRequests(
+  pres: any,
+  tokenMap: Map<string, string>
+): any[] {
+  const requests: any[] = [];
+  const slides = pres?.slides ?? [];
+  for (const s of slides) {
+    const pageElements = s?.pageElements ?? [];
+    for (const pe of pageElements) {
+      walkPageElementForText(pe, tokenMap, requests);
+    }
+  }
+  return requests;
+}
+
+function walkPageElementForText(pe: any, tokenMap: Map<string, string>, requests: any[]) {
+  const objectId = typeof pe?.objectId === 'string' ? pe.objectId : '';
+  if (!objectId) {
+    const children = pe?.elementGroup?.children ?? pe?.group?.children;
+    if (Array.isArray(children)) {
+      for (const ch of children) walkPageElementForText(ch, tokenMap, requests);
+    }
+    return;
+  }
+
+  const shape = pe?.shape;
+  const textElements = shape?.text?.textElements;
+  if (Array.isArray(textElements)) {
+    const before = shapeTextFromTextElements(textElements);
+    const after = applyReplacementsLongestFirst(before, tokenMap);
+    const needsChartMerge = CHART_PLACEHOLDER_MARKERS.some((m) => before.includes(m));
+    if (after !== before || needsChartMerge) {
+      requests.push({
+        deleteText: {
+          objectId,
+          textRange: { type: 'ALL' },
+        },
+      });
+      requests.push({
+        insertText: {
+          objectId,
+          insertionIndex: 0,
+          text: after,
+        },
+      });
+    }
+  }
+
+  const table = pe?.table;
+  const rows = table?.tableRows;
+  if (Array.isArray(rows)) {
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[r];
+      const cells = row?.tableCells;
+      if (!Array.isArray(cells)) continue;
+      for (let c = 0; c < cells.length; c++) {
+        const cell = cells[c];
+        const te = cell?.text?.textElements;
+        if (!Array.isArray(te)) continue;
+        const before = shapeTextFromTextElements(te);
+        const after = applyReplacementsLongestFirst(before, tokenMap);
+        const needsChartMerge = CHART_PLACEHOLDER_MARKERS.some((m) => before.includes(m));
+        if (after === before && !needsChartMerge) continue;
+        const cellLocation: TableCellLoc = { rowIndex: r, columnIndex: c };
+        requests.push({
+          deleteText: {
+            objectId,
+            cellLocation,
+            textRange: { type: 'ALL' },
+          },
+        });
+        requests.push({
+          insertText: {
+            objectId,
+            cellLocation,
+            insertionIndex: 0,
+            text: after,
+          },
+        });
+      }
+    }
+  }
+
+  const children = pe?.elementGroup?.children ?? pe?.group?.children;
+  if (Array.isArray(children)) {
+    for (const ch of children) walkPageElementForText(ch, tokenMap, requests);
+  }
 }
 
 function extractPlaceholders(text: string): string[] {
