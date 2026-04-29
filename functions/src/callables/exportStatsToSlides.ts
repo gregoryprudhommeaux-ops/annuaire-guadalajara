@@ -25,6 +25,9 @@ type VitrineStats = {
   topSectors: Array<{ name: string; value: number }>;
   growthCumulative: Array<{ date: string; count: number }>;
   needs: Array<{ key: string; label: string; count: number }>;
+  topPassions: Array<{ passionId: string; memberCount: number; sectorCount: number }>;
+  recentMembers: Array<{ uid: string; createdAtMs: number; sector: string; primaryNeed: string }>;
+  recentRequests: Array<{ id: string; createdAtMs: number; expiresAtMs: number; title: string }>;
 };
 
 function toMillis(v: unknown): number {
@@ -45,6 +48,21 @@ function isoDay(ms: number): string {
   const d = new Date(ms);
   if (Number.isNaN(d.getTime())) return '';
   return d.toISOString().slice(0, 10);
+}
+
+function sanitizeStringArray(raw: unknown, limit: number): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const x of raw) {
+    if (typeof x !== 'string') continue;
+    const s = x.trim();
+    if (!s || seen.has(s)) continue;
+    seen.add(s);
+    out.push(s);
+    if (out.length >= limit) break;
+  }
+  return out;
 }
 
 function getGoogleAuth(scopes: string[]) {
@@ -80,7 +98,15 @@ function getSlides(auth: any) {
 
 async function loadVitrineStats(): Promise<VitrineStats> {
   const db = getFirestore(getApps()[0]!, FIRESTORE_DATABASE_ID);
-  const snap = await db.collection('users').get();
+  const [usersSnap, requestsSnap] = await Promise.all([
+    db.collection('users').get(),
+    db
+      .collection('member_requests')
+      .orderBy('createdAt', 'desc')
+      .limit(20)
+      .get()
+      .catch(() => null),
+  ]);
 
   const nowMs = Date.now();
   const d30 = nowMs - 30 * 24 * 3600 * 1000;
@@ -88,6 +114,8 @@ async function loadVitrineStats(): Promise<VitrineStats> {
 
   const bySector = new Map<string, number>();
   const regByDay = new Map<string, number>();
+  const passionToMembers = new Map<string, Set<string>>();
+  const passionToSectors = new Map<string, Set<string>>();
 
   let totalMembers = 0;
   let newMembersLast30d = 0;
@@ -122,7 +150,9 @@ async function loadVitrineStats(): Promise<VitrineStats> {
     return 'other';
   };
 
-  for (const doc of snap.docs) {
+  const recentMembersAll: Array<{ uid: string; createdAtMs: number; sector: string; primaryNeed: string }> = [];
+
+  for (const doc of usersSnap.docs) {
     const d = doc.data() as Record<string, unknown>;
     // Do not count admin as a member.
     if (String(d.role ?? '').trim().toLowerCase() === 'admin') continue;
@@ -140,6 +170,17 @@ async function loadVitrineStats(): Promise<VitrineStats> {
     const sector = String(d.activityCategory ?? (d as any).sector ?? '—').trim() || '—';
     bySector.set(sector, (bySector.get(sector) ?? 0) + 1);
 
+    // Passions / affinités (IDs uniquement ici).
+    const passions = sanitizeStringArray((d as any).passionIds, 10);
+    if (passions.length) {
+      for (const pid of passions) {
+        if (!passionToMembers.has(pid)) passionToMembers.set(pid, new Set());
+        if (!passionToSectors.has(pid)) passionToSectors.set(pid, new Set());
+        passionToMembers.get(pid)!.add(doc.id);
+        passionToSectors.get(pid)!.add(sector);
+      }
+    }
+
     const v = Number((d as any).publicProfileViewCount ?? (d as any).profileViewCount ?? (d as any).profileViews ?? 0) || 0;
     const c = Number((d as any).publicContactClickCount ?? (d as any).contactClickCount ?? (d as any).contactClicks ?? 0) || 0;
     if (v > 0) profileViewsCumul += Math.max(0, Math.floor(v));
@@ -155,6 +196,11 @@ async function loadVitrineStats(): Promise<VitrineStats> {
       seen.add(cat);
       needsCount.set(cat, (needsCount.get(cat) ?? 0) + 1);
     }
+
+    // Recent members slide (keep lightweight, 4 latest by createdAt)
+    const primaryNeedCat = ids.map((x) => highlightedToCategory(String(x ?? ''))).find(Boolean) as string | undefined;
+    const primaryNeed = primaryNeedCat ? primaryNeedCat : '';
+    recentMembersAll.push({ uid: doc.id, createdAtMs: createdAtMs || 0, sector, primaryNeed });
   }
 
   const topSectors = Array.from(bySector.entries())
@@ -174,6 +220,37 @@ async function loadVitrineStats(): Promise<VitrineStats> {
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
 
+  const topPassions = Array.from(passionToSectors.entries())
+    .map(([passionId, sectors]) => ({
+      passionId,
+      memberCount: passionToMembers.get(passionId)?.size ?? 0,
+      sectorCount: sectors.size,
+    }))
+    .sort((a, b) => b.sectorCount - a.sectorCount || b.memberCount - a.memberCount)
+    .slice(0, 8);
+
+  const recentMembers = recentMembersAll
+    .filter((m) => m.createdAtMs > 0)
+    .sort((a, b) => b.createdAtMs - a.createdAtMs)
+    .slice(0, 4);
+
+  const recentRequests: Array<{ id: string; createdAtMs: number; expiresAtMs: number; title: string }> = [];
+  if (requestsSnap) {
+    for (const doc of requestsSnap.docs) {
+      const d = doc.data() as Record<string, unknown>;
+      const createdAtMs = toMillis(d.createdAt) || (typeof d.createdAt === 'number' ? d.createdAt : 0);
+      const expiresAtMs = toMillis(d.expiresAt) || (typeof d.expiresAt === 'number' ? d.expiresAt : 0);
+      if (!createdAtMs || !expiresAtMs) continue;
+      if (expiresAtMs <= nowMs) continue;
+      const sector = typeof d.sector === 'string' ? d.sector.trim() : '';
+      const pos = typeof d.productOrService === 'string' ? d.productOrService.trim() : '';
+      const text = typeof d.text === 'string' ? d.text.trim() : '';
+      const title = [pos, sector].filter(Boolean).join(' — ') || text.slice(0, 140) || 'Demande réseau';
+      recentRequests.push({ id: doc.id, createdAtMs, expiresAtMs, title });
+      if (recentRequests.length >= 5) break;
+    }
+  }
+
   return {
     totalMembers,
     newMembersLast30d,
@@ -183,6 +260,9 @@ async function loadVitrineStats(): Promise<VitrineStats> {
     topSectors,
     growthCumulative,
     needs,
+    topPassions,
+    recentMembers,
+    recentRequests,
   };
 }
 
@@ -275,7 +355,14 @@ async function buildScratchDeck(slides: ReturnType<typeof google.slides>, presen
   const slideIds = {
     cover: 's_cover',
     kpi: 's_kpi',
-    charts: 's_charts',
+    sectors: 's_sectors',
+    growth: 's_growth',
+    needs: 's_needs',
+    opportunities: 's_opps',
+    members: 's_members',
+    requests: 's_requests',
+    affinities: 's_affinities',
+    cta: 's_cta',
   };
 
   const createBlankSlide = (objectId: string) =>
@@ -283,7 +370,14 @@ async function buildScratchDeck(slides: ReturnType<typeof google.slides>, presen
 
   createBlankSlide(slideIds.cover);
   createBlankSlide(slideIds.kpi);
-  createBlankSlide(slideIds.charts);
+  createBlankSlide(slideIds.sectors);
+  createBlankSlide(slideIds.growth);
+  createBlankSlide(slideIds.needs);
+  createBlankSlide(slideIds.opportunities);
+  createBlankSlide(slideIds.members);
+  createBlankSlide(slideIds.requests);
+  createBlankSlide(slideIds.affinities);
+  createBlankSlide(slideIds.cta);
 
   const addTextBox = (
     slideObjectId: string,
@@ -393,13 +487,53 @@ async function buildScratchDeck(slides: ReturnType<typeof google.slides>, presen
   card(2, 'views', 'Vues profils (cumul)', '{{KPI_VIEWS}}');
   card(3, 'clicks', 'Clics contact (cumul)', '{{KPI_CLICKS}}');
 
-  // Charts
-  addTextBox(slideIds.charts, 'charts_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Graphes & catégories', 14, true, THEME.brand.teal);
-  addTextBox(slideIds.charts, 'charts_s1', { x: 48, y: 62 }, { w: 640, h: 18 }, 'Secteurs, croissance et opportunités les plus recherchées.', 11, false, THEME.brand.muted);
+  // Secteurs
+  addTextBox(slideIds.sectors, 'sec_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Secteurs représentés', 14, true, THEME.brand.teal);
+  addTextBox(slideIds.sectors, 'sec_s', { x: 48, y: 62 }, { w: 640, h: 18 }, 'Top secteurs (lecture agrégée).', 11, false, THEME.brand.muted);
+  addChartPlaceholder(slideIds.sectors, 'ch_sectors', { x: 48, y: 98 }, { w: 620, h: 360 }, '{{CHART_SECTORS}}');
 
-  addChartPlaceholder(slideIds.charts, 'ch_sectors', { x: 48, y: 96 }, { w: 620, h: 170 }, '{{CHART_SECTORS}}');
-  addChartPlaceholder(slideIds.charts, 'ch_growth', { x: 48, y: 280 }, { w: 620, h: 150 }, '{{CHART_GROWTH}}');
-  addChartPlaceholder(slideIds.charts, 'ch_needs', { x: 48, y: 446 }, { w: 620, h: 170 }, '{{CHART_NEEDS}}');
+  // Croissance
+  addTextBox(slideIds.growth, 'gro_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Croissance du réseau', 14, true, THEME.brand.teal);
+  addTextBox(slideIds.growth, 'gro_s', { x: 48, y: 62 }, { w: 640, h: 18 }, 'Inscrits cumulés (tout historique).', 11, false, THEME.brand.muted);
+  addChartPlaceholder(slideIds.growth, 'ch_growth', { x: 48, y: 110 }, { w: 620, h: 300 }, '{{CHART_GROWTH}}');
+
+  // Besoins
+  addTextBox(slideIds.needs, 'need_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Besoins & opportunités', 14, true, THEME.brand.teal);
+  addTextBox(slideIds.needs, 'need_s', { x: 48, y: 62 }, { w: 640, h: 18 }, 'Catégories les plus recherchées.', 11, false, THEME.brand.muted);
+  addChartPlaceholder(slideIds.needs, 'ch_needs', { x: 48, y: 98 }, { w: 620, h: 360 }, '{{CHART_NEEDS}}');
+
+  // Opportunités (liste)
+  addTextBox(slideIds.opportunities, 'opp_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Opportunités actives (liste)', 14, true, THEME.brand.teal);
+  addTextBox(slideIds.opportunities, 'opp_s', { x: 48, y: 62 }, { w: 640, h: 18 }, 'Même info que le graphe, en format éditable.', 11, false, THEME.brand.muted);
+  addTextBox(slideIds.opportunities, 'opp_list', { x: 48, y: 100 }, { w: 620, h: 420 }, '{{OPPORTUNITIES_LIST}}', 12, false, THEME.brand.slate);
+
+  // Derniers inscrits
+  addTextBox(slideIds.members, 'mem_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Derniers inscrits', 14, true, THEME.brand.teal);
+  addTextBox(slideIds.members, 'mem_s', { x: 48, y: 62 }, { w: 640, h: 18 }, '4 derniers profils (agrégé, sans email).', 11, false, THEME.brand.muted);
+  addTextBox(slideIds.members, 'mem_list', { x: 48, y: 100 }, { w: 620, h: 420 }, '{{RECENT_MEMBERS_LIST}}', 12, false, THEME.brand.slate);
+
+  // Demandes récentes
+  addTextBox(slideIds.requests, 'req_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Demandes récentes', 14, true, THEME.brand.teal);
+  addTextBox(slideIds.requests, 'req_s', { x: 48, y: 62 }, { w: 640, h: 18 }, '5 dernières demandes actives.', 11, false, THEME.brand.muted);
+  addTextBox(slideIds.requests, 'req_list', { x: 48, y: 100 }, { w: 620, h: 420 }, '{{RECENT_REQUESTS_LIST}}', 12, false, THEME.brand.slate);
+
+  // Affinités
+  addTextBox(slideIds.affinities, 'aff_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Affinités (passions)', 14, true, THEME.brand.teal);
+  addTextBox(slideIds.affinities, 'aff_s', { x: 48, y: 62 }, { w: 640, h: 18 }, 'Top passions (IDs, à renommer si besoin).', 11, false, THEME.brand.muted);
+  addTextBox(slideIds.affinities, 'aff_list', { x: 48, y: 100 }, { w: 620, h: 420 }, '{{TOP_PASSIONS_LIST}}', 12, false, THEME.brand.slate);
+
+  // CTA / conclusion
+  addTextBox(slideIds.cta, 'cta_h', { x: 48, y: 72 }, { w: 640, h: 40 }, 'Conclusion', 18, true, THEME.brand.slate);
+  addTextBox(
+    slideIds.cta,
+    'cta_body',
+    { x: 48, y: 120 },
+    { w: 640, h: 300 },
+    '• Le réseau grandit et les opportunités sont déjà concrètes.\n• Vous pouvez trier/éditer/supprimer les slides pour faire une version PDF finale.\n\n{{TITLE}}',
+    12,
+    false,
+    THEME.brand.muted
+  );
 
   await slides.presentations.batchUpdate({ presentationId, requestBody: { requests } });
 }
@@ -502,6 +636,42 @@ async function fillPresentation(
   const chartGrowth = chartUrlLine(growthPoints.length ? growthPoints : [0, 1]);
   const chartNeeds = chartUrlBar(needsLabels, needsValues, needsColors.slice(0, Math.max(1, needsValues.length)));
 
+  const opportunitiesList =
+    stats.needs.length === 0
+      ? '—'
+      : stats.needs
+          .slice(0, 12)
+          .map((n, i) => `• ${n.label} — ${n.count}`)
+          .join('\n');
+
+  const recentMembersList =
+    stats.recentMembers.length === 0
+      ? '—'
+      : stats.recentMembers
+          .map((m) => {
+            const when = m.createdAtMs ? new Date(m.createdAtMs).toISOString().slice(0, 10) : '';
+            const need = m.primaryNeed ? ` (need: ${m.primaryNeed})` : '';
+            return `• ${when} — ${m.sector}${need}`;
+          })
+          .join('\n');
+
+  const recentRequestsList =
+    stats.recentRequests.length === 0
+      ? '—'
+      : stats.recentRequests
+          .map((r) => {
+            const when = r.createdAtMs ? new Date(r.createdAtMs).toISOString().slice(0, 10) : '';
+            return `• ${when} — ${r.title}`;
+          })
+          .join('\n');
+
+  const topPassionsList =
+    stats.topPassions.length === 0
+      ? '—'
+      : stats.topPassions
+          .map((p) => `• ${p.passionId} — ${p.memberCount} membres, ${p.sectorCount} secteurs`)
+          .join('\n');
+
   // We rely on placeholders if present. If not present, the deck will still be created,
   // but will remain empty until a template is provided.
   const requests: any[] = [
@@ -511,6 +681,10 @@ async function fillPresentation(
     { replaceAllText: { containsText: { text: '{{KPI_NEW_30D}}', matchCase: true }, replaceText: kpiNew } },
     { replaceAllText: { containsText: { text: '{{KPI_VIEWS}}', matchCase: true }, replaceText: kpiViews } },
     { replaceAllText: { containsText: { text: '{{KPI_CLICKS}}', matchCase: true }, replaceText: kpiClicks } },
+    { replaceAllText: { containsText: { text: '{{OPPORTUNITIES_LIST}}', matchCase: true }, replaceText: opportunitiesList } },
+    { replaceAllText: { containsText: { text: '{{RECENT_MEMBERS_LIST}}', matchCase: true }, replaceText: recentMembersList } },
+    { replaceAllText: { containsText: { text: '{{RECENT_REQUESTS_LIST}}', matchCase: true }, replaceText: recentRequestsList } },
+    { replaceAllText: { containsText: { text: '{{TOP_PASSIONS_LIST}}', matchCase: true }, replaceText: topPassionsList } },
     {
       replaceAllShapesWithImage: {
         imageUrl: chartSectors,
