@@ -144,12 +144,13 @@ export default function StatsPage() {
       }
     } catch (e) {
       console.error(e);
+      const detail = e instanceof Error ? e.message : String(e);
       alert(
         lang === 'en'
-          ? 'Slides export failed.'
+          ? `Slides export failed.\n\n${detail}`
           : lang === 'es'
-            ? 'La exportación Slides falló.'
-            : "L’export Slides a échoué."
+            ? `La exportación Slides falló.\n\n${detail}`
+            : `L’export Slides a échoué.\n\n${detail}`
       );
     } finally {
       setExportBusy(false);
