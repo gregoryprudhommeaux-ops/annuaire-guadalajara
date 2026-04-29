@@ -162,11 +162,23 @@ export default function StatsPage() {
             * {
               /* Avoid unsupported color functions in computed styles */
               color: #0f172a !important;
+              background: transparent !important;
+              background-color: transparent !important;
+              background-image: none !important;
               border-color: #e2e8f0 !important;
               outline-color: #2563eb !important;
               text-decoration-color: currentColor !important;
               box-shadow: none !important;
               filter: none !important;
+            }
+            svg, svg * {
+              fill: #0f172a !important;
+              stroke: #0f172a !important;
+              filter: none !important;
+            }
+            .stats-print-root,
+            .stats-print-root * {
+              background-color: #ffffff !important;
             }
             /* Keep brand teal accents where explicitly used */
             .stats-ds { --stats-primary: #01696f; --stats-primary-hover: #015a5f; }
