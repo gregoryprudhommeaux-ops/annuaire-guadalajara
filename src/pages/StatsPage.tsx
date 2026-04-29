@@ -134,6 +134,8 @@ export default function StatsPage() {
     setPdfBusy(true);
     setPdfMode(true);
     try {
+      // Ensure the PDF-safe render has applied before html2canvas clones the DOM.
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
       const scale = 2;
       const canvas = await html2canvas(el, {
         scale,
@@ -145,6 +147,9 @@ export default function StatsPage() {
           doc.querySelectorAll('.no-print').forEach((n) => {
             (n as HTMLElement).style.display = 'none';
           });
+          // Defensive: html2canvas can crash on SVG `foreignObject` and some filters.
+          doc.querySelectorAll('foreignObject').forEach((n) => n.remove());
+          doc.querySelectorAll('[filter]').forEach((n) => n.removeAttribute('filter'));
         },
       });
 
@@ -240,12 +245,14 @@ export default function StatsPage() {
       }
     } catch (e) {
       console.error(e);
+      const msg =
+        typeof e === 'object' && e && 'message' in e ? String((e as { message?: unknown }).message) : String(e);
       alert(
         lang === 'en'
-          ? 'PDF export failed. Please try again.'
+          ? `PDF export failed. Please try again.\n\n${msg}`
           : lang === 'es'
-            ? 'La exportación PDF falló. Inténtalo de nuevo.'
-            : "L’export PDF a échoué. Réessayez."
+            ? `La exportación PDF falló. Inténtalo de nuevo.\n\n${msg}`
+            : `L’export PDF a échoué. Réessayez.\n\n${msg}`
       );
     } finally {
       setPdfBusy(false);
