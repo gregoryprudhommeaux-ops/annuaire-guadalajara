@@ -610,8 +610,9 @@ export const exportStatsToSlides = onCall(
             ? `FrancoNetwork - Vitrina de red - ${month}`
             : `FrancoNetwork - Vitrine réseau - ${month}`;
 
-      const templateId =
-        String(cfg.template_id_by_lang?.[lang] ?? cfg.template_id ?? cfg.templateId ?? '').trim();
+      const perLangRaw = String(cfg.template_id_by_lang?.[lang] ?? '').trim();
+      const baseRaw = String(cfg.template_id ?? cfg.templateId ?? '').trim();
+      const templateId = perLangRaw || baseRaw;
       const folderId = String(SLIDES_EXPORT_FOLDER_ID.value() ?? '').trim();
 
       if (!templateId) {
@@ -629,8 +630,8 @@ export const exportStatsToSlides = onCall(
       await fillPresentation(slides, presentationId, stats, lang);
 
       const url = slidesUrl(presentationId);
-      logger.info('Slides deck generated', { presentationId });
-      return { ok: true, presentationId, url };
+      logger.info('Slides deck generated', { presentationId, templateId, lang });
+      return { ok: true, presentationId, url, debug: { templateId, lang } };
     } catch (err) {
       const anyErr = err as any;
       const status = Number(anyErr?.response?.status ?? anyErr?.code ?? 0) || undefined;

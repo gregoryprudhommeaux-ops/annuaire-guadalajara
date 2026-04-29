@@ -118,7 +118,12 @@ export default function StatsPage() {
         : 'Augmente avec le nombre de décideurs';
 
   type ExportStatsToSlidesInput = { lang: Language };
-  type ExportStatsToSlidesResult = { ok: boolean; presentationId: string; url: string };
+  type ExportStatsToSlidesResult = {
+    ok: boolean;
+    presentationId: string;
+    url: string;
+    debug?: { templateId?: string; lang?: string };
+  };
 
   const handleExportSlides = useCallback(async () => {
     if (exportBusy) return;
