@@ -1,0 +1,216 @@
+{
+  "report_month_year_fr": "avril 2026",
+  "extraction_date_fr_long": "29 avril 2026",
+  "hero_stats": {
+    "members_count": "18",
+    "active_opportunities_count": "0",
+    "month_growth_percent": "+400%",
+    "sectors_count": "8"
+  },
+  "indicators": {
+    "active_decision_makers": "18",
+    "new_this_month": "15",
+    "profile_views": "0",
+    "introductions_started": "0",
+    "potential_connections": "153"
+  },
+  "affinities": [
+    {
+      "name": "Vins",
+      "badge": "TRÈS FÉDÉRATRICE",
+      "members": 9,
+      "sectors_or_universes": 6,
+      "sectors_or_universes_label": "secteurs",
+      "insight": "Crée des points d’entrée naturels entre secteurs"
+    },
+    {
+      "name": "Cuisine",
+      "badge": "AFFINITÉ TRANSVERSALE",
+      "members": 8,
+      "sectors_or_universes": 6,
+      "sectors_or_universes_label": "secteurs",
+      "insight": "Favorise les échanges informels entre profils variés"
+    },
+    {
+      "name": "Voyage",
+      "members": 8,
+      "sectors_or_universes": 6,
+      "sectors_or_universes_label": "univers métier",
+      "insight": "Un terrain commun fréquent dans les rencontres du réseau"
+    },
+    {
+      "name": "Gastronomie",
+      "members": 6,
+      "sectors_or_universes": 4,
+      "sectors_or_universes_label": "secteurs",
+      "insight": "Rapproche des profils internationaux et mobiles"
+    },
+    {
+      "name": "Randonnée",
+      "members": 6,
+      "sectors_or_universes": 4,
+      "sectors_or_universes_label": "secteurs",
+      "insight": "Crée des points d’entrée naturels entre secteurs"
+    }
+  ],
+  "affinity_insights": {
+    "intro": "Le réseau ne repose pas uniquement sur des cartes de visite. Ces centres d’intérêt communs créent des points d’entrée naturels entre dirigeants, experts et entrepreneurs de secteurs différents.",
+    "bullets": [
+      "Des conversations plus naturelles",
+      "Des passerelles entre secteurs",
+      "Une confiance qui se crée plus vite"
+    ],
+    "highlights": [
+      "5 affinités déjà visibles dans la communauté",
+      "Jusqu’à 6 secteurs réunis autour d’un même intérêt",
+      "Les passions les plus fédératrices : Vins, Cuisine, Voyage"
+    ],
+    "closing": "Les meilleures connexions commencent souvent par un terrain commun."
+  },
+  "sectors": [
+    { "name": "Conseil & Services aux entreprises" },
+    { "name": "Commerce & Distribution" },
+    { "name": "Industrie & Manufacturier" },
+    { "name": "Technologies & Informatique" },
+    { "name": "Santé & Bien-être" },
+    { "name": "Culture & Loisirs" },
+    { "name": "Agriculture & Agroalimentaire" },
+    { "name": "Énergie & Environnement" }
+  ],
+  "growth": {
+    "headline": "FrancoNetwork accélère semaine après semaine",
+    "supporting_text": "Une dynamique visible, portée par le bouche-à-oreille, les recommandations et les premiers membres actifs.",
+    "labels": ["27 mars", "1 avr.", "7 avr.", "8 avr.", "13 avr.", "14 avr.", "17 avr."],
+    "chart_y_max": 20,
+    "acceleration_label": "Accélération visible",
+    "acceleration_text": "Le réseau commence à se diffuser naturellement",
+    "insight_title": "Ce que cette courbe raconte",
+    "insight_text": "Les premières inscriptions ne sont pas seulement un volume. Elles montrent qu’un réseau ciblé, francophone et qualifié peut rapidement créer un effet d’entraînement à Guadalajara.",
+    "highlights": ["+15 membres sur la période récente", "18 décideurs déjà visibles"],
+    "closing": "Chaque nouvelle inscription augmente la valeur du réseau pour tous les autres."
+  },
+  "recent_activity": [
+    {
+      "sector": "Commerce & Distribution",
+      "need": "Recherche connexions business",
+      "relative_date": "Inscrit il y a 1 semaine"
+    },
+    {
+      "sector": "Santé & Bien-être",
+      "need": "Recherche : Support marketing / communication / design",
+      "relative_date": "Inscrit il y a 2 semaines"
+    },
+    {
+      "sector": "Conseil & Services aux entreprises",
+      "need": "Recherche partenaires commerciaux",
+      "relative_date": "Inscrit il y a 2 semaines"
+    },
+    {
+      "sector": "Commerce & Distribution",
+      "need": "Recherche partenaires commerciaux",
+      "relative_date": "Inscrit il y a 2 semaines"
+    }
+  ],
+  "top_requested_opportunities": [
+    { "category": "Partenaires commerciaux", "count": 8 },
+    { "category": "Autres besoins", "count": 7 },
+    { "category": "Distributeurs / importateurs", "count": 5 },
+    { "category": "Experts locaux", "count": 4 },
+    { "category": "Fournisseurs", "count": 4 },
+    { "category": "Investisseurs / financement", "count": 4 }
+  ],
+  "active_opportunities": [
+    {
+      "category": "Partenaires commerciaux",
+      "badge": "TRÈS DEMANDÉ",
+      "requests": 8,
+      "insight": "Des entreprises cherchent déjà des relais business locaux",
+      "url": "https://franconetwork.app/requests?category=partners"
+    },
+    {
+      "category": "Autres besoins",
+      "badge": "EN FORTE DEMANDE",
+      "requests": 7,
+      "insight": "Des demandes plus transversales émergent aussi",
+      "url": "https://franconetwork.app/requests?category=other"
+    },
+    {
+      "category": "Distributeurs / importateurs",
+      "requests": 5,
+      "insight": "Un besoin fort pour développer la mise sur le marché",
+      "url": "https://franconetwork.app/requests?category=distributors"
+    },
+    {
+      "category": "Experts locaux",
+      "requests": 4,
+      "insight": "Les membres recherchent des relais de confiance sur place",
+      "url": "https://franconetwork.app/requests?category=experts"
+    },
+    {
+      "category": "Fournisseurs",
+      "requests": 4,
+      "insight": "Le réseau sert aussi à sécuriser l’approvisionnement",
+      "url": "https://franconetwork.app/requests?category=suppliers"
+    },
+    {
+      "category": "Investisseurs / financement",
+      "requests": 4,
+      "insight": "Des besoins ciblés autour du financement et du développement",
+      "url": "https://franconetwork.app/requests?category=investors"
+    }
+  ],
+  "opportunity_insights": {
+    "intro": "Ces signaux montrent que les membres ne viennent pas seulement pour figurer dans un annuaire. Ils cherchent activement des connexions, des relais terrain et des partenaires capables d’accélérer leurs projets.",
+    "bullets": [
+      "Des besoins déjà exprimés par la communauté",
+      "Une inscription permet d’apparaître au bon moment"
+    ],
+    "closing": "Vous êtes peut-être précisément le contact que d’autres membres recherchent déjà."
+  },
+  "recent_requests": {
+    "headline": "Des besoins publiés récemment dans le réseau",
+    "description": "Des recherches concrètes, déjà exprimées par les membres ces derniers jours.",
+    "empty_state": "Les premières demandes actives apparaîtront ici au fil de la croissance du réseau.",
+    "importance_title": "Pourquoi c’est important",
+    "importance_text": "Ces demandes montrent qu’au-delà de la visibilité, les membres utilisent déjà le réseau pour trouver des relais concrets, des expertises ciblées et des partenaires de confiance.",
+    "bullets": [
+      "Des besoins réellement exprimés",
+      "Des opportunités déjà actives",
+      "Une communauté qui passe à l’action"
+    ],
+    "closing": "Votre profil peut répondre à une demande déjà présente dans le réseau."
+  },
+  "cta_blocks": [
+    {
+      "title": "Vous développez votre activité au Mexique",
+      "body": "Accédez à des contacts qualifiés, gagnez du temps sur le terrain et identifiez plus vite les bons relais locaux.",
+      "support": "Pensé pour les échanges business francophones à Guadalajara",
+      "cta": "Rejoindre comme entreprise",
+      "url": "https://franconetwork.app/inscription"
+    },
+    {
+      "title": "Vous cherchez des partenaires commerciaux",
+      "body": "Distributeurs, apporteurs d’affaires, experts locaux, fournisseurs : le réseau vous aide à transformer vos recherches en connexions utiles.",
+      "support": "Des connexions plus ciblées qu’un annuaire classique",
+      "cta": "Voir les opportunités",
+      "url": "https://franconetwork.app/requests"
+    },
+    {
+      "title": "Vous êtes déjà implanté et souhaitez gagner en visibilité",
+      "body": "Positionnez votre profil au bon moment pour apparaître dans les recherches et les demandes exprimées par la communauté.",
+      "support": "Une présence visible au sein d’une communauté qualifiée",
+      "cta": "Créer ma présence dans le réseau",
+      "url": "https://franconetwork.app/inscription"
+    }
+  ],
+  "footer": {
+    "brand": "FrancoNetwork",
+    "descriptor": "Réseau francophone d’affaires · Guadalajara, Jalisco, Mexique",
+    "website": "franconetwork.app",
+    "signup": "Inscription gratuite",
+    "date_label": "Données au",
+    "date_value": "29 avril 2026",
+    "source": "Source : agrégats annuaire (vues et mises en relation si ces indicateurs sont actifs)."
+  }
+}
+

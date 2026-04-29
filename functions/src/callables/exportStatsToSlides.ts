@@ -2,12 +2,13 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { defineString } from 'firebase-functions/params';
 import { google } from 'googleapis';
+import fs from 'node:fs';
+import path from 'node:path';
 import { getApps } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { FIRESTORE_DATABASE_ID } from '../constants';
 import { isCallerAdmin } from '../lib/admin';
 
-const SLIDES_TEMPLATE_ID = defineString('GOOGLE_SLIDES_TEMPLATE_ID', { default: '' });
 const SLIDES_EXPORT_FOLDER_ID = defineString('GOOGLE_SLIDES_EXPORT_FOLDER_ID', { default: '' });
 
 // Optional: run Drive/Slides operations as a real Google user (OAuth) instead of the
@@ -29,6 +30,30 @@ type VitrineStats = {
   recentMembers: Array<{ uid: string; createdAtMs: number; sector: string; primaryNeed: string }>;
   recentRequests: Array<{ id: string; createdAtMs: number; expiresAtMs: number; title: string }>;
 };
+
+type VitrineTemplateConfig = {
+  template_id?: string;
+  templateId?: string;
+  /** Optional override per UI language. */
+  template_id_by_lang?: Partial<Record<'fr' | 'en' | 'es', string>>;
+  language?: 'fr' | 'en' | 'es' | 'multi';
+  nonDeriveRules?: { fixedSlideCount?: number; fixedOrder?: boolean; fixedTitles?: boolean };
+  placeholders: {
+    text: string[];
+    images: Array<{ shapeText: string; kind: 'sectors_bar' | 'growth_line' | 'needs_bar' }>;
+  };
+  fallbackPolicy: { dash: string; emptyList: string; unknown: string };
+};
+
+function loadVitrineTemplateConfig(): VitrineTemplateConfig {
+  // Firebase deploy uploads the `functions/` directory. Keep a copy under `functions/config/`.
+  const p = path.resolve(__dirname, '../../config/vitrine-template.json');
+  const raw = fs.readFileSync(p, 'utf8');
+  const parsed = JSON.parse(raw) as VitrineTemplateConfig;
+  const templateId = String(parsed?.template_id ?? parsed?.templateId ?? '').trim();
+  if (!templateId) throw new Error('Template config: template_id manquant.');
+  return parsed;
+}
 
 function toMillis(v: unknown): number {
   if (typeof v === 'number' && Number.isFinite(v) && v > 0) return v;
@@ -266,33 +291,22 @@ async function loadVitrineStats(): Promise<VitrineStats> {
   };
 }
 
-function monthTitleFr(now: Date): string {
-  const m = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-  return m;
+type UiLang = 'fr' | 'en' | 'es';
+
+function localeForLang(lang: UiLang): string {
+  return lang === 'es' ? 'es-MX' : lang === 'en' ? 'en-US' : 'fr-FR';
+}
+
+function monthTitle(now: Date, lang: UiLang): string {
+  return now.toLocaleDateString(localeForLang(lang), { month: 'long', year: 'numeric' });
+}
+
+function longDate(now: Date, lang: UiLang): string {
+  return now.toLocaleDateString(localeForLang(lang), { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 function slidesUrl(presentationId: string): string {
   return `https://docs.google.com/presentation/d/${presentationId}/edit`;
-}
-
-async function createPresentationFromScratch(
-  drive: ReturnType<typeof google.drive>,
-  title: string,
-  folderId: string
-): Promise<string> {
-  // Creating a Slides file is a Drive operation. With service accounts, using Drive API is
-  // the most reliable way to create the file, then we can update it via Slides API.
-  const res = await drive.files.create({
-    requestBody: {
-      name: title,
-      mimeType: 'application/vnd.google-apps.presentation',
-      ...(folderId ? { parents: [folderId] } : {}),
-    },
-    fields: 'id',
-  });
-  const id = res.data.id;
-  if (!id) throw new Error('Drive create: id manquant');
-  return id;
 }
 
 async function copyTemplatePresentation(
@@ -314,229 +328,7 @@ async function copyTemplatePresentation(
   return id;
 }
 
-type Pt = { x: number; y: number };
-type SizePt = { w: number; h: number };
-
-const THEME = {
-  brand: { teal: '#01696f', slate: '#0f172a', muted: '#475569', border: '#e2e8f0' },
-};
-
-function rgbFromHex(hex: string) {
-  const h = hex.replace('#', '').trim();
-  const n = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16);
-  return { red: ((n >> 16) & 255) / 255, green: ((n >> 8) & 255) / 255, blue: (n & 255) / 255 };
-}
-
-function ptRect(pos: Pt, size: SizePt) {
-  return {
-    transform: {
-      scaleX: 1,
-      scaleY: 1,
-      translateX: pos.x,
-      translateY: pos.y,
-      unit: 'PT',
-    },
-    size: {
-      width: { magnitude: size.w, unit: 'PT' },
-      height: { magnitude: size.h, unit: 'PT' },
-    },
-  };
-}
-
-async function buildScratchDeck(slides: ReturnType<typeof google.slides>, presentationId: string) {
-  const pres = await slides.presentations.get({ presentationId });
-  const existingSlideIds = (pres.data.slides ?? []).map((s) => s.objectId).filter(Boolean) as string[];
-
-  const requests: any[] = [];
-  for (const sid of existingSlideIds) {
-    requests.push({ deleteObject: { objectId: sid } });
-  }
-
-  const slideIds = {
-    cover: 's_cover',
-    kpi: 's_kpi',
-    sectors: 's_sectors',
-    growth: 's_growth',
-    needs: 's_needs',
-    opportunities: 's_opps',
-    members: 's_members',
-    requests: 's_requests',
-    affinities: 's_affinities',
-    cta: 's_cta',
-  };
-
-  const createBlankSlide = (objectId: string) =>
-    requests.push({ createSlide: { objectId, slideLayoutReference: { predefinedLayout: 'BLANK' } } });
-
-  createBlankSlide(slideIds.cover);
-  createBlankSlide(slideIds.kpi);
-  createBlankSlide(slideIds.sectors);
-  createBlankSlide(slideIds.growth);
-  createBlankSlide(slideIds.needs);
-  createBlankSlide(slideIds.opportunities);
-  createBlankSlide(slideIds.members);
-  createBlankSlide(slideIds.requests);
-  createBlankSlide(slideIds.affinities);
-  createBlankSlide(slideIds.cta);
-
-  const addTextBox = (
-    slideObjectId: string,
-    shapeId: string,
-    pos: Pt,
-    size: SizePt,
-    text: string,
-    fontSize: number,
-    bold = false,
-    colorHex = THEME.brand.slate
-  ) => {
-    requests.push({
-      createShape: {
-        objectId: shapeId,
-        shapeType: 'TEXT_BOX',
-        elementProperties: { pageObjectId: slideObjectId, ...ptRect(pos, size) },
-      },
-    });
-    requests.push({ insertText: { objectId: shapeId, insertionIndex: 0, text } });
-    requests.push({
-      updateTextStyle: {
-        objectId: shapeId,
-        textRange: { type: 'ALL' },
-        style: {
-          fontFamily: 'Inter',
-          fontSize: { magnitude: fontSize, unit: 'PT' },
-          bold,
-          foregroundColor: { opaqueColor: { rgbColor: rgbFromHex(colorHex) } },
-        },
-        fields: 'fontFamily,fontSize,bold,foregroundColor',
-      },
-    });
-  };
-
-  const addCard = (slideObjectId: string, shapeId: string, pos: Pt, size: SizePt) => {
-    requests.push({
-      createShape: {
-        objectId: shapeId,
-        shapeType: 'ROUND_RECTANGLE',
-        elementProperties: { pageObjectId: slideObjectId, ...ptRect(pos, size) },
-      },
-    });
-    requests.push({
-      updateShapeProperties: {
-        objectId: shapeId,
-        shapeProperties: {
-          shapeBackgroundFill: { solidFill: { color: { rgbColor: rgbFromHex('#ffffff') } } },
-          outline: {
-            outlineFill: { solidFill: { color: { rgbColor: rgbFromHex(THEME.brand.border) } } },
-            weight: { magnitude: 1, unit: 'PT' },
-          },
-        },
-        fields: 'shapeBackgroundFill,outline',
-      },
-    });
-  };
-
-  const addChartPlaceholder = (slideObjectId: string, shapeId: string, pos: Pt, size: SizePt, placeholderText: string) => {
-    requests.push({
-      createShape: {
-        objectId: shapeId,
-        shapeType: 'RECTANGLE',
-        elementProperties: { pageObjectId: slideObjectId, ...ptRect(pos, size) },
-      },
-    });
-    requests.push({ insertText: { objectId: shapeId, insertionIndex: 0, text: placeholderText } });
-    requests.push({
-      updateShapeProperties: {
-        objectId: shapeId,
-        shapeProperties: {
-          shapeBackgroundFill: { solidFill: { color: { rgbColor: rgbFromHex('#f8fafc') } } },
-          outline: {
-            outlineFill: { solidFill: { color: { rgbColor: rgbFromHex(THEME.brand.border) } } },
-            weight: { magnitude: 1, unit: 'PT' },
-          },
-        },
-        fields: 'shapeBackgroundFill,outline',
-      },
-    });
-  };
-
-  // Cover
-  addTextBox(slideIds.cover, 't_title', { x: 48, y: 72 }, { w: 620, h: 60 }, '{{TITLE}}', 28, true, THEME.brand.slate);
-  addTextBox(slideIds.cover, 't_subtitle', { x: 48, y: 130 }, { w: 620, h: 40 }, '{{SUBTITLE}}', 14, false, THEME.brand.muted);
-
-  // KPI
-  addTextBox(slideIds.kpi, 'kpi_h', { x: 48, y: 40 }, { w: 640, h: 30 }, 'Indicateurs clés', 14, true, THEME.brand.teal);
-
-  const cardW = 300;
-  const cardH = 110;
-  const gap = 20;
-  const y0 = 90;
-  const x0 = 48;
-
-  const card = (idx: number, id: string, label: string, valuePlaceholder: string) => {
-    const col = idx % 2;
-    const row = Math.floor(idx / 2);
-    const x = x0 + col * (cardW + gap);
-    const y = y0 + row * (cardH + gap);
-    addCard(slideIds.kpi, `card_${id}`, { x, y }, { w: cardW, h: cardH });
-    addTextBox(slideIds.kpi, `card_${id}_val`, { x: x + 16, y: y + 18 }, { w: cardW - 32, h: 32 }, valuePlaceholder, 26, true, THEME.brand.teal);
-    addTextBox(slideIds.kpi, `card_${id}_lab`, { x: x + 16, y: y + 56 }, { w: cardW - 32, h: 40 }, label, 12, true, THEME.brand.slate);
-  };
-
-  card(0, 'members', 'Membres dans le réseau', '{{KPI_MEMBERS}}');
-  card(1, 'new', 'Nouveaux (30 jours)', '{{KPI_NEW_30D}}');
-  card(2, 'views', 'Vues profils (cumul)', '{{KPI_VIEWS}}');
-  card(3, 'clicks', 'Clics contact (cumul)', '{{KPI_CLICKS}}');
-
-  // Secteurs
-  addTextBox(slideIds.sectors, 'sec_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Secteurs représentés', 14, true, THEME.brand.teal);
-  addTextBox(slideIds.sectors, 'sec_s', { x: 48, y: 62 }, { w: 640, h: 18 }, 'Top secteurs (lecture agrégée).', 11, false, THEME.brand.muted);
-  addChartPlaceholder(slideIds.sectors, 'ch_sectors', { x: 48, y: 98 }, { w: 620, h: 360 }, '{{CHART_SECTORS}}');
-
-  // Croissance
-  addTextBox(slideIds.growth, 'gro_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Croissance du réseau', 14, true, THEME.brand.teal);
-  addTextBox(slideIds.growth, 'gro_s', { x: 48, y: 62 }, { w: 640, h: 18 }, 'Inscrits cumulés (tout historique).', 11, false, THEME.brand.muted);
-  addChartPlaceholder(slideIds.growth, 'ch_growth', { x: 48, y: 110 }, { w: 620, h: 300 }, '{{CHART_GROWTH}}');
-
-  // Besoins
-  addTextBox(slideIds.needs, 'need_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Besoins & opportunités', 14, true, THEME.brand.teal);
-  addTextBox(slideIds.needs, 'need_s', { x: 48, y: 62 }, { w: 640, h: 18 }, 'Catégories les plus recherchées.', 11, false, THEME.brand.muted);
-  addChartPlaceholder(slideIds.needs, 'ch_needs', { x: 48, y: 98 }, { w: 620, h: 360 }, '{{CHART_NEEDS}}');
-
-  // Opportunités (liste)
-  addTextBox(slideIds.opportunities, 'opp_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Opportunités actives (liste)', 14, true, THEME.brand.teal);
-  addTextBox(slideIds.opportunities, 'opp_s', { x: 48, y: 62 }, { w: 640, h: 18 }, 'Même info que le graphe, en format éditable.', 11, false, THEME.brand.muted);
-  addTextBox(slideIds.opportunities, 'opp_list', { x: 48, y: 100 }, { w: 620, h: 420 }, '{{OPPORTUNITIES_LIST}}', 12, false, THEME.brand.slate);
-
-  // Derniers inscrits
-  addTextBox(slideIds.members, 'mem_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Derniers inscrits', 14, true, THEME.brand.teal);
-  addTextBox(slideIds.members, 'mem_s', { x: 48, y: 62 }, { w: 640, h: 18 }, '4 derniers profils (agrégé, sans email).', 11, false, THEME.brand.muted);
-  addTextBox(slideIds.members, 'mem_list', { x: 48, y: 100 }, { w: 620, h: 420 }, '{{RECENT_MEMBERS_LIST}}', 12, false, THEME.brand.slate);
-
-  // Demandes récentes
-  addTextBox(slideIds.requests, 'req_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Demandes récentes', 14, true, THEME.brand.teal);
-  addTextBox(slideIds.requests, 'req_s', { x: 48, y: 62 }, { w: 640, h: 18 }, '5 dernières demandes actives.', 11, false, THEME.brand.muted);
-  addTextBox(slideIds.requests, 'req_list', { x: 48, y: 100 }, { w: 620, h: 420 }, '{{RECENT_REQUESTS_LIST}}', 12, false, THEME.brand.slate);
-
-  // Affinités
-  addTextBox(slideIds.affinities, 'aff_h', { x: 48, y: 32 }, { w: 640, h: 30 }, 'Affinités (passions)', 14, true, THEME.brand.teal);
-  addTextBox(slideIds.affinities, 'aff_s', { x: 48, y: 62 }, { w: 640, h: 18 }, 'Top passions (IDs, à renommer si besoin).', 11, false, THEME.brand.muted);
-  addTextBox(slideIds.affinities, 'aff_list', { x: 48, y: 100 }, { w: 620, h: 420 }, '{{TOP_PASSIONS_LIST}}', 12, false, THEME.brand.slate);
-
-  // CTA / conclusion
-  addTextBox(slideIds.cta, 'cta_h', { x: 48, y: 72 }, { w: 640, h: 40 }, 'Conclusion', 18, true, THEME.brand.slate);
-  addTextBox(
-    slideIds.cta,
-    'cta_body',
-    { x: 48, y: 120 },
-    { w: 640, h: 300 },
-    '• Le réseau grandit et les opportunités sont déjà concrètes.\n• Vous pouvez trier/éditer/supprimer les slides pour faire une version PDF finale.\n\n{{TITLE}}',
-    12,
-    false,
-    THEME.brand.muted
-  );
-
-  await slides.presentations.batchUpdate({ presentationId, requestBody: { requests } });
-}
+// NOTE: non-derive rule — we no longer generate slides from scratch in code.
 
 function quickChartUrl(config: unknown, width: number, height: number): string {
   // QuickChart returns a public PNG image from a URL-encoded Chart.js config.
@@ -611,17 +403,27 @@ function chartUrlLine(points: number[]): string {
 async function fillPresentation(
   slides: ReturnType<typeof google.slides>,
   presentationId: string,
-  stats: VitrineStats
+  stats: VitrineStats,
+  lang: UiLang
 ) {
+  const cfg = loadVitrineTemplateConfig();
   const now = new Date();
-  const month = monthTitleFr(now);
+  const month = monthTitle(now, lang);
+  const extractDateLong = longDate(now, lang);
 
-  const title = `FrancoNetwork · Vitrine réseau · ${month}`;
-  const subtitle = `Découvrez la communauté en chiffres — ${month}`;
+  const docTitle =
+    lang === 'en'
+      ? `FrancoNetwork - Network showcase - ${month}`
+      : lang === 'es'
+        ? `FrancoNetwork - Vitrina de red - ${month}`
+        : `FrancoNetwork - Vitrine réseau - ${month}`;
+
   const kpiMembers = String(stats.totalMembers);
   const kpiNew = String(stats.newMembersLast30d);
   const kpiViews = String(stats.profileViewsCumul);
   const kpiClicks = String(stats.contactClicksCumul);
+  const kpiPotentialConnections =
+    stats.totalMembers > 1 ? String((stats.totalMembers * (stats.totalMembers - 1)) / 2) : '0';
 
   const sectorsLabels = stats.topSectors.map((s) => s.name);
   const sectorsValues = stats.topSectors.map((s) => s.value);
@@ -636,55 +438,120 @@ async function fillPresentation(
   const chartGrowth = chartUrlLine(growthPoints.length ? growthPoints : [0, 1]);
   const chartNeeds = chartUrlBar(needsLabels, needsValues, needsColors.slice(0, Math.max(1, needsValues.length)));
 
-  const opportunitiesList =
-    stats.needs.length === 0
-      ? '—'
-      : stats.needs
-          .slice(0, 12)
-          .map((n, i) => `• ${n.label} — ${n.count}`)
+  const dash = cfg.fallbackPolicy?.dash ?? '—';
+  const listDash = cfg.fallbackPolicy?.emptyList ?? '—';
+
+  const affinitiesList =
+    stats.topPassions.length === 0
+      ? listDash
+      : stats.topPassions
+          .slice(0, 8)
+          .map((p) => `• ${p.passionId} — ${p.memberCount} membres · ${p.sectorCount} secteurs`)
           .join('\n');
 
-  const recentMembersList =
+  const affinitiesInsights =
+    lang === 'en'
+      ? '• Existing relationship groundwork\n• Signals of trust and conviviality\n• A network conducive to durable connections\n\nConclusion: shared interests accelerate meaningful exchanges.'
+      : lang === 'es'
+        ? '• Base de relaciones ya existente\n• Señales de confianza y convivencia\n• Una red propicia a conexiones duraderas\n\nConclusión: los puntos en común aceleran los intercambios.'
+        : '• Une base de relations déjà existante\n• Des signaux de confiance et de convivialité\n• Un réseau propice aux connexions durables\n\nConclusion : des points communs favorisent des échanges plus rapides.';
+
+  const sectorsList =
+    stats.topSectors.length === 0
+      ? listDash
+      : stats.topSectors.map((s) => `• ${s.name} — ${s.value}`).join('\n');
+
+  const growthSummary =
+    lang === 'en'
+      ? `• ${stats.newMembersLast30d} new (30 days)\n• ${stats.totalMembers} decision-makers already visible\n\nConclusion: measurable growth momentum.`
+      : lang === 'es'
+        ? `• ${stats.newMembersLast30d} nuevos (30 días)\n• ${stats.totalMembers} decisores ya visibles\n\nConclusión: una dinámica de crecimiento medible.`
+        : `• ${stats.newMembersLast30d} nouveaux (30 jours)\n• ${stats.totalMembers} décideurs déjà visibles\n\nConclusion : une dynamique de croissance mesurable.`;
+
+  const recentActivityList =
     stats.recentMembers.length === 0
-      ? '—'
+      ? listDash
       : stats.recentMembers
           .map((m) => {
-            const when = m.createdAtMs ? new Date(m.createdAtMs).toISOString().slice(0, 10) : '';
-            const need = m.primaryNeed ? ` (need: ${m.primaryNeed})` : '';
+            const when = m.createdAtMs ? new Date(m.createdAtMs).toLocaleDateString('fr-FR') : '';
+            const need = m.primaryNeed ? ` — besoin: ${m.primaryNeed}` : '';
             return `• ${when} — ${m.sector}${need}`;
           })
           .join('\n');
 
+  const mostSoughtList =
+    stats.needs.length === 0
+      ? listDash
+      : stats.needs
+          .slice(0, 8)
+          .map((n) => `• ${n.label} — ${n.count}`)
+          .join('\n');
+
+  const activeOppsList = mostSoughtList;
+
+  const activeOppsWhy =
+    lang === 'en'
+      ? '• Needs already expressed by the community\n• Joining helps you appear at the right moment\n\nConclusion: the network enables concrete opportunities.'
+      : lang === 'es'
+        ? '• Necesidades ya expresadas por la comunidad\n• Inscribirse ayuda a aparecer en el momento adecuado\n\nConclusión: la red facilita oportunidades concretas.'
+        : '• Des besoins déjà exprimés par la communauté\n• Une inscription permet d’apparaître au bon moment\n\nConclusion : le réseau facilite des opportunités concrètes.';
+
   const recentRequestsList =
     stats.recentRequests.length === 0
-      ? '—'
+      ? listDash
       : stats.recentRequests
+          .slice(0, 5)
           .map((r) => {
-            const when = r.createdAtMs ? new Date(r.createdAtMs).toISOString().slice(0, 10) : '';
+            const when = r.createdAtMs ? new Date(r.createdAtMs).toLocaleDateString('fr-FR') : '';
             return `• ${when} — ${r.title}`;
           })
           .join('\n');
 
-  const topPassionsList =
-    stats.topPassions.length === 0
-      ? '—'
-      : stats.topPassions
-          .map((p) => `• ${p.passionId} — ${p.memberCount} membres, ${p.sectorCount} secteurs`)
-          .join('\n');
+  const recentRequestsWhy =
+    lang === 'en'
+      ? '• Genuine expressed needs\n• Already-active opportunities\n• A community that takes action\n\nConclusion: the network already connects concrete projects.'
+      : lang === 'es'
+        ? '• Necesidades realmente expresadas\n• Oportunidades ya activas\n• Una comunidad en acción\n\nConclusión: la red ya conecta proyectos concretos.'
+        : '• Des besoins réellement exprimés\n• Des opportunités déjà actives\n• Une communauté qui passe à l’action\n\nConclusion : le réseau sert déjà à connecter des projets concrets.';
+
+  const ctaCards =
+    lang === 'en'
+      ? '• Complete your profile\n• Respond to a request\n• Join and activate the network'
+      : lang === 'es'
+        ? '• Completar su perfil\n• Responder a una solicitud\n• Unirse y activar la red'
+        : '• Compléter son profil\n• Répondre à une demande\n• Rejoindre et activer le réseau';
+
+  const footerSource =
+    lang === 'en'
+      ? 'Source: directory aggregates'
+      : lang === 'es'
+        ? 'Fuente: agregados del directorio'
+        : 'Source : agrégats annuaire';
 
   // We rely on placeholders if present. If not present, the deck will still be created,
   // but will remain empty until a template is provided.
   const requests: any[] = [
-    { replaceAllText: { containsText: { text: '{{TITLE}}', matchCase: true }, replaceText: title } },
-    { replaceAllText: { containsText: { text: '{{SUBTITLE}}', matchCase: true }, replaceText: subtitle } },
+    { replaceAllText: { containsText: { text: '{{DOC_TITLE}}', matchCase: true }, replaceText: docTitle } },
+    { replaceAllText: { containsText: { text: '{{MONTH_TITLE}}', matchCase: true }, replaceText: month } },
+    { replaceAllText: { containsText: { text: '{{EXTRACT_DATE_LONG}}', matchCase: true }, replaceText: extractDateLong } },
+    { replaceAllText: { containsText: { text: '{{FOOTER_DATE_LONG}}', matchCase: true }, replaceText: extractDateLong } },
+    { replaceAllText: { containsText: { text: '{{FOOTER_SOURCE}}', matchCase: true }, replaceText: footerSource } },
     { replaceAllText: { containsText: { text: '{{KPI_MEMBERS}}', matchCase: true }, replaceText: kpiMembers } },
     { replaceAllText: { containsText: { text: '{{KPI_NEW_30D}}', matchCase: true }, replaceText: kpiNew } },
-    { replaceAllText: { containsText: { text: '{{KPI_VIEWS}}', matchCase: true }, replaceText: kpiViews } },
-    { replaceAllText: { containsText: { text: '{{KPI_CLICKS}}', matchCase: true }, replaceText: kpiClicks } },
-    { replaceAllText: { containsText: { text: '{{OPPORTUNITIES_LIST}}', matchCase: true }, replaceText: opportunitiesList } },
-    { replaceAllText: { containsText: { text: '{{RECENT_MEMBERS_LIST}}', matchCase: true }, replaceText: recentMembersList } },
-    { replaceAllText: { containsText: { text: '{{RECENT_REQUESTS_LIST}}', matchCase: true }, replaceText: recentRequestsList } },
-    { replaceAllText: { containsText: { text: '{{TOP_PASSIONS_LIST}}', matchCase: true }, replaceText: topPassionsList } },
+    { replaceAllText: { containsText: { text: '{{KPI_PROFILE_VIEWS}}', matchCase: true }, replaceText: kpiViews } },
+    { replaceAllText: { containsText: { text: '{{KPI_CONTACT_CLICKS}}', matchCase: true }, replaceText: kpiClicks } },
+    { replaceAllText: { containsText: { text: '{{KPI_POTENTIAL_CONNECTIONS}}', matchCase: true }, replaceText: kpiPotentialConnections } },
+    { replaceAllText: { containsText: { text: '{{AFFINITIES_LIST}}', matchCase: true }, replaceText: affinitiesList || dash } },
+    { replaceAllText: { containsText: { text: '{{AFFINITIES_INSIGHTS}}', matchCase: true }, replaceText: affinitiesInsights || dash } },
+    { replaceAllText: { containsText: { text: '{{SECTORS_LIST}}', matchCase: true }, replaceText: sectorsList || dash } },
+    { replaceAllText: { containsText: { text: '{{GROWTH_SUMMARY}}', matchCase: true }, replaceText: growthSummary || dash } },
+    { replaceAllText: { containsText: { text: '{{RECENT_ACTIVITY_LIST}}', matchCase: true }, replaceText: recentActivityList || dash } },
+    { replaceAllText: { containsText: { text: '{{MOST_SOUGHT_LIST}}', matchCase: true }, replaceText: mostSoughtList || dash } },
+    { replaceAllText: { containsText: { text: '{{ACTIVE_OPPS_LIST}}', matchCase: true }, replaceText: activeOppsList || dash } },
+    { replaceAllText: { containsText: { text: '{{ACTIVE_OPPS_WHY}}', matchCase: true }, replaceText: activeOppsWhy || dash } },
+    { replaceAllText: { containsText: { text: '{{RECENT_REQUESTS_LIST}}', matchCase: true }, replaceText: recentRequestsList || dash } },
+    { replaceAllText: { containsText: { text: '{{RECENT_REQUESTS_WHY}}', matchCase: true }, replaceText: recentRequestsWhy || dash } },
+    { replaceAllText: { containsText: { text: '{{CTA_CARDS}}', matchCase: true }, replaceText: ctaCards || dash } },
     {
       replaceAllShapesWithImage: {
         imageUrl: chartSectors,
@@ -730,11 +597,26 @@ export const exportStatsToSlides = onCall(
     }
 
     try {
+      const cfg = loadVitrineTemplateConfig();
       const now = new Date();
-      const month = monthTitleFr(now);
-      const title = `FrancoNetwork · Vitrine réseau · ${month}`;
-      const templateId = String(SLIDES_TEMPLATE_ID.value() ?? '').trim();
+      const rawLang = String(request.data?.lang ?? 'fr').trim().toLowerCase();
+      const lang: UiLang = rawLang === 'en' ? 'en' : rawLang === 'es' ? 'es' : 'fr';
+
+      const month = monthTitle(now, lang);
+      const title =
+        lang === 'en'
+          ? `FrancoNetwork - Network showcase - ${month}`
+          : lang === 'es'
+            ? `FrancoNetwork - Vitrina de red - ${month}`
+            : `FrancoNetwork - Vitrine réseau - ${month}`;
+
+      const templateId =
+        String(cfg.template_id_by_lang?.[lang] ?? cfg.template_id ?? cfg.templateId ?? '').trim();
       const folderId = String(SLIDES_EXPORT_FOLDER_ID.value() ?? '').trim();
+
+      if (!templateId) {
+        throw new Error('Template Slides manquant (config/vitrine-template.json).');
+      }
 
       const stats = await loadVitrineStats();
 
@@ -742,14 +624,9 @@ export const exportStatsToSlides = onCall(
       const drive = getDrive(auth);
       const slides = getSlides(auth);
 
-      const presentationId = templateId
-        ? await copyTemplatePresentation(drive, templateId, title, folderId)
-        : await createPresentationFromScratch(drive, title, folderId);
-
-      if (!templateId) {
-        await buildScratchDeck(slides, presentationId);
-      }
-      await fillPresentation(slides, presentationId, stats);
+      // Non-derive rule: always copy the master template deck and only replace placeholders.
+      const presentationId = await copyTemplatePresentation(drive, templateId, title, folderId);
+      await fillPresentation(slides, presentationId, stats, lang);
 
       const url = slidesUrl(presentationId);
       logger.info('Slides deck generated', { presentationId });

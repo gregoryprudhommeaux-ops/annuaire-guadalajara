@@ -1,0 +1,80 @@
+{
+  "template_id": "franconetwork_vitrine_gslides_master_v1",
+  "template_id_by_lang": {
+    "fr": "franconetwork_vitrine_gslides_master_v1",
+    "en": "",
+    "es": ""
+  },
+  "language": "multi",
+  "nonDeriveRules": {
+    "fixedSlideCount": 14,
+    "fixedOrder": true,
+    "fixedTitles": true,
+    "fixedLanguage": "multi",
+    "fixedStyle": "business_institutionnel_sobre",
+    "neverDropSlideOnMissingData": true
+  },
+  "designSystem": {
+    "fontFamily": "Inter",
+    "palette": {
+      "brandTeal": "#01696f",
+      "ink": "#0f172a",
+      "muted": "#475569",
+      "border": "#e2e8f0",
+      "paper": "#ffffff",
+      "soft": "#f8fafc"
+    }
+  },
+  "slides": [
+    { "n": 1, "id": "s1_cover", "title": "FrancoNetwork · Vitrine réseau", "subtitle": "Données extraites le {{EXTRACT_DATE_LONG}}" },
+    { "n": 2, "id": "s2_kpi", "title": "Indicateurs clés", "subtitle": "{{MONTH_TITLE}}" },
+    { "n": 3, "id": "s3_affinities", "title": "Affinités du réseau", "subtitle": "Ce qui relie les décideurs" },
+    { "n": 4, "id": "s4_affinities_insights", "title": "Ce que ces affinités révèlent", "subtitle": "" },
+    { "n": 5, "id": "s5_sectors", "title": "Secteurs représentés", "subtitle": "" },
+    { "n": 6, "id": "s6_growth", "title": "Croissance du réseau", "subtitle": "" },
+    { "n": 7, "id": "s7_recent_activity", "title": "Activité récente", "subtitle": "Profils & besoins observés" },
+    { "n": 8, "id": "s8_most_sought", "title": "Opportunités les plus recherchées", "subtitle": "" },
+    { "n": 9, "id": "s9_active_opps", "title": "Opportunités actives", "subtitle": "" },
+    { "n": 10, "id": "s10_active_opps_why", "title": "Pourquoi c’est utile", "subtitle": "" },
+    { "n": 11, "id": "s11_recent_requests", "title": "Demandes récentes", "subtitle": "" },
+    { "n": 12, "id": "s12_recent_requests_why", "title": "Pourquoi c’est important", "subtitle": "" },
+    { "n": 13, "id": "s13_call_to_action", "title": "Passer à l’action", "subtitle": "" },
+    { "n": 14, "id": "s14_footer", "title": "Source & date", "subtitle": "" }
+  ],
+  "placeholders": {
+    "text": [
+      "{{DOC_TITLE}}",
+      "{{MONTH_TITLE}}",
+      "{{EXTRACT_DATE_LONG}}",
+      "{{FOOTER_DATE_LONG}}",
+      "{{FOOTER_SOURCE}}",
+      "{{KPI_MEMBERS}}",
+      "{{KPI_NEW_30D}}",
+      "{{KPI_PROFILE_VIEWS}}",
+      "{{KPI_CONTACT_CLICKS}}",
+      "{{KPI_POTENTIAL_CONNECTIONS}}",
+      "{{AFFINITIES_LIST}}",
+      "{{AFFINITIES_INSIGHTS}}",
+      "{{SECTORS_LIST}}",
+      "{{GROWTH_SUMMARY}}",
+      "{{RECENT_ACTIVITY_LIST}}",
+      "{{MOST_SOUGHT_LIST}}",
+      "{{ACTIVE_OPPS_LIST}}",
+      "{{ACTIVE_OPPS_WHY}}",
+      "{{RECENT_REQUESTS_LIST}}",
+      "{{RECENT_REQUESTS_WHY}}",
+      "{{CTA_CARDS}}"
+    ],
+    "images": [
+      { "shapeText": "{{CHART_SECTORS}}", "kind": "sectors_bar" },
+      { "shapeText": "{{CHART_GROWTH}}", "kind": "growth_line" },
+      { "shapeText": "{{CHART_NEEDS}}", "kind": "needs_bar" }
+    ]
+  },
+  "fallbackPolicy": {
+    "dash": "—",
+    "emptyList": "—",
+    "unknown": "—"
+  }
+}
+

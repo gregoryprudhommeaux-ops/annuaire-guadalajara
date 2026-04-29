@@ -1,0 +1,308 @@
+{
+  "template_id": "franconetwork_vitrine_gslides_master_v1",
+  "language": "fr",
+  "brand": {
+    "name": "FrancoNetwork",
+    "tagline": "Le réseau francophone d’affaires de Guadalajara",
+    "location": "Guadalajara, Jalisco, Mexique",
+    "website": "franconetwork.app",
+    "signup_label": "Inscription gratuite"
+  },
+  "document_naming": {
+    "default_title_format": "FrancoNetwork - Vitrine réseau - {{report_month_year_fr}}",
+    "archival_title_format": "FrancoNetwork - Vitrine réseau - extraction du {{extraction_date_fr_long}}",
+    "use_archival_title_if_full_date_available": true
+  },
+  "date_rules": {
+    "locale": "fr-FR",
+    "slide_1_date_format": "Données extraites le {{extraction_date_fr_long}}",
+    "footer_date_format": "{{extraction_date_fr_long}}"
+  },
+  "design_system": {
+    "theme_mode": "light",
+    "colors": {
+      "page_background": "#F7F8FA",
+      "slide_background": "#FFFFFF",
+      "section_background_soft": "#F3F5F7",
+      "primary_text": "#111827",
+      "secondary_text": "#4B5563",
+      "muted_text": "#6B7280",
+      "hairline": "#E5E7EB",
+      "border": "#DDE3EA",
+      "brand_primary": "#0F172A",
+      "brand_secondary": "#1F2937",
+      "brand_accent": "#1D4ED8",
+      "brand_accent_soft": "#DBEAFE",
+      "success": "#16A34A",
+      "success_soft": "#DCFCE7",
+      "warning": "#B45309",
+      "warning_soft": "#FEF3C7",
+      "neutral_card": "#F9FAFB",
+      "white": "#FFFFFF"
+    },
+    "typography": {
+      "font_family_primary": "Inter",
+      "font_family_fallback": "Arial, Helvetica, sans-serif",
+      "title": {
+        "font_weight": 700,
+        "font_size_pt": 28,
+        "line_height": 1.15,
+        "color": "#0F172A"
+      },
+      "section_title": {
+        "font_weight": 700,
+        "font_size_pt": 22,
+        "line_height": 1.2,
+        "color": "#111827"
+      },
+      "subtitle": {
+        "font_weight": 500,
+        "font_size_pt": 14,
+        "line_height": 1.35,
+        "color": "#4B5563"
+      },
+      "body": {
+        "font_weight": 400,
+        "font_size_pt": 12,
+        "line_height": 1.45,
+        "color": "#374151"
+      },
+      "small": {
+        "font_weight": 400,
+        "font_size_pt": 10,
+        "line_height": 1.35,
+        "color": "#6B7280"
+      },
+      "kpi_value": {
+        "font_weight": 700,
+        "font_size_pt": 24,
+        "line_height": 1.0,
+        "color": "#0F172A"
+      },
+      "kpi_label": {
+        "font_weight": 600,
+        "font_size_pt": 10,
+        "line_height": 1.2,
+        "color": "#6B7280",
+        "uppercase": true
+      }
+    },
+    "layout": {
+      "page_size": "16:9",
+      "slide_width_px_reference": 1280,
+      "slide_height_px_reference": 720,
+      "margins": {
+        "top": 36,
+        "right": 44,
+        "bottom": 32,
+        "left": 44
+      },
+      "grid": {
+        "columns": 12,
+        "gutter": 16
+      },
+      "card": {
+        "background": "#F9FAFB",
+        "border_color": "#E5E7EB",
+        "border_radius": 18,
+        "padding": 18
+      }
+    }
+  },
+  "behavior_rules": {
+    "strict_template_lock": true,
+    "always_keep_same_slide_count": true,
+    "always_keep_same_slide_order": true,
+    "always_keep_same_slide_titles": true,
+    "never_invent_data": true,
+    "missing_data_policy": {
+      "mode": "graceful_fallback",
+      "fallback_text_short": "Donnée non disponible à la date d’extraction",
+      "fallback_text_editorial": "Cette donnée n’est pas encore exposée publiquement dans la vitrine.",
+      "allow_hide_empty_micro_block": true,
+      "never_remove_entire_slide": true
+    }
+  },
+  "data_contract": {
+    "dynamic_fields": [
+      "report_month_year_fr",
+      "extraction_date_fr_long",
+      "hero_stats",
+      "indicators",
+      "affinities",
+      "affinity_insights",
+      "sectors",
+      "growth",
+      "recent_activity",
+      "top_requested_opportunities",
+      "active_opportunities",
+      "opportunity_insights",
+      "recent_requests",
+      "cta_blocks",
+      "footer"
+    ],
+    "source_truth_rule": "All text, values, labels and insights must come from the Vitrine page content or be faithful micro-summaries of visible content."
+  },
+  "slides": [
+    {
+      "slide_number": 1,
+      "slide_id": "cover",
+      "title": "FrancoNetwork",
+      "subtitle": "Le réseau francophone d’affaires de Guadalajara",
+      "eyebrow": "VITRINE RÉSEAU",
+      "date_line_template": "Données extraites le {{extraction_date_fr_long}}",
+      "layout": "hero_cover_with_4_kpis",
+      "kpi_row": [
+        { "label": "Membres dans le réseau", "value_path": "hero_stats.members_count" },
+        { "label": "Opportunités actives", "value_path": "hero_stats.active_opportunities_count" },
+        { "label": "Croissance ce mois", "value_path": "hero_stats.month_growth_percent" },
+        { "label": "Secteurs représentés", "value_path": "hero_stats.sectors_count" }
+      ]
+    },
+    {
+      "slide_number": 2,
+      "slide_id": "overview_kpis",
+      "title": "Le réseau en un coup d’œil",
+      "subtitle": "Principaux chiffres visibles sur la vitrine",
+      "layout": "4_kpi_cards",
+      "kpis": [
+        { "label": "Membres dans le réseau", "value_path": "hero_stats.members_count" },
+        { "label": "Opportunités actives", "value_path": "hero_stats.active_opportunities_count" },
+        { "label": "Croissance ce mois", "value_path": "hero_stats.month_growth_percent" },
+        { "label": "Secteurs représentés", "value_path": "hero_stats.sectors_count" }
+      ]
+    },
+    {
+      "slide_number": 3,
+      "slide_id": "indicators",
+      "title": "Indicateurs clés du réseau",
+      "subtitle": "Indicateurs issus de l’annuaire public, actualisés régulièrement.",
+      "layout": "5_kpi_cards",
+      "kpis": [
+        { "label": "Décideurs actifs", "value_path": "indicators.active_decision_makers" },
+        { "label": "Nouveaux ce mois", "value_path": "indicators.new_this_month" },
+        { "label": "Consultations de profils", "value_path": "indicators.profile_views" },
+        { "label": "Mises en relation initiées", "value_path": "indicators.introductions_started" },
+        { "label": "Connexions potentielles", "value_path": "indicators.potential_connections" }
+      ]
+    },
+    {
+      "slide_number": 4,
+      "slide_id": "affinities",
+      "title": "Affinités qui créent les connexions",
+      "subtitle": "Des intérêts communs qui rapprochent des profils issus de secteurs différents.",
+      "layout": "affinity_cards",
+      "repeat_source": "affinities"
+    },
+    {
+      "slide_number": 5,
+      "slide_id": "affinity_insights",
+      "title": "Ce que révèlent les affinités",
+      "subtitle": "Lecture business des centres d’intérêt communs",
+      "layout": "editorial",
+      "fields": {
+        "intro_path": "affinity_insights.intro",
+        "bullets_path": "affinity_insights.bullets",
+        "highlights_path": "affinity_insights.highlights",
+        "closing_path": "affinity_insights.closing"
+      }
+    },
+    {
+      "slide_number": 6,
+      "slide_id": "sectors",
+      "title": "Un réseau multi-sectoriel",
+      "subtitle": "8 secteurs d’activité visibles dans l’annuaire",
+      "layout": "sector_list_or_chart",
+      "repeat_source": "sectors"
+    },
+    {
+      "slide_number": 7,
+      "slide_id": "growth",
+      "title": "Croissance du réseau",
+      "subtitle": "FrancoNetwork accélère semaine après semaine",
+      "layout": "line_chart_plus_insights",
+      "fields": {
+        "labels_path": "growth.labels",
+        "supporting_text_path": "growth.supporting_text",
+        "insight_title_path": "growth.insight_title",
+        "insight_text_path": "growth.insight_text",
+        "highlights_path": "growth.highlights",
+        "closing_path": "growth.closing"
+      }
+    },
+    {
+      "slide_number": 8,
+      "slide_id": "recent_activity",
+      "title": "Profils récemment arrivés",
+      "subtitle": "Des profils variés, des besoins concrets, une dynamique visible.",
+      "layout": "activity_cards",
+      "repeat_source": "recent_activity"
+    },
+    {
+      "slide_number": 9,
+      "slide_id": "top_requested_opportunities",
+      "title": "Besoins actuellement les plus recherchés",
+      "subtitle": "Lecture synthétique des catégories les plus exprimées",
+      "layout": "horizontal_bar_chart",
+      "repeat_source": "top_requested_opportunities"
+    },
+    {
+      "slide_number": 10,
+      "slide_id": "active_opportunities",
+      "title": "Ce que les membres recherchent en ce moment",
+      "subtitle": "Des besoins concrets déjà exprimés dans le réseau.",
+      "layout": "opportunity_cards",
+      "repeat_source": "active_opportunities"
+    },
+    {
+      "slide_number": 11,
+      "slide_id": "opportunity_insights",
+      "title": "Pourquoi ces signaux sont utiles",
+      "subtitle": "Lecture business des intentions exprimées dans le réseau",
+      "layout": "editorial",
+      "fields": {
+        "intro_path": "opportunity_insights.intro",
+        "bullets_path": "opportunity_insights.bullets",
+        "closing_path": "opportunity_insights.closing"
+      }
+    },
+    {
+      "slide_number": 12,
+      "slide_id": "recent_requests",
+      "title": "Demandes récentes publiées",
+      "subtitle": "Des besoins publiés récemment dans le réseau",
+      "layout": "editorial_with_empty_state",
+      "fields": {
+        "description_path": "recent_requests.description",
+        "empty_state_path": "recent_requests.empty_state",
+        "importance_title_path": "recent_requests.importance_title",
+        "importance_text_path": "recent_requests.importance_text",
+        "bullets_path": "recent_requests.bullets",
+        "closing_path": "recent_requests.closing"
+      }
+    },
+    {
+      "slide_number": 13,
+      "slide_id": "cta",
+      "title": "Comment entrer dans le réseau",
+      "subtitle": "Choisissez l’entrée qui correspond le mieux à votre situation actuelle",
+      "layout": "cta_cards",
+      "repeat_source": "cta_blocks"
+    },
+    {
+      "slide_number": 14,
+      "slide_id": "closing",
+      "title": "FrancoNetwork",
+      "subtitle": "Réseau francophone d’affaires · Guadalajara, Jalisco, Mexique",
+      "layout": "closing_brand",
+      "fields": {
+        "website_path": "footer.website",
+        "signup_path": "footer.signup",
+        "date_label_path": "footer.date_label",
+        "date_value_path": "footer.date_value",
+        "source_path": "footer.source"
+      }
+    }
+  ]
+}
+

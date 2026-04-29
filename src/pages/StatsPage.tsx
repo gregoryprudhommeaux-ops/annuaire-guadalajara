@@ -117,17 +117,18 @@ export default function StatsPage() {
         ? 'Crece con el tamaño de la red'
         : 'Augmente avec le nombre de décideurs';
 
+  type ExportStatsToSlidesInput = { lang: Language };
   type ExportStatsToSlidesResult = { ok: boolean; presentationId: string; url: string };
 
   const handleExportSlides = useCallback(async () => {
     if (exportBusy) return;
     setExportBusy(true);
     try {
-      const fn = httpsCallable<Record<string, never>, ExportStatsToSlidesResult>(
+      const fn2 = httpsCallable<ExportStatsToSlidesInput, ExportStatsToSlidesResult>(
         functions,
         'exportStatsToSlides'
       );
-      const res = await fn({});
+      const res = await fn2({ lang });
       const url = String(res.data?.url ?? '').trim();
       if (!url) {
         throw new Error('URL Slides manquante.');
