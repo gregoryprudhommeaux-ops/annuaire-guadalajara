@@ -191,3 +191,4 @@ export { sendCampaignNow } from './callables/sendCampaignNow';
 export { sendCampaignTest } from './callables/sendCampaignTest';
 export { sendAutomationTest } from './callables/sendAutomationTest';
 export { publishPublicEmailTemplate } from './callables/publishPublicEmailTemplate';
+export { publicTemplateHtml } from './http/publicTemplateHtml';

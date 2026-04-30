@@ -436,14 +436,22 @@ export function AdminEmailManager() {
     setBusy(`share-tpl-${tpl.id}`);
     setToast('Publication…');
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const url = `${origin}/t/${encodeURIComponent(tpl.id)}/html`;
       await publishPublicEmailTemplateCallable({
         templateId: tpl.id,
         name: tpl.name,
         subject: tpl.subject,
         bodyHtml: tpl.bodyHtml,
       });
+      const projectId = (import.meta as any)?.env?.VITE_FIREBASE_PROJECT_ID || undefined;
+      // Prefer config already bundled in the app
+      const inferredProjectId =
+        projectId ||
+        (typeof window !== 'undefined' &&
+          (window as any).__FIREBASE_DEFAULTS__?.config?.projectId) ||
+        undefined;
+      const pid = inferredProjectId || 'gen-lang-client-0229891518';
+      const url = `https://us-central1-${pid}.cloudfunctions.net/publicTemplateHtml?id=${encodeURIComponent(tpl.id)}`;
+
       // Open via an anchor click to reduce popup-blocker issues
       const a = document.createElement('a');
       a.href = url;
