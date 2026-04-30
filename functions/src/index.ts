@@ -180,6 +180,10 @@ export const backfillMembersToGoogleSheet = functions
   });
 
 export { onUserCreatedSendWelcome } from './triggers/onUserCreated';
+export {
+  notifyAdminOnUserCreated,
+  notifyAdminOnUserUpdated,
+} from './triggers/notifyAdminOnUserWrite';
 export { weeklyDigest } from './triggers/weeklyDigest';
 export { monthlyStatsDigest } from './triggers/monthlyStatsDigest';
 export { dispatchScheduledCampaigns } from './triggers/dispatchScheduledCampaigns';

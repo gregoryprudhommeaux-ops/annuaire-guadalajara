@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, orderBy, query, where, limit } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot, orderBy, query, where, limit, Timestamp } from 'firebase/firestore';
 import type { Language, MemberNetworkRequest, NeedComment, UserProfile } from '@/types';
 import { TimePeriodProvider } from '@/contexts/TimePeriodContext';
 import { AdminPeriodPills } from '@/components/admin/AdminPeriodPills';
@@ -27,9 +27,61 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
   const [recentRequests, setRecentRequests] = useState<MemberNetworkRequest[] | null>(null);
   const [unansweredNeeds, setUnansweredNeeds] = useState<UnansweredNeedRow[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [liveUserNotif, setLiveUserNotif] = useState<{
+    created: number;
+    modified: number;
+    latest: string[];
+  } | null>(null);
   const PAGE_SIZE = 5;
   const [needsPage, setNeedsPage] = useState(0);
   const [requestsPage, setRequestsPage] = useState(0);
+
+  useEffect(() => {
+    let initDone = false;
+    const q = query(collection(db, 'users'), orderBy('updatedAt', 'desc'), limit(50));
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        if (!initDone) {
+          initDone = true;
+          return;
+        }
+        const changes = snap.docChanges();
+        if (changes.length === 0) return;
+        setLiveUserNotif((prev) => {
+          const base = prev ?? { created: 0, modified: 0, latest: [] as string[] };
+          let created = base.created;
+          let modified = base.modified;
+          const latest = [...base.latest];
+          const pushLatest = (label: string) => {
+            if (!label) return;
+            latest.unshift(label);
+            // cap to keep the UI compact
+            while (latest.length > 4) latest.pop();
+          };
+          for (const ch of changes) {
+            if (ch.type !== 'added' && ch.type !== 'modified') continue;
+            const d = ch.doc.data() as Record<string, unknown>;
+            const name =
+              String(d.fullName ?? '').trim() ||
+              String(d.companyName ?? '').trim() ||
+              String(d.email ?? '').trim() ||
+              ch.doc.id;
+            const when = (d.updatedAt as Timestamp | undefined)?.toDate?.();
+            const stamp = when ? when.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
+            pushLatest(stamp ? `${name} · ${stamp}` : name);
+            if (ch.type === 'added') created += 1;
+            if (ch.type === 'modified') modified += 1;
+          }
+          return { created, modified, latest };
+        });
+      },
+      () => {
+        // ignore (admin dashboard still works without live notif)
+      }
+    );
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -282,6 +334,40 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
           <div className="admin-header__toolbar">
             <AdminPeriodPills t={t} />
           </div>
+
+          {liveUserNotif && (liveUserNotif.created > 0 || liveUserNotif.modified > 0) ? (
+            <div
+              className="admin-card"
+              style={{
+                borderColor: 'rgba(1, 105, 111, 0.35)',
+                background: 'rgba(230, 245, 245, 0.65)',
+              }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="admin-card__eyebrow">Notifications</p>
+                  <p className="admin-card__text">
+                    {liveUserNotif.created > 0 ? `${liveUserNotif.created} compte(s) créé(s)` : null}
+                    {liveUserNotif.created > 0 && liveUserNotif.modified > 0 ? ' · ' : null}
+                    {liveUserNotif.modified > 0 ? `${liveUserNotif.modified} profil(s) modifié(s)` : null}
+                  </p>
+                  {liveUserNotif.latest.length > 0 ? (
+                    <p className="mt-2 text-xs text-[var(--fn-muted)]">
+                      Derniers : {liveUserNotif.latest.join(' · ')}
+                    </p>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLiveUserNotif(null)}
+                  className="admin-pill"
+                  style={{ minHeight: 32, padding: '0 10px', textDecoration: 'none' }}
+                >
+                  Ignorer
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {loadError ? (
             <p
