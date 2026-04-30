@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Eye, Handshake, Layers, Share2 } from 'lucide-react';
+import { Layers, Share2 } from 'lucide-react';
 import { useVitrineStats } from '@/hooks/useVitrineStats';
 import { useFirebaseAuthUser } from '@/hooks/useFirebaseAuthUser';
 import { useLanguage } from '@/i18n/LanguageProvider';
@@ -38,6 +38,8 @@ export type StatsVitrineContentProps = {
   variant: StatsVitrineVariant;
   /** URL complète `/stats/share?lang=…` — affiche le bouton Partager si `variant === 'app'`. */
   sharePageUrl?: string;
+  /** Variante share uniquement : rendu dans le coin haut droit de la carte (ex. sélecteur de langue). */
+  shareTopRight?: React.ReactNode;
 };
 
 function formatMonthYear(d: Date, lang: Language) {
@@ -59,7 +61,7 @@ function localeNum(lang: Language, n: number) {
   return n.toLocaleString(lang === 'es' ? 'es-MX' : lang === 'en' ? 'en-US' : 'fr-FR');
 }
 
-export function StatsVitrineContent({ variant, sharePageUrl }: StatsVitrineContentProps) {
+export function StatsVitrineContent({ variant, sharePageUrl, shareTopRight }: StatsVitrineContentProps) {
   const { lang } = useLanguage();
   const firebaseUser = useFirebaseAuthUser();
   const vitrine = useVitrineStats();
@@ -156,8 +158,17 @@ export function StatsVitrineContent({ variant, sharePageUrl }: StatsVitrineConte
         ) : null}
       </Helmet>
 
-      <div className="mx-auto max-w-5xl px-4 py-10">
+      <div
+        className={
+          variant === 'share'
+            ? 'mx-auto max-w-5xl px-4 pb-10 pt-3 sm:pt-4'
+            : 'mx-auto max-w-5xl px-4 py-10'
+        }
+      >
         <div className="stats-ds stats-print-root overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
+          {variant === 'share' && shareTopRight ? (
+            <div className="mb-4 flex justify-end">{shareTopRight}</div>
+          ) : null}
           {variant === 'app' ? (
             <header className="border-b border-slate-200 pb-4 mb-2">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -287,7 +298,7 @@ export function StatsVitrineContent({ variant, sharePageUrl }: StatsVitrineConte
               title={tc.indicatorsTitle}
               description={tc.indicatorsDescription}
             />
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <div className="mx-auto mt-6 grid max-w-md gap-4">
               <SupportMetricCard
                 icon={<Layers className="h-5 w-5 shrink-0 text-[#01696f]" aria-hidden />}
                 label={tc.sectorCardLabel}
@@ -298,30 +309,6 @@ export function StatsVitrineContent({ variant, sharePageUrl }: StatsVitrineConte
                     : { kind: 'soft', title: tc.sectorPendingTitle, subtitle: tc.sectorPendingSub }
                 }
                 footnote={tc.sectorFootnoteUniqueLabels}
-              />
-              <SupportMetricCard
-                icon={<Eye className="h-5 w-5 shrink-0 text-[#01696f]" aria-hidden />}
-                label={tc.viewsLabel}
-                lang={lang}
-                primary={{
-                  kind: 'number',
-                  value: vitrine.profileViewsCumul > 0 ? vitrine.profileViewsCumul : 0,
-                }}
-                footnote={
-                  vitrine.profileViewsCumul > 0 ? tc.viewsFootnotePublished : tc.viewsFootnotePending
-                }
-              />
-              <SupportMetricCard
-                icon={<Handshake className="h-5 w-5 shrink-0 text-[#01696f]" aria-hidden />}
-                label={tc.contactsLabel}
-                lang={lang}
-                primary={{
-                  kind: 'number',
-                  value: vitrine.contactClicksCumul > 0 ? vitrine.contactClicksCumul : 0,
-                }}
-                footnote={
-                  vitrine.contactClicksCumul > 0 ? tc.contactsFootnotePublished : tc.contactsFootnotePending
-                }
               />
             </div>
           </section>
@@ -348,23 +335,34 @@ export function StatsVitrineContent({ variant, sharePageUrl }: StatsVitrineConte
 
           <RecentRequestsFeed lang={lang} hideBottomCta={shareStripMidCtas} />
 
-          {variant === 'app' ? (
-            <SegmentedJoinCTA lang={lang} />
-          ) : (
-            <section className="mt-10 border-t border-slate-200 pt-8 print:break-inside-avoid">
-              <p className="max-w-3xl text-sm leading-relaxed text-slate-700 sm:text-[15px]">
-                {tc.sharePage.closingBenefits}
-              </p>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <StatsPrimaryButton to="/inscription" className="w-full justify-center sm:w-auto">
-                  {tc.sharePage.ctaCreateProfile}
-                </StatsPrimaryButton>
-                <StatsSecondaryButton to={profileManageHref} className="w-full justify-center sm:w-auto">
-                  {tc.sharePage.ctaUpdateProfile}
-                </StatsSecondaryButton>
-              </div>
-            </section>
-          )}
+          {variant === 'app' ? <SegmentedJoinCTA lang={lang} /> : null}
+
+          {/* Bandeau vert : même bloc sur /stats (après les personas) et sur /stats/share */}
+          <section
+            className="mt-10 rounded-2xl bg-[#01696f] px-6 py-10 text-center shadow-md print:break-inside-avoid sm:px-10 sm:py-12"
+            aria-labelledby="stats-closing-benefits"
+          >
+            <p
+              id="stats-closing-benefits"
+              className="mx-auto max-w-3xl text-sm leading-relaxed text-white sm:text-[15px]"
+            >
+              {tc.sharePage.closingBenefits}
+            </p>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap">
+              <StatsPrimaryButton
+                to="/inscription"
+                className="w-full min-w-[12rem] justify-center border-white bg-white text-[#01696f] shadow-md motion-safe:hover:bg-slate-50 motion-safe:hover:text-[#015a5f] sm:w-auto"
+              >
+                {tc.sharePage.ctaCreateProfile}
+              </StatsPrimaryButton>
+              <StatsSecondaryButton
+                to={profileManageHref}
+                className="w-full min-w-[12rem] justify-center border-2 border-white bg-transparent text-white motion-safe:hover:border-white motion-safe:hover:bg-white/15 sm:w-auto"
+              >
+                {tc.sharePage.ctaUpdateProfile}
+              </StatsSecondaryButton>
+            </div>
+          </section>
 
           <div className="mt-10 flex flex-col items-start gap-4 border-t border-slate-200 pt-8 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">

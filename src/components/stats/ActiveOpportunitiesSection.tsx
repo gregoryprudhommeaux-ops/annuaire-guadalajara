@@ -173,15 +173,31 @@ export function ActiveOpportunitiesSection({
         </div>
 
         {!hideBottomCta ? (
-          <div className="border-t border-slate-100 px-4 py-5 sm:px-6">
-            <p className="text-sm leading-relaxed text-slate-700">{c.conv}</p>
-            <div className="mt-4 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-start print:flex-row">
-              <StatsPrimaryButton to="/inscription" className="w-full sm:w-auto print:w-auto">
-                {c.ctaPrimary}
-              </StatsPrimaryButton>
-              <StatsSecondaryButton to="/requests" className="w-full sm:w-auto print:w-auto">
-                {c.ctaSecondary}
-              </StatsSecondaryButton>
+          <div className="border-t border-slate-100 px-4 py-5 sm:px-6 sm:py-6">
+            <div
+              className="rounded-2xl border border-white/15 bg-[#01696f] px-6 py-8 text-center shadow-md print:break-inside-avoid sm:px-8 sm:py-10"
+              aria-labelledby="active-opps-conv-heading"
+            >
+              <p
+                id="active-opps-conv-heading"
+                className="mx-auto max-w-3xl text-sm font-semibold leading-relaxed text-white text-pretty sm:text-[15px]"
+              >
+                {c.conv}
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap print:flex-row">
+                <StatsPrimaryButton
+                  to="/inscription"
+                  className="w-full min-w-[12rem] justify-center border-white bg-white text-[#01696f] shadow-md motion-safe:hover:bg-slate-50 motion-safe:hover:text-[#015a5f] sm:w-auto print:w-auto"
+                >
+                  {c.ctaPrimary}
+                </StatsPrimaryButton>
+                <StatsSecondaryButton
+                  to="/requests"
+                  className="w-full min-w-[12rem] justify-center border-2 border-white bg-transparent text-white motion-safe:hover:border-white motion-safe:hover:bg-white/15 sm:w-auto print:w-auto"
+                >
+                  {c.ctaSecondary}
+                </StatsSecondaryButton>
+              </div>
             </div>
           </div>
         ) : null}

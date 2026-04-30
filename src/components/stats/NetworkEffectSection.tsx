@@ -104,13 +104,11 @@ export function NetworkEffectSection({
         </div>
 
         <div className="px-4 pb-4 sm:px-6 sm:pb-6">
-          <StatsInsightCard className="border-[#01696f]/20">
-            <div className="flex items-start gap-2">
-              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#01696f]" aria-hidden />
-              <div>
-                <h3 className="text-sm font-extrabold text-slate-900 sm:text-[15px]">{c.profileHeading}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">{c.profileBody}</p>
-              </div>
+          <StatsInsightCard className="border border-white/15 bg-[#01696f] py-6 shadow-md sm:p-8">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <Sparkles className="h-5 w-5 shrink-0 text-white/95" aria-hidden />
+              <h3 className="text-sm font-extrabold text-white sm:text-[15px]">{c.profileHeading}</h3>
+              <p className="max-w-3xl text-sm leading-relaxed text-white/90">{c.profileBody}</p>
             </div>
           </StatsInsightCard>
         </div>

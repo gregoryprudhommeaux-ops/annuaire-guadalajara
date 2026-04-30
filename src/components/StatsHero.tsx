@@ -19,7 +19,11 @@ export type StatsHeroModel = {
 };
 
 function KpiValueSkeleton() {
-  return <div className="h-10 w-24 max-w-full animate-pulse rounded-md bg-slate-200/90" aria-hidden />;
+  return (
+    <div className="flex w-full justify-center" aria-hidden>
+      <div className="h-10 w-24 max-w-full animate-pulse rounded-md bg-slate-200/90" />
+    </div>
+  );
 }
 
 function UiBadge({ children }: { children: React.ReactNode }) {
@@ -46,21 +50,26 @@ function KpiCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${statsCardClassName} relative transition-shadow motion-safe:hover:shadow-md md:p-5`}>
-      <div className="absolute right-3 top-3 flex flex-col items-end gap-1 md:right-4 md:top-4" aria-hidden>
-        <Icon className="h-6 w-6 text-[#01696f]" strokeWidth={1.75} />
+    <div
+      className={`${statsCardClassName} flex flex-col items-center text-center transition-shadow motion-safe:hover:shadow-md md:p-5`}
+    >
+      {/* Hauteur minimale fixe pour aligner les métriques entre cartes (avec ou sans badge). */}
+      <div className="mb-4 flex min-h-[3.25rem] w-full flex-wrap items-center justify-center gap-x-2 gap-y-2 px-1">
+        {badge ?? null}
+        <Icon className="h-6 w-6 shrink-0 text-[#01696f]" strokeWidth={1.75} aria-hidden />
       </div>
-      {badge ? <div className="relative z-[1] mb-2 flex flex-wrap justify-end pr-10">{badge}</div> : null}
-      <div className="relative min-h-[3rem] pr-8 sm:pr-10">{displaySkeleton ? <KpiValueSkeleton /> : children}</div>
+      <div className="relative flex min-h-[3rem] w-full items-center justify-center">
+        {displaySkeleton ? <KpiValueSkeleton /> : children}
+      </div>
       <p className="mt-2 text-sm font-medium text-gray-800">{label}</p>
-      <p className="mt-0.5 text-xs leading-snug text-gray-500">{sublabel}</p>
+      <p className="mt-1 max-w-[20rem] text-xs leading-snug text-gray-500 text-pretty sm:max-w-none">{sublabel}</p>
     </div>
   );
 }
 
 function SoftValue({ text, secondary }: { text: string; secondary?: string }) {
   return (
-    <div className="pt-0.5">
+    <div className="w-full pt-0.5 text-center">
       <p className="text-lg font-semibold leading-snug text-slate-700">{text}</p>
       {secondary ? <p className="mt-1 text-xs leading-relaxed text-slate-500">{secondary}</p> : null}
     </div>
@@ -168,7 +177,7 @@ export function StatsHero({ lang, model }: { lang: Language; model: StatsHeroMod
           {totalMembers === 0 ? (
             <SoftValue text={t.membersZero} secondary={t.badgeSoon} />
           ) : (
-            <div className="pr-8 text-4xl font-bold leading-tight tracking-tight text-[#01696f] [font-variant-numeric:lining-nums] sm:pr-10">
+            <div className="text-4xl font-bold leading-tight tracking-tight text-[#01696f] [font-variant-numeric:lining-nums]">
               {Math.max(0, Math.round(aMembers)).toLocaleString(loc)}
             </div>
           )}
@@ -181,7 +190,7 @@ export function StatsHero({ lang, model }: { lang: Language; model: StatsHeroMod
           sublabel={t.connectionsSub}
         >
           {showBigPotential ? (
-            <div className="pr-8 text-4xl font-bold leading-tight tracking-tight text-[#01696f] [font-variant-numeric:lining-nums] sm:pr-10">
+            <div className="text-4xl font-bold leading-tight tracking-tight text-[#01696f] [font-variant-numeric:lining-nums]">
               {Math.max(0, Math.round(aPot)).toLocaleString(loc)}
             </div>
           ) : (
@@ -201,7 +210,7 @@ export function StatsHero({ lang, model }: { lang: Language; model: StatsHeroMod
           ) : growthIsStableEqual ? (
             <SoftValue text={t.growthStable} />
           ) : (
-            <div className="pr-8 text-4xl font-bold leading-tight tracking-tight text-[#01696f] [font-variant-numeric:lining-nums] sm:pr-10">
+            <div className="text-4xl font-bold leading-tight tracking-tight text-[#01696f] [font-variant-numeric:lining-nums]">
               {formatMoMPct(monthOverMonthGrowthPct)}
             </div>
           )}
@@ -214,7 +223,7 @@ export function StatsHero({ lang, model }: { lang: Language; model: StatsHeroMod
           sublabel={t.sectorsSub}
         >
           {showSectors ? (
-            <div className="pr-8 text-4xl font-bold leading-tight tracking-tight text-[#01696f] [font-variant-numeric:lining-nums] sm:pr-10">
+            <div className="text-4xl font-bold leading-tight tracking-tight text-[#01696f] [font-variant-numeric:lining-nums]">
               {Math.max(0, Math.round(aSectors)).toLocaleString(loc)}
             </div>
           ) : (

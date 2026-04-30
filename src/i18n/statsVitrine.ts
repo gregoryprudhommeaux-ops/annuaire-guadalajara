@@ -102,6 +102,8 @@ export type StatsVitrineCopy = {
     b1: string;
     b2: string;
     b3: string;
+    /** Mise en avant : événements qualifiés selon les affinités (colonne droite). */
+    eventsHighlight: string;
     ctaLine: string;
     ctaPrimary: string;
     ctaSecondary: string;
@@ -310,6 +312,8 @@ const FR: StatsVitrineCopy = {
     b1: 'Des conversations plus naturelles',
     b2: 'Des passerelles entre secteurs',
     b3: 'Une confiance qui se crée plus vite',
+    eventsHighlight:
+      'Ces affinités nous permettent aussi d’inviter les membres à des événements qualifiés qui correspondent particulièrement à leurs centres d’intérêt.',
     ctaLine: 'Les meilleures connexions commencent souvent par un terrain commun.',
     ctaPrimary: 'Rejoindre le réseau',
     ctaSecondary: 'Découvrir la communauté',
@@ -546,6 +550,8 @@ const EN: StatsVitrineCopy = {
     b1: 'More natural conversations',
     b2: 'Bridges between sectors',
     b3: 'Trust that builds faster',
+    eventsHighlight:
+      'These affinities also help us invite members to curated, qualified events that match their interests particularly well.',
     ctaLine: 'The strongest connections often start with common ground.',
     ctaPrimary: 'Join the network',
     ctaSecondary: 'Discover the community',
@@ -783,6 +789,8 @@ const ES: StatsVitrineCopy = {
     b1: 'Conversaciones más naturales',
     b2: 'Puentes entre sectores',
     b3: 'Una confianza que se construye más rápido',
+    eventsHighlight:
+      'Estas afinidades también nos permiten invitar a los miembros a eventos cualificados que encajan especialmente con sus intereses.',
     ctaLine: 'Las mejores conexiones a menudo empiezan con un terreno común.',
     ctaPrimary: 'Unirse a la red',
     ctaSecondary: 'Descubrir la comunidad',

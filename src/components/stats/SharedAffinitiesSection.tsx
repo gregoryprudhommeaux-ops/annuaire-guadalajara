@@ -189,6 +189,11 @@ export function SharedAffinitiesSection({
                   {c.b3}
                 </li>
               </ul>
+              <div className="mt-5 rounded-xl border border-white/15 bg-[#01696f] px-4 py-4 shadow-sm sm:px-5 sm:py-5">
+                <p className="text-center text-sm font-semibold leading-relaxed text-white text-pretty sm:text-[15px]">
+                  {c.eventsHighlight}
+                </p>
+              </div>
             </StatsInsightCard>
           </aside>
         </div>
