@@ -302,7 +302,6 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
                   setCommunicationLanguageDraft={setCommunicationLanguageDraft}
                 />
 
-                <input type="hidden" name="photoURL" value={profilePhotoUrlDraft} />
                 <ProfileEditPersonBioBlock
                   lang={lang}
                   t={t}

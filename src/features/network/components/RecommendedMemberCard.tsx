@@ -107,28 +107,34 @@ export function RecommendedMemberCard({
         </div>
       </div>
 
-      <div className="recommended-card__content">
-        <h3 className="recommended-card__name" title={displayName || fullName}>
-          {displayName || fullName}
-        </h3>
+      <div className="recommended-card__body">
+        <div className="recommended-card__content">
+          <h3 className="recommended-card__name" title={displayName || fullName}>
+            {displayName || fullName}
+          </h3>
 
-        {companyName ? (
-          <p className="recommended-card__company" title={companyName}>
-            {companyName}
-          </p>
-        ) : null}
+          {companyName ? (
+            <p className="recommended-card__company" title={companyName}>
+              {companyName}
+            </p>
+          ) : null}
 
-        {sector ? <p className="recommended-card__sector">{sector}</p> : null}
+          {sector ? <p className="recommended-card__sector">{sector}</p> : null}
 
-        {reasons.length ? (
-          <div className="recommended-card__reasons">
-            {reasons.map((reason, i) => (
-              <span key={`${reason}-${i}`} className="recommended-card__reasonChip">
-                {reason}
-              </span>
-            ))}
+          <div className="recommended-card__reasonsSlot">
+            {reasons.length ? (
+              <div className="recommended-card__reasons">
+                {reasons.map((reason, i) => (
+                  <span key={`${reason}-${i}`} className="recommended-card__reasonChip">
+                    {reason}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <span className="recommended-card__reasonsEmpty" aria-hidden />
+            )}
           </div>
-        ) : null}
+        </div>
 
         {evidentMatch ? (
           <div className="recommended-card__evidentWrap">

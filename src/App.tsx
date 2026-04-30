@@ -6939,20 +6939,39 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         {workFunctionLabel(selectedProfile.positionCategory, lang)}
                       </p>
                     )}
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {(() => {
-                        const cats = profileDistinctActivityCategories(selectedProfile);
-                        return cats.length ? (
-                          cats.map((cat) => (
-                            <span key={cat} className={profileNeutralPillClass}>
-                              {activityCategoryLabel(cat, lang)}
-                            </span>
-                          ))
-                        ) : (
-                          <span className={profileNeutralPillClass}>—</span>
-                        );
-                      })()}
-                      <span className={profileNeutralPillClass}>{selectedProfile.city}</span>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex min-w-0 flex-wrap gap-2">
+                        {(() => {
+                          const cats = profileDistinctActivityCategories(selectedProfile);
+                          return cats.length ? (
+                            cats.map((cat) => (
+                              <span key={cat} className={profileNeutralPillClass}>
+                                {activityCategoryLabel(cat, lang)}
+                              </span>
+                            ))
+                          ) : (
+                            <span className={profileNeutralPillClass}>—</span>
+                          );
+                        })()}
+                        {selectedProfile.city ? (
+                          <span className={profileNeutralPillClass}>{selectedProfile.city}</span>
+                        ) : null}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsShareProfileModalOpen(true);
+                        }}
+                        className={cn(
+                          profileNeutralPillClass,
+                          'shrink-0 gap-2 transition-colors hover:bg-slate-100'
+                        )}
+                        title={pickLang('Partager le profil', 'Compartir perfil', 'Share profile', lang)}
+                      >
+                        <Share2 size={16} aria-hidden />
+                        {pickLang('Partager', 'Compartir', 'Share', lang)}
+                      </button>
                     </div>
                     <div
                       className={cn(
@@ -6967,18 +6986,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           {formatProfileLastSeen(selectedProfile.lastSeen, lang) ?? t('adminLastSeenUnknown')}
                         </p>
                       ) : null}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsShareProfileModalOpen(true);
-                        }}
-                        className="inline-flex shrink-0 items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-stone-700 shadow-sm transition-colors hover:bg-stone-50"
-                        title={pickLang('Partager le profil', 'Compartir perfil', 'Share profile', lang)}
-                      >
-                        <Share2 size={18} aria-hidden />
-                        {pickLang('Partager', 'Compartir', 'Share', lang)}
-                      </button>
                     </div>
                     {viewerIsAdmin &&
                       (selectedProfile.needsAdminReview === true || selectedProfile.isValidated === false) && (

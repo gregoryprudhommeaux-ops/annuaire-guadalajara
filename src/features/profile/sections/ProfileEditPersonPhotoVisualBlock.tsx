@@ -57,6 +57,7 @@ export default function ProfileEditPersonPhotoVisualBlock({
         </label>
         <input
           id="profilePhotoUrl"
+          name="photoURL"
           type="url"
           inputMode="url"
           autoComplete="url"

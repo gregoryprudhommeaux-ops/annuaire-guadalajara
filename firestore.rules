@@ -24,7 +24,11 @@ service cloud.firestore {
         request.auth.uid == 'HiSztwqyDXUZ5RalOyqUP3BJd6Y2' ||
         exists(/databases/$(database)/documents/admin_allowlist/$(request.auth.uid)) ||
         (request.auth.token.email is string &&
-          request.auth.token.email.trim() == 'chinois2001@gmail.com') ||
+          (
+            request.auth.token.email.trim() == 'chinois2001@gmail.com' ||
+            request.auth.token.email.trim() == 'gregory.prudhommeaux@gmail.com'
+          )
+        ) ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
