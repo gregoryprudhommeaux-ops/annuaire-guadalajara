@@ -64,7 +64,8 @@
     --fn-header-h: 56px;
     /* Second row: primary nav pills (AppHeader), only from sm+ — used for sticky offsets on profile, etc. */
     --fn-header-subnav-h: 3.25rem;
-    --fn-bottomnav-h: 64px;
+    /* Mobile bottom nav: slightly tighter to avoid taking over the screen. */
+    --fn-bottomnav-h: 56px;
   }
 
   html,
