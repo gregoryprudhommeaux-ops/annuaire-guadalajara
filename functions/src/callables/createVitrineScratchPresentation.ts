@@ -11,6 +11,11 @@ function emu(magnitude: number) {
   return { magnitude: Math.round(magnitude), unit: 'EMU' as const };
 }
 
+/** Google Slides API: custom objectId length must be ≥ 5. */
+function scratchShapeId(slideIndex: number, kind: 'title' | 'body' | 'img'): string {
+  return `vn_s${slideIndex}_${kind}`;
+}
+
 function transform(translateX: number, translateY: number) {
   return {
     scaleX: 1,
@@ -214,14 +219,14 @@ export async function createVitrineScratchPresentation(
   for (let i = 1; i < 14; i += 1) {
     requests.push({
       createSlide: {
-        objectId: `slide_${i}`,
+        objectId: `vn_slide_${i}`,
         insertionIndex: i,
         slideLayoutReference: { predefinedLayout: 'BLANK' },
       },
     });
   }
 
-  const pageIds = [s0, ...Array.from({ length: 13 }, (_, i) => `slide_${i + 1}`)];
+  const pageIds = [s0, ...Array.from({ length: 13 }, (_, i) => `vn_slide_${i + 1}`)];
   const titles = slideSectionTitles(lang);
 
   const tw = PAGE_W - 2 * PAD;
@@ -230,70 +235,70 @@ export async function createVitrineScratchPresentation(
   const bodyH = PAGE_H - bodyTop - PAD;
 
   // 0 cover
-  pushTextBox(requests, pageIds[0], 'ss0t', PAD, PAD, tw, titleH, bundle.docTitle);
-  pushTextBox(requests, pageIds[0], 'ss0b', PAD, bodyTop, tw, bodyH * 0.35, `${bundle.extractDateLong}\n${bundle.month}`);
+  pushTextBox(requests, pageIds[0], scratchShapeId(0, 'title'), PAD, PAD, tw, titleH, bundle.docTitle);
+  pushTextBox(requests, pageIds[0], scratchShapeId(0, 'body'), PAD, bodyTop, tw, bodyH * 0.35, `${bundle.extractDateLong}\n${bundle.month}`);
 
   // 1 KPIs
-  pushTextBox(requests, pageIds[1], 'ss1t', PAD, PAD, tw, titleH, titles[1]);
-  pushTextBox(requests, pageIds[1], 'ss1b', PAD, bodyTop, tw, bodyH, kpiBody(bundle, lang));
+  pushTextBox(requests, pageIds[1], scratchShapeId(1, 'title'), PAD, PAD, tw, titleH, titles[1]);
+  pushTextBox(requests, pageIds[1], scratchShapeId(1, 'body'), PAD, bodyTop, tw, bodyH, kpiBody(bundle, lang));
 
   // 2 affinities
-  pushTextBox(requests, pageIds[2], 'ss2t', PAD, PAD, tw, titleH, titles[2]);
-  pushTextBox(requests, pageIds[2], 'ss2b', PAD, bodyTop, tw, bodyH, bundle.affinitiesList);
+  pushTextBox(requests, pageIds[2], scratchShapeId(2, 'title'), PAD, PAD, tw, titleH, titles[2]);
+  pushTextBox(requests, pageIds[2], scratchShapeId(2, 'body'), PAD, bodyTop, tw, bodyH, bundle.affinitiesList);
 
   // 3 insights
-  pushTextBox(requests, pageIds[3], 'ss3t', PAD, PAD, tw, titleH, titles[3]);
-  pushTextBox(requests, pageIds[3], 'ss3b', PAD, bodyTop, tw, bodyH, bundle.affinitiesInsights);
+  pushTextBox(requests, pageIds[3], scratchShapeId(3, 'title'), PAD, PAD, tw, titleH, titles[3]);
+  pushTextBox(requests, pageIds[3], scratchShapeId(3, 'body'), PAD, bodyTop, tw, bodyH, bundle.affinitiesInsights);
 
   // 4 sectors + chart
-  pushTextBox(requests, pageIds[4], 'ss4t', PAD, PAD, tw, titleH, titles[4]);
+  pushTextBox(requests, pageIds[4], scratchShapeId(4, 'title'), PAD, PAD, tw, titleH, titles[4]);
   const textH4 = bodyH * 0.38;
-  pushTextBox(requests, pageIds[4], 'ss4b', PAD, bodyTop, tw, textH4, bundle.sectorsList);
+  pushTextBox(requests, pageIds[4], scratchShapeId(4, 'body'), PAD, bodyTop, tw, textH4, bundle.sectorsList);
   const imgY4 = bodyTop + textH4 + 0.12 * EMU_PER_IN;
   const imgH = bodyH * 0.52;
-  pushImage(requests, pageIds[4], 'ss4img', bundle.chartSectors, PAD, imgY4, tw, imgH);
+  pushImage(requests, pageIds[4], scratchShapeId(4, 'img'), bundle.chartSectors, PAD, imgY4, tw, imgH);
 
   // 5 growth + chart
-  pushTextBox(requests, pageIds[5], 'ss5t', PAD, PAD, tw, titleH, titles[5]);
+  pushTextBox(requests, pageIds[5], scratchShapeId(5, 'title'), PAD, PAD, tw, titleH, titles[5]);
   const textH5 = bodyH * 0.32;
-  pushTextBox(requests, pageIds[5], 'ss5b', PAD, bodyTop, tw, textH5, bundle.growthSummary);
+  pushTextBox(requests, pageIds[5], scratchShapeId(5, 'body'), PAD, bodyTop, tw, textH5, bundle.growthSummary);
   const imgY5 = bodyTop + textH5 + 0.12 * EMU_PER_IN;
-  pushImage(requests, pageIds[5], 'ss5img', bundle.chartGrowth, PAD, imgY5, tw, imgH);
+  pushImage(requests, pageIds[5], scratchShapeId(5, 'img'), bundle.chartGrowth, PAD, imgY5, tw, imgH);
 
   // 6 recent
-  pushTextBox(requests, pageIds[6], 'ss6t', PAD, PAD, tw, titleH, titles[6]);
-  pushTextBox(requests, pageIds[6], 'ss6b', PAD, bodyTop, tw, bodyH, bundle.recentActivityList);
+  pushTextBox(requests, pageIds[6], scratchShapeId(6, 'title'), PAD, PAD, tw, titleH, titles[6]);
+  pushTextBox(requests, pageIds[6], scratchShapeId(6, 'body'), PAD, bodyTop, tw, bodyH, bundle.recentActivityList);
 
   // 7 most sought + needs chart
-  pushTextBox(requests, pageIds[7], 'ss7t', PAD, PAD, tw, titleH, titles[7]);
+  pushTextBox(requests, pageIds[7], scratchShapeId(7, 'title'), PAD, PAD, tw, titleH, titles[7]);
   const textH7 = bodyH * 0.38;
-  pushTextBox(requests, pageIds[7], 'ss7b', PAD, bodyTop, tw, textH7, bundle.mostSoughtList);
+  pushTextBox(requests, pageIds[7], scratchShapeId(7, 'body'), PAD, bodyTop, tw, textH7, bundle.mostSoughtList);
   const imgY7 = bodyTop + textH7 + 0.12 * EMU_PER_IN;
-  pushImage(requests, pageIds[7], 'ss7img', bundle.chartNeeds, PAD, imgY7, tw, imgH);
+  pushImage(requests, pageIds[7], scratchShapeId(7, 'img'), bundle.chartNeeds, PAD, imgY7, tw, imgH);
 
   // 8 active list
-  pushTextBox(requests, pageIds[8], 'ss8t', PAD, PAD, tw, titleH, titles[8]);
-  pushTextBox(requests, pageIds[8], 'ss8b', PAD, bodyTop, tw, bodyH, bundle.activeOppsList);
+  pushTextBox(requests, pageIds[8], scratchShapeId(8, 'title'), PAD, PAD, tw, titleH, titles[8]);
+  pushTextBox(requests, pageIds[8], scratchShapeId(8, 'body'), PAD, bodyTop, tw, bodyH, bundle.activeOppsList);
 
   // 9 why active
-  pushTextBox(requests, pageIds[9], 'ss9t', PAD, PAD, tw, titleH, titles[9]);
-  pushTextBox(requests, pageIds[9], 'ss9b', PAD, bodyTop, tw, bodyH, bundle.activeOppsWhy);
+  pushTextBox(requests, pageIds[9], scratchShapeId(9, 'title'), PAD, PAD, tw, titleH, titles[9]);
+  pushTextBox(requests, pageIds[9], scratchShapeId(9, 'body'), PAD, bodyTop, tw, bodyH, bundle.activeOppsWhy);
 
   // 10 recent requests
-  pushTextBox(requests, pageIds[10], 'ss10t', PAD, PAD, tw, titleH, titles[10]);
-  pushTextBox(requests, pageIds[10], 'ss10b', PAD, bodyTop, tw, bodyH, bundle.recentRequestsList);
+  pushTextBox(requests, pageIds[10], scratchShapeId(10, 'title'), PAD, PAD, tw, titleH, titles[10]);
+  pushTextBox(requests, pageIds[10], scratchShapeId(10, 'body'), PAD, bodyTop, tw, bodyH, bundle.recentRequestsList);
 
   // 11 why requests
-  pushTextBox(requests, pageIds[11], 'ss11t', PAD, PAD, tw, titleH, titles[11]);
-  pushTextBox(requests, pageIds[11], 'ss11b', PAD, bodyTop, tw, bodyH, bundle.recentRequestsWhy);
+  pushTextBox(requests, pageIds[11], scratchShapeId(11, 'title'), PAD, PAD, tw, titleH, titles[11]);
+  pushTextBox(requests, pageIds[11], scratchShapeId(11, 'body'), PAD, bodyTop, tw, bodyH, bundle.recentRequestsWhy);
 
   // 12 CTA
-  pushTextBox(requests, pageIds[12], 'ss12t', PAD, PAD, tw, titleH, titles[12]);
-  pushTextBox(requests, pageIds[12], 'ss12b', PAD, bodyTop, tw, bodyH, bundle.ctaCards);
+  pushTextBox(requests, pageIds[12], scratchShapeId(12, 'title'), PAD, PAD, tw, titleH, titles[12]);
+  pushTextBox(requests, pageIds[12], scratchShapeId(12, 'body'), PAD, bodyTop, tw, bodyH, bundle.ctaCards);
 
   // 13 footer
-  pushTextBox(requests, pageIds[13], 'ss13t', PAD, PAD, tw, titleH, titles[13]);
-  pushTextBox(requests, pageIds[13], 'ss13b', PAD, bodyTop, tw, bodyH, footerBody(bundle, lang));
+  pushTextBox(requests, pageIds[13], scratchShapeId(13, 'title'), PAD, PAD, tw, titleH, titles[13]);
+  pushTextBox(requests, pageIds[13], scratchShapeId(13, 'body'), PAD, bodyTop, tw, bodyH, footerBody(bundle, lang));
 
   await slides.presentations.batchUpdate({
     presentationId,
