@@ -723,30 +723,20 @@ export function AdminEmailManager() {
                         {formatDate(t.updatedAt)}
                       </td>
                       <td className="px-3 py-3 sm:px-4">
-                        <div className="flex flex-wrap gap-1.5">
-                          <div className="flex flex-col items-start gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => handleUseTemplate(t)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs font-semibold text-stone-800 hover:bg-stone-50"
-                            >
-                              <Copy className="h-3 w-3" aria-hidden />
-                              Utiliser
-                            </button>
-                            <button
-                              type="button"
-                              disabled={busy === `tpl-${t.id}`}
-                              onClick={() => handleEditTemplate(t)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs font-semibold text-stone-800 hover:bg-stone-50 disabled:opacity-60"
-                            >
-                              Renommer
-                            </button>
-                          </div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleUseTemplate(t)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs font-semibold text-stone-800 hover:bg-stone-50"
+                          >
+                            <Copy className="h-3 w-3" aria-hidden />
+                            Utiliser
+                          </button>
                           <button
                             type="button"
                             disabled={busy === `share-tpl-${t.id}`}
                             onClick={() => handleShareTemplate(t)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 disabled:opacity-60"
+                            className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs font-semibold text-stone-800 hover:bg-stone-50 disabled:opacity-60"
                           >
                             {busy === `share-tpl-${t.id}` ? (
                               <Loader2 className="h-3 w-3 animate-spin" aria-hidden />

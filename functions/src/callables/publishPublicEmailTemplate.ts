@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import * as logger from 'firebase-functions/logger';
 import { getApps } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { FIRESTORE_DATABASE_ID } from '../constants';
 import { isCallerAdmin } from '../lib/admin';
 
@@ -38,18 +39,30 @@ export const publishPublicEmailTemplate = onCall(
     if (!templateId) throw new HttpsError('invalid-argument', 'templateId manquant.');
     if (!subject || !bodyHtml) throw new HttpsError('invalid-argument', 'subject/bodyHtml manquants.');
 
-    const db = getFirestore(getApps()[0]!, FIRESTORE_DATABASE_ID);
-
-    await db.doc(`publicEmailTemplates/${templateId}`).set(
-      {
-        name: name || subject,
-        subject,
-        bodyHtml,
-        createdBy: request.auth.uid,
-        updatedAt: new Date(),
-      },
-      { merge: true }
-    );
+    try {
+      const db = getFirestore(getApps()[0]!, FIRESTORE_DATABASE_ID);
+      await db.doc(`publicEmailTemplates/${templateId}`).set(
+        {
+          name: name || subject,
+          subject,
+          bodyHtml,
+          createdBy: request.auth.uid,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch (err) {
+      logger.error('publishPublicEmailTemplate failed', {
+        templateId,
+        uid: request.auth.uid,
+        email: request.auth.token.email ?? null,
+        err: err instanceof Error ? { message: err.message, stack: err.stack } : String(err),
+      });
+      throw new HttpsError(
+        'internal',
+        err instanceof Error ? err.message : 'Publication échouée.'
+      );
+    }
 
     return { ok: true, id: templateId };
   }
