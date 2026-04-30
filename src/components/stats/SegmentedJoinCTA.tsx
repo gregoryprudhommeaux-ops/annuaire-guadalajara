@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Compass, Handshake, Radar } from 'lucide-react';
 import type { Language } from '@/types';
+import { getStatsVitrineCopy } from '@/i18n/statsVitrine';
 import { StatsCard, StatsPrimaryButton, StatsSectionHeader, StatsSectionShell } from '@/components/stats/ui';
 
 type Persona = {
@@ -11,120 +12,6 @@ type Persona = {
   to: string;
   Icon: React.ComponentType<{ className?: string }>;
 };
-
-type Copy = {
-  eyebrow: string;
-  title: string;
-  lead: string;
-  p1: Persona;
-  p2: Persona;
-  p3: Persona;
-  footer: string;
-  brandCta: string;
-};
-
-function tcopy(lang: Language): Copy {
-  if (lang === 'en') {
-    return {
-      eyebrow: 'Take action',
-      title: 'The network becomes useful when the right profile joins at the right time',
-      lead: 'Choose the path that best matches your current situation.',
-      p1: {
-        title: 'You are growing your business in Mexico',
-        body: 'Access qualified contacts, move faster on the ground, and spot the right local relays earlier.',
-        micro: 'Built for French-speaking business exchanges in Guadalajara',
-        cta: 'Join as a business',
-        to: '/inscription',
-        Icon: Compass,
-      },
-      p2: {
-        title: 'You are looking for commercial partners',
-        body: 'Distributors, deal-bringers, local experts, suppliers: turn your searches into useful connections.',
-        micro: 'More targeted than a simple directory',
-        cta: 'View opportunities',
-        to: '/requests',
-        Icon: Handshake,
-      },
-      p3: {
-        title: 'You are already established and want more visibility',
-        body: 'Position your profile so you show up in searches and in requests from the community.',
-        micro: 'Visible in a qualified community',
-        cta: 'Build my presence in the network',
-        to: '/inscription',
-        Icon: Radar,
-      },
-      footer:
-        'The more relevant profiles join, the more value each new sign-up creates for others.',
-      brandCta: 'Join FrancoNetwork',
-    };
-  }
-  if (lang === 'es') {
-    return {
-      eyebrow: 'Pase a la acción',
-      title: 'La red gana en utilidad cuando el perfil adecuado entra en el momento adecuado',
-      lead: 'Elija el punto de entrada que mejor encaje con su situación actual.',
-      p1: {
-        title: 'Desarrolla su actividad en México',
-        body: 'Acceda a contactos cualificados, gane tiempo sobre el terreno e identifique antes a los buenos apoyos locales.',
-        micro: 'Pensado para el intercambio de negocio francófono en Guadalajara',
-        cta: 'Unirse como empresa',
-        to: '/inscription',
-        Icon: Compass,
-      },
-      p2: {
-        title: 'Busca socios comerciales',
-        body: 'Distribuidores, generadores de oportunidades, expertos locales, proveedores: de la búsqueda a la conexión útil.',
-        micro: 'Más orientado que un anuario clásico',
-        cta: 'Ver oportunidades',
-        to: '/requests',
-        Icon: Handshake,
-      },
-      p3: {
-        title: 'Ya está implantado y quiere más visibilidad',
-        body: 'Posicione su perfil en el buen momento para figurar en las búsquedas y en las demandas de la comunidad.',
-        micro: 'Presencia visible en una comunidad cualificada',
-        cta: 'Crear mi presencia en la red',
-        to: '/inscription',
-        Icon: Radar,
-      },
-      footer:
-        'Cuanto más perfiles relevantes atrae la red, más valor aporta cada alta para los demás.',
-      brandCta: 'Unirse a FrancoNetwork',
-    };
-  }
-  return {
-    eyebrow: 'Passer à l’action',
-    title: 'Le réseau devient utile dès que le bon profil entre au bon moment',
-    lead: 'Choisissez l’entrée qui correspond le mieux à votre situation actuelle.',
-    p1: {
-      title: 'Vous développez votre activité au Mexique',
-      body: 'Accédez à des contacts qualifiés, gagnez du temps sur le terrain et identifiez plus vite les bons relais locaux.',
-      micro: 'Pensé pour les échanges business francophones à Guadalajara',
-      cta: 'Rejoindre comme entreprise',
-      to: '/inscription',
-      Icon: Compass,
-    },
-    p2: {
-      title: 'Vous cherchez des partenaires commerciaux',
-      body: 'Distributeurs, apporteurs d’affaires, experts locaux, fournisseurs : le réseau vous aide à transformer vos recherches en connexions utiles.',
-      micro: 'Des connexions plus ciblées qu’un annuaire classique',
-      cta: 'Voir les opportunités',
-      to: '/requests',
-      Icon: Handshake,
-    },
-    p3: {
-      title: 'Vous êtes déjà implanté et souhaitez gagner en visibilité',
-      body: 'Positionnez votre profil au bon moment pour apparaître dans les recherches et les demandes exprimées par la communauté.',
-      micro: 'Une présence visible au sein d’une communauté qualifiée',
-      cta: 'Créer ma présence dans le réseau',
-      to: '/inscription',
-      Icon: Radar,
-    },
-    footer:
-      'Plus le réseau attire de profils pertinents, plus chaque inscription crée de la valeur pour les autres.',
-    brandCta: 'Rejoindre FrancoNetwork',
-  };
-}
 
 type CardProps = {
   persona: Persona;
@@ -157,8 +44,13 @@ function PersonaCard({ persona, index }: CardProps) {
  * Bloc de conversion final segmenté (3 profils) pour la page `/stats`.
  */
 export function SegmentedJoinCTA({ lang }: { lang: Language }) {
-  const c = tcopy(lang);
-  const personas: Persona[] = [c.p1, c.p2, c.p3];
+  const sj = getStatsVitrineCopy(lang).segmentedJoin;
+  const personas: Persona[] = [
+    { ...sj.p1, Icon: Compass },
+    { ...sj.p2, Icon: Handshake },
+    { ...sj.p3, Icon: Radar },
+  ];
+  const c = { eyebrow: sj.eyebrow, title: sj.title, lead: sj.lead, footer: sj.footer, brandCta: sj.brandCta };
   const [reveal, setReveal] = useState(false);
 
   useEffect(() => {

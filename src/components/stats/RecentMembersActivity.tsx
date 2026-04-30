@@ -17,43 +17,8 @@ import {
 } from '@/lib/recentMembersActivityUtils';
 import type { Language } from '@/types';
 import type { UserProfile } from '@/types';
+import { getStatsVitrineCopy } from '@/i18n/statsVitrine';
 import { StatsCard, StatsSectionHeader, StatsSectionShell } from '@/components/stats/ui';
-
-type Copy = {
-  eyebrow: string;
-  title: string;
-  lead: string;
-  empty: string;
-  sectorFallback: string;
-};
-
-function tcopy(lang: Language): Copy {
-  if (lang === 'en') {
-    return {
-      eyebrow: 'Recent activity',
-      title: 'They recently joined the network',
-      lead: 'Varied profiles, concrete needs, and visible momentum.',
-      empty: 'The first members are building the network’s foundation.',
-      sectorFallback: 'Professional activity',
-    };
-  }
-  if (lang === 'es') {
-    return {
-      eyebrow: 'Actividad reciente',
-      title: 'Se unieron a nosotros en los últimos días',
-      lead: 'Perfiles variados, necesidades concretas, dinamismo visible.',
-      empty: 'Los primeros miembros están construyendo la base de la red.',
-      sectorFallback: 'Actividad profesional',
-    };
-  }
-  return {
-    eyebrow: 'Activité récente',
-    title: 'Ils nous ont rejoints ces derniers jours',
-    lead: 'Des profils variés, des besoins concrets, une dynamique visible.',
-    empty: 'Les premiers membres construisent actuellement la base du réseau.',
-    sectorFallback: 'Activité professionnelle',
-  };
-}
 
 type SectorVisual = {
   Icon: React.ComponentType<{ className?: string }>;
@@ -155,7 +120,7 @@ function CardSkeleton() {
  * Requête : `users` triés par `createdAt` desc, `limit(4)`.
  */
 export function RecentMembersActivity({ lang }: { lang: Language }) {
-  const c = tcopy(lang);
+  const c = getStatsVitrineCopy(lang).recentMembers;
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<UserProfile[]>([]);
   const [failed, setFailed] = useState(false);

@@ -19,77 +19,7 @@ import {
 } from '@/lib/formatPublicMemberRequest';
 import { mapMemberRequestDoc, MEMBER_REQUESTS_COLLECTION } from '@/lib/memberRequests';
 import type { Language, MemberNetworkRequest } from '@/types';
-
-type Copy = {
-  eyebrow: string;
-  title: string;
-  lead: string;
-  whyTitle: string;
-  whyBody: string;
-  b1: string;
-  b2: string;
-  b3: string;
-  ctaLine: string;
-  ctaPrimary: string;
-  ctaSecondary: string;
-  badgeNew: string;
-  empty: string;
-};
-
-function tcopy(lang: Language): Copy {
-  if (lang === 'en') {
-    return {
-      eyebrow: 'Recent requests',
-      title: 'Recent needs published in the network',
-      lead: 'Concrete searches already posted by members in the last few days.',
-      whyTitle: 'Why this matters',
-      whyBody:
-        'These requests show that beyond visibility, members already use the network to find concrete relays, focused expertise, and trusted partners.',
-      b1: 'Genuinely expressed needs',
-      b2: 'Already active opportunities',
-      b3: 'A community that takes action',
-      ctaLine: 'Your profile could address a need already in the network.',
-      ctaPrimary: 'Join the network',
-      ctaSecondary: 'View requests',
-      badgeNew: 'New',
-      empty: 'The first active requests will appear here as the network grows.',
-    };
-  }
-  if (lang === 'es') {
-    return {
-      eyebrow: 'Solicitudes recientes',
-      title: 'Necesidades publicadas recientemente en la red',
-      lead: 'Búsquedas concretas, ya compartidas por las socias y los socios en los últimos días.',
-      whyTitle: 'Para qué sirve',
-      whyBody:
-        'Estas señales muestran que, además de visibilidad, la red se usa ya para relés concretos, pericia focalizada y socias de confianza.',
-      b1: 'Necesidades realmente expresadas',
-      b2: 'Oportunidades ya activas',
-      b3: 'Una comunidad en acción',
-      ctaLine: 'Su perfil podría responder a una solicitud que ya circula en la red.',
-      ctaPrimary: 'Unirse a la red',
-      ctaSecondary: 'Ver solicitudes',
-      badgeNew: 'Nuevo',
-      empty: 'Las primeras demandas activas irán apareciendo aquí con el crecimiento de la red.',
-    };
-  }
-  return {
-    eyebrow: 'Demandes récentes',
-    title: 'Des besoins publiés récemment dans le réseau',
-    lead: 'Des recherches concrètes, déjà exprimées par les membres ces derniers jours.',
-    whyTitle: 'Pourquoi c’est important',
-    whyBody:
-      'Ces demandes montrent qu’au-delà de la visibilité, les membres utilisent déjà le réseau pour trouver des relais concrets, des expertises ciblées et des partenaires de confiance.',
-    b1: 'Des besoins réellement exprimés',
-    b2: 'Des opportunités déjà actives',
-    b3: 'Une communauté qui passe à l’action',
-    ctaLine: 'Votre profil peut répondre à une demande déjà présente dans le réseau.',
-    ctaPrimary: 'Rejoindre le réseau',
-    ctaSecondary: 'Voir les demandes',
-    badgeNew: 'Nouveau',
-    empty: 'Les premières demandes actives apparaîtront ici au fil de la croissance du réseau.',
-  };
-}
+import { getStatsVitrineCopy } from '@/i18n/statsVitrine';
 
 function coalesceMs(v: unknown): number {
   if (typeof v === 'number' && Number.isFinite(v) && v > 0) return v;
@@ -133,7 +63,7 @@ function pickLineIcon(
 type RowProps = {
   r: MemberNetworkRequest;
   lang: Language;
-  c: Copy;
+  c: ReturnType<typeof getStatsVitrineCopy>['recentRequests'];
   index: number;
   onRequestClick?: (id: string) => void;
 };
@@ -221,11 +151,13 @@ function RequestRowSkeleton() {
 export function RecentRequestsFeed({
   lang,
   onRequestClick,
+  hideBottomCta = false,
 }: {
   lang: Language;
   onRequestClick?: (id: string) => void;
+  hideBottomCta?: boolean;
 }) {
-  const c = tcopy(lang);
+  const c = getStatsVitrineCopy(lang).recentRequests;
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<MemberNetworkRequest[]>([]);
   const [failed, setFailed] = useState(false);
@@ -285,6 +217,11 @@ export function RecentRequestsFeed({
             title={c.title}
             titleId="recent-requests-feed-title"
             description={c.lead}
+            transition={
+              <p className="max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-[15px]">
+                {c.leadSecondary}
+              </p>
+            }
           />
         </div>
 
@@ -334,17 +271,19 @@ export function RecentRequestsFeed({
           </aside>
         </div>
 
-        <div className="border-t border-slate-100 px-4 py-5 sm:px-6">
-          <p className="text-sm text-slate-700">{c.ctaLine}</p>
-          <div className="mt-4 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-start print:flex-row">
-            <StatsPrimaryButton to="/inscription" className="w-full sm:w-auto print:w-auto">
-              {c.ctaPrimary}
-            </StatsPrimaryButton>
-            <StatsSecondaryButton to="/requests" className="w-full sm:w-auto print:w-auto">
-              {c.ctaSecondary}
-            </StatsSecondaryButton>
+        {!hideBottomCta ? (
+          <div className="border-t border-slate-100 px-4 py-5 sm:px-6">
+            <p className="text-sm text-slate-700">{c.ctaLine}</p>
+            <div className="mt-4 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-start print:flex-row">
+              <StatsPrimaryButton to="/inscription" className="w-full sm:w-auto print:w-auto">
+                {c.ctaPrimary}
+              </StatsPrimaryButton>
+              <StatsSecondaryButton to="/requests" className="w-full sm:w-auto print:w-auto">
+                {c.ctaSecondary}
+              </StatsSecondaryButton>
+            </div>
           </div>
-        </div>
+        ) : null}
       </StatsSectionShell>
     </section>
   );

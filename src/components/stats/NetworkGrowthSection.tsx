@@ -10,6 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { Language } from '@/types';
+import { getStatsVitrineCopy } from '@/i18n/statsVitrine';
 import {
   formatGrowthAxisDate,
   formatGrowthTooltipDate,
@@ -42,89 +43,21 @@ function findAccelerationIndex(rows: Row[]): number {
   return bestDelta > 0 ? bestI : -1;
 }
 
-type Copy = {
-  eyebrow: string;
-  title: string;
-  lead: string;
-  annotTitle: string;
-  annotSub: string;
-  insightTitle: string;
-  insightBody: string;
-  badge1: (n: number) => string;
-  badge2: (n: number) => string;
-  tooltipN: (n: number) => string;
-  transition: string;
-  cta: string;
-  empty: string;
-};
-
-function tcopy(lang: Language, _recentMembers: number, _total: number): Copy {
-  if (lang === 'en') {
-    return {
-      eyebrow: 'Network growth',
-      title: 'FrancoNetwork is accelerating week after week',
-      lead: 'A visible dynamic driven by word of mouth, referrals, and the first active members.',
-      annotTitle: 'Visible acceleration',
-      annotSub: 'The network is starting to spread naturally',
-      insightTitle: 'What this curve tells you',
-      insightBody:
-        'The first sign-ups are not just a volume. They show that a focused, Francophone, high-quality network can quickly create a flywheel in Guadalajara.',
-      badge1: (n) => `+${n} members in the recent period`,
-      badge2: (n) => `${n} decision-makers already listed`,
-      tooltipN: (n) => `${n} members already signed up`,
-      transition: 'Each new sign-up increases the value of the network for everyone else.',
-      cta: 'Join the network',
-      empty: 'Not enough history yet to plot the curve. Come back soon.',
-    };
-  }
-  if (lang === 'es') {
-    return {
-      eyebrow: 'Crecimiento de la red',
-      title: 'FrancoNetwork acelera semana a semana',
-      lead: 'Dinamismo visible, impulsado por el boca a boca, referencias y los primeros miembros activos.',
-      annotTitle: 'Aceleración visible',
-      annotSub: 'La red empieza a difundirse de forma natural',
-      insightTitle: 'Qué cuenta esta curva',
-      insightBody:
-        'Las primeras inscripciones no son solo volumen. Muestran que una red francófona, cualificada y segmentada puede generar un efecto de arranque en Guadalajara.',
-      badge1: (n) => `+${n} miembros en el periodo reciente`,
-      badge2: (n) => `${n} perfiles de decisores ya visibles`,
-      tooltipN: (n) => `Ya ${n} miembros inscritos`,
-      transition: 'Cada nueva inscripción hace crecer el valor de la red para todos los demás.',
-      cta: 'Unirse a la red',
-      empty: 'Aún no hay historial para la curva. Vuelve pronto.',
-    };
-  }
-  return {
-    eyebrow: 'Croissance du réseau',
-    title: 'FrancoNetwork accélère semaine après semaine',
-    lead: 'Une dynamique visible, portée par le bouche-à-oreille, les recommandations et les premiers membres actifs.',
-    annotTitle: 'Accélération visible',
-    annotSub: 'Le réseau commence à se diffuser naturellement',
-    insightTitle: 'Ce que cette courbe raconte',
-    insightBody:
-      'Les premières inscriptions ne sont pas seulement un volume. Elles montrent qu’un réseau ciblé, francophone et qualifié peut rapidement créer un effet d’entraînement à Guadalajara.',
-    badge1: (n) => `+${n} membres sur la période récente`,
-    badge2: (n) => `${n} décideurs déjà visibles`,
-    tooltipN: (n) => `${n} membres déjà inscrits`,
-    transition: 'Chaque nouvelle inscription augmente la valeur du réseau pour tous les autres.',
-    cta: 'Rejoindre le réseau',
-    empty: 'Pas encore assez d’historique pour la courbe. Revenez bientôt.',
-  };
-}
-
 export function NetworkGrowthSection({
   growthCumulative,
   totalMembers,
   newMembersLast30d,
   lang,
+  hideFooterCta = false,
 }: {
   growthCumulative: Row[];
   totalMembers: number;
   newMembersLast30d: number;
   lang: Language;
+  /** Masque le bloc « transition » + bouton rejoindre (ex. page `/stats/share`). */
+  hideFooterCta?: boolean;
 }) {
-  const c = tcopy(lang, newMembersLast30d, totalMembers);
+  const c = getStatsVitrineCopy(lang).networkGrowth;
   const chartBase = useId().replace(/:/g, '');
   const gradId = `${chartBase}-fill`;
   const dropId = `${chartBase}-drop`;
@@ -249,7 +182,7 @@ export function NetworkGrowthSection({
           </div>
         )}
 
-        {data.length > 0 && (
+        {data.length > 0 && !hideFooterCta ? (
           <div className="border-t border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
             <p className="text-sm text-slate-600">{c.transition}</p>
             <div className="mt-4 print:hidden">
@@ -259,7 +192,7 @@ export function NetworkGrowthSection({
             </div>
             <p className="mt-2 hidden text-xs text-slate-500 print:block">franconetwork.app / inscription</p>
           </div>
-        )}
+        ) : null}
       </StatsSectionShell>
     </section>
   );

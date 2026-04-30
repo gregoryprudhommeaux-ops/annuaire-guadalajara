@@ -20,6 +20,14 @@ export type VitrineStats = {
   totalMembers: number;
   newMembersLast30d: number;
   prevNewMembers30d: number;
+  /** Inscriptions sur le mois civil en cours (pour KPI « croissance du mois »). */
+  calendarNewThisMonth: number;
+  /** Inscriptions sur le mois civil précédent. */
+  calendarNewPrevMonth: number;
+  /** Variation % nouveaux inscrits mois civil vs mois précédent (alignée sur l’ancien hero). */
+  monthOverMonthGrowthPct: number;
+  /** Secteurs d’activité distincts (profils), comme l’ancien hero `distinctSectors`. */
+  distinctSectorsCount: number;
   profileViewsCumul: number;
   contactClicksCumul: number;
   potentialConnections: number;
@@ -52,6 +60,10 @@ export function useVitrineStats(): VitrineStats {
     totalMembers: 0,
     newMembersLast30d: 0,
     prevNewMembers30d: 0,
+    calendarNewThisMonth: 0,
+    calendarNewPrevMonth: 0,
+    monthOverMonthGrowthPct: 0,
+    distinctSectorsCount: 0,
     profileViewsCumul: 0,
     contactClicksCumul: 0,
     potentialConnections: 0,
@@ -74,6 +86,14 @@ export function useVitrineStats(): VitrineStats {
         }
 
         const now = new Date();
+        const y = now.getFullYear();
+        const mo = now.getMonth();
+        const startThisMonth = new Date(y, mo, 1, 0, 0, 0, 0);
+        const startPrevMonth = new Date(y, mo - 1, 1, 0, 0, 0, 0);
+        const startThisMs = startThisMonth.getTime();
+        const startPrevMs = startPrevMonth.getTime();
+        const nowMs = now.getTime();
+
         const d30 = new Date(now);
         d30.setDate(d30.getDate() - 30);
         const d60 = new Date(now);
@@ -92,6 +112,9 @@ export function useVitrineStats(): VitrineStats {
         let totalMembers = memberRows.length;
         let newMembersLast30d = 0;
         let prevNewMembers30d = 0;
+        let calendarNewThisMonth = 0;
+        let calendarNewPrevMonth = 0;
+        const sectorLabelSet = new Set<string>();
         const bySector: Record<string, number> = {};
         const regByDay: Record<string, number> = {};
         const passionToMembers = new Map<string, Set<string>>();
@@ -119,13 +142,23 @@ export function useVitrineStats(): VitrineStats {
           const up = rowToUserProfile(p);
           const createdAt = (p.createdAt as Timestamp)?.toDate?.();
           if (createdAt) {
+            const createdMs = createdAt.getTime();
             if (createdAt >= d30) newMembersLast30d += 1;
             if (createdAt < d30 && createdAt >= d60) prevNewMembers30d += 1;
+            if (createdMs >= startThisMs && createdMs <= nowMs) calendarNewThisMonth += 1;
+            if (createdMs >= startPrevMs && createdMs < startThisMs) calendarNewPrevMonth += 1;
             const key = createdAt.toISOString().split('T')[0];
             regByDay[key] = (regByDay[key] || 0) + 1;
           }
 
           const sectors = profileDistinctActivityCategories(up);
+          for (const s of sectors) {
+            const t = s.trim();
+            if (t && t !== '—') sectorLabelSet.add(t);
+          }
+          const ind = String((up as { industry?: string }).industry ?? (p as any).industry ?? '').trim();
+          if (ind) sectorLabelSet.add(ind);
+
           if (sectors.length === 0) {
             const fallback = String(up.activityCategory ?? (p as any).sector ?? '').trim() || '—';
             bySector[fallback] = (bySector[fallback] || 0) + 1;
@@ -214,11 +247,29 @@ export function useVitrineStats(): VitrineStats {
         const n2 = totalMembers;
         const potentialConnections2 = n2 > 1 ? (n2 * (n2 - 1)) / 2 : 0;
 
+        const monthOverMonthGrowthPct =
+          calendarNewPrevMonth === 0
+            ? calendarNewThisMonth > 0
+              ? 100
+              : 0
+            : Math.round(
+                ((calendarNewThisMonth - calendarNewPrevMonth) / calendarNewPrevMonth) * 100
+              );
+
+        let distinctSectorsCount = sectorLabelSet.size;
+        if (distinctSectorsCount === 0) {
+          distinctSectorsCount = Object.keys(bySector).filter((k) => k && k !== '—').length;
+        }
+
         if (!cancelled) {
           setState({
             totalMembers: n2,
             newMembersLast30d,
             prevNewMembers30d,
+            calendarNewThisMonth,
+            calendarNewPrevMonth,
+            monthOverMonthGrowthPct,
+            distinctSectorsCount,
             profileViewsCumul,
             contactClicksCumul,
             potentialConnections: potentialConnections2,

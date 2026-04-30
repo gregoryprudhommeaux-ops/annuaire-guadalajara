@@ -381,6 +381,7 @@ const loadDashboardPage = () => import('./components/dashboard/DashboardPage');
 const loadAdminPage = () => import('@/screens/AdminPage');
 const loadInternalAdminPage = () => import('@/pages/InternalAdminPage');
 const loadStatsPage = () => import('@/pages/StatsPage');
+const loadStatsSharePage = () => import('@/pages/StatsSharePage');
 const loadAdminEvents = () => import('./components/dashboard/AdminEvents');
 const loadCommunicationAdminPage = () => import('@/pages/CommunicationAdminPage');
 const loadPublicEventPage = () => import('./components/events/PublicEventPage');
@@ -390,6 +391,7 @@ const DashboardPage = React.lazy(loadDashboardPage);
 const AdminPageLazy = React.lazy(loadAdminPage);
 const InternalAdminPageLazy = React.lazy(loadInternalAdminPage);
 const StatsPageLazy = React.lazy(loadStatsPage);
+const StatsSharePageLazy = React.lazy(loadStatsSharePage);
 const AdminEventsLazy = React.lazy(loadAdminEvents);
 const CommunicationAdminPageLazy = React.lazy(loadCommunicationAdminPage);
 const PublicEventPageLazy = React.lazy(loadPublicEventPage);
@@ -8179,6 +8181,20 @@ const App = () => {
             <Route path="/requests" element={<MainApp />} />
             <Route path="/radar" element={<MainApp initialViewMode="radar" />} />
             <Route path="/stats" element={<MainApp />} />
+            <Route
+              path="/stats/share"
+              element={
+                <React.Suspense
+                  fallback={
+                    <div className="flex min-h-screen items-center justify-center bg-[#f4f6f7] px-4 text-sm text-slate-500">
+                      Loading…
+                    </div>
+                  }
+                >
+                  <StatsSharePageLazy />
+                </React.Suspense>
+              }
+            />
             <Route path="/admin" element={<MainApp />} />
             <Route path="/admin/internal" element={<MainApp />} />
             <Route path="/requests/:id" element={<RequestsRedirect />} />

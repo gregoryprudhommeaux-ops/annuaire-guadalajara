@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { NeedChartRow } from '@/lib/needs';
 import { getChartColor } from '@/lib/chartTheme';
 import type { Language } from '@/types';
+import { getStatsVitrineCopy } from '@/i18n/statsVitrine';
 import { getOpportunitySubline } from '@/lib/activeOpportunitiesEditorial';
 import {
   StatsBadge,
@@ -14,87 +15,12 @@ import {
   statsListRowClassName,
 } from '@/components/stats/ui';
 
-type Copy = {
-  eyebrow: string;
-  title: string;
-  lead: string;
-  whyTitle: string;
-  whyBody: string;
-  whyB1: string;
-  whyB2: string;
-  conv: string;
-  ctaPrimary: string;
-  ctaSecondary: string;
-  badgeTop: string;
-  badgeSecond: string;
-  demandes: (n: number) => string;
-  empty: string;
-};
-
-function tcopy(lang: Language): Copy {
-  if (lang === 'en') {
-    return {
-      eyebrow: 'Active opportunities',
-      title: 'What members are looking for right now',
-      lead: 'Partners, distributors, experts, suppliers: concrete needs already expressed in the network.',
-      whyTitle: 'Why this matters',
-      whyBody:
-        'These signals show members are not here only to be listed. They are actively seeking connections, on-the-ground relays, and partners who can accelerate their projects.',
-      whyB1: 'Needs already expressed by the community',
-      whyB2: 'Joining helps you appear at the right moment',
-      conv: 'You may be exactly the contact other members are already looking for.',
-      ctaPrimary: 'Join the network',
-      ctaSecondary: 'View requests',
-      badgeTop: 'High demand',
-      badgeSecond: 'Strong demand',
-      demandes: (n) => `${n} request${n === 1 ? '' : 's'}`,
-      empty: 'Need categories will appear here as members express them.',
-    };
-  }
-  if (lang === 'es') {
-    return {
-      eyebrow: 'Oportunidades activas',
-      title: 'Lo que los miembros buscan ahora',
-      lead: 'Socios, distribuidores, expertos, proveedores: necesidades concretas ya expresadas en la red.',
-      whyTitle: 'Para qué sirve',
-      whyBody:
-        'Estas señales muestran que los miembros no vienen solo a figurar. Buscan conexiones activas, apoyo local y socios capaces de acelerar sus proyectos.',
-      whyB1: 'Necesidades ya expresadas por la comunidad',
-      whyB2: 'Inscribirse ayuda a aparecer en el momento adecuado',
-      conv: 'Quizá usted es justo el contacto que otros miembros ya buscan.',
-      ctaPrimary: 'Unirse a la red',
-      ctaSecondary: 'Ver solicitudes',
-      badgeTop: 'Muy demandado',
-      badgeSecond: 'En fuerte demanda',
-      demandes: (n) => `${n} solicitud${n === 1 ? '' : 'es'}`,
-      empty: 'Las categorías aparecerán cuando los miembros expresen sus necesidades.',
-    };
-  }
-  return {
-    eyebrow: 'Opportunités actives',
-    title: 'Ce que les membres recherchent en ce moment',
-    lead: 'Partenaires, distributeurs, experts, fournisseurs : des besoins concrets déjà exprimés dans le réseau.',
-    whyTitle: 'Pourquoi c’est utile',
-    whyBody:
-      'Ces signaux montrent que les membres ne viennent pas seulement pour figurer dans un annuaire. Ils cherchent activement des connexions, des relais terrain et des partenaires capables d’accélérer leurs projets.',
-    whyB1: 'Des besoins déjà exprimés par la communauté',
-    whyB2: 'Une inscription permet d’apparaître au bon moment',
-    conv: 'Vous êtes peut-être précisément le contact que d’autres membres recherchent déjà.',
-    ctaPrimary: 'Rejoindre le réseau',
-    ctaSecondary: 'Voir les demandes',
-    badgeTop: 'Très demandé',
-    badgeSecond: 'En forte demande',
-    demandes: (n) => `${n} demande${n === 1 ? '' : 's'}`,
-    empty: 'Les catégories de besoins s’afficheront dès que des membres les expriment sur leurs profils.',
-  };
-}
-
 type RowProps = {
   row: NeedChartRow;
   max: number;
   rank: number;
   lang: Language;
-  c: Copy;
+  c: ReturnType<typeof getStatsVitrineCopy>['activeOpportunities'];
   index: number;
   onCategoryClick?: (key: string) => void;
 };
@@ -165,6 +91,7 @@ export function ActiveOpportunitiesSection({
   lang,
   loading = false,
   onCategoryClick,
+  hideBottomCta = false,
 }: {
   needs: NeedChartRow[];
   lang: Language;
@@ -172,8 +99,9 @@ export function ActiveOpportunitiesSection({
   loading?: boolean;
   /** Clic sur une catégorie (sinon navigation vers `/requests?category=…`). */
   onCategoryClick?: (key: string) => void;
+  hideBottomCta?: boolean;
 }) {
-  const c = tcopy(lang);
+  const c = getStatsVitrineCopy(lang).activeOpportunities;
   const [reveal, setReveal] = useState(false);
   useEffect(() => {
     const t = requestAnimationFrame(() => setReveal(true));
@@ -244,17 +172,19 @@ export function ActiveOpportunitiesSection({
           </aside>
         </div>
 
-        <div className="border-t border-slate-100 px-4 py-5 sm:px-6">
-          <p className="text-sm leading-relaxed text-slate-700">{c.conv}</p>
-          <div className="mt-4 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-start print:flex-row">
-            <StatsPrimaryButton to="/inscription" className="w-full sm:w-auto print:w-auto">
-              {c.ctaPrimary}
-            </StatsPrimaryButton>
-            <StatsSecondaryButton to="/requests" className="w-full sm:w-auto print:w-auto">
-              {c.ctaSecondary}
-            </StatsSecondaryButton>
+        {!hideBottomCta ? (
+          <div className="border-t border-slate-100 px-4 py-5 sm:px-6">
+            <p className="text-sm leading-relaxed text-slate-700">{c.conv}</p>
+            <div className="mt-4 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-start print:flex-row">
+              <StatsPrimaryButton to="/inscription" className="w-full sm:w-auto print:w-auto">
+                {c.ctaPrimary}
+              </StatsPrimaryButton>
+              <StatsSecondaryButton to="/requests" className="w-full sm:w-auto print:w-auto">
+                {c.ctaSecondary}
+              </StatsSecondaryButton>
+            </div>
           </div>
-        </div>
+        ) : null}
       </StatsSectionShell>
     </section>
   );

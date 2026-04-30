@@ -10,6 +10,8 @@ import type { UserProfile } from '@/types';
  * |------------------------------------|:-----:|:------:|:-----:|
  * | View `/` (public landing)          |  ✅   |   ✅    |  ✅   |
  * | View `/network` + `/requests`      |  ✅   |   ✅    |  ✅   |
+ * | View `/stats/share` (vitrine lien)|  ✅   |   ✅    |  ✅   |
+ * | View `/stats` (vitrine interne)    |  ❌   |   ❌    |  ✅   |
  * | View `/dashboard`                 |  ❌   |   ✅    |  ✅   |
  * | View `/admin`                     |  ❌   |   ❌    |  ✅   |
  * | Post requests / member actions     |  ❌   |   ✅    |  ✅   |
@@ -35,6 +37,8 @@ export function getAppRole(ctx: RoleContext): AppRole {
 export type RouteAccess = 'public' | 'member' | 'admin';
 
 export function routeAccessForPath(pathname: string): RouteAccess {
+  // Page vitrine publique à partager (hors shell app, lecture sans compte admin).
+  if (pathname === '/stats/share') return 'public';
   if (pathname === '/stats' || pathname.startsWith('/stats/')) return 'admin';
   if (pathname === '/admin' || pathname.startsWith('/admin/')) return 'admin';
   if (pathname === '/communication' || pathname.startsWith('/communication/')) return 'admin';

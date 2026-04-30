@@ -12,6 +12,10 @@ type Props = {
   data: NeedChartRow[];
   title?: string;
   subtitle?: string;
+  /** Tooltip value label (e.g. « Membres » / « Members »). */
+  tooltipMembersLabel?: string;
+  /** Empty state message when no rows qualify. */
+  emptyMessage?: string;
   /** Compact variant (e.g. Radar). */
   compact?: boolean;
   /** Aligne avec les cartes admin (pas de bordure / titre propre, uniquement le graphique). */
@@ -120,6 +124,8 @@ export function NeedsBarChart({
   data,
   title = 'Besoins les plus exprimés',
   subtitle = 'Catégories de besoins actuellement les plus présentes dans le réseau',
+  tooltipMembersLabel = 'Membres',
+  emptyMessage = 'Aucune donnée de besoins à afficher.',
   compact = false,
   embedded = false,
   compactYAxisWidth,
@@ -174,9 +180,7 @@ export function NeedsBarChart({
     >
       {!hasData ? (
         <div className="flex h-full min-h-[220px] w-full items-center justify-center rounded-xl border border-zinc-200/90 bg-zinc-50/90 px-3 text-sm text-zinc-600">
-          <p className="text-center font-semibold leading-snug">
-            Aucune donnée de besoins à afficher.
-          </p>
+          <p className="text-center font-semibold leading-snug">{emptyMessage}</p>
         </div>
       ) : (
         <ResponsiveContainer
@@ -221,7 +225,7 @@ export function NeedsBarChart({
               />
               <Tooltip
                 cursor={{ fill: hexToRgba(getChartColor(0), 0.08) }}
-                formatter={(value: unknown) => [Number(value ?? 0), 'Membres']}
+                formatter={(value: unknown) => [Number(value ?? 0), tooltipMembersLabel]}
                 contentStyle={{
                   borderRadius: 12,
                   border: `1px solid ${chartTheme.base.axis}`,

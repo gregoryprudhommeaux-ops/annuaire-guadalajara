@@ -21,114 +21,7 @@ import {
   statsCardClassName,
 } from '@/components/stats/ui';
 import type { Language } from '@/types';
-
-type Copy = {
-  eyebrow: string;
-  title: string;
-  lead: string;
-  whyTitle: string;
-  whyBody: string;
-  b1: string;
-  b2: string;
-  b3: string;
-  ctaLine: string;
-  ctaPrimary: string;
-  ctaSecondary: string;
-  badge0: string;
-  badge1: string;
-  insightCount: (n: number) => string;
-  insightSectors: (n: number) => string;
-  insightTop: (names: string) => string;
-  emDash: string;
-};
-
-const SUB: Record<Language, [string, string, string, string]> = {
-  fr: [
-    'Crée des points d’entrée naturels entre secteurs',
-    'Favorise les échanges informels entre profils variés',
-    'Un terrain commun fréquent dans les rencontres du réseau',
-    'Rapproche des profils internationaux et mobiles',
-  ],
-  en: [
-    'Creates natural entry points across sectors',
-    'Supports informal exchanges between varied profiles',
-    'A frequent common ground in network meetups',
-    'Brings together international, mobile profiles',
-  ],
-  es: [
-    'Crea puntos de entrada naturales entre sectores',
-    'Favorece el intercambio informal entre perfiles variados',
-    'Un terreno común frecuente en los encuentros de la red',
-    'Acerca perfiles internacionales y móviles',
-  ],
-};
-
-function tcopy(lang: Language): Copy {
-  if (lang === 'en') {
-    return {
-      eyebrow: 'Network affinities',
-      title: 'Connections also grow outside of meetings',
-      lead: 'Shared interests that bring people together across different sectors.',
-      whyTitle: 'What these affinities reveal',
-      whyBody:
-        'The network is not only about business cards. These shared interests create natural entry points between leaders, experts, and entrepreneurs from different fields.',
-      b1: 'More natural conversations',
-      b2: 'Bridges between sectors',
-      b3: 'Trust that builds faster',
-      ctaLine: 'The strongest connections often start with common ground.',
-      ctaPrimary: 'Join the network',
-      ctaSecondary: 'Explore the community',
-      badge0: 'Highly unifying',
-      badge1: 'Cross-cutting affinity',
-      insightCount: (n) => `${n} affinities already visible in the community`,
-      insightSectors: (n) => `Up to ${n} sectors around a single interest`,
-      insightTop: (names) => `Most unifying interests: ${names}`,
-      emDash: '—',
-    };
-  }
-  if (lang === 'es') {
-    return {
-      eyebrow: 'Afinidades de la red',
-      title: 'Las conexiones también nacen fuera de las reuniones',
-      lead: 'Intereses comunes que acercan a perfiles de distintos sectores.',
-      whyTitle: 'Qué revelan estas afinidades',
-      whyBody:
-        'La red no se basa solo en las tarjetas. Estos intereses compartidos crean puntos de encuentro naturales entre directivos, expertos y emprendedores de distintos ámbitos.',
-      b1: 'Conversaciones más naturales',
-      b2: 'Puentes entre sectores',
-      b3: 'Una confianza que se construye más rápido',
-      ctaLine: 'Las mejores conexiones a menudo empiezan con un terreno común.',
-      ctaPrimary: 'Unirse a la red',
-      ctaSecondary: 'Descubrir la comunidad',
-      badge0: 'Muy unificadora',
-      badge1: 'Afinidad transversal',
-      insightCount: (n) => `${n} afinidades ya visibles en la comunidad`,
-      insightSectors: (n) => `Hasta ${n} sectores alrededor de un mismo interés`,
-      insightTop: (names) => `Intereses que más unen: ${names}`,
-      emDash: '—',
-    };
-  }
-  return {
-    eyebrow: 'Affinités du réseau',
-    title: 'Les connexions se créent aussi en dehors des rendez-vous',
-    lead: 'Des intérêts communs qui rapprochent des profils issus de secteurs différents.',
-    whyTitle: 'Ce que ces affinités révèlent',
-    whyBody:
-      'Le réseau ne repose pas uniquement sur des cartes de visite. Ces centres d’intérêt communs créent des points d’entrée naturels entre dirigeants, experts et entrepreneurs de secteurs différents.',
-    b1: 'Des conversations plus naturelles',
-    b2: 'Des passerelles entre secteurs',
-    b3: 'Une confiance qui se crée plus vite',
-    ctaLine: 'Les meilleures connexions commencent souvent par un terrain commun.',
-    ctaPrimary: 'Rejoindre le réseau',
-    ctaSecondary: 'Découvrir la communauté',
-    badge0: 'Très fédératrice',
-    badge1: 'Affinité transversale',
-    insightCount: (n) => `${n} affinités déjà visibles dans la communauté`,
-    insightSectors: (n) => `Jusqu’à ${n} secteurs réunis autour d’un même intérêt`,
-    insightTop: (names) => `Les passions les plus fédératrices : ${names}`,
-    emDash: '—',
-  };
-}
+import { getStatsVitrineCopy } from '@/i18n/statsVitrine';
 
 function iconForPassionId(id: string): React.ComponentType<{ className?: string }> {
   const low = id.toLowerCase();
@@ -150,7 +43,7 @@ type CardProps = {
   rank: number;
   subline: string;
   lang: Language;
-  c: Copy;
+  c: ReturnType<typeof getStatsVitrineCopy>['sharedAffinities'];
   index: number;
 };
 
@@ -216,19 +109,21 @@ export function SharedAffinitiesSection({
   passions,
   lang,
   loading = false,
+  hideFooterCta = false,
 }: {
   passions: VitrinePassionRow[];
   lang: Language;
   loading?: boolean;
+  hideFooterCta?: boolean;
 }) {
-  const c = tcopy(lang);
+  const c = getStatsVitrineCopy(lang).sharedAffinities;
   const [reveal, setReveal] = useState(false);
   useEffect(() => {
     const t = requestAnimationFrame(() => setReveal(true));
     return () => cancelAnimationFrame(t);
   }, []);
 
-  const sublines = SUB[lang] ?? SUB.fr;
+  const sublines = c.cardSubLines;
   const sorted = React.useMemo(() => sortPassionsByFederation(passions), [passions]);
 
   if (!loading && (!passions || passions.length === 0)) return null;
@@ -314,7 +209,7 @@ export function SharedAffinitiesSection({
           </div>
         )}
 
-        {!loading && (
+        {!loading && !hideFooterCta ? (
           <div className="border-t border-slate-100 px-4 py-5 sm:px-6 sm:py-6">
             <p className="text-sm text-slate-800">{c.ctaLine}</p>
             <div className="mt-4 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-start print:flex-row">
@@ -326,7 +221,7 @@ export function SharedAffinitiesSection({
               </StatsSecondaryButton>
             </div>
           </div>
-        )}
+        ) : null}
       </StatsSectionShell>
     </section>
   );
