@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { NeedChartRow } from '@/lib/needs';
+import { getChartColor } from '@/lib/chartTheme';
 import type { Language } from '@/types';
 import { getOpportunitySubline } from '@/lib/activeOpportunitiesEditorial';
 import {
@@ -103,6 +104,7 @@ function OpportunityCategoryRow({ row, max, rank, lang, c, index, onCategoryClic
   const sub = getOpportunitySubline(row.key, lang);
   const isTop = rank === 0 && row.count > 0;
   const isSecond = rank === 1 && row.count > 0;
+  const barColor = getChartColor(index);
 
   const inner = (
     <>
@@ -113,13 +115,15 @@ function OpportunityCategoryRow({ row, max, rank, lang, c, index, onCategoryClic
         <div className="flex shrink-0 items-center gap-1.5">
           {isTop && <StatsBadge>{c.badgeTop}</StatsBadge>}
           {isSecond && !isTop && <StatsBadge>{c.badgeSecond}</StatsBadge>}
-          <span className="tabular-nums text-sm font-bold text-[#01696f]">{c.demandes(row.count)}</span>
+          <span className="tabular-nums text-sm font-bold" style={{ color: barColor }}>
+            {c.demandes(row.count)}
+          </span>
         </div>
       </div>
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
         <div
-          className="h-full rounded-full bg-[#01696f] transition-[width] duration-500 ease-out motion-reduce:transition-none"
-          style={{ width: `${w}%` }}
+          className="h-full rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none"
+          style={{ width: `${w}%`, backgroundColor: barColor }}
         />
       </div>
       <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{sub}</p>

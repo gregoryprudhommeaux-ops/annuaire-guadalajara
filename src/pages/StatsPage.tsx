@@ -25,12 +25,8 @@ import { RecentMembersActivity } from '@/components/stats/RecentMembersActivity'
 import { RecentRequestsFeed } from '@/components/stats/RecentRequestsFeed';
 import { SegmentedJoinCTA } from '@/components/stats/SegmentedJoinCTA';
 import { SharedAffinitiesSection } from '@/components/stats/SharedAffinitiesSection';
-import {
-  STATS_CHART_BAR_COLORS,
-  StatsCard,
-  StatsSectionHeader,
-  StatsSectionShell,
-} from '@/components/stats/ui';
+import { chartTheme, getChartColor } from '@/lib/chartTheme';
+import { StatsCard, StatsSectionHeader, StatsSectionShell } from '@/components/stats/ui';
 import { functions } from '@/firebase';
 import francoLogoUrl from '../../favicon.svg?url';
 import './stats-page.css';
@@ -52,8 +48,17 @@ function formatShortDate(d: Date, lang: Language) {
 
 function TrendPill({ text, tone }: { text: string; tone: 'up' | 'down' | 'flat' }) {
   const cls =
-    tone === 'up' ? 'text-[#0a5c61]' : tone === 'down' ? 'text-rose-700' : 'text-slate-500';
-  return <p className={`mt-1 text-xs font-semibold ${cls}`}>{text}</p>;
+    tone === 'up'
+      ? ''
+      : tone === 'down'
+        ? 'text-rose-700'
+        : 'text-slate-500';
+  const style = tone === 'up' ? { color: chartTheme.state.success } : undefined;
+  return (
+    <p className={`mt-1 text-xs font-semibold ${cls}`} style={style}>
+      {text}
+    </p>
+  );
 }
 
 export default function StatsPage() {
@@ -208,7 +213,7 @@ export default function StatsPage() {
     () => vitrine.topSectors.map((s) => ({ name: s.name, value: s.value })),
     [vitrine.topSectors]
   );
-  const sectorColor = (idx: number) => STATS_CHART_BAR_COLORS[idx % STATS_CHART_BAR_COLORS.length]!;
+  const sectorColor = (idx: number) => getChartColor(idx);
 
   if (vitrine.loading) {
     return (
@@ -333,20 +338,31 @@ export default function StatsPage() {
               <div className="h-72 w-full min-w-0 max-w-full px-2 pb-4 pt-2 sm:px-4 sm:pb-5">
                 <ResponsiveContainer>
                   <BarChart data={topSectorsChart} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 6 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      horizontal={false}
+                      stroke={chartTheme.base.axis}
+                    />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      tick={{ fontSize: 11, fill: chartTheme.base.labelMuted }}
+                    />
                     <YAxis
                       type="category"
                       dataKey="name"
                       width={140}
-                      tick={{ fontSize: 11, fill: '#0f172a' }}
+                      tick={{ fontSize: 11, fill: chartTheme.base.label }}
                     />
                     <Tooltip
                       contentStyle={{
                         borderRadius: 8,
-                        border: '1px solid #e2e8f0',
+                        border: `1px solid ${chartTheme.base.axis}`,
                         fontSize: 12,
+                        backgroundColor: chartTheme.base.tooltipBg,
+                        color: chartTheme.base.tooltipText,
                       }}
+                      labelStyle={{ color: chartTheme.base.tooltipText, fontWeight: 700 }}
                     />
                     <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={16}>
                       {topSectorsChart.map((_, idx) => (

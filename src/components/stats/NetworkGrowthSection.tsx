@@ -14,6 +14,7 @@ import {
   formatGrowthAxisDate,
   formatGrowthTooltipDate,
 } from '@/lib/statsGrowthDateFormat';
+import { chartTheme, hexToRgba } from '@/lib/chartTheme';
 import {
   StatsBadge,
   StatsInsightCard,
@@ -22,8 +23,8 @@ import {
   StatsSectionShell,
 } from '@/components/stats/ui';
 
-const BRAND = '#01696f';
-const FILL_MID = '#01696f';
+/** Série unique : courbe + aire (lisible sur fond clair). */
+const GROWTH_LINE = chartTheme.categorical[0]!;
 
 type Row = { date: string; count: number };
 
@@ -173,8 +174,8 @@ export function NetworkGrowthSection({
                   >
                     <defs>
                       <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={FILL_MID} stopOpacity={0.2} />
-                        <stop offset="100%" stopColor={FILL_MID} stopOpacity={0.02} />
+                        <stop offset="0%" stopColor={hexToRgba(GROWTH_LINE, 0.22)} stopOpacity={1} />
+                        <stop offset="100%" stopColor={hexToRgba(GROWTH_LINE, 0.04)} stopOpacity={1} />
                       </linearGradient>
                       {!pdfMode ? (
                         <filter
@@ -191,20 +192,20 @@ export function NetworkGrowthSection({
                     </defs>
                     <CartesianGrid
                       vertical={false}
-                      stroke="#f1f5f9"
+                      stroke={chartTheme.base.axis}
                       strokeDasharray="3 3"
                     />
                     <XAxis
                       dataKey="date"
                       tickFormatter={(d) => formatGrowthAxisDate(String(d), lang)}
-                      tick={{ fontSize: 10, fill: '#94a3b8' }}
+                      tick={{ fontSize: 10, fill: chartTheme.base.labelMuted }}
                       minTickGap={20}
                       tickLine={false}
-                      axisLine={{ stroke: '#e2e8f0' }}
+                      axisLine={{ stroke: chartTheme.base.axis }}
                     />
                     <YAxis
                       allowDecimals={false}
-                      tick={{ fontSize: 10, fill: '#94a3b8' }}
+                      tick={{ fontSize: 10, fill: chartTheme.base.labelMuted }}
                       tickLine={false}
                       axisLine={false}
                       width={40}
@@ -229,7 +230,7 @@ export function NetworkGrowthSection({
                       type="monotoneX"
                       dataKey="count"
                       name="count"
-                      stroke={BRAND}
+                      stroke={GROWTH_LINE}
                       strokeWidth={2.5}
                       isAnimationActive={false}
                       dot={lineDot(
@@ -334,16 +335,17 @@ function GrowthTooltip({
   const dKey = String(label ?? p.date);
   return (
     <div
-      className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2.5 text-left shadow-lg backdrop-blur"
-      style={{ minWidth: 120 }}
+      className="rounded-lg px-3 py-2.5 text-left shadow-lg"
+      style={{
+        minWidth: 120,
+        backgroundColor: chartTheme.base.tooltipBg,
+        color: chartTheme.base.tooltipText,
+        border: `1px solid ${chartTheme.base.axis}`,
+      }}
     >
-      <p className="text-[11px] font-medium text-slate-500 sm:text-xs">
-        {labelFormatter(dKey)}
-      </p>
-      <p className="mt-1 text-xl font-extrabold tabular-nums" style={{ color: BRAND }}>
-        {p.count}
-      </p>
-      <p className="mt-0.5 text-xs text-slate-600">{lineMembers(p.count)}</p>
+      <p className="text-[11px] font-medium opacity-90 sm:text-xs">{labelFormatter(dKey)}</p>
+      <p className="mt-1 text-xl font-extrabold tabular-nums text-white">{p.count}</p>
+      <p className="mt-0.5 text-xs opacity-90">{lineMembers(p.count)}</p>
     </div>
   );
 }
@@ -380,7 +382,7 @@ function AnnotationPoint({
       <g>
         <circle
           r={5}
-          fill={BRAND}
+          fill={GROWTH_LINE}
           stroke="#fff"
           strokeWidth={2}
           cx={cx}
@@ -394,7 +396,7 @@ function AnnotationPoint({
     <g>
       <circle
         r={5}
-        fill={BRAND}
+        fill={GROWTH_LINE}
         stroke="#fff"
         strokeWidth={2}
         cx={cx}
@@ -409,7 +411,7 @@ function AnnotationPoint({
         className="overflow-visible"
       >
         <div className="rounded-lg border border-slate-200/80 bg-white/95 px-2 py-1.5 shadow-sm backdrop-blur">
-          <p className="text-[10px] font-semibold leading-tight" style={{ color: BRAND }}>
+          <p className="text-[10px] font-semibold leading-tight" style={{ color: GROWTH_LINE }}>
             {title}
           </p>
           <p className="mt-0.5 text-[9px] leading-tight text-slate-600 sm:text-[10px]">{sub}</p>

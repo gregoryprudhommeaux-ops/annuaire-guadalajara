@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { chartTheme, getChartColor, hexToRgba } from '@/lib/chartTheme';
 
 export type NeedChartRow = {
   key: string;
@@ -24,17 +25,6 @@ type Props = {
   /** Hard cap of visible categories (defaults to 8). */
   limit?: number;
 };
-
-const COLORS = [
-  '#0f766e', // teal-700
-  '#115e59', // teal-800
-  '#1d4ed8', // blue-700
-  '#7c3aed', // violet-600
-  '#b45309', // amber-700
-  '#be123c', // rose-700
-  '#334155', // slate-700
-  '#4338ca', // indigo-700
-] as const;
 
 function compactLabel(label: string, max: number): string {
   const s = String(label ?? '').trim();
@@ -104,7 +94,7 @@ function NeedsYAxisTick({
     <g transform={`translate(${nx},${ny})`}>
       <title>{full}</title>
       {lines && lines[1] ? (
-        <text textAnchor="end" fill="#334155" fontSize={fontSize}>
+        <text textAnchor="end" fill={chartTheme.base.label} fontSize={fontSize}>
           <tspan x={0} dy="-0.55em" dominantBaseline="middle">
             {lines[0]}
           </tspan>
@@ -116,7 +106,7 @@ function NeedsYAxisTick({
         <text
           textAnchor="end"
           dominantBaseline="middle"
-          fill="#334155"
+          fill={chartTheme.base.label}
           fontSize={fontSize}
         >
           {single}
@@ -208,17 +198,17 @@ export function NeedsBarChart({
                 type="number"
                 domain={[0, maxCount]}
                 allowDecimals={false}
-                tick={{ fontSize: compact ? 11 : 12, fill: '#64748b' }}
-                stroke="#e4e4e7"
-                axisLine={{ stroke: '#e4e4e7' }}
-                tickLine={{ stroke: '#e4e4e7' }}
+                tick={{ fontSize: compact ? 11 : 12, fill: chartTheme.base.labelMuted }}
+                stroke={chartTheme.base.axis}
+                axisLine={{ stroke: chartTheme.base.axis }}
+                tickLine={{ stroke: chartTheme.base.axis }}
               />
               <YAxis
                 type="category"
                 dataKey="label"
                 width={yAxisWidth}
                 interval={0}
-                stroke="#e4e4e7"
+                stroke={chartTheme.base.axis}
                 axisLine={false}
                 tickLine={false}
                 tick={(p) => (
@@ -230,15 +220,18 @@ export function NeedsBarChart({
                 )}
               />
               <Tooltip
-                cursor={{ fill: 'rgba(15,118,110,0.06)' }}
+                cursor={{ fill: hexToRgba(getChartColor(0), 0.08) }}
                 formatter={(value: unknown) => [Number(value ?? 0), 'Membres']}
                 contentStyle={{
                   borderRadius: 12,
-                  border: '1px solid #e4e4e7',
+                  border: `1px solid ${chartTheme.base.axis}`,
                   boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
                   fontSize: 12,
+                  backgroundColor: chartTheme.base.tooltipBg,
+                  color: chartTheme.base.tooltipText,
                 }}
-                labelStyle={{ color: '#0f172a', fontWeight: 700 }}
+                labelStyle={{ color: chartTheme.base.tooltipText, fontWeight: 700 }}
+                itemStyle={{ color: chartTheme.base.tooltipText }}
               />
               <Bar
                 dataKey="count"
@@ -248,8 +241,9 @@ export function NeedsBarChart({
                 {rows.map((entry, index) => (
                   <Cell
                     key={entry.key}
-                    fill={COLORS[index % COLORS.length]}
-                    fillOpacity={0.95}
+                    fill={hexToRgba(getChartColor(index), 0.92)}
+                    stroke={getChartColor(index)}
+                    strokeWidth={1}
                   />
                 ))}
               </Bar>
