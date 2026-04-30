@@ -204,7 +204,7 @@ export const EN_STRINGS: Record<string, string> = {
   adminPageLead:
     "Network steering: growth, profile quality, requests, sector/city gaps, and usage stats.",
   adminVitrineLink: "Public vitrine",
-  adminVitrinePdf: "Open /stats (PDF)",
+  adminVitrinePdf: "Open public showcase (/stats)",
   adminInternalTab: "Internal",
   adminBackToDashboard: "Dashboard",
   adminInternalTitle: "Internal",

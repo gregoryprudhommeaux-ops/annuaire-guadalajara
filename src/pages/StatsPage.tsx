@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import {
   Bar,
@@ -11,10 +11,8 @@ import {
   YAxis,
 } from 'recharts';
 import { Eye, Handshake, Network, TrendingUp, Users } from 'lucide-react';
-import { httpsCallable } from 'firebase/functions';
 import { Link } from 'react-router-dom';
 import { useVitrineStats } from '@/hooks/useVitrineStats';
-import { setStatsPagePdfState } from '@/lib/statsPagePdfBridge';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import type { Language } from '@/types';
 import { StatsHero } from '@/components/StatsHero';
@@ -27,7 +25,6 @@ import { SegmentedJoinCTA } from '@/components/stats/SegmentedJoinCTA';
 import { SharedAffinitiesSection } from '@/components/stats/SharedAffinitiesSection';
 import { chartTheme, getChartColor } from '@/lib/chartTheme';
 import { StatsCard, StatsSectionHeader, StatsSectionShell } from '@/components/stats/ui';
-import { functions } from '@/firebase';
 import francoLogoUrl from '../../favicon.svg?url';
 import './stats-page.css';
 
@@ -64,8 +61,6 @@ function TrendPill({ text, tone }: { text: string; tone: 'up' | 'down' | 'flat' 
 export default function StatsPage() {
   const { lang } = useLanguage();
   const vitrine = useVitrineStats();
-  const printRef = useRef<HTMLDivElement | null>(null);
-  const [exportBusy, setExportBusy] = useState(false);
 
   const now = useMemo(() => new Date(), []);
   const monthTitle = useMemo(() => formatMonthYear(now, lang), [now, lang]);
@@ -122,93 +117,6 @@ export default function StatsPage() {
         ? 'Crece con el tamaño de la red'
         : 'Augmente avec le nombre de décideurs';
 
-  type ExportStatsToSlidesInput = { lang: Language };
-  type ExportStatsToSlidesResult = {
-    ok: boolean;
-    presentationId: string;
-    url: string;
-    debug?: {
-      templateId?: string;
-      lang?: string;
-      exportMode?: string;
-      leftoverPlaceholders?: string[];
-    };
-  };
-
-  const handleExportSlides = useCallback(async () => {
-    if (exportBusy) return;
-    setExportBusy(true);
-    try {
-      const fn2 = httpsCallable<ExportStatsToSlidesInput, ExportStatsToSlidesResult>(
-        functions,
-        'exportStatsToSlides'
-      );
-      const res = await fn2({ lang });
-      const url = String(res.data?.url ?? '').trim();
-      if (!url) {
-        throw new Error('URL Slides manquante.');
-      }
-      const leftovers = Array.isArray(res.data?.debug?.leftoverPlaceholders)
-        ? res.data.debug.leftoverPlaceholders
-        : [];
-      const w = window.open(url, '_blank', 'noopener,noreferrer');
-      if (!w) {
-        alert(
-          lang === 'en'
-            ? 'Please allow popups to open the Google Slides export.'
-            : lang === 'es'
-              ? 'Autoriza las ventanas emergentes para abrir la exportación de Google Slides.'
-              : "Autorisez les popups pour ouvrir l’export Google Slides."
-        );
-      }
-      if (leftovers.length > 0) {
-        alert(
-          (lang === 'en'
-            ? 'Slides generated, but some placeholders were not filled:\n\n'
-            : lang === 'es'
-              ? 'Slides generadas, pero faltan algunos campos:\n\n'
-              : 'Slides générées, mais certains champs ne sont pas remplis :\n\n') +
-            leftovers.slice(0, 40).join('\n') +
-            (leftovers.length > 40 ? `\n… (+${leftovers.length - 40})` : '')
-        );
-      }
-    } catch (e) {
-      console.error(e);
-      const anyE = e as any;
-      const code = typeof anyE?.code === 'string' ? anyE.code : '';
-      const msg = typeof anyE?.message === 'string' ? anyE.message : e instanceof Error ? e.message : String(e);
-      let details = '';
-      try {
-        if (anyE?.details !== undefined) details = JSON.stringify(anyE.details);
-      } catch {
-        details = String(anyE?.details ?? '');
-      }
-      const detail = [code && `code: ${code}`, msg && `message: ${msg}`, details && `details: ${details}`]
-        .filter(Boolean)
-        .join('\n');
-      alert(
-        lang === 'en'
-          ? `Slides export failed.\n\n${detail}`
-          : lang === 'es'
-            ? `La exportación Slides falló.\n\n${detail}`
-            : `L’export Slides a échoué.\n\n${detail}`
-      );
-    } finally {
-      setExportBusy(false);
-    }
-  }, [exportBusy, lang]);
-
-  useEffect(() => {
-    if (vitrine.loading || vitrine.error) {
-      setStatsPagePdfState(null);
-      return;
-    }
-    setStatsPagePdfState({ print: () => void handleExportSlides(), busy: exportBusy });
-    return () => {
-      setStatsPagePdfState(null);
-    };
-  }, [vitrine.error, vitrine.loading, handleExportSlides, exportBusy]);
-
   const topSectorsChart = useMemo(
     () => vitrine.topSectors.map((s) => ({ name: s.name, value: s.value })),
     [vitrine.topSectors]
@@ -237,11 +145,8 @@ export default function StatsPage() {
       </Helmet>
 
       <div className="mx-auto max-w-5xl px-4 py-10">
-        <div
-          ref={printRef}
-          className="stats-ds stats-print-root overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10"
-        >
-          <header className="stats-pdf-header">
+        <div className="stats-ds stats-print-root overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
+          <header className="border-b border-slate-200 pb-3 mb-4">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#01696f]">FrancoNetwork</p>
             <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
               {lang === 'en'
@@ -380,7 +285,6 @@ export default function StatsPage() {
             totalMembers={vitrine.totalMembers}
             newMembersLast30d={vitrine.newMembersLast30d}
             lang={lang}
-            pdfMode={false}
           />
 
           <RecentMembersActivity lang={lang} />

@@ -508,7 +508,7 @@ export const TRANSLATIONS: Translations = {
     es: "Gestión de la red: crecimiento, calidad de perfiles, solicitudes, brechas sector/ciudad y estadísticas de uso.",
   },
   adminVitrineLink: { fr: "Voir la vitrine publique", es: "Ver vitrina pública" },
-  adminVitrinePdf: { fr: "Ouvrir /stats (PDF)", es: "Abrir /stats (PDF)" },
+  adminVitrinePdf: { fr: "Ouvrir la vitrine (/stats)", es: "Abrir vitrina (/stats)" },
   adminInternalTab: { fr: "Internal", es: "Internal" },
   adminBackToDashboard: { fr: "Tableau de bord", es: "Panel" },
   adminInternalTitle: {

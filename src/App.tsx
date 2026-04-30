@@ -376,8 +376,6 @@ import PublicHomePage from '@/pages/PublicHomePage';
 import AppShell from '@/components/layout/AppShell';
 import { AppHeader as FrancoNetworkAppHeader } from '@/components/layout/AppHeader';
 import { canAccessRoute, getAppRole } from '@/auth/roleModel';
-import { StatsPdfHeaderButton } from '@/components/stats/StatsPdfHeaderButton';
-
 const loadNetworkRadarSection = () => import('./components/home/NetworkRadarSection');
 const loadDashboardPage = () => import('./components/dashboard/DashboardPage');
 const loadAdminPage = () => import('@/screens/AdminPage');
@@ -4976,15 +4974,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             isAdmin: viewerIsAdmin,
             onSignIn: openAuthModal,
             onSignOut: handleLogout,
-            rightSlot:
-              isStatsRoute ? (
-                <div className="flex shrink-0 items-center gap-2">
-                  <StatsPdfHeaderButton lang={lang} />
-                  {languageControlsTopRight}
-                </div>
-              ) : (
-                languageControlsTopRight
-              ),
+            rightSlot: languageControlsTopRight,
           }}
           showBottomNav={Boolean(user)}
           contentClassName={cn(

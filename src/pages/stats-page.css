@@ -10,7 +10,7 @@
   --stats-surface-muted: #f9fafb;
 }
 
-/* Vitrine /stats : PDF + impression */
+/* Vitrine /stats : impression navigateur */
 @media print {
   .no-print {
     display: none !important;
@@ -23,12 +23,6 @@
 .stats-print-root {
   background: #ffffff;
   color: #0f172a;
-}
-
-.stats-pdf-header {
-  border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 12px;
-  margin-bottom: 16px;
 }
 
 .stats-pdf-footer {
