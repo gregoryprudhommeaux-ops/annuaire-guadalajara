@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Layers, Share2 } from 'lucide-react';
+import { Share2 } from 'lucide-react';
 import { useVitrineStats } from '@/hooks/useVitrineStats';
 import { useFirebaseAuthUser } from '@/hooks/useFirebaseAuthUser';
 import { useLanguage } from '@/i18n/LanguageProvider';
@@ -28,7 +28,7 @@ import { SegmentedJoinCTA } from '@/components/stats/SegmentedJoinCTA';
 import { SharedAffinitiesSection } from '@/components/stats/SharedAffinitiesSection';
 import { StatsPrimaryButton, StatsSecondaryButton } from '@/components/stats/ui';
 import { chartTheme, getChartColor } from '@/lib/chartTheme';
-import { StatsCard, StatsSectionHeader, StatsSectionShell } from '@/components/stats/ui';
+import { StatsSectionHeader, StatsSectionShell } from '@/components/stats/ui';
 import francoLogoUrl from '../../favicon.svg?url';
 import './stats-page.css';
 
@@ -55,10 +55,6 @@ function formatShortDate(d: Date, lang: Language) {
     month: 'long',
     year: 'numeric',
   });
-}
-
-function localeNum(lang: Language, n: number) {
-  return n.toLocaleString(lang === 'es' ? 'es-MX' : lang === 'en' ? 'en-US' : 'fr-FR');
 }
 
 export function StatsVitrineContent({ variant, sharePageUrl, shareTopRight }: StatsVitrineContentProps) {
@@ -166,9 +162,6 @@ export function StatsVitrineContent({ variant, sharePageUrl, shareTopRight }: St
         }
       >
         <div className="stats-ds stats-print-root overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
-          {variant === 'share' && shareTopRight ? (
-            <div className="mb-4 flex justify-end">{shareTopRight}</div>
-          ) : null}
           {variant === 'app' ? (
             <header className="border-b border-slate-200 pb-4 mb-2">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -205,9 +198,12 @@ export function StatsVitrineContent({ variant, sharePageUrl, shareTopRight }: St
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#01696f]">
                 {tc.headerBrand}
               </p>
-              <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                {tc.sharePage.documentTitle}
-              </h1>
+              <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                <h1 className="min-w-0 flex-1 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                  {tc.sharePage.documentTitle}
+                </h1>
+                {shareTopRight ? <div className="flex shrink-0 justify-end">{shareTopRight}</div> : null}
+              </div>
               <p className="mt-2 max-w-3xl text-sm text-slate-600 sm:text-[15px] leading-relaxed">
                 {tc.headerLeadPrefix} {monthTitle}
               </p>
@@ -292,27 +288,6 @@ export function StatsVitrineContent({ variant, sharePageUrl, shareTopRight }: St
             </StatsSectionShell>
           </section>
 
-          <section className="mt-10 print:break-inside-avoid">
-            <StatsSectionHeader
-              eyebrow={tc.indicatorsEyebrow}
-              title={tc.indicatorsTitle}
-              description={tc.indicatorsDescription}
-            />
-            <div className="mx-auto mt-6 grid max-w-md gap-4">
-              <SupportMetricCard
-                icon={<Layers className="h-5 w-5 shrink-0 text-[#01696f]" aria-hidden />}
-                label={tc.sectorCardLabel}
-                lang={lang}
-                primary={
-                  vitrine.distinctSectorsCount > 0
-                    ? { kind: 'number', value: vitrine.distinctSectorsCount }
-                    : { kind: 'soft', title: tc.sectorPendingTitle, subtitle: tc.sectorPendingSub }
-                }
-                footnote={tc.sectorFootnoteUniqueLabels}
-              />
-            </div>
-          </section>
-
           <RecentMembersActivity lang={lang} />
 
           <div className="mt-10 print:break-inside-avoid">
@@ -386,37 +361,5 @@ export function StatsVitrineContent({ variant, sharePageUrl, shareTopRight }: St
         </div>
       </div>
     </div>
-  );
-}
-
-function SupportMetricCard({
-  icon,
-  label,
-  lang,
-  primary,
-  footnote,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  lang: Language;
-  primary: { kind: 'number'; value: number } | { kind: 'soft'; title: string; subtitle: string };
-  footnote: string;
-}) {
-  return (
-    <StatsCard className="flex flex-col p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-2">
-        {icon}
-        {primary.kind === 'number' ? (
-          <p className="text-2xl font-extrabold tabular-nums text-slate-900">{localeNum(lang, primary.value)}</p>
-        ) : (
-          <div className="max-w-[12rem] text-right">
-            <p className="text-sm font-semibold leading-snug text-slate-800">{primary.title}</p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">{primary.subtitle}</p>
-          </div>
-        )}
-      </div>
-      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-2 text-sm leading-relaxed text-slate-600">{footnote}</p>
-    </StatsCard>
   );
 }

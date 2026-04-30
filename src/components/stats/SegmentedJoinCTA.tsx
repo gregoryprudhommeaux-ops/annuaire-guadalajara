@@ -89,11 +89,6 @@ export function SegmentedJoinCTA({ lang }: { lang: Language }) {
           <p className="text-sm leading-relaxed text-slate-700">
             {c.footer}
           </p>
-          <div className="mt-4 flex justify-center sm:justify-center print:justify-center">
-            <StatsPrimaryButton to="/inscription" className="w-full max-w-md sm:w-auto">
-              {c.brandCta}
-            </StatsPrimaryButton>
-          </div>
         </div>
       </StatsSectionShell>
     </section>

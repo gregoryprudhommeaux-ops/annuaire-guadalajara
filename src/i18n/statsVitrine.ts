@@ -404,7 +404,7 @@ const FR: StatsVitrineCopy = {
     brandCta: 'Rejoindre FrancoNetwork',
   },
   sharePage: {
-    documentTitle: 'FrancoNetwork — Communauté en chiffres',
+    documentTitle: 'Communauté en chiffres',
     metaDescription:
       'Chiffres agrégés du réseau francophone d’affaires à Guadalajara : membres, secteurs, besoins — à partager librement.',
     shareLinkLabel: 'Partager',
@@ -642,7 +642,7 @@ const EN: StatsVitrineCopy = {
     brandCta: 'Join FrancoNetwork',
   },
   sharePage: {
-    documentTitle: 'FrancoNetwork — Community in numbers',
+    documentTitle: 'Community in numbers',
     metaDescription:
       'Aggregated figures from the Francophone business network in Guadalajara — free to share.',
     shareLinkLabel: 'Share',
@@ -881,7 +881,7 @@ const ES: StatsVitrineCopy = {
     brandCta: 'Unirse a FrancoNetwork',
   },
   sharePage: {
-    documentTitle: 'FrancoNetwork — La comunidad en cifras',
+    documentTitle: 'La comunidad en cifras',
     metaDescription:
       'Cifras agregadas de la red francófona de negocios en Guadalajara — para compartir libremente.',
     shareLinkLabel: 'Compartir',

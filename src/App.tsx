@@ -2288,6 +2288,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const profileEditFrUx = isEditProfileRoute && lang === 'fr';
   const isMembersDirectoryRoute = location.pathname === '/membres' || isNetworkRoute;
   const pathnameNorm = location.pathname.replace(/\/$/, '') || '/';
+  /** Même SPA que `/stats` : évite de démonter MainApp (session Firebase + garde routes) lors du passage stats ↔ partage. */
+  const isStatsShareRoute = pathnameNorm === '/stats/share';
   const isEventsAdminRoute = pathnameNorm === '/evenements';
   const isCommunicationAdminRoute = pathnameNorm === '/communication';
   const isAdminInternalRoute = pathnameNorm === '/admin/internal';
@@ -4811,6 +4813,20 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-stone-400 animate-pulse font-medium">{t('loading')}</div>
       </div>
+    );
+  }
+
+  if (isStatsShareRoute) {
+    return (
+      <React.Suspense
+        fallback={
+          <div className="flex min-h-screen items-center justify-center bg-[#f4f6f7] px-4 text-sm text-slate-500">
+            {t('loading')}
+          </div>
+        }
+      >
+        <StatsSharePageLazy />
+      </React.Suspense>
     );
   }
 
@@ -8181,20 +8197,7 @@ const App = () => {
             <Route path="/requests" element={<MainApp />} />
             <Route path="/radar" element={<MainApp initialViewMode="radar" />} />
             <Route path="/stats" element={<MainApp />} />
-            <Route
-              path="/stats/share"
-              element={
-                <React.Suspense
-                  fallback={
-                    <div className="flex min-h-screen items-center justify-center bg-[#f4f6f7] px-4 text-sm text-slate-500">
-                      Loading…
-                    </div>
-                  }
-                >
-                  <StatsSharePageLazy />
-                </React.Suspense>
-              }
-            />
+            <Route path="/stats/share" element={<MainApp />} />
             <Route path="/admin" element={<MainApp />} />
             <Route path="/admin/internal" element={<MainApp />} />
             <Route path="/requests/:id" element={<RequestsRedirect />} />
