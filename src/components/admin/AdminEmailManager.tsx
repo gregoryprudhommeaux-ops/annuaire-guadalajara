@@ -22,6 +22,7 @@ import {
   DEFAULT_TEST_EMAIL,
   deleteCampaign,
   deleteTemplate,
+  publishTemplatePublic,
   sendCampaignNowCallable,
   sendCampaignTestCallable,
   subscribeToCampaigns,
@@ -33,6 +34,7 @@ import {
   type CampaignStatus,
   type EmailTemplateDoc,
 } from '@/lib/emailManager';
+import { FirebaseError } from 'firebase/app';
 
 type Tab = 'campaigns' | 'templates' | 'automations';
 
@@ -327,6 +329,11 @@ export function AdminEmailManager() {
       setToast('Sujet et corps obligatoires pour un template.');
       return;
     }
+    if (!auth.currentUser) {
+      setToast('Non connecté. Recharge la page et reconnecte-toi.');
+      return;
+    }
+    setToast('Sauvegarde du template…');
     setBusy('save-tpl');
     try {
       await createTemplate({
@@ -336,8 +343,19 @@ export function AdminEmailManager() {
         createdBy: uid,
       });
       setToast('Template enregistré.');
+      setTab('templates');
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'Erreur sauvegarde template.');
+      if (err instanceof FirebaseError) {
+        if (err.code === 'permission-denied') {
+          setToast(
+            "Permission refusée (admin). Vérifie que les règles Firestore sont bien déployées et que ton compte est admin."
+          );
+        } else {
+          setToast(`${err.code}: ${err.message}`);
+        }
+      } else {
+        setToast(err instanceof Error ? err.message : 'Erreur sauvegarde template.');
+      }
     } finally {
       setBusy(null);
     }
@@ -405,6 +423,29 @@ export function AdminEmailManager() {
       setToast('Template supprimé.');
     } catch (err) {
       setToast(err instanceof Error ? err.message : 'Suppression échouée.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleShareTemplate = async (tpl: EmailTemplateDoc) => {
+    if (!auth.currentUser) {
+      setToast('Non connecté.');
+      return;
+    }
+    setBusy(`share-tpl-${tpl.id}`);
+    setToast('Publication du lien…');
+    try {
+      await publishTemplatePublic(
+        { id: tpl.id, name: tpl.name, subject: tpl.subject, bodyHtml: tpl.bodyHtml },
+        auth.currentUser.uid
+      );
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const url = `${origin}/t/${encodeURIComponent(tpl.id)}`;
+      await navigator.clipboard.writeText(url);
+      setToast('Lien copié. Tu peux le partager sur WhatsApp.');
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : 'Partage échoué.');
     } finally {
       setBusy(null);
     }
@@ -692,6 +733,17 @@ export function AdminEmailManager() {
                             className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs font-semibold text-stone-800 hover:bg-stone-50 disabled:opacity-60"
                           >
                             Renommer
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy === `share-tpl-${t.id}`}
+                            onClick={() => handleShareTemplate(t)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 disabled:opacity-60"
+                          >
+                            {busy === `share-tpl-${t.id}` ? (
+                              <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                            ) : null}
+                            Partager
                           </button>
                           <button
                             type="button"

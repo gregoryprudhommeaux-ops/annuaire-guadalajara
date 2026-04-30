@@ -382,6 +382,7 @@ const loadAdminPage = () => import('@/screens/AdminPage');
 const loadInternalAdminPage = () => import('@/pages/InternalAdminPage');
 const loadStatsPage = () => import('@/pages/StatsPage');
 const loadStatsSharePage = () => import('@/pages/StatsSharePage');
+const loadPublicTemplatePage = () => import('@/pages/PublicTemplatePage');
 const loadAdminEvents = () => import('./components/dashboard/AdminEvents');
 const loadCommunicationAdminPage = () => import('@/pages/CommunicationAdminPage');
 const loadPublicEventPage = () => import('./components/events/PublicEventPage');
@@ -392,6 +393,7 @@ const AdminPageLazy = React.lazy(loadAdminPage);
 const InternalAdminPageLazy = React.lazy(loadInternalAdminPage);
 const StatsPageLazy = React.lazy(loadStatsPage);
 const StatsSharePageLazy = React.lazy(loadStatsSharePage);
+const PublicTemplatePageLazy = React.lazy(loadPublicTemplatePage);
 const AdminEventsLazy = React.lazy(loadAdminEvents);
 const CommunicationAdminPageLazy = React.lazy(loadCommunicationAdminPage);
 const PublicEventPageLazy = React.lazy(loadPublicEventPage);
@@ -8232,6 +8234,20 @@ const App = () => {
             <Route path="/evenements" element={<MainApp initialViewMode="dashboard" />} />
             <Route path="/communication" element={<MainApp initialViewMode="dashboard" />} />
             <Route path="/e/:slug" element={<MainApp />} />
+            <Route
+              path="/t/:id"
+              element={
+                <React.Suspense
+                  fallback={
+                    <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                      Chargement…
+                    </div>
+                  }
+                >
+                  <PublicTemplatePageLazy />
+                </React.Suspense>
+              }
+            />
             <Route path="/profil/:profileId" element={<ProfilePage />} />
             <Route path="/besoin/:needId" element={<NeedPage />} />
           </Routes>

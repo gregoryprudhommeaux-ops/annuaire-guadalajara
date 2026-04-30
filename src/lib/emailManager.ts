@@ -59,6 +59,7 @@ export type EmailTemplateDoc = {
 
 const TEMPLATES = 'emailTemplates';
 const CAMPAIGNS = 'emailCampaigns';
+const PUBLIC_TEMPLATES = 'publicEmailTemplates';
 
 export function subscribeToTemplates(
   cb: (templates: EmailTemplateDoc[]) => void,
@@ -107,6 +108,23 @@ export async function createTemplate(input: {
     createdBy: input.createdBy,
   });
   return ref.id;
+}
+
+export async function publishTemplatePublic(
+  template: Pick<EmailTemplateDoc, 'id' | 'name' | 'subject' | 'bodyHtml'>,
+  createdBy: string
+): Promise<void> {
+  await setDoc(
+    doc(db, PUBLIC_TEMPLATES, template.id),
+    {
+      name: template.name,
+      subject: template.subject,
+      bodyHtml: template.bodyHtml,
+      createdBy,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
 }
 
 export async function updateTemplate(

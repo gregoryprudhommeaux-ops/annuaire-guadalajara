@@ -329,6 +329,15 @@ service cloud.firestore {
     }
 
     /**
+     * Templates emails publics (partage WhatsApp, lien externe).
+     * La source “admin” reste privée (`emailTemplates`), on publie une copie ici.
+     */
+    match /publicEmailTemplates/{templateId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
      * Templates et campagnes emails — gestion 100% admin (dashboard /admin/internal).
      * Les envois réels passent par Cloud Functions (clé Resend serveur uniquement).
      */
