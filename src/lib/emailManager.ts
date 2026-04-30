@@ -225,7 +225,7 @@ export async function sendCampaignTestCallable(
 // EMAIL AUTOMATIONS — synchro logique avec functions/src/lib/automations.ts
 // ============================================================================
 
-export type AutomationTrigger = 'userCreated' | 'weeklySchedule';
+export type AutomationTrigger = 'userCreated' | 'weeklySchedule' | 'monthlySchedule';
 
 export const AUTOMATION_TRIGGERS: {
   id: AutomationTrigger;
@@ -244,6 +244,12 @@ export const AUTOMATION_TRIGGERS: {
     description:
       'Envoyé chaque lundi à 9h (heure de Guadalajara) à tous les membres ayant un email valide.',
   },
+  {
+    id: 'monthlySchedule',
+    label: 'Fin de mois (stats)',
+    description:
+      'Envoyé automatiquement le dernier jour du mois (heure de Guadalajara) aux membres (et aux emails externes configurés).',
+  },
 ];
 
 /**
@@ -259,6 +265,12 @@ export const AUTOMATION_VARIABLES: { name: string; description: string }[] = [
   { name: 'appUrl', description: 'URL de l\'app' },
   { name: 'profileEditUrl', description: 'Lien vers /profile/edit' },
   { name: 'networkUrl', description: 'Lien vers /network' },
+  { name: 'statsShareUrl', description: 'Lien vers /stats/share?lang=…' },
+  { name: 'monthLabel', description: 'Mois en cours (ex. avril 2026) selon la langue' },
+  { name: 'kpiMembers', description: 'KPI — membres (nombre formaté)' },
+  { name: 'kpiConnections', description: 'KPI — connexions potentielles (nombre formaté)' },
+  { name: 'kpiGrowthPct', description: 'KPI — croissance du mois (ex. +18%)' },
+  { name: 'kpiSectors', description: 'KPI — secteurs représentés (nombre formaté)' },
   { name: 'completionRate', description: 'Taux de complétion (0-100)' },
   { name: 'completionPercent', description: 'Taux de complétion avec %' },
 ];
@@ -397,6 +409,7 @@ const APP_CONFIG_AUTOMATIONS = 'appConfig/emailAutomations';
 const DEFAULT_AUTOMATION_SETTINGS: AutomationSettings = {
   userCreated: true,
   weeklySchedule: true,
+  monthlySchedule: true,
 };
 
 export function subscribeToAutomationSettings(
@@ -412,6 +425,7 @@ export function subscribeToAutomationSettings(
       cb({
         userCreated: data?.userCreated !== false,
         weeklySchedule: data?.weeklySchedule !== false,
+        monthlySchedule: data?.monthlySchedule !== false,
       });
     },
     (err) => onError?.(err)

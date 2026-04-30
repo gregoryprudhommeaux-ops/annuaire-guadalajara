@@ -88,6 +88,43 @@ const PRESETS: Record<AutomationTrigger, { subject: string; bodyHtml: string; na
 <p><a href="{{networkUrl}}">Voir le réseau</a></p>
 <p>À lundi prochain,<br/>L'équipe FrancoNetwork</p>`,
   },
+  monthlySchedule: {
+    name: 'Fin de mois — Communauté en chiffres',
+    subject: 'Communauté en chiffres — {{monthLabel}}',
+    bodyHtml: `<p>Bonjour {{firstName}},</p>
+<p>Voici un aperçu de la communauté pour <strong>{{monthLabel}}</strong>.</p>
+
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:16px 0 8px 0;">
+  <tr>
+    <td style="padding:8px; border:1px solid #e5e7eb; border-radius:14px; text-align:center;">
+      <div style="font-size:28px; font-weight:800; color:#01696f; line-height:1.1;">{{kpiMembers}}</div>
+      <div style="margin-top:6px; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#6b7280;">Membres</div>
+    </td>
+    <td width="12"></td>
+    <td style="padding:8px; border:1px solid #e5e7eb; border-radius:14px; text-align:center;">
+      <div style="font-size:28px; font-weight:800; color:#01696f; line-height:1.1;">{{kpiConnections}}</div>
+      <div style="margin-top:6px; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#6b7280;">Connexions</div>
+    </td>
+  </tr>
+  <tr><td height="12" colspan="3"></td></tr>
+  <tr>
+    <td style="padding:8px; border:1px solid #e5e7eb; border-radius:14px; text-align:center;">
+      <div style="font-size:28px; font-weight:800; color:#01696f; line-height:1.1;">{{kpiGrowthPct}}</div>
+      <div style="margin-top:6px; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#6b7280;">Croissance</div>
+    </td>
+    <td width="12"></td>
+    <td style="padding:8px; border:1px solid #e5e7eb; border-radius:14px; text-align:center;">
+      <div style="font-size:28px; font-weight:800; color:#01696f; line-height:1.1;">{{kpiSectors}}</div>
+      <div style="margin-top:6px; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:#6b7280;">Secteurs</div>
+    </td>
+  </tr>
+</table>
+
+<p style="margin-top:10px;"><a href="{{statsShareUrl}}"><strong>Voir la page complète à partager</strong></a></p>
+<p>Vous pouvez aussi mettre à jour votre profil pour apparaître au bon moment :</p>
+<p><a href="{{profileEditUrl}}">Mettre à jour mon profil</a></p>
+<p>À bientôt,<br/>L'équipe FrancoNetwork</p>`,
+  },
 };
 
 function triggerLabel(t: AutomationTrigger): string {

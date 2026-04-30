@@ -181,6 +181,7 @@ export const backfillMembersToGoogleSheet = functions
 
 export { onUserCreatedSendWelcome } from './triggers/onUserCreated';
 export { weeklyDigest } from './triggers/weeklyDigest';
+export { monthlyStatsDigest } from './triggers/monthlyStatsDigest';
 export { dispatchScheduledCampaigns } from './triggers/dispatchScheduledCampaigns';
 export { sendCampaignNow } from './callables/sendCampaignNow';
 export { sendCampaignTest } from './callables/sendCampaignTest';

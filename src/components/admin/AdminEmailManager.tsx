@@ -343,6 +343,34 @@ export function AdminEmailManager() {
     }
   };
 
+  const handleCreateMonthlyStatsTemplate = async () => {
+    setBusy('seed-monthly-stats');
+    try {
+      const subject = 'Communauté en chiffres — fin de mois';
+      const bodyHtml = `<p>Bonjour,</p>
+<p>Chaque fin de mois, nous partageons une synthèse publique et partageable de la communauté :</p>
+<p><a href="https://franconetwork.app/stats/share?lang=fr"><strong>Voir « Communauté en chiffres »</strong></a></p>
+<p>Vous pouvez ensuite :</p>
+<ul>
+  <li>partager cette page à votre équipe / réseau,</li>
+  <li>ou rejoindre la plateforme pour apparaître au bon moment.</li>
+</ul>
+<p><a href="https://franconetwork.app/inscription">Rejoindre FrancoNetwork</a></p>`;
+
+      await createTemplate({
+        name: 'Fin de mois — Communauté en chiffres',
+        subject,
+        bodyHtml,
+        createdBy: uid,
+      });
+      setToast('Template “Fin de mois — Communauté en chiffres” créé.');
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : 'Création du template échouée.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const handleUseTemplate = (t: EmailTemplateDoc) => {
     setComposer({
       ...EMPTY_COMPOSER,
@@ -614,8 +642,24 @@ export function AdminEmailManager() {
                 {templates.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-4 py-8 text-center text-stone-500">
-                      Aucun template. Crée-en un depuis le composer en cliquant
-                      sur « Sauver comme template ».
+                      <p>
+                        Aucun template. Crée-en un depuis le composer en cliquant sur « Sauver comme template ».
+                      </p>
+                      <div className="mt-4 flex justify-center">
+                        <button
+                          type="button"
+                          disabled={busy === 'seed-monthly-stats'}
+                          onClick={handleCreateMonthlyStatsTemplate}
+                          className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 shadow-sm hover:bg-stone-50 disabled:opacity-60"
+                        >
+                          {busy === 'seed-monthly-stats' ? (
+                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                          ) : (
+                            <Plus className="h-4 w-4" aria-hidden />
+                          )}
+                          Créer le template “Communauté en chiffres”
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ) : (

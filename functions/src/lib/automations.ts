@@ -3,7 +3,7 @@ import { getApps } from 'firebase-admin/app';
 import { FIRESTORE_DATABASE_ID } from '../constants';
 
 /** Déclencheurs supportés. Synchronisé avec `src/lib/emailManager.ts` côté front. */
-export type AutomationTrigger = 'userCreated' | 'weeklySchedule';
+export type AutomationTrigger = 'userCreated' | 'weeklySchedule' | 'monthlySchedule';
 
 /** Langue cible d'une automation (`null` = toutes). */
 export type AutomationLanguage = 'fr' | 'es' | 'en' | null;

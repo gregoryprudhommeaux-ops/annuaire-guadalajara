@@ -58,6 +58,15 @@ export function buildVariables(recipient: RecipientLike): TemplateVars {
   );
 
   const language = resolveLanguage(recipient.communicationLanguage);
+  const monthLabel = (() => {
+    const now = new Date();
+    const locale = language === 'fr' ? 'fr-FR' : language === 'en' ? 'en-US' : 'es-MX';
+    try {
+      return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(now);
+    } catch {
+      return '';
+    }
+  })();
   return {
     firstName: firstName(fullName) || display,
     fullName: fullName || display,
@@ -67,6 +76,13 @@ export function buildVariables(recipient: RecipientLike): TemplateVars {
     appUrl,
     profileEditUrl: `${appUrl}/profile/edit`,
     networkUrl: `${appUrl}/network`,
+    statsShareUrl: `${appUrl}/stats/share?lang=${language}`,
+    monthLabel,
+    // KPI (renseignés par certains triggers, ex. monthlySchedule). Valeurs vides par défaut.
+    kpiMembers: '',
+    kpiConnections: '',
+    kpiGrowthPct: '',
+    kpiSectors: '',
     completionRate: String(completion),
     completionPercent: `${completion}%`,
     language,
@@ -76,6 +92,13 @@ export function buildVariables(recipient: RecipientLike): TemplateVars {
 /** Données de prévisualisation utilisées pour l'envoi de TEST. */
 export function buildSampleVariables(adminEmail: string): TemplateVars {
   const appUrl = APP_URL_PARAM.value() || 'https://franconetwork.app';
+  const monthLabel = (() => {
+    try {
+      return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date());
+    } catch {
+      return '';
+    }
+  })();
   return {
     firstName: 'Gregory',
     fullName: 'Gregory Prudhommeaux',
@@ -85,6 +108,12 @@ export function buildSampleVariables(adminEmail: string): TemplateVars {
     appUrl,
     profileEditUrl: `${appUrl}/profile/edit`,
     networkUrl: `${appUrl}/network`,
+    statsShareUrl: `${appUrl}/stats/share?lang=${DEFAULT_COMMUNICATION_LANGUAGE}`,
+    monthLabel,
+    kpiMembers: '153',
+    kpiConnections: '1 120',
+    kpiGrowthPct: '+18%',
+    kpiSectors: '8',
     completionRate: '87',
     completionPercent: '87%',
     language: DEFAULT_COMMUNICATION_LANGUAGE,
@@ -119,6 +148,12 @@ export const AVAILABLE_VARS: { name: string; description: string }[] = [
   { name: 'appUrl', description: 'URL de l\'app (https://franconetwork.app)' },
   { name: 'profileEditUrl', description: 'Lien direct vers /profile/edit' },
   { name: 'networkUrl', description: 'Lien vers le répertoire /network' },
+  { name: 'statsShareUrl', description: 'Lien vers la vitrine /stats/share (langue auto)' },
+  { name: 'monthLabel', description: 'Mois en cours (ex. avril 2026) selon la langue' },
+  { name: 'kpiMembers', description: 'KPI — membres (nombre formaté)' },
+  { name: 'kpiConnections', description: 'KPI — connexions potentielles (nombre formaté)' },
+  { name: 'kpiGrowthPct', description: 'KPI — croissance du mois (ex. +18%)' },
+  { name: 'kpiSectors', description: 'KPI — secteurs représentés (nombre formaté)' },
   { name: 'completionRate', description: 'Taux de complétion (0–100)' },
   { name: 'completionPercent', description: 'Taux de complétion avec %' },
   { name: 'language', description: "Langue de communication choisie (fr/es/en, défaut es)" },
