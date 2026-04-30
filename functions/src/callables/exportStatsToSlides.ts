@@ -8,6 +8,9 @@ import { getApps } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { FIRESTORE_DATABASE_ID } from '../constants';
 import { isCallerAdmin } from '../lib/admin';
+import type { UiLang, VitrineStats } from './vitrineTypes';
+import { buildVitrineExportBundle, localeForLang } from './vitrineExportBundle';
+import { createVitrineScratchPresentation } from './createVitrineScratchPresentation';
 
 const SLIDES_EXPORT_FOLDER_ID = defineString('GOOGLE_SLIDES_EXPORT_FOLDER_ID', { default: '' });
 
@@ -17,21 +20,9 @@ const GOOGLE_OAUTH_CLIENT_ID = defineString('GOOGLE_OAUTH_CLIENT_ID', { default:
 const GOOGLE_OAUTH_CLIENT_SECRET = defineString('GOOGLE_OAUTH_CLIENT_SECRET', { default: '' });
 const GOOGLE_OAUTH_REFRESH_TOKEN = defineString('GOOGLE_OAUTH_REFRESH_TOKEN', { default: '' });
 
-type VitrineStats = {
-  totalMembers: number;
-  newMembersLast30d: number;
-  prevNewMembers30d: number;
-  profileViewsCumul: number;
-  contactClicksCumul: number;
-  topSectors: Array<{ name: string; value: number }>;
-  growthCumulative: Array<{ date: string; count: number }>;
-  needs: Array<{ key: string; label: string; count: number }>;
-  topPassions: Array<{ passionId: string; memberCount: number; sectorCount: number }>;
-  recentMembers: Array<{ uid: string; createdAtMs: number; sector: string; primaryNeed: string }>;
-  recentRequests: Array<{ id: string; createdAtMs: number; expiresAtMs: number; title: string }>;
-};
-
 type VitrineTemplateConfig = {
+  /** `scratch` = deck généré par l’API Slides sans copier le master. */
+  export_mode?: 'template' | 'scratch';
   template_id?: string;
   templateId?: string;
   /** Optional override per UI language. */
@@ -50,8 +41,15 @@ function loadVitrineTemplateConfig(): VitrineTemplateConfig {
   const p = path.resolve(__dirname, '../../config/vitrine-template.json');
   const raw = fs.readFileSync(p, 'utf8');
   const parsed = JSON.parse(raw) as VitrineTemplateConfig;
-  const templateId = String(parsed?.template_id ?? parsed?.templateId ?? '').trim();
-  if (!templateId) throw new Error('Template config: template_id manquant.');
+  const mode = String(parsed?.export_mode ?? 'template')
+    .trim()
+    .toLowerCase();
+  if (mode !== 'scratch') {
+    const templateId = String(parsed?.template_id ?? parsed?.templateId ?? '').trim();
+    if (!templateId) {
+      throw new Error('Template config: template_id manquant (ou définissez export_mode à "scratch").');
+    }
+  }
   return parsed;
 }
 
@@ -291,20 +289,6 @@ async function loadVitrineStats(): Promise<VitrineStats> {
   };
 }
 
-type UiLang = 'fr' | 'en' | 'es';
-
-function localeForLang(lang: UiLang): string {
-  return lang === 'es' ? 'es-MX' : lang === 'en' ? 'en-US' : 'fr-FR';
-}
-
-function monthTitle(now: Date, lang: UiLang): string {
-  return now.toLocaleDateString(localeForLang(lang), { month: 'long', year: 'numeric' });
-}
-
-function longDate(now: Date, lang: UiLang): string {
-  return now.toLocaleDateString(localeForLang(lang), { day: 'numeric', month: 'long', year: 'numeric' });
-}
-
 function slidesUrl(presentationId: string, opts?: { templateId?: string; lang?: string }): string {
   const base = `https://docs.google.com/presentation/d/${presentationId}/edit`;
   const qp = new URLSearchParams();
@@ -361,78 +345,6 @@ async function copyTemplatePresentation(
   return id;
 }
 
-// NOTE: non-derive rule — we no longer generate slides from scratch in code.
-
-function quickChartUrl(config: unknown, width: number, height: number): string {
-  // QuickChart returns a public PNG image from a URL-encoded Chart.js config.
-  // This is reliably fetchable by Google Slides for replaceAllShapesWithImage.
-  const c = encodeURIComponent(JSON.stringify(config));
-  return `https://quickchart.io/chart?format=png&backgroundColor=white&width=${width}&height=${height}&c=${c}`;
-}
-
-function chartUrlBar(labels: string[], values: number[], colors: string[]): string {
-  const safe = values.length ? values : [0];
-  const safeLabels = labels.length ? labels : ['—'];
-  const palette = colors.length ? colors : ['#01696f'];
-  const cfg = {
-    type: 'bar',
-    data: {
-      labels: safeLabels,
-      datasets: [
-        {
-          data: safe,
-          backgroundColor: safe.map((_: number, i: number) => palette[i % palette.length]),
-          borderWidth: 0,
-          barThickness: 16,
-        },
-      ],
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: false },
-      },
-      scales: {
-        x: { ticks: { color: '#475569', font: { size: 12 } }, grid: { color: '#e2e8f0' } },
-        y: { ticks: { color: '#0f172a', font: { size: 12 } }, grid: { display: false } },
-      },
-    },
-  };
-  return quickChartUrl(cfg, 820, 380);
-}
-
-function chartUrlLine(points: number[]): string {
-  const safe = points.length ? points : [0, 1];
-  const cfg = {
-    type: 'line',
-    data: {
-      labels: safe.map((_: number, i: number) => String(i + 1)),
-      datasets: [
-        {
-          data: safe,
-          borderColor: '#01696f',
-          backgroundColor: 'rgba(1,105,111,0.15)',
-          fill: false,
-          tension: 0.25,
-          pointRadius: 3,
-          pointBackgroundColor: '#01696f',
-        },
-      ],
-    },
-    options: {
-      responsive: false,
-      plugins: { legend: { display: false }, tooltip: { enabled: false } },
-      scales: {
-        x: { display: false },
-        y: { ticks: { color: '#475569', font: { size: 12 } }, grid: { color: '#e2e8f0' } },
-      },
-    },
-  };
-  return quickChartUrl(cfg, 820, 300);
-}
-
 async function fillPresentation(
   slides: ReturnType<typeof google.slides>,
   presentationId: string,
@@ -440,169 +352,52 @@ async function fillPresentation(
   lang: UiLang
 ) {
   const cfg = loadVitrineTemplateConfig();
-  const now = new Date();
-  const month = monthTitle(now, lang);
-  const extractDateLong = longDate(now, lang);
-
-  const docTitle =
-    lang === 'en'
-      ? `FrancoNetwork - Network showcase - ${month}`
-      : lang === 'es'
-        ? `FrancoNetwork - Vitrina de red - ${month}`
-        : `FrancoNetwork - Vitrine réseau - ${month}`;
-
-  const kpiMembers = String(stats.totalMembers);
-  const kpiNew = String(stats.newMembersLast30d);
-  const kpiViews = String(stats.profileViewsCumul);
-  const kpiClicks = String(stats.contactClicksCumul);
-  const kpiPotentialConnections =
-    stats.totalMembers > 1 ? String((stats.totalMembers * (stats.totalMembers - 1)) / 2) : '0';
-
-  const sectorsLabels = stats.topSectors.map((s) => s.name);
-  const sectorsValues = stats.topSectors.map((s) => s.value);
-  const sectorColors = ['#01696f', '#1f5f5b', '#3a7c78', '#5aa19c', '#0f766e', '#115e59', '#0b4a46', '#083b38'];
-
-  const growthPoints = stats.growthCumulative.map((p) => p.count);
-  const needsLabels = stats.needs.map((n) => n.label);
-  const needsValues = stats.needs.map((n) => n.count);
-  const needsColors = ['#01696f', '#0f766e', '#1f5f5b', '#3b82f6', '#a855f7', '#f59e0b', '#ef4444', '#64748b'];
-
-  const chartSectors = chartUrlBar(sectorsLabels, sectorsValues, sectorColors.slice(0, Math.max(1, sectorsValues.length)));
-  const chartGrowth = chartUrlLine(growthPoints.length ? growthPoints : [0, 1]);
-  const chartNeeds = chartUrlBar(needsLabels, needsValues, needsColors.slice(0, Math.max(1, needsValues.length)));
-
   const dash = cfg.fallbackPolicy?.dash ?? '—';
   const listDash = cfg.fallbackPolicy?.emptyList ?? '—';
-
-  const affinitiesList =
-    stats.topPassions.length === 0
-      ? listDash
-      : stats.topPassions
-          .slice(0, 8)
-          .map((p) => `• ${p.passionId} — ${p.memberCount} membres · ${p.sectorCount} secteurs`)
-          .join('\n');
-
-  const affinitiesInsights =
-    lang === 'en'
-      ? '• Existing relationship groundwork\n• Signals of trust and conviviality\n• A network conducive to durable connections\n\nConclusion: shared interests accelerate meaningful exchanges.'
-      : lang === 'es'
-        ? '• Base de relaciones ya existente\n• Señales de confianza y convivencia\n• Una red propicia a conexiones duraderas\n\nConclusión: los puntos en común aceleran los intercambios.'
-        : '• Une base de relations déjà existante\n• Des signaux de confiance et de convivialité\n• Un réseau propice aux connexions durables\n\nConclusion : des points communs favorisent des échanges plus rapides.';
-
-  const sectorsList =
-    stats.topSectors.length === 0
-      ? listDash
-      : stats.topSectors.map((s) => `• ${s.name} — ${s.value}`).join('\n');
-
-  const growthSummary =
-    lang === 'en'
-      ? `• ${stats.newMembersLast30d} new (30 days)\n• ${stats.totalMembers} decision-makers already visible\n\nConclusion: measurable growth momentum.`
-      : lang === 'es'
-        ? `• ${stats.newMembersLast30d} nuevos (30 días)\n• ${stats.totalMembers} decisores ya visibles\n\nConclusión: una dinámica de crecimiento medible.`
-        : `• ${stats.newMembersLast30d} nouveaux (30 jours)\n• ${stats.totalMembers} décideurs déjà visibles\n\nConclusion : une dynamique de croissance mesurable.`;
-
-  const recentActivityList =
-    stats.recentMembers.length === 0
-      ? listDash
-      : stats.recentMembers
-          .map((m) => {
-            const when = m.createdAtMs ? new Date(m.createdAtMs).toLocaleDateString(localeForLang(lang)) : '';
-            const need = m.primaryNeed ? ` — besoin: ${m.primaryNeed}` : '';
-            return `• ${when} — ${m.sector}${need}`;
-          })
-          .join('\n');
-
-  const mostSoughtList =
-    stats.needs.length === 0
-      ? listDash
-      : stats.needs
-          .slice(0, 8)
-          .map((n) => `• ${n.label} — ${n.count}`)
-          .join('\n');
-
-  const activeOppsList = mostSoughtList;
-
-  const activeOppsWhy =
-    lang === 'en'
-      ? '• Needs already expressed by the community\n• Joining helps you appear at the right moment\n\nConclusion: the network enables concrete opportunities.'
-      : lang === 'es'
-        ? '• Necesidades ya expresadas por la comunidad\n• Inscribirse ayuda a aparecer en el momento adecuado\n\nConclusión: la red facilita oportunidades concretas.'
-        : '• Des besoins déjà exprimés par la communauté\n• Une inscription permet d’apparaître au bon moment\n\nConclusion : le réseau facilite des opportunités concrètes.';
-
-  const recentRequestsList =
-    stats.recentRequests.length === 0
-      ? listDash
-      : stats.recentRequests
-          .slice(0, 5)
-          .map((r) => {
-            const when = r.createdAtMs ? new Date(r.createdAtMs).toLocaleDateString(localeForLang(lang)) : '';
-            return `• ${when} — ${r.title}`;
-          })
-          .join('\n');
-
-  const recentRequestsWhy =
-    lang === 'en'
-      ? '• Genuine expressed needs\n• Already-active opportunities\n• A community that takes action\n\nConclusion: the network already connects concrete projects.'
-      : lang === 'es'
-        ? '• Necesidades realmente expresadas\n• Oportunidades ya activas\n• Una comunidad en acción\n\nConclusión: la red ya conecta proyectos concretos.'
-        : '• Des besoins réellement exprimés\n• Des opportunités déjà actives\n• Une communauté qui passe à l’action\n\nConclusion : le réseau sert déjà à connecter des projets concrets.';
-
-  const ctaCards =
-    lang === 'en'
-      ? '• Complete your profile\n• Respond to a request\n• Join and activate the network'
-      : lang === 'es'
-        ? '• Completar su perfil\n• Responder a una solicitud\n• Unirse y activar la red'
-        : '• Compléter son profil\n• Répondre à une demande\n• Rejoindre et activer le réseau';
-
-  const footerSource =
-    lang === 'en'
-      ? 'Source: directory aggregates'
-      : lang === 'es'
-        ? 'Fuente: agregados del directorio'
-        : 'Source : agrégats annuaire';
+  const bundle = buildVitrineExportBundle(stats, lang, listDash);
 
   // ---------------------------------------------------------------------------
   // Token map: legacy {{KPI_*}} + VitrineData-style placeholders.
   // We rewrite whole text boxes/table cells so styled runs cannot break matching.
   // ---------------------------------------------------------------------------
   const tokenMap = new Map<string, string>();
-  tokenMap.set('{{DOC_TITLE}}', docTitle);
-  tokenMap.set('{{MONTH_TITLE}}', month);
-  tokenMap.set('{{EXTRACT_DATE_LONG}}', extractDateLong);
-  tokenMap.set('{{FOOTER_DATE_LONG}}', extractDateLong);
-  tokenMap.set('{{FOOTER_SOURCE}}', footerSource);
-  tokenMap.set('{{KPI_MEMBERS}}', kpiMembers);
-  tokenMap.set('{{KPI_NEW_30D}}', kpiNew);
-  tokenMap.set('{{KPI_PROFILE_VIEWS}}', kpiViews);
-  tokenMap.set('{{KPI_CONTACT_CLICKS}}', kpiClicks);
-  tokenMap.set('{{KPI_POTENTIAL_CONNECTIONS}}', kpiPotentialConnections);
-  tokenMap.set('{{AFFINITIES_LIST}}', affinitiesList || dash);
-  tokenMap.set('{{AFFINITIES_INSIGHTS}}', affinitiesInsights || dash);
-  tokenMap.set('{{SECTORS_LIST}}', sectorsList || dash);
-  tokenMap.set('{{GROWTH_SUMMARY}}', growthSummary || dash);
-  tokenMap.set('{{RECENT_ACTIVITY_LIST}}', recentActivityList || dash);
-  tokenMap.set('{{MOST_SOUGHT_LIST}}', mostSoughtList || dash);
-  tokenMap.set('{{ACTIVE_OPPS_LIST}}', activeOppsList || dash);
-  tokenMap.set('{{ACTIVE_OPPS_WHY}}', activeOppsWhy || dash);
-  tokenMap.set('{{RECENT_REQUESTS_LIST}}', recentRequestsList || dash);
-  tokenMap.set('{{RECENT_REQUESTS_WHY}}', recentRequestsWhy || dash);
-  tokenMap.set('{{CTA_CARDS}}', ctaCards || dash);
+  tokenMap.set('{{DOC_TITLE}}', bundle.docTitle);
+  tokenMap.set('{{MONTH_TITLE}}', bundle.month);
+  tokenMap.set('{{EXTRACT_DATE_LONG}}', bundle.extractDateLong);
+  tokenMap.set('{{FOOTER_DATE_LONG}}', bundle.extractDateLong);
+  tokenMap.set('{{FOOTER_SOURCE}}', bundle.footerSource);
+  tokenMap.set('{{KPI_MEMBERS}}', bundle.kpiMembers);
+  tokenMap.set('{{KPI_NEW_30D}}', bundle.kpiNew);
+  tokenMap.set('{{KPI_PROFILE_VIEWS}}', bundle.kpiViews);
+  tokenMap.set('{{KPI_CONTACT_CLICKS}}', bundle.kpiClicks);
+  tokenMap.set('{{KPI_POTENTIAL_CONNECTIONS}}', bundle.kpiPotentialConnections);
+  tokenMap.set('{{AFFINITIES_LIST}}', bundle.affinitiesList || dash);
+  tokenMap.set('{{AFFINITIES_INSIGHTS}}', bundle.affinitiesInsights || dash);
+  tokenMap.set('{{SECTORS_LIST}}', bundle.sectorsList || dash);
+  tokenMap.set('{{GROWTH_SUMMARY}}', bundle.growthSummary || dash);
+  tokenMap.set('{{RECENT_ACTIVITY_LIST}}', bundle.recentActivityList || dash);
+  tokenMap.set('{{MOST_SOUGHT_LIST}}', bundle.mostSoughtList || dash);
+  tokenMap.set('{{ACTIVE_OPPS_LIST}}', bundle.activeOppsList || dash);
+  tokenMap.set('{{ACTIVE_OPPS_WHY}}', bundle.activeOppsWhy || dash);
+  tokenMap.set('{{RECENT_REQUESTS_LIST}}', bundle.recentRequestsList || dash);
+  tokenMap.set('{{RECENT_REQUESTS_WHY}}', bundle.recentRequestsWhy || dash);
+  tokenMap.set('{{CTA_CARDS}}', bundle.ctaCards || dash);
 
   const vitrineDataLike = {
-    report_month_year_fr: month,
-    extraction_date_fr_long: extractDateLong,
+    report_month_year_fr: bundle.month,
+    extraction_date_fr_long: bundle.extractDateLong,
     hero_stats: {
-      members_count: kpiMembers,
+      members_count: bundle.kpiMembers,
       active_opportunities_count: stats.recentRequests.length ? String(stats.recentRequests.length) : '0',
       month_growth_percent: '',
       sectors_count: String(stats.topSectors.length || 0),
     },
     indicators: {
-      active_decision_makers: kpiMembers,
-      new_this_month: kpiNew,
-      profile_views: kpiViews,
-      introductions_started: kpiClicks,
-      potential_connections: kpiPotentialConnections,
+      active_decision_makers: bundle.kpiMembers,
+      new_this_month: bundle.kpiNew,
+      profile_views: bundle.kpiViews,
+      introductions_started: bundle.kpiClicks,
+      potential_connections: bundle.kpiPotentialConnections,
     },
     affinities: stats.topPassions.slice(0, 5).map((p) => ({
       name: p.passionId,
@@ -622,8 +417,8 @@ async function fillPresentation(
     active_opportunities: stats.needs.slice(0, 6).map((n) => ({ category: n.label, badge: '', requests: n.count, insight: '', url: '' })),
     footer: {
       website: 'franconetwork.app',
-      date_value: extractDateLong,
-      source: footerSource,
+      date_value: bundle.extractDateLong,
+      source: bundle.footerSource,
     },
   };
 
@@ -649,21 +444,21 @@ async function fillPresentation(
   requests.push(
     {
       replaceAllShapesWithImage: {
-        imageUrl: chartSectors,
+        imageUrl: bundle.chartSectors,
         replaceMethod: 'CENTER_INSIDE',
         containsText: { text: '{{CHART_SECTORS}}', matchCase: true },
       },
     },
     {
       replaceAllShapesWithImage: {
-        imageUrl: chartGrowth,
+        imageUrl: bundle.chartGrowth,
         replaceMethod: 'CENTER_INSIDE',
         containsText: { text: '{{CHART_GROWTH}}', matchCase: true },
       },
     },
     {
       replaceAllShapesWithImage: {
-        imageUrl: chartNeeds,
+        imageUrl: bundle.chartNeeds,
         replaceMethod: 'CENTER_INSIDE',
         containsText: { text: '{{CHART_NEEDS}}', matchCase: true },
       },
@@ -867,45 +662,60 @@ export const exportStatsToSlides = onCall(
 
     try {
       const cfg = loadVitrineTemplateConfig();
-      const now = new Date();
       const rawLang = String(request.data?.lang ?? 'fr').trim().toLowerCase();
       const lang: UiLang = rawLang === 'en' ? 'en' : rawLang === 'es' ? 'es' : 'fr';
+      const exportMode =
+        String(cfg.export_mode ?? 'template')
+          .trim()
+          .toLowerCase() === 'scratch'
+          ? 'scratch'
+          : 'template';
 
-      const month = monthTitle(now, lang);
-      const title =
-        lang === 'en'
-          ? `FrancoNetwork - Network showcase - ${month}`
-          : lang === 'es'
-            ? `FrancoNetwork - Vitrina de red - ${month}`
-            : `FrancoNetwork - Vitrine réseau - ${month}`;
+      const stats = await loadVitrineStats();
+      const listDash = cfg.fallbackPolicy?.emptyList ?? '—';
+      const bundle = buildVitrineExportBundle(stats, lang, listDash);
+      const title = bundle.docTitle;
 
       const perLangRaw = String(cfg.template_id_by_lang?.[lang] ?? '').trim();
       const baseRaw = String(cfg.template_id ?? cfg.templateId ?? '').trim();
       const templateId = perLangRaw || baseRaw;
       const folderId = String(SLIDES_EXPORT_FOLDER_ID.value() ?? '').trim();
 
-      if (!templateId) {
-        throw new Error('Template Slides manquant (config/vitrine-template.json).');
-      }
-
-      const stats = await loadVitrineStats();
-
       const auth = getEffectiveAuth();
       const drive = getDrive(auth);
       const slides = getSlides(auth);
 
-      // Non-derive rule: always copy the master template deck and only replace placeholders.
-      const presentationId = await copyTemplatePresentation(drive, templateId, title, folderId);
-      await fillPresentation(slides, presentationId, stats, lang);
+      let presentationId: string;
+      if (exportMode === 'scratch') {
+        presentationId = await createVitrineScratchPresentation(slides, drive, title, folderId, bundle, lang);
+      } else {
+        if (!templateId) {
+          throw new Error('Template Slides manquant (config/vitrine-template.json).');
+        }
+        presentationId = await copyTemplatePresentation(drive, templateId, title, folderId);
+        await fillPresentation(slides, presentationId, stats, lang);
+      }
 
-      const url = slidesUrl(presentationId, { templateId, lang });
+      const url =
+        exportMode === 'scratch'
+          ? slidesUrl(presentationId, { lang })
+          : slidesUrl(presentationId, { templateId, lang });
 
-      // Diagnostics: detect leftover {{...}} placeholders in the copied deck.
       const pres = await slides.presentations.get({ presentationId });
       const text = collectTextFromPresentation(pres.data);
       const leftover = extractPlaceholders(text);
-      logger.info('Slides deck generated', { presentationId, templateId, lang });
-      return { ok: true, presentationId, url, debug: { templateId, lang, leftoverPlaceholders: leftover } };
+      logger.info('Slides deck generated', { presentationId, templateId, lang, exportMode });
+      return {
+        ok: true,
+        presentationId,
+        url,
+        debug: {
+          templateId: exportMode === 'scratch' ? undefined : templateId,
+          lang,
+          exportMode,
+          leftoverPlaceholders: leftover,
+        },
+      };
     } catch (err) {
       const anyErr = err as any;
       const status = Number(anyErr?.response?.status ?? anyErr?.code ?? 0) || undefined;

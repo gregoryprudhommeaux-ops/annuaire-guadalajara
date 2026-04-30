@@ -122,7 +122,12 @@ export default function StatsPage() {
     ok: boolean;
     presentationId: string;
     url: string;
-    debug?: { templateId?: string; lang?: string; leftoverPlaceholders?: string[] };
+    debug?: {
+      templateId?: string;
+      lang?: string;
+      exportMode?: string;
+      leftoverPlaceholders?: string[];
+    };
   };
 
   const handleExportSlides = useCallback(async () => {
