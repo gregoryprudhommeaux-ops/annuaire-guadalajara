@@ -451,6 +451,29 @@ export function AdminEmailManager() {
     }
   };
 
+  const handleCopyHtmlLink = async (tpl: EmailTemplateDoc) => {
+    if (!auth.currentUser) {
+      setToast('Non connecté.');
+      return;
+    }
+    setBusy(`html-tpl-${tpl.id}`);
+    setToast('Ouverture du lien HTML…');
+    try {
+      await publishTemplatePublic(
+        { id: tpl.id, name: tpl.name, subject: tpl.subject, bodyHtml: tpl.bodyHtml },
+        auth.currentUser.uid
+      );
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const url = `${origin}/t/${encodeURIComponent(tpl.id)}/html`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setToast('Template HTML ouvert.');
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : 'Ouverture du lien échouée.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const audienceCount = useMemo(() => {
     if (composer.audienceType === 'manual') return parseEmails(composer.manualEmails).length;
     return null;
@@ -718,22 +741,35 @@ export function AdminEmailManager() {
                       </td>
                       <td className="px-3 py-3 sm:px-4">
                         <div className="flex flex-wrap gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleUseTemplate(t)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs font-semibold text-stone-800 hover:bg-stone-50"
-                          >
-                            <Copy className="h-3 w-3" aria-hidden />
-                            Utiliser
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busy === `tpl-${t.id}`}
-                            onClick={() => handleEditTemplate(t)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs font-semibold text-stone-800 hover:bg-stone-50 disabled:opacity-60"
-                          >
-                            Renommer
-                          </button>
+                          <div className="flex flex-col items-start gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleUseTemplate(t)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs font-semibold text-stone-800 hover:bg-stone-50"
+                            >
+                              <Copy className="h-3 w-3" aria-hidden />
+                              Utiliser
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busy === `tpl-${t.id}`}
+                              onClick={() => handleEditTemplate(t)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs font-semibold text-stone-800 hover:bg-stone-50 disabled:opacity-60"
+                            >
+                              Renommer
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busy === `html-tpl-${t.id}`}
+                              onClick={() => handleCopyHtmlLink(t)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs font-semibold text-stone-800 hover:bg-stone-50 disabled:opacity-60"
+                            >
+                              {busy === `html-tpl-${t.id}` ? (
+                                <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                              ) : null}
+                              Lien HTML
+                            </button>
+                          </div>
                           <button
                             type="button"
                             disabled={busy === `share-tpl-${t.id}`}

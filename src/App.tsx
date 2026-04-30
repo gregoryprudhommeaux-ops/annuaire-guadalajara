@@ -383,6 +383,7 @@ const loadInternalAdminPage = () => import('@/pages/InternalAdminPage');
 const loadStatsPage = () => import('@/pages/StatsPage');
 const loadStatsSharePage = () => import('@/pages/StatsSharePage');
 const loadPublicTemplatePage = () => import('@/pages/PublicTemplatePage');
+const loadPublicTemplateHtmlPage = () => import('@/pages/PublicTemplateHtmlPage');
 const loadAdminEvents = () => import('./components/dashboard/AdminEvents');
 const loadCommunicationAdminPage = () => import('@/pages/CommunicationAdminPage');
 const loadPublicEventPage = () => import('./components/events/PublicEventPage');
@@ -394,6 +395,7 @@ const InternalAdminPageLazy = React.lazy(loadInternalAdminPage);
 const StatsPageLazy = React.lazy(loadStatsPage);
 const StatsSharePageLazy = React.lazy(loadStatsSharePage);
 const PublicTemplatePageLazy = React.lazy(loadPublicTemplatePage);
+const PublicTemplateHtmlPageLazy = React.lazy(loadPublicTemplateHtmlPage);
 const AdminEventsLazy = React.lazy(loadAdminEvents);
 const CommunicationAdminPageLazy = React.lazy(loadCommunicationAdminPage);
 const PublicEventPageLazy = React.lazy(loadPublicEventPage);
@@ -8245,6 +8247,20 @@ const App = () => {
                   }
                 >
                   <PublicTemplatePageLazy />
+                </React.Suspense>
+              }
+            />
+            <Route
+              path="/t/:id/html"
+              element={
+                <React.Suspense
+                  fallback={
+                    <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                      Chargement…
+                    </div>
+                  }
+                >
+                  <PublicTemplateHtmlPageLazy />
                 </React.Suspense>
               }
             />
