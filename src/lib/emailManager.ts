@@ -127,6 +127,20 @@ export async function publishTemplatePublic(
   );
 }
 
+export async function publishPublicEmailTemplateCallable(input: {
+  templateId: string;
+  name: string;
+  subject: string;
+  bodyHtml: string;
+}): Promise<{ ok: boolean; id: string }> {
+  const fn = httpsCallable<
+    { templateId: string; name: string; subject: string; bodyHtml: string },
+    { ok: boolean; id: string }
+  >(functions, 'publishPublicEmailTemplate');
+  const res = await fn(input);
+  return res.data;
+}
+
 export async function updateTemplate(
   id: string,
   patch: Partial<Pick<EmailTemplateDoc, 'name' | 'subject' | 'bodyHtml'>>

@@ -2,7 +2,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getApps } from 'firebase-admin/app';
 import { FIRESTORE_DATABASE_ID } from '../constants';
 
-const ADMIN_EMAIL = 'chinois2001@gmail.com';
+const ADMIN_EMAILS = new Set(['chinois2001@gmail.com', 'gregory.prudhommeaux@gmail.com']);
 const HARDCODED_ADMIN_UID = 'HiSztwqyDXUZ5RalOyqUP3BJd6Y2';
 
 /**
@@ -15,7 +15,7 @@ export async function isCallerAdmin(
 ): Promise<boolean> {
   if (!uid) return false;
   if (uid === HARDCODED_ADMIN_UID) return true;
-  if (email && email.trim().toLowerCase() === ADMIN_EMAIL) return true;
+  if (email && ADMIN_EMAILS.has(email.trim().toLowerCase())) return true;
 
   const db = getFirestore(getApps()[0]!, FIRESTORE_DATABASE_ID);
 

@@ -190,3 +190,4 @@ export { dispatchScheduledCampaigns } from './triggers/dispatchScheduledCampaign
 export { sendCampaignNow } from './callables/sendCampaignNow';
 export { sendCampaignTest } from './callables/sendCampaignTest';
 export { sendAutomationTest } from './callables/sendAutomationTest';
+export { publishPublicEmailTemplate } from './callables/publishPublicEmailTemplate';

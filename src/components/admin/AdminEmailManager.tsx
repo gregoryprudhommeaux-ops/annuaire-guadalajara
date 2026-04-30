@@ -22,7 +22,7 @@ import {
   DEFAULT_TEST_EMAIL,
   deleteCampaign,
   deleteTemplate,
-  publishTemplatePublic,
+  publishPublicEmailTemplateCallable,
   sendCampaignNowCallable,
   sendCampaignTestCallable,
   subscribeToCampaigns,
@@ -434,41 +434,24 @@ export function AdminEmailManager() {
       return;
     }
     setBusy(`share-tpl-${tpl.id}`);
-    setToast('Publication du lien…');
+    setToast('Ouverture…');
     try {
-      await publishTemplatePublic(
-        { id: tpl.id, name: tpl.name, subject: tpl.subject, bodyHtml: tpl.bodyHtml },
-        auth.currentUser.uid
-      );
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const url = `${origin}/t/${encodeURIComponent(tpl.id)}`;
-      await navigator.clipboard.writeText(url);
-      setToast('Lien copié. Tu peux le partager sur WhatsApp.');
-    } catch (err) {
-      setToast(err instanceof Error ? err.message : 'Partage échoué.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const handleCopyHtmlLink = async (tpl: EmailTemplateDoc) => {
-    if (!auth.currentUser) {
-      setToast('Non connecté.');
-      return;
-    }
-    setBusy(`html-tpl-${tpl.id}`);
-    setToast('Ouverture du lien HTML…');
-    try {
-      await publishTemplatePublic(
-        { id: tpl.id, name: tpl.name, subject: tpl.subject, bodyHtml: tpl.bodyHtml },
-        auth.currentUser.uid
-      );
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const url = `${origin}/t/${encodeURIComponent(tpl.id)}/html`;
+      await publishPublicEmailTemplateCallable({
+        templateId: tpl.id,
+        name: tpl.name,
+        subject: tpl.subject,
+        bodyHtml: tpl.bodyHtml,
+      });
       window.open(url, '_blank', 'noopener,noreferrer');
-      setToast('Template HTML ouvert.');
+      setToast('Template ouvert.');
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'Ouverture du lien échouée.');
+      if (err instanceof FirebaseError) {
+        setToast(`${err.code}: ${err.message}`);
+      } else {
+        setToast(err instanceof Error ? err.message : 'Partage échoué.');
+      }
     } finally {
       setBusy(null);
     }
@@ -757,17 +740,6 @@ export function AdminEmailManager() {
                               className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs font-semibold text-stone-800 hover:bg-stone-50 disabled:opacity-60"
                             >
                               Renommer
-                            </button>
-                            <button
-                              type="button"
-                              disabled={busy === `html-tpl-${t.id}`}
-                              onClick={() => handleCopyHtmlLink(t)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-1 text-xs font-semibold text-stone-800 hover:bg-stone-50 disabled:opacity-60"
-                            >
-                              {busy === `html-tpl-${t.id}` ? (
-                                <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-                              ) : null}
-                              Lien HTML
                             </button>
                           </div>
                           <button
