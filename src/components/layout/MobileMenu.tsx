@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { LogOut, X } from 'lucide-react';
 import { Link, NavLink } from 'react-router-dom';
 import { cn } from '@/lib/cn';
 import type { NavItem } from '@/data/navigation';
@@ -153,6 +153,23 @@ export function MobileMenu({
                   </NavLink>
                 </li>
               ))}
+              {isAuthenticated ? (
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSignOut?.();
+                      onClose();
+                    }}
+                    className="flex w-full min-h-[44px] items-center gap-3 rounded-[var(--fn-radius-sm)] px-3 text-sm font-semibold text-[var(--fn-muted)] outline-none hover:bg-[var(--fn-surface-2)] focus-visible:ring-2 focus-visible:ring-[rgb(var(--fn-ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fn-bg)]"
+                  >
+                    <span className="text-[var(--fn-muted-2)]">
+                      <LogOut className="h-5 w-5" aria-hidden />
+                    </span>
+                    <span className="truncate">Log Out</span>
+                  </button>
+                </li>
+              ) : null}
               <li>
                 <Link
                   to="/privacy"

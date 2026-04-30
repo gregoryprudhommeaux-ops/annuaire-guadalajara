@@ -108,13 +108,14 @@
 .fn-network-page .network-select {
   width: 100%;
   min-height: 2.75rem;
-  border: 1px solid rgb(var(--fn-border));
+  border: 1px solid rgb(203 213 225); /* slate-300: plus visible */
   border-radius: 0.75rem;
   padding: 0 0.875rem;
-  background: rgb(var(--fn-surface));
+  background: #fff;
   color: rgb(var(--fn-fg));
   font-size: 0.875rem; /* text-sm */
   line-height: 1.25;
+  box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.04);
 }
 
 .fn-network-page .network-input:focus,
@@ -122,6 +123,10 @@
   outline: 2px solid rgb(var(--fn-ring));
   outline-offset: 0;
   border-color: rgb(var(--fn-ring));
+}
+
+.fn-network-page .network-input::placeholder {
+  color: rgb(148 163 184); /* slate-400 */
 }
 
 .fn-network-page .network-search-panel__filters {
