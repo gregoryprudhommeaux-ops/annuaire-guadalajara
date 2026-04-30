@@ -386,7 +386,7 @@
 }
 
 .fn-network-page .network-sort-panel select {
-  max-width: 380px;
+  max-width: none;
 }
 
 .fn-network-page .network-toolbar {
@@ -410,7 +410,8 @@
 }
 
 .fn-network-page .network-saved-panel {
-  flex: 0 1 320px;
+  /* Mobile: avoid reserving a tall empty block in column layout. */
+  flex: 0 1 auto;
   align-self: flex-start;
   display: flex;
   align-items: flex-start;
@@ -430,6 +431,41 @@
     border-color 0.15s ease,
     box-shadow 0.15s ease,
     background-color 0.15s ease;
+}
+
+@media (min-width: 720px) {
+  .fn-network-page .network-saved-panel {
+    /* Desktop: keep a compact fixed width card next to sort panel. */
+    flex: 0 0 320px;
+  }
+}
+
+.fn-network-page .network-saved-panel__toggle {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  color: rgb(51 65 85);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.fn-network-page .network-saved-panel__toggle:hover {
+  background: rgb(248 250 252);
+  border-color: rgb(203 213 225);
+  color: rgb(15 23 42);
+}
+
+.fn-network-page .network-saved-panel__toggle:focus-visible {
+  outline: 2px solid rgb(var(--fn-ring));
+  outline-offset: 2px;
 }
 
 .fn-network-page .network-saved-panel:hover:not(:disabled) {

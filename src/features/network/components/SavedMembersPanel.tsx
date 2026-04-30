@@ -42,7 +42,7 @@ export function SavedMembersPanel({
     <button
       type="button"
       className={cn(
-        'network-saved-panel',
+        'network-saved-panel relative',
         active && 'network-saved-panel--active',
         disabled && 'opacity-55',
         className
@@ -56,40 +56,39 @@ export function SavedMembersPanel({
       }}
       aria-disabled={disabled}
       aria-pressed={active}
+      data-collapsed={collapsed ? 'true' : 'false'}
       aria-label={
         disabled
           ? t('network.savedPanel.titleEmpty')
           : t('network.savedPanel.openAria', { count })
       }
     >
+      <span
+        role="button"
+        tabIndex={0}
+        onClick={(e) => {
+          e.stopPropagation();
+          setCollapsed((v) => !v);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            e.stopPropagation();
+            setCollapsed((v) => !v);
+          }
+        }}
+        className="network-saved-panel__toggle"
+        aria-label={collapsed ? 'Déplier' : 'Replier'}
+      >
+        {collapsed ? <ChevronDown size={16} aria-hidden /> : <ChevronUp size={16} aria-hidden />}
+      </span>
       <span className="network-saved-panel__iconWrap" aria-hidden>
         <Bookmark size={20} className="network-saved-panel__icon" strokeWidth={2} />
       </span>
       <span className="network-saved-panel__body">
         <span className="network-saved-panel__titleRow">
           <span className="network-saved-panel__title">{title}</span>
-          <span className="flex items-center gap-2">
-            <span className="network-saved-panel__count">{count}</span>
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={(e) => {
-                e.stopPropagation();
-                setCollapsed((v) => !v);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setCollapsed((v) => !v);
-                }
-              }}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-              aria-label={collapsed ? 'Déplier' : 'Replier'}
-            >
-              {collapsed ? <ChevronDown size={16} aria-hidden /> : <ChevronUp size={16} aria-hidden />}
-            </span>
-          </span>
+          <span className="network-saved-panel__count">{count}</span>
         </span>
         {!collapsed ? <span className="network-saved-panel__description">{description}</span> : null}
       </span>
