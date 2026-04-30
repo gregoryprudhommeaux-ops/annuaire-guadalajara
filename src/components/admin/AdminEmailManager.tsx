@@ -794,11 +794,11 @@ function Composer({
       <div
         className={
           showPreview
-            ? 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'
+            ? 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-stretch'
             : 'block'
         }
       >
-        <div>
+        <div className={showPreview ? 'flex h-full flex-col' : undefined}>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-xs font-semibold text-stone-700">
           Nom interne (optionnel)
@@ -825,9 +825,9 @@ function Composer({
         <textarea
           value={state.bodyHtml}
           onChange={(e) => set({ bodyHtml: e.target.value })}
-          rows={10}
+          rows={18}
           placeholder="<p>Bonjour…</p><p><a href='https://franconetwork.app'>En savoir plus</a></p>"
-          className="rounded-lg border border-stone-200 px-3 py-2 font-mono text-xs text-stone-900"
+          className="min-h-[22rem] flex-1 rounded-lg border border-stone-200 px-3 py-2 font-mono text-xs text-stone-900"
         />
         <span className="text-[11px] font-normal text-stone-500">
           HTML inline supporté. Le corps est wrappé dans une coque commune
@@ -914,7 +914,7 @@ function Composer({
         </div>
 
         {showPreview ? (
-          <div>
+          <div className="h-full">
             <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-stone-600">
               Aperçu
             </p>
