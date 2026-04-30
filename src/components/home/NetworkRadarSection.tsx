@@ -355,10 +355,10 @@ export default function NetworkRadarSection({
   );
 
   return (
-    <div className="w-full min-w-0">
+    <div className="w-full min-w-0 overflow-x-hidden">
       <div className="space-y-8 md:space-y-10">
         {/* Hero */}
-        <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-teal-50/40 p-5 shadow-sm sm:p-6">
+        <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-teal-50/40 p-4 shadow-sm sm:p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             {!radarLocked ? (
@@ -426,7 +426,7 @@ export default function NetworkRadarSection({
 
             {/* Main zone — opportunités (pleine largeur) */}
             <section id="radar-opportunities" className="scroll-mt-6">
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div className="mb-5 flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold tracking-tight text-slate-900">
@@ -460,7 +460,7 @@ export default function NetworkRadarSection({
             {/* Actions rapides + tendances secteurs : 50 / 50, même hauteur */}
             <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div className="flex min-h-0">
-                <div className="flex w-full flex-1 flex-col rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+                <div className="flex w-full flex-1 flex-col rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm sm:p-6">
                   <h3 className="text-base font-semibold text-slate-900">{t('radarWhereToActTitle')}</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-600">{t('radarWhereToActLead')}</p>
 
@@ -508,7 +508,7 @@ export default function NetworkRadarSection({
               </div>
 
               <div className="flex min-h-0">
-                <div className="relative flex w-full flex-1 flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="relative flex w-full flex-1 flex-col rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                   <button
                     type="button"
                     onClick={() => setActiveRadarChart('sectors')}
@@ -613,7 +613,7 @@ export default function NetworkRadarSection({
             {/* Secondary zone */}
             <section>
               {/* PERSONALIZED OPPORTUNITIES (placeholder UI) */}
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm sm:p-6">
                 <h3 className="text-base font-semibold text-slate-900">{t('radarNetworkNeedsYouTitle')}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{t('radarNetworkNeedsYouLead')}</p>
                 <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-600">
@@ -623,7 +623,7 @@ export default function NetworkRadarSection({
             </section>
 
             {/* Relational zone */}
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <h3 className="text-base font-semibold text-slate-900">{t('radarIcebreakerTitle')}</h3>
               {passionEntries.length === 0 ? (
                 <p className="mt-2 text-sm text-slate-500">{t('chartPassionsEmpty')}</p>

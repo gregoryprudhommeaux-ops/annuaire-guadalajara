@@ -473,6 +473,11 @@
   .admin-dashboard-page .admin-recommended-actions__grid {
     grid-template-columns: 1fr;
   }
+
+  /* Mobile: the "Gaps secteurs & villes" table is too wide/heavy. */
+  .admin-dashboard-page #admin-section-gaps {
+    display: none;
+  }
 }
 
 .admin-dashboard-page .admin-card {

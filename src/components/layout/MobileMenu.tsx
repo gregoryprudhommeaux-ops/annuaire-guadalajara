@@ -170,24 +170,6 @@ export function MobileMenu({
                   </button>
                 </li>
               ) : null}
-              <li>
-                <Link
-                  to="/privacy"
-                  onClick={onClose}
-                  className="flex min-h-[44px] items-center gap-3 rounded-[var(--fn-radius-sm)] px-3 text-sm font-semibold text-[var(--fn-muted)] outline-none hover:bg-[var(--fn-surface-2)] focus-visible:ring-2 focus-visible:ring-[rgb(var(--fn-ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fn-bg)]"
-                >
-                  <span className="truncate">{t('footer.privacy')}</span>
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/terms"
-                  onClick={onClose}
-                  className="flex min-h-[44px] items-center gap-3 rounded-[var(--fn-radius-sm)] px-3 text-sm font-semibold text-[var(--fn-muted)] outline-none hover:bg-[var(--fn-surface-2)] focus-visible:ring-2 focus-visible:ring-[rgb(var(--fn-ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--fn-bg)]"
-                >
-                  <span className="truncate">{t('footer.terms')}</span>
-                </Link>
-              </li>
             </ul>
           </div>
         </div>

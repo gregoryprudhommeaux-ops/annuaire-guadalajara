@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { chartTheme, getChartColor, hexToRgba } from '@/lib/chartTheme';
 
@@ -133,6 +133,16 @@ export function NeedsBarChart({
   compactTickFontSize,
   limit = 8,
 }: Props) {
+  const [isNarrow, setIsNarrow] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 420px)');
+    const onChange = () => setIsNarrow(mq.matches);
+    onChange();
+    mq.addEventListener?.('change', onChange);
+    return () => mq.removeEventListener?.('change', onChange);
+  }, []);
+
   const rows = useMemo(() => {
     const cap = Math.max(1, Math.min(8, Math.round(Number(limit) || 8)));
     return (data ?? [])
@@ -161,12 +171,12 @@ export function NeedsBarChart({
   // Compact (Radar): keep the chart visually left-aligned on mobile.
   // A too-wide Y axis creates a large empty gutter and pushes bars to the right.
   const yAxisWidth = embedded
-    ? (compactYAxisWidth ?? 202)
+    ? (compactYAxisWidth ?? (isNarrow ? 140 : 202))
     : compact
       ? (compactYAxisWidth ?? 160)
       : 300;
   const yTickMaxLine = embedded
-    ? (compactTickMaxChars ?? 30)
+    ? (compactTickMaxChars ?? (isNarrow ? 18 : 30))
     : compact
       ? (compactTickMaxChars ?? 22)
       : 40;
@@ -190,7 +200,7 @@ export function NeedsBarChart({
           // (tabs/panels). A min size makes the first measurement non-zero and
           // avoids a blank chart until a resize occurs.
           minHeight={height}
-          minWidth={320}
+          minWidth={embedded || isNarrow ? 0 : 320}
         >
           <BarChart
             data={rows}

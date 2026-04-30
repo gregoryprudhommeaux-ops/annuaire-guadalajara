@@ -25,7 +25,8 @@ export function BottomNav({ items = DEFAULT_ITEMS, className }: BottomNavProps) 
   return (
     <nav
       className={cn(
-        'fixed inset-x-0 bottom-0 z-40 border-t border-[var(--fn-border)] bg-[var(--fn-surface)] sm:hidden',
+        // Keep above any page footer/cards on mobile.
+        'fixed inset-x-0 bottom-0 z-[120] border-t border-[var(--fn-border)] bg-[var(--fn-surface)] sm:hidden',
         // iOS safe-area: keep labels above home indicator.
         'pb-[env(safe-area-inset-bottom)]',
         className

@@ -278,6 +278,7 @@ import { SortSelect } from './features/network/components/SortSelect';
 import { SavedMembersPanel } from './features/network/components/SavedMembersPanel';
 import {
   loadRecommendationPrefs,
+  saveRecommendationPrefs,
   subscribeRecommendationPrefs,
 } from './features/network/utils/recommendationPreferences';
 import { ProfileSectionHint } from '@/features/profile/components/ProfileSectionHint';
@@ -4579,6 +4580,27 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   );
   const savedMembersCount = savedMemberUidsSet.size;
 
+  const toggleSavedMemberUid = useCallback(
+    (uid: string) => {
+      const targetUid = (uid ?? '').trim();
+      if (!targetUid) return;
+      if (!user) {
+        openAuthModal();
+        return;
+      }
+      if (!profile?.uid) {
+        setShowOnboarding(true);
+        return;
+      }
+      const prefs = loadRecommendationPrefs(profile.uid);
+      const next = new Set((prefs.savedUids ?? []).filter(Boolean));
+      if (next.has(targetUid)) next.delete(targetUid);
+      else next.add(targetUid);
+      saveRecommendationPrefs(profile.uid, { knownUids: prefs.knownUids ?? [], savedUids: [...next] });
+    },
+    [user, profile?.uid, openAuthModal]
+  );
+
   useEffect(() => {
     if (savedMembersCount === 0) setShowSavedMembersOnly(false);
   }, [savedMembersCount]);
@@ -6961,21 +6983,45 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           <span className={profileNeutralPillClass}>{selectedProfile.city}</span>
                         ) : null}
                       </div>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsShareProfileModalOpen(true);
-                        }}
-                        className={cn(
-                          profileNeutralPillClass,
-                          'shrink-0 gap-2 transition-colors hover:bg-slate-100'
-                        )}
-                        title={pickLang('Partager le profil', 'Compartir perfil', 'Share profile', lang)}
-                      >
-                        <Share2 size={16} aria-hidden />
-                        {pickLang('Partager', 'Compartir', 'Share', lang)}
-                      </button>
+                      <div className="flex shrink-0 flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSavedMemberUid(selectedProfile.uid);
+                          }}
+                          className={cn(
+                            profileNeutralPillClass,
+                            'gap-2 transition-colors hover:bg-slate-100'
+                          )}
+                          title={pickLang(
+                            'Sauvegarder ce profil',
+                            'Guardar este perfil',
+                            'Save this profile',
+                            lang
+                          )}
+                        >
+                          <Star size={16} aria-hidden />
+                          {savedMemberUidsSet.has(selectedProfile.uid)
+                            ? pickLang('SAUVEGARDÉ', 'GUARDADO', 'SAVED', lang)
+                            : pickLang('SAUVEGARDER', 'GUARDAR', 'SAVE', lang)}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsShareProfileModalOpen(true);
+                          }}
+                          className={cn(
+                            profileNeutralPillClass,
+                            'gap-2 transition-colors hover:bg-slate-100'
+                          )}
+                          title={pickLang('Partager le profil', 'Compartir perfil', 'Share profile', lang)}
+                        >
+                          <Share2 size={16} aria-hidden />
+                          {pickLang('Partager', 'Compartir', 'Share', lang)}
+                        </button>
+                      </div>
                     </div>
                     <div
                       className={cn(

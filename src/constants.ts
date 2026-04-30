@@ -737,8 +737,8 @@ export const TRANSLATIONS: Translations = {
   showLastRegistrants: { fr: "Afficher les derniers inscrits", es: "Ver los últimos registros" },
   seeMore: { fr: "Voir plus", es: "Ver más" },
   cardBioSeeLess: { fr: "Voir moins", es: "Ver menos" },
-  cardContactByEmail: { fr: "Contacter par email", es: "Contactar por email" },
-  cardContactByWhatsapp: { fr: "Contacter sur WhatsApp", es: "Contactar por WhatsApp" },
+  cardContactByEmail: { fr: "Email", es: "Contactar por email" },
+  cardContactByWhatsapp: { fr: "Whatsapp", es: "Contactar por WhatsApp" },
   pendingValidation: { fr: "Profil en attente de validation", es: "Perfil pendiente de validación" },
   validationMessage: { fr: "Votre profil doit être validé par un administrateur pour accéder à toutes les informations de l'annuaire.", es: "Tu perfil debe ser validado por un administrador para acceder a toda la información del directorio." },
   profileFormRequiredLegend: {

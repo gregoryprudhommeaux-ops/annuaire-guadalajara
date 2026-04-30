@@ -66,7 +66,6 @@ export default function ProfileAvatar({
           }}
           loading="lazy"
           decoding="async"
-          referrerPolicy="no-referrer"
         />
       ) : initials && fullName.trim() ? (
         <span
