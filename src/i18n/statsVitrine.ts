@@ -10,6 +10,8 @@ export type StatsVitrineCopy = {
   metaDescription: string;
   metaTitleSuffix: string;
   headerBrand: string;
+  /** Petit sous-titre à droite du brand (ligne 1). */
+  headerBrandSuffix: string;
   headerTitle: string;
   headerLeadPrefix: string;
   headerBridge: string;
@@ -182,6 +184,7 @@ const FR: StatsVitrineCopy = {
     'Une communauté d’affaires francophone à Guadalajara : croissance, secteurs et besoins exprimés — chiffres agrégés et responsables.',
   metaTitleSuffix: 'Rejoindre FrancoNetwork · Guadalajara',
   headerBrand: 'FrancoNetwork',
+  headerBrandSuffix: 'L’Annuaire d’Affaires de Guadalajara',
   headerTitle: 'Le réseau francophone d’affaires de Guadalajara',
   headerLeadPrefix: 'Découvrez la communauté en chiffres —',
   headerBridge:
@@ -422,6 +425,7 @@ const EN: StatsVitrineCopy = {
     'A qualified Francophone business community in Guadalajara: growth, sectors represented, and needs expressed — aggregated, privacy-safe figures.',
   metaTitleSuffix: 'Join FrancoNetwork · Francophone business · Guadalajara',
   headerBrand: 'FrancoNetwork',
+  headerBrandSuffix: 'Guadalajara Business Directory',
   headerTitle: 'The French-speaking business network of Guadalajara',
   headerLeadPrefix: 'Discover the community in numbers —',
   headerBridge:
@@ -660,6 +664,7 @@ const ES: StatsVitrineCopy = {
     'Comunidad francófona cualificada en Guadalajara: crecimiento, sectores y necesidades expresadas — cifras agregadas y responsables.',
   metaTitleSuffix: 'Únase a FrancoNetwork · negocios francófonos · Guadalajara',
   headerBrand: 'FrancoNetwork',
+  headerBrandSuffix: 'Directorio de Negocios de Guadalajara',
   headerTitle: 'La red francófona de negocios de Guadalajara',
   headerLeadPrefix: 'Descubra la comunidad en cifras —',
   headerBridge:

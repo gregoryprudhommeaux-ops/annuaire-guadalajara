@@ -166,8 +166,12 @@ export function StatsVitrineContent({ variant, sharePageUrl, shareTopRight }: St
             <header className="border-b border-slate-200 pb-4 mb-2">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#01696f]">
-                    {tc.headerBrand}
+                  <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold uppercase tracking-[0.22em] text-[#01696f]">
+                    <span>{tc.headerBrand}</span>
+                    <span className="h-1 w-1 rounded-full bg-[#01696f]/40" aria-hidden />
+                    <span className="text-[11px] font-semibold tracking-normal normal-case text-slate-500">
+                      {tc.headerBrandSuffix}
+                    </span>
                   </p>
                   <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
                     {tc.headerTitle}
@@ -195,8 +199,12 @@ export function StatsVitrineContent({ variant, sharePageUrl, shareTopRight }: St
             </header>
           ) : (
             <header className="border-b border-slate-200 pb-4 mb-2">
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#01696f]">
-                {tc.headerBrand}
+              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold uppercase tracking-[0.22em] text-[#01696f]">
+                <span>{tc.headerBrand}</span>
+                <span className="h-1 w-1 rounded-full bg-[#01696f]/40" aria-hidden />
+                <span className="text-[11px] font-semibold tracking-normal normal-case text-slate-500">
+                  {tc.headerBrandSuffix}
+                </span>
               </p>
               <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                 <h1 className="min-w-0 flex-1 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">

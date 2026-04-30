@@ -216,8 +216,8 @@ export function SharedAffinitiesSection({
 
         {!loading && !hideFooterCta ? (
           <div className="border-t border-slate-100 px-4 py-5 sm:px-6 sm:py-6">
-            <p className="text-sm text-slate-800">{c.ctaLine}</p>
-            <div className="mt-4 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-start print:flex-row">
+            <p className="text-center text-sm text-slate-800">{c.ctaLine}</p>
+            <div className="mt-4 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-center print:flex-row">
               <StatsPrimaryButton to="/inscription" className="w-full sm:w-auto print:w-auto">
                 {c.ctaPrimary}
               </StatsPrimaryButton>

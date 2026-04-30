@@ -86,7 +86,7 @@ export function SegmentedJoinCTA({ lang }: { lang: Language }) {
         </div>
 
         <div className="border-t border-slate-100 px-4 py-6 sm:px-6 sm:py-8">
-          <p className="text-sm leading-relaxed text-slate-700">
+          <p className="text-center text-sm leading-relaxed text-slate-700">
             {c.footer}
           </p>
         </div>

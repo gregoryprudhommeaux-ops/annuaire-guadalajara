@@ -184,8 +184,8 @@ export function NetworkGrowthSection({
 
         {data.length > 0 && !hideFooterCta ? (
           <div className="border-t border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
-            <p className="text-sm text-slate-600">{c.transition}</p>
-            <div className="mt-4 print:hidden">
+            <p className="text-center text-sm text-slate-600">{c.transition}</p>
+            <div className="mt-4 flex justify-center print:hidden">
               <StatsPrimaryButton to="/inscription" className="w-full sm:w-auto">
                 {c.cta}
               </StatsPrimaryButton>
