@@ -23,12 +23,28 @@ export const publishPublicEmailTemplate = onCall(
     memory: '256MiB',
   },
   async (request) => {
+    const tag = 'publishPublicEmailTemplate';
+    const uid = request.auth?.uid;
+    const email = request.auth?.token?.email ?? null;
+    logger.info(`${tag}: start`, { uid, email });
+
     if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentification requise.');
+      throw new HttpsError('unauthenticated', `${tag}: auth required`);
     }
-    const ok = await isCallerAdmin(request.auth.uid, request.auth.token.email ?? null);
+
+    let ok = false;
+    try {
+      ok = await isCallerAdmin(request.auth.uid, email);
+    } catch (err) {
+      logger.error(`${tag}: admin check failed`, {
+        uid: request.auth.uid,
+        email,
+        err: err instanceof Error ? { message: err.message, stack: err.stack } : String(err),
+      });
+      throw new HttpsError('internal', `${tag}: admin check failed`);
+    }
     if (!ok) {
-      throw new HttpsError('permission-denied', 'Réservé aux admins.');
+      throw new HttpsError('permission-denied', `${tag}: admin only`);
     }
 
     const templateId = String((request.data as Input | undefined)?.templateId ?? '').trim();
@@ -36,11 +52,15 @@ export const publishPublicEmailTemplate = onCall(
     const subject = String((request.data as Input | undefined)?.subject ?? '').trim();
     const bodyHtml = String((request.data as Input | undefined)?.bodyHtml ?? '').trim();
 
-    if (!templateId) throw new HttpsError('invalid-argument', 'templateId manquant.');
-    if (!subject || !bodyHtml) throw new HttpsError('invalid-argument', 'subject/bodyHtml manquants.');
+    if (!templateId) throw new HttpsError('invalid-argument', `${tag}: templateId missing`);
+    if (!subject || !bodyHtml) {
+      throw new HttpsError('invalid-argument', `${tag}: subject/bodyHtml missing`);
+    }
 
     try {
-      const db = getFirestore(getApps()[0]!, FIRESTORE_DATABASE_ID);
+      const app = getApps()[0];
+      if (!app) throw new Error('firebase-admin app not initialized');
+      const db = getFirestore(app, FIRESTORE_DATABASE_ID);
       await db.doc(`publicEmailTemplates/${templateId}`).set(
         {
           name: name || subject,
@@ -52,18 +72,19 @@ export const publishPublicEmailTemplate = onCall(
         { merge: true }
       );
     } catch (err) {
-      logger.error('publishPublicEmailTemplate failed', {
+      logger.error(`${tag}: firestore write failed`, {
         templateId,
         uid: request.auth.uid,
-        email: request.auth.token.email ?? null,
+        email,
         err: err instanceof Error ? { message: err.message, stack: err.stack } : String(err),
       });
       throw new HttpsError(
         'internal',
-        err instanceof Error ? err.message : 'Publication échouée.'
+        `${tag}: firestore write failed: ${err instanceof Error ? err.message : String(err)}`
       );
     }
 
+    logger.info(`${tag}: ok`, { templateId, uid: request.auth.uid });
     return { ok: true, id: templateId };
   }
 );

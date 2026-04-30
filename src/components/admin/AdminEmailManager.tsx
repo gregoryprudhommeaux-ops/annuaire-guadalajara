@@ -434,7 +434,7 @@ export function AdminEmailManager() {
       return;
     }
     setBusy(`share-tpl-${tpl.id}`);
-    setToast('Ouverture…');
+    setToast('Publication…');
     try {
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const url = `${origin}/t/${encodeURIComponent(tpl.id)}/html`;
@@ -444,8 +444,15 @@ export function AdminEmailManager() {
         subject: tpl.subject,
         bodyHtml: tpl.bodyHtml,
       });
-      window.open(url, '_blank', 'noopener,noreferrer');
-      setToast('Template ouvert.');
+      // Open via an anchor click to reduce popup-blocker issues
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setToast('Lien ouvert.');
     } catch (err) {
       if (err instanceof FirebaseError) {
         setToast(`${err.code}: ${err.message}`);
