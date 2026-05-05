@@ -30,6 +30,10 @@ export const PROFILE_FIELD_HELP = {
   keywords:
     'Ajoutez des mots-clés précis pour être trouvé plus facilement et apparaître dans les bons matchs (jusqu’à 20, séparés par des virgules).',
   openness: 'Aide à proposer des mises en relation pertinentes.',
+  networkCommunityPrimary:
+    'La page /network utilise la ville, l’état et le pays de votre fiche : à l’enregistrement, ils sont recopiés depuis le 1er bloc « Société ». Gardez ce bloc cohérent pour le filtre « ma ville » et le matching.',
+  networkCommunitySync:
+    'Utile si le brouillon du 1er bloc ne reflète plus la fiche déjà enregistrée : on recopie ville / état / pays depuis les données sauvegardées vers ce brouillon (sans autre changement).',
 } as const satisfies Partial<Record<ProfileFieldLabelKey, string>>;
 
 export type ProfileFieldHelpKey = keyof typeof PROFILE_FIELD_HELP;

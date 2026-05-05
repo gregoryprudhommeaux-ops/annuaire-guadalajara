@@ -6,6 +6,7 @@ import type {
   Language,
   UserProfile,
 } from '@/types';
+import { ProfileCommunityPrimaryBanner } from '@/features/profile/components/ProfileCommunityPrimaryBanner';
 
 export type ProfileEditExpandedFormCtx = {
   // data
@@ -76,6 +77,7 @@ export type ProfileEditExpandedFormCtx = {
     React.SetStateAction<Record<string, boolean | undefined>>
   >;
   updateCompanyActivitySlot: (slotId: string, patch: Partial<CompanyActivitySlot>) => void;
+  syncCommunityLocationFromSavedProfile: () => void;
   emptyCompanyActivitySlot: () => CompanyActivitySlot;
   handleSaveProfile: React.FormEventHandler<HTMLFormElement>;
   handleDeleteProfile: (uid: string) => Promise<void> | void;
@@ -186,6 +188,7 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
     companyActivityEditCollapsed,
     setCompanyActivityEditCollapsed,
     updateCompanyActivitySlot,
+    syncCommunityLocationFromSavedProfile,
     ACTIVITY_CATEGORIES,
     activityCategoryLabel,
     CITIES,
@@ -348,6 +351,18 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
                 onToggleHighlightedNeed={toggleHighlightedNeedDraft}
                 highlightedOffersDraft={highlightedOffersDraft}
                 onToggleHighlightedOffer={toggleHighlightedOfferDraft}
+              />
+
+              <ProfileCommunityPrimaryBanner
+                lang={lang}
+                t={t}
+                pickLang={pickLang}
+                profileEditFrUx={profileEditFrUx}
+                isEditProfileRoute={isEditProfileRoute}
+                savedProfile={editingProfile ?? profile}
+                firstSlot={companyActivitiesDraft[0]}
+                onSyncFromSavedProfile={syncCommunityLocationFromSavedProfile}
+                editingSomeoneElse={editingSomeoneElse}
               />
 
               <ProfileEditCompanyActivitySectionShell lang={lang} t={t} pickLang={pickLang} isEditProfileRoute={isEditProfileRoute}>

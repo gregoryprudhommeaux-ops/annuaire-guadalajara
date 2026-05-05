@@ -1580,6 +1580,26 @@ export const TRANSLATIONS: Translations = {
     fr: 'Mettez en avant jusqu’à 3 offres concrètes (même liste que les besoins) : cela améliore les recoupements avec les besoins des autres membres.',
     es: 'Destaca hasta 3 ofertas concretas (la misma lista que las necesidades): mejora el cruce con las necesidades de otros miembros.',
   },
+  profileCommunityPrimaryTitle: {
+    fr: 'Communauté & lieu (réseau)',
+    es: 'Comunidad y ubicación (red)',
+  },
+  profileCommunityPrimaryBody: {
+    fr:
+      'La page /network utilise la ville, l’état et le pays de votre fiche. À l’enregistrement, ils sont recopiés depuis le 1er bloc « Société » ci‑dessous : gardez ce bloc cohérent pour le filtre « ma ville » et le matching.',
+    es:
+      'La página /network usa la ciudad, el estado y el país de tu ficha. Al guardar, se copian desde el 1er bloque « Empresa » más abajo: mantén ese bloque coherente para el filtro y el emparejamiento.',
+  },
+  profileCommunityPrimarySyncCta: {
+    fr: 'Reprendre la ville enregistrée sur la fiche',
+    es: 'Usar la ubicación guardada en la ficha',
+  },
+  profileCommunityPrimarySyncHint: {
+    fr:
+      'Si le brouillon du 1er bloc ne correspond plus à la fiche déjà enregistrée, ce bouton recopie ville / état / pays depuis les données sauvegardées (sans autre modification).',
+    es:
+      'Si el borrador del 1er bloque ya no coincide con la ficha guardada, este botón copia ciudad / estado / país desde los datos guardados (sin otros cambios).',
+  },
   typedNeedsRadar: {
     fr: "Besoins structurés (réseau)",
     es: "Necesidades de la red",

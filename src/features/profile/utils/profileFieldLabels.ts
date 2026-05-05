@@ -38,6 +38,11 @@ export const PROFILE_FIELD_LABELS = {
   keywords: 'Mots-clés',
   openness: 'Ouvert à',
   hostDelegations: "Visites de l'entreprise possible",
+  /** Ville « communauté principale » pour /network (MVP : alignée sur le 1er bloc société). */
+  networkCommunityPrimary: 'Communauté & lieu (réseau)',
+  networkCommunitySyncCta: 'Reprendre la ville enregistrée sur la fiche',
+  /** Clé d’aide associée (non affichée comme libellé de champ). */
+  networkCommunitySync: 'Synchronisation lieu',
 } as const;
 
 export type ProfileFieldLabelKey = keyof typeof PROFILE_FIELD_LABELS;

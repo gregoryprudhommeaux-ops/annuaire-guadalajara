@@ -3086,6 +3086,18 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     setCompanyActivitiesDraft((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   };
 
+  /** Recopie ville / état / pays depuis la fiche Firestore vers le 1er bloc société (brouillon). */
+  const syncCommunityLocationFromSavedProfile = useCallback(() => {
+    const src = editingProfile ?? profile;
+    const g = normalizeGeo(src ?? {});
+    const first = companyActivitiesDraft[0];
+    if (!g || !first?.id) return;
+    setCompanyActivitiesDraft((prev) =>
+      prev.map((s) => (s.id === first.id ? { ...s, city: g.city, state: g.state, country: g.country } : s))
+    );
+    setCompanyActivityEditCollapsed((prev) => ({ ...prev, [first.id]: false }));
+  }, [editingProfile, profile, companyActivitiesDraft, setCompanyActivitiesDraft]);
+
   const stats = useMemo(() => {
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -5452,6 +5464,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   companyActivityEditCollapsed,
                   setCompanyActivityEditCollapsed,
                   updateCompanyActivitySlot,
+                  syncCommunityLocationFromSavedProfile,
                   ACTIVITY_CATEGORIES,
                   activityCategoryLabel,
                   CITIES,

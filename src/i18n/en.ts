@@ -640,6 +640,12 @@ export const EN_STRINGS: Record<string, string> = {
   highlightedOffersOptional: "(optional)",
   highlightedOffersHint:
     "Highlight up to 3 concrete offers (same list as needs) to improve overlap with other members’ needs.",
+  profileCommunityPrimaryTitle: "Community & location (network)",
+  profileCommunityPrimaryBody:
+    "The /network page uses your profile city, state, and country. When you save, those fields are copied from the first “Company” block below — keep that block consistent for the “my city” filter and matching.",
+  profileCommunityPrimarySyncCta: "Copy saved profile location into 1st company block",
+  profileCommunityPrimarySyncHint:
+    "Use this if the first block draft no longer matches your saved profile: it copies city / state / country from stored data (nothing else changes).",
   typedNeedsRadar: "Structured needs (network)",
   typedNeedsRadarEmpty: "No structured needs yet (optional field, up to 3).",
   filterByTypedNeed: "Filtered by structured need:",
