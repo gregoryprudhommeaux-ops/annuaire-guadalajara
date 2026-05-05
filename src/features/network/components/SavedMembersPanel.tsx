@@ -78,7 +78,7 @@ export function SavedMembersPanel({
           }
         }}
         className="network-saved-panel__toggle"
-        aria-label={collapsed ? 'Déplier' : 'Replier'}
+        aria-label={collapsed ? t('network.savedPanel.expandToggleAria') : t('network.savedPanel.collapseToggleAria')}
       >
         {collapsed ? <ChevronDown size={16} aria-hidden /> : <ChevronUp size={16} aria-hidden />}
       </span>

@@ -245,16 +245,18 @@ export function NetworkPage({
         ) : null}
 
         <NetworkToolbar>
-          <SortPanel title={t('membersSortLabel')}>
-            <SortSelect value={sortBy} onChange={setSortBy} />
-          </SortPanel>
-          <SavedMembersPanel
-            title={t('network.savedPanel.title')}
-            count={savedCount}
-            description={t('network.savedPanel.description')}
-            onClick={openSavedMembersView}
-            active={showSavedOnly}
-          />
+          <div className="network-toolbar__row">
+            <SortPanel title={t('membersSortLabel')}>
+              <SortSelect value={sortBy} onChange={setSortBy} />
+            </SortPanel>
+            <SavedMembersPanel
+              title={t('network.savedPanel.title')}
+              count={savedCount}
+              description={t('network.savedPanel.description')}
+              onClick={openSavedMembersView}
+              active={showSavedOnly}
+            />
+          </div>
         </NetworkToolbar>
 
         <div ref={memberGridRef} className="member-grid">

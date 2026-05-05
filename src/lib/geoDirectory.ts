@@ -1,4 +1,4 @@
-import type { UserProfile } from '@/types';
+import type { Language, UserProfile } from '@/types';
 
 export type GeoKey = {
   country: string;
@@ -32,6 +32,56 @@ export type GeoIndex = {
   citiesByCountryState: Map<string, string[]>;
   geoById: Map<string, GeoKey>;
 };
+
+/** Libellé pour une ligne du sélecteur « ville seule » : ville seule si unique, sinon précision état / pays. */
+export function geoPickerOptionLabel(g: GeoKey, all: GeoKey[]): string {
+  const id = geoId(g);
+  const cityL = g.city.toLowerCase();
+  const dupCity = all.some((x) => geoId(x) !== id && x.city.toLowerCase() === cityL);
+  if (!dupCity) return g.city;
+  const dupCityState = all.some(
+    (x) =>
+      geoId(x) !== id &&
+      x.city.toLowerCase() === cityL &&
+      x.state.toLowerCase() === g.state.toLowerCase()
+  );
+  if (!dupCityState) return `${g.city} · ${g.state}`;
+  return `${g.city} · ${g.state} · ${g.country}`;
+}
+
+export type GeoPickerOption = {
+  id: string;
+  label: string;
+  /** Texte pour filtrer (ville, état, pays). */
+  search: string;
+  geo: GeoKey;
+};
+
+export function buildGeoPickerOptions(index: GeoIndex, sortLocale: Language = 'fr'): GeoPickerOption[] {
+  const all = Array.from(index.geoById.values());
+  if (all.length === 0) return [];
+
+  const options: GeoPickerOption[] = all.map((geo) => {
+    const id = geoId(geo);
+    return {
+      id,
+      label: geoPickerOptionLabel(geo, all),
+      search: `${geo.city} ${geo.state} ${geo.country}`.toLowerCase(),
+      geo,
+    };
+  });
+
+  const loc = sortLocale === 'es' ? 'es' : sortLocale === 'en' ? 'en' : 'fr';
+  options.sort((a, b) => {
+    const c = a.geo.city.localeCompare(b.geo.city, loc, { sensitivity: 'base' });
+    if (c !== 0) return c;
+    const s = a.geo.state.localeCompare(b.geo.state, loc, { sensitivity: 'base' });
+    if (s !== 0) return s;
+    return a.geo.country.localeCompare(b.geo.country, loc, { sensitivity: 'base' });
+  });
+
+  return options;
+}
 
 export function buildGeoIndex(profiles: Array<Pick<UserProfile, 'country' | 'state' | 'city'>>): GeoIndex {
   const countriesSet = new Set<string>();

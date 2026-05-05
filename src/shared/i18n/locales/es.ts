@@ -81,6 +81,17 @@ const shell = {
       description: 'Recupera tus perfiles guardados y tu enfoque sugerido',
       titleEmpty: 'Aún no hay contactos guardados',
       openAria: 'Mostrar {count} contactos guardados en el directorio',
+      expandToggleAria: 'Desplegar',
+      collapseToggleAria: 'Plegar',
+    },
+    explorer: {
+      titleWithCity: 'Red en {city}',
+      titleDefault: 'Red',
+      outsidePrimaryBadge: 'Fuera de tu comunidad principal',
+      returnToCity: 'Volver a {city}',
+      cityPlaceholder: 'Ciudad (búsqueda)',
+      cityAriaLabel: 'Elegir una ciudad del directorio para filtrar miembros',
+      noLocationsYet: 'Aún no hay ubicaciones en el directorio',
     },
   },
   footer: {

@@ -81,6 +81,17 @@ const shell = {
       description: 'See profiles you saved and your suggested approach',
       titleEmpty: 'No saved contacts yet',
       openAria: 'Show {count} saved contacts in the directory',
+      expandToggleAria: 'Expand',
+      collapseToggleAria: 'Collapse',
+    },
+    explorer: {
+      titleWithCity: 'Network in {city}',
+      titleDefault: 'Network',
+      outsidePrimaryBadge: 'Outside your main community',
+      returnToCity: 'Back to {city}',
+      cityPlaceholder: 'City (search)',
+      cityAriaLabel: 'Pick a city from the directory to filter members',
+      noLocationsYet: 'No locations in the directory yet',
     },
   },
   footer: {

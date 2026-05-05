@@ -394,12 +394,31 @@
   flex-direction: column;
   gap: 16px;
   align-items: stretch;
+  overflow: visible;
+}
+
+/* Liste ville : éviter que un parent en overflow:hidden coupe le dropdown (mobile). */
+.fn-network-page .network-geo-combobox {
+  position: relative;
+  z-index: 2;
+}
+
+/* Horizontal controls (géo + tri + favoris, or tri + favoris only).
+   Keep title / headings in a separate full-width row above — otherwise the sort
+   panel top-aligns with the heading and the select overlaps the geo row. */
+.fn-network-page .network-toolbar__row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
 }
 
 @media (min-width: 720px) {
-  .fn-network-page .network-toolbar {
+  .fn-network-page .network-toolbar__row {
     flex-direction: row;
-    /* Avoid stretching cards to the tallest sibling. */
     align-items: flex-start;
   }
 }

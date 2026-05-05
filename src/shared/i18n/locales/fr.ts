@@ -84,6 +84,17 @@ const shell = {
         'Retrouver vos profils enregistrés et votre approche suggérée',
       titleEmpty: 'Aucun contact sauvegardé pour le moment',
       openAria: 'Afficher les {count} contacts sauvegardés dans l’annuaire',
+      expandToggleAria: 'Déplier',
+      collapseToggleAria: 'Replier',
+    },
+    explorer: {
+      titleWithCity: 'Réseau à {city}',
+      titleDefault: 'Réseau',
+      outsidePrimaryBadge: 'Hors de votre communauté principale',
+      returnToCity: 'Revenir à {city}',
+      cityPlaceholder: 'Ville (recherche)',
+      cityAriaLabel: 'Choisir une ville de l’annuaire pour filtrer les membres',
+      noLocationsYet: 'Aucun lieu dans l’annuaire pour l’instant',
     },
   },
   footer: {

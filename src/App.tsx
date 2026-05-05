@@ -2307,6 +2307,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   });
   const [viewerExpiredModal, setViewerExpiredModal] = useState<null | 'expired' | 'revoked'>(null);
   const [networkExplorerGeoId, setNetworkExplorerGeoId] = useState<string>('');
+  /** Après effacement du champ ville, ne pas réappliquer tout de suite la ville du profil. */
+  const userClearedNetworkGeoRef = useRef(false);
   const [profileSaveBusy, setProfileSaveBusy] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [profileSaveSuccess, setProfileSaveSuccess] = useState<string | null>(null);
@@ -4682,10 +4684,13 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const viewerPrimaryGeo = useMemo(() => normalizeGeo(profile ?? {}), [profile]);
 
   useEffect(() => {
-    // Session-only: default to viewer primary city when entering /network.
-    if (!isNetworkRoute) return;
+    if (!isNetworkRoute) {
+      userClearedNetworkGeoRef.current = false;
+      return;
+    }
     if (networkExplorerGeoId) return;
     if (!viewerPrimaryGeo) return;
+    if (userClearedNetworkGeoRef.current) return;
     setNetworkExplorerGeoId(geoId(viewerPrimaryGeo));
   }, [isNetworkRoute, networkExplorerGeoId, viewerPrimaryGeo]);
 
@@ -5599,29 +5604,29 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   )}
 
                 <NetworkToolbar>
-                  <div className="flex min-w-0 flex-1 flex-col gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-extrabold tracking-tight text-stone-900">
-                        {(() => {
-                          const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
-                          if (chosen) return `Réseau à ${chosen.city}`;
-                          return 'Réseau';
-                        })()}
-                      </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-extrabold tracking-tight text-stone-900">
                       {(() => {
                         const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
-                        const primary = viewerPrimaryGeo;
-                        if (!chosen || !primary) return null;
-                        const out = geoId(chosen) !== geoId(primary);
-                        if (!out) return null;
-                        return (
-                          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-extrabold text-amber-900">
-                            Hors de votre communauté principale
-                          </span>
-                        );
+                        if (chosen) return t('network.explorer.titleWithCity', { city: chosen.city });
+                        return t('network.explorer.titleDefault');
                       })()}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    </p>
+                    {(() => {
+                      const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
+                      const primary = viewerPrimaryGeo;
+                      if (!chosen || !primary) return null;
+                      const out = geoId(chosen) !== geoId(primary);
+                      if (!out) return null;
+                      return (
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-extrabold text-amber-900">
+                          {t('network.explorer.outsidePrimaryBadge')}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                  <div className="network-toolbar__row">
+                    <div className="flex min-w-0 w-full flex-1 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                       <GeoCitySelector
                         index={networkGeoIndex}
                         value={(() => {
@@ -5629,41 +5634,52 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           return geoValueFromKey(chosen);
                         })()}
                         onChange={(next) => {
-                          const id = geoId({ country: next.country, state: next.state, city: next.city });
-                          setNetworkExplorerGeoId(id);
+                          const c = String(next.country ?? '').trim();
+                          const s = String(next.state ?? '').trim();
+                          const city = String(next.city ?? '').trim();
+                          if (!c || !s || !city) {
+                            userClearedNetworkGeoRef.current = true;
+                            setNetworkExplorerGeoId('');
+                            return;
+                          }
+                          userClearedNetworkGeoRef.current = false;
+                          setNetworkExplorerGeoId(geoId({ country: c, state: s, city }));
                         }}
                       />
                       {viewerPrimaryGeo ? (
                         <button
                           type="button"
-                          className="h-10 rounded-xl border border-stone-200 bg-white px-3 text-xs font-semibold text-stone-800 hover:bg-stone-50"
-                          onClick={() => setNetworkExplorerGeoId(geoId(viewerPrimaryGeo))}
+                          className="h-auto min-h-10 w-full shrink-0 rounded-xl border border-stone-200 bg-white px-3 py-2 text-center text-xs font-semibold leading-snug text-stone-800 hover:bg-stone-50 sm:w-auto sm:py-0"
+                          onClick={() => {
+                            userClearedNetworkGeoRef.current = false;
+                            setNetworkExplorerGeoId(geoId(viewerPrimaryGeo));
+                          }}
                         >
-                          Revenir à {viewerPrimaryGeo.city}
+                          {t('network.explorer.returnToCity', { city: viewerPrimaryGeo.city })}
                         </button>
                       ) : null}
                     </div>
-                  </div>
-                  <SortPanel title={t('membersSortLabel')} htmlFor="members-directory-sort">
-                    <SortSelect
-                      id="members-directory-sort"
-                      value={membersSortMode}
-                      onChange={(mode) => {
-                        const sortParam =
-                          mode === 'recent' ? 'recent' : mode === 'alphabetical' ? 'alpha' : 'default';
-                        const p = new URLSearchParams(location.search);
-                        p.set('sort', sortParam);
-                        navigate({ pathname: '/network', search: `?${p.toString()}` }, { replace: true });
-                      }}
+                    <SortPanel title={t('membersSortLabel')} htmlFor="members-directory-sort">
+                      <SortSelect
+                        id="members-directory-sort"
+                        value={membersSortMode}
+                        onChange={(mode) => {
+                          const sortParam =
+                            mode === 'recent' ? 'recent' : mode === 'alphabetical' ? 'alpha' : 'default';
+                          const p = new URLSearchParams(location.search);
+                          p.set('sort', sortParam);
+                          navigate({ pathname: '/network', search: `?${p.toString()}` }, { replace: true });
+                        }}
+                      />
+                    </SortPanel>
+                    <SavedMembersPanel
+                      title={t('network.savedPanel.title')}
+                      count={savedMembersCount}
+                      description={t('network.savedPanel.description')}
+                      onClick={openSavedMembersDirectoryView}
+                      active={showSavedMembersOnly}
                     />
-                  </SortPanel>
-                  <SavedMembersPanel
-                    title={t('network.savedPanel.title')}
-                    count={savedMembersCount}
-                    description={t('network.savedPanel.description')}
-                    onClick={openSavedMembersDirectoryView}
-                    active={showSavedMembersOnly}
-                  />
+                  </div>
                 </NetworkToolbar>
 
                 <div ref={membersDirectoryGridRef} className="member-grid">
@@ -6727,33 +6743,35 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   {isMembersDirectoryRoute &&
                     (isNetworkRoute ? (
                       <NetworkToolbar>
-                        <SortPanel title={t('membersSortLabel')} htmlFor="members-directory-sort">
-                          <SortSelect
-                            id="members-directory-sort"
-                            value={membersSortMode}
-                            onChange={(mode) => {
-                              const sortParam =
-                                mode === 'recent'
-                                  ? 'recent'
-                                  : mode === 'alphabetical'
-                                    ? 'alpha'
-                                    : 'default';
-                              const p = new URLSearchParams(location.search);
-                              p.set('sort', sortParam);
-                              navigate(
-                                { pathname: '/network', search: `?${p.toString()}` },
-                                { replace: true }
-                              );
-                            }}
+                        <div className="network-toolbar__row">
+                          <SortPanel title={t('membersSortLabel')} htmlFor="members-directory-sort">
+                            <SortSelect
+                              id="members-directory-sort"
+                              value={membersSortMode}
+                              onChange={(mode) => {
+                                const sortParam =
+                                  mode === 'recent'
+                                    ? 'recent'
+                                    : mode === 'alphabetical'
+                                      ? 'alpha'
+                                      : 'default';
+                                const p = new URLSearchParams(location.search);
+                                p.set('sort', sortParam);
+                                navigate(
+                                  { pathname: '/network', search: `?${p.toString()}` },
+                                  { replace: true }
+                                );
+                              }}
+                            />
+                          </SortPanel>
+                          <SavedMembersPanel
+                            title={t('network.savedPanel.title')}
+                            count={savedMembersCount}
+                            description={t('network.savedPanel.description')}
+                            onClick={openSavedMembersDirectoryView}
+                            active={showSavedMembersOnly}
                           />
-                        </SortPanel>
-                        <SavedMembersPanel
-                          title={t('network.savedPanel.title')}
-                          count={savedMembersCount}
-                          description={t('network.savedPanel.description')}
-                          onClick={openSavedMembersDirectoryView}
-                          active={showSavedMembersOnly}
-                        />
+                        </div>
                       </NetworkToolbar>
                     ) : (
                       <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:gap-6">
