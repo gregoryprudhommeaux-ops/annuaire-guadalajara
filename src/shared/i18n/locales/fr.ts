@@ -60,6 +60,12 @@ const shell = {
       matchTitleStrong: 'Ils ont besoin de toi',
       matchTitleSoft: 'Tu peux probablement aider',
       matchReasonForNeeds: 'Ton profil semble pertinent pour : {needs}',
+      relevanceBadgeStrong: 'Très pertinent',
+      relevanceBadgeMedium: 'Pertinent',
+      relevanceBadgeLow: 'À explorer',
+      relevanceStarsStrong: '★★★',
+      relevanceStarsMedium: '★★',
+      relevanceStarsLow: '★',
     },
     scoreLabel: 'Pertinence : {score} sur 5',
     recommendedCard: {

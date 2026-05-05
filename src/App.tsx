@@ -279,6 +279,7 @@ import { SortSelect } from './features/network/components/SortSelect';
 import { SavedMembersPanel } from './features/network/components/SavedMembersPanel';
 import { GeoCitySelector, geoValueFromKey } from './features/network/components/GeoCitySelector';
 import { buildGeoIndex, geoId, normalizeGeo } from './lib/geoDirectory';
+import { computeSmartMatch, type MatchTier } from '@/features/network/utils/networkSmartMatch';
 import {
   loadRecommendationPrefs,
   saveRecommendationPrefs,
@@ -846,6 +847,28 @@ function ProfileCardListingFooter({
 
 type ProfileCardVariant = 'default' | 'company' | 'activity';
 
+function networkRelevanceBadgeMarkup(tier: MatchTier) {
+  if (tier === 'strong') {
+    return {
+      labelKey: 'network.memberCard.relevanceBadgeStrong',
+      starsKey: 'network.memberCard.relevanceStarsStrong',
+      className: 'border-teal-200 bg-teal-50 text-teal-900',
+    };
+  }
+  if (tier === 'medium') {
+    return {
+      labelKey: 'network.memberCard.relevanceBadgeMedium',
+      starsKey: 'network.memberCard.relevanceStarsMedium',
+      className: 'border-amber-200 bg-amber-50 text-amber-900',
+    };
+  }
+  return {
+    labelKey: 'network.memberCard.relevanceBadgeLow',
+    starsKey: 'network.memberCard.relevanceStarsLow',
+    className: 'border-slate-200 bg-slate-50 text-slate-700',
+  };
+}
+
 const ProfileCard = ({
   p,
   isOwn = false,
@@ -859,6 +882,7 @@ const ProfileCard = ({
   onGuestJoin,
   viewerIsAdmin = false,
   networkListing = false,
+  networkMatchTier = null,
 }: {
   p: UserProfile;
   isOwn?: boolean;
@@ -875,6 +899,8 @@ const ProfileCard = ({
   viewerIsAdmin?: boolean;
   /** Mise en forme annuaire `/network` (scanabilité, styles `fn-network-*`). */
   networkListing?: boolean;
+  /** Pertinence pour vous (tri intelligent) — pas de score numérique affiché. */
+  networkMatchTier?: MatchTier | null;
 }) => {
   const { lang, t } = useLanguage();
   // Désactivation volontaire : l’admin ne modifie pas les profils via l’UI (évite incohérences).
@@ -1000,14 +1026,45 @@ const ProfileCard = ({
               <>
                 <h3 className={memberCardDefaultNameClassName(networkListing)}>{p.fullName}</h3>
                 <p className="mt-0.5 truncate text-xs font-medium text-stone-600">{p.companyName}</p>
+                {networkListing ? (
+                  (() => {
+                    const g = normalizeGeo(p);
+                    if (!g) return null;
+                    return (
+                      <p className="mt-0.5 truncate text-[11px] font-semibold text-stone-600">
+                        {g.city} · {g.state}
+                      </p>
+                    );
+                  })()
+                ) : null}
                 <p className="mt-0.5 line-clamp-2 text-xs text-stone-500">
                   {(() => {
                     const cats = profileDistinctActivityCategories(p);
-                    return cats.length
-                      ? cats.map((c) => activityCategoryLabel(c, lang)).join(' · ')
+                    const useCats = networkListing ? cats.slice(0, 2) : cats;
+                    return useCats.length
+                      ? useCats.map((c) => activityCategoryLabel(c, lang)).join(' · ')
                       : '—';
                   })()}
                 </p>
+                {networkListing && networkMatchTier ? (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                    {(() => {
+                      const cfg = networkRelevanceBadgeMarkup(networkMatchTier);
+                      return (
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold',
+                            cfg.className
+                          )}
+                          role="img"
+                          aria-label={t(cfg.labelKey)}
+                        >
+                          <span aria-hidden>{t(cfg.starsKey)}</span>
+                        </span>
+                      );
+                    })()}
+                  </div>
+                ) : null}
               </>
             )}
           </div>
@@ -4758,6 +4815,51 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     });
   }, [isNetworkRoute, membersDirectoryListDisplayed, networkExplorerGeoId, networkGeoIndex.geoById]);
 
+  /** `/network` : tri « pertinence » + scores pour badges (une passe `computeSmartMatch` par fiche). */
+  const { networkMembersListForGrid, networkMatchInfo } = useMemo(() => {
+    const emptyInfo = new Map<string, { score: number; tier: MatchTier }>();
+    if (!isNetworkRoute) {
+      return { networkMembersListForGrid: membersDirectoryListGeoFiltered, networkMatchInfo: emptyInfo };
+    }
+    const list = [...membersDirectoryListGeoFiltered];
+    const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
+    const ctx = {
+      viewingOutsidePrimaryCity: Boolean(
+        viewerPrimaryGeo && chosen && geoId(chosen) !== geoId(viewerPrimaryGeo)
+      ),
+      viewerPrimaryCity: viewerPrimaryGeo?.city,
+    };
+    const matchInfo = new Map<string, { score: number; tier: MatchTier }>();
+    if (profile) {
+      for (const m of list) {
+        if (m.uid === profile.uid) continue;
+        const sm = computeSmartMatch(profile, m, ctx);
+        matchInfo.set(m.uid, { score: sm.score, tier: sm.tier });
+      }
+    }
+    if (profile && membersSortMode === 'default') {
+      const locale = sortLocale(lang);
+      list.sort((a, b) => {
+        if (a.uid === profile.uid) return 1;
+        if (b.uid === profile.uid) return -1;
+        const sa = matchInfo.get(a.uid)?.score ?? 0;
+        const sb = matchInfo.get(b.uid)?.score ?? 0;
+        if (sb !== sa) return sb - sa;
+        return a.fullName.localeCompare(b.fullName, locale, { sensitivity: 'base' });
+      });
+    }
+    return { networkMembersListForGrid: list, networkMatchInfo: matchInfo };
+  }, [
+    isNetworkRoute,
+    membersDirectoryListGeoFiltered,
+    profile,
+    membersSortMode,
+    networkExplorerGeoId,
+    networkGeoIndex.geoById,
+    viewerPrimaryGeo,
+    lang,
+  ]);
+
   const openSavedMembersDirectoryView = useCallback(() => {
     if (savedMembersCount === 0) return;
     setShowSavedMembersOnly((prev) => !prev);
@@ -5552,7 +5654,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </NetworkToolbar>
 
                 <div ref={membersDirectoryGridRef} className="member-grid">
-                  {membersDirectoryListGeoFiltered.map((p) => (
+                  {networkMembersListForGrid.map((p) => (
                     <React.Fragment key={p.uid}>
                       <ProfileCard
                         variant="default"
@@ -5566,6 +5668,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         guestDirectoryTeaser={guestDirectoryRestricted}
                         onGuestJoin={onGuestDirectoryJoin}
                         networkListing
+                        networkMatchTier={networkMatchInfo.get(p.uid)?.tier ?? null}
                       />
                     </React.Fragment>
                   ))}
