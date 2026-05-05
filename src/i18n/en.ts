@@ -342,7 +342,8 @@ export const EN_STRINGS: Record<string, string> = {
   profileFormCompanyActivityMinOne: "At least one company or activity with a name is required.",
   profileActivityToggleExpand: "Show details",
   profileActivityToggleCollapse: "Hide details",
-  profileFormCountryFootnote: "Country of operation or residence.",
+  profileFormCountryFootnote:
+    "Country of operation or residence. For a Mexican state (e.g. Jalisco), use Mexico.",
   profileFormSectionCore: "What you’re looking for and what you can offer",
   profileFormRecommendPriorityBannerTitle: "Priority section to be recommended",
   profileFormRecommendPriorityBannerBody:

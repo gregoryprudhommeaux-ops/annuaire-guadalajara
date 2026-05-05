@@ -833,8 +833,8 @@ export const TRANSLATIONS: Translations = {
   profileActivityToggleCollapse: { fr: 'Masquer le détail', es: 'Ocultar detalle' },
   /** Sous le champ pays (formulaire identité) — court, pour aligner la grille. */
   profileFormCountryFootnote: {
-    fr: "Pays d'implantation ou de résidence.",
-    es: 'País de implantación o residencia.',
+    fr: "Pays d'implantation ou de résidence. Si l'état est mexicain (ex. Jalisco), indiquez le Mexique.",
+    es: 'País de implantación o residencia. Si el estado es mexicano (p. ej. Jalisco), indica México.',
   },
   profileFormSectionCore: {
     fr: 'Ce que vous cherchez et ce que vous pouvez apporter',

@@ -222,6 +222,11 @@ import {
   PUBLICATION_BIO_MIN_LEN,
 } from './lib/profilePublicationRules';
 import {
+  canonicalMexicoCountryForUi,
+  countryMeansMexico,
+  stateImpliesMexico,
+} from './lib/profileLocationConsistency';
+import {
   profileCoachFingerprint,
   collectProfileCoachGapKeys,
   formatLocalProfileCoachLine,
@@ -3955,6 +3960,19 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
         setProfileSaveBusy(false);
         return;
       }
+      if (stateImpliesMexico(s.state) && !countryMeansMexico(s.country)) {
+        const expected = canonicalMexicoCountryForUi(lang);
+        setProfileSaveError(
+          pickLang(
+            `L’état « ${s.state.trim()} » est au Mexique : indiquez « ${expected} » comme pays d’implantation (pas « ${s.country.trim()} »)${tag}.`,
+            `El estado « ${s.state.trim()} » está en México: indica « ${expected} » como país (no « ${s.country.trim()} »)${tag}.`,
+            `The state « ${s.state.trim()} » is in Mexico: set the country to « ${expected} » (not « ${s.country.trim()} »)${tag}.`,
+            lang
+          )
+        );
+        setProfileSaveBusy(false);
+        return;
+      }
       if (!s.positionCategory?.trim()) {
         setProfileSaveError(
           pickLang(
@@ -5590,7 +5608,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   }
                 />
               </aside>
-              <section className="min-w-0 space-y-4">
+              <section className="min-w-0 space-y-4 px-5 lg:px-0">
                 {user &&
                   networkCompatibilityCurrentUser &&
                   !guestDirectoryRestricted && (
@@ -5626,7 +5644,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     })()}
                   </div>
                   <div className="network-toolbar__row">
-                    <div className="flex min-w-0 w-full flex-1 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                    <div className="network-toolbar__geo flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                       <GeoCitySelector
                         index={networkGeoIndex}
                         value={(() => {

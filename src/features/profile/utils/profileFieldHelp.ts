@@ -16,7 +16,8 @@ export const PROFILE_FIELD_HELP = {
   passions: 'Centres d’intérêt hors cœur de métier : humanisent la fiche et le matching.',
   companyName: 'Raison sociale ou nom commercial principal.',
   sector: 'Secteur principal pour filtres et suggestions.',
-  country: 'Pays d’implantation ou de résidence.',
+  country:
+    'Pays d’implantation ou de résidence. Si l’état est mexicain (ex. Jalisco), le pays doit être le Mexique.',
   roleInCompany: 'Décrivez votre rôle réel, pas seulement votre titre.',
   activityDescription: '2 à 4 phrases concrètes sur l’activité sur ce marché.',
   lookingForText:
