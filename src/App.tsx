@@ -284,6 +284,7 @@ import { SortSelect } from './features/network/components/SortSelect';
 import { SavedMembersPanel } from './features/network/components/SavedMembersPanel';
 import { GeoCitySelector, geoValueFromKey } from './features/network/components/GeoCitySelector';
 import { buildGeoIndex, geoId, normalizeGeo } from './lib/geoDirectory';
+import { collapseGeoForDirectory, isGuadalajaraZmgCanonicalGeo } from './lib/metroAreas';
 import { computeSmartMatch, type MatchTier } from '@/features/network/utils/networkSmartMatch';
 import {
   loadRecommendationPrefs,
@@ -4699,7 +4700,13 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     return buildGeoIndex((membersFiltered ?? []).filter((p) => p.role !== 'admin'));
   }, [membersFiltered]);
 
-  const viewerPrimaryGeo = useMemo(() => normalizeGeo(profile ?? {}), [profile]);
+  /** Lieu tel que sur la fiche (affichage bouton « Revenir à … »). */
+  const viewerGeoRaw = useMemo(() => normalizeGeo(profile ?? {}), [profile]);
+  /** Lieu normalisé pour filtres réseau (ex. toute la ZMG → une entrée « Grand Guadalajara »). */
+  const viewerGeoNetwork = useMemo(
+    () => (viewerGeoRaw ? collapseGeoForDirectory(viewerGeoRaw) : null),
+    [viewerGeoRaw]
+  );
 
   useEffect(() => {
     if (!isNetworkRoute) {
@@ -4707,10 +4714,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       return;
     }
     if (networkExplorerGeoId) return;
-    if (!viewerPrimaryGeo) return;
+    if (!viewerGeoNetwork) return;
     if (userClearedNetworkGeoRef.current) return;
-    setNetworkExplorerGeoId(geoId(viewerPrimaryGeo));
-  }, [isNetworkRoute, networkExplorerGeoId, viewerPrimaryGeo]);
+    setNetworkExplorerGeoId(geoId(viewerGeoNetwork));
+  }, [isNetworkRoute, networkExplorerGeoId, viewerGeoNetwork]);
 
   const membersDisplayList = useMemo(() => {
     const list = [...membersFiltered];
@@ -4839,14 +4846,11 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     if (!isNetworkRoute) return membersDirectoryListDisplayed;
     const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
     if (!chosen) return membersDirectoryListDisplayed;
+    const chosenCollapsedId = geoId(chosen);
     return membersDirectoryListDisplayed.filter((p) => {
       const g = normalizeGeo(p);
       if (!g) return false;
-      return (
-        g.country.toLowerCase() === chosen.country.toLowerCase() &&
-        g.state.toLowerCase() === chosen.state.toLowerCase() &&
-        g.city.toLowerCase() === chosen.city.toLowerCase()
-      );
+      return geoId(collapseGeoForDirectory(g)) === chosenCollapsedId;
     });
   }, [isNetworkRoute, membersDirectoryListDisplayed, networkExplorerGeoId, networkGeoIndex.geoById]);
 
@@ -4860,9 +4864,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
     const ctx = {
       viewingOutsidePrimaryCity: Boolean(
-        viewerPrimaryGeo && chosen && geoId(chosen) !== geoId(viewerPrimaryGeo)
+        viewerGeoNetwork && chosen && geoId(chosen) !== geoId(viewerGeoNetwork)
       ),
-      viewerPrimaryCity: viewerPrimaryGeo?.city,
+      viewerPrimaryCity: viewerGeoRaw?.city,
     };
     const matchInfo = new Map<string, { score: number; tier: MatchTier }>();
     if (profile) {
@@ -4891,7 +4895,8 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     membersSortMode,
     networkExplorerGeoId,
     networkGeoIndex.geoById,
-    viewerPrimaryGeo,
+    viewerGeoNetwork,
+    viewerGeoRaw,
     lang,
   ]);
 
@@ -5626,13 +5631,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                     <p className="text-sm font-extrabold tracking-tight text-stone-900">
                       {(() => {
                         const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
-                        if (chosen) return t('network.explorer.titleWithCity', { city: chosen.city });
-                        return t('network.explorer.titleDefault');
+                        if (!chosen) return t('network.explorer.titleDefault');
+                        const cityTitle = isGuadalajaraZmgCanonicalGeo(chosen)
+                          ? t('network.explorer.metroGuadalajaraZmg')
+                          : chosen.city;
+                        return t('network.explorer.titleWithCity', { city: cityTitle });
                       })()}
                     </p>
                     {(() => {
                       const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
-                      const primary = viewerPrimaryGeo;
+                      const primary = viewerGeoNetwork;
                       if (!chosen || !primary) return null;
                       const out = geoId(chosen) !== geoId(primary);
                       if (!out) return null;
@@ -5664,16 +5672,16 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                           setNetworkExplorerGeoId(geoId({ country: c, state: s, city }));
                         }}
                       />
-                      {viewerPrimaryGeo ? (
+                      {viewerGeoRaw && viewerGeoNetwork ? (
                         <button
                           type="button"
                           className="h-auto min-h-10 w-full shrink-0 rounded-xl border border-stone-200 bg-white px-3 py-2 text-center text-xs font-semibold leading-snug text-stone-800 hover:bg-stone-50 sm:w-auto sm:py-0"
                           onClick={() => {
                             userClearedNetworkGeoRef.current = false;
-                            setNetworkExplorerGeoId(geoId(viewerPrimaryGeo));
+                            setNetworkExplorerGeoId(geoId(viewerGeoNetwork));
                           }}
                         >
-                          {t('network.explorer.returnToCity', { city: viewerPrimaryGeo.city })}
+                          {t('network.explorer.returnToCity', { city: viewerGeoRaw.city })}
                         </button>
                       ) : null}
                     </div>

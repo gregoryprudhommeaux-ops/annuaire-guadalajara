@@ -20,7 +20,7 @@ type GeoCitySelectorProps = {
 
 export function GeoCitySelector({ index, value, onChange, id = 'network-geo-city' }: GeoCitySelectorProps) {
   const { lang, t } = useLanguage();
-  const options = useMemo(() => buildGeoPickerOptions(index, lang), [index, lang]);
+  const options = useMemo(() => buildGeoPickerOptions(index, lang, t), [index, lang, t]);
   const labelById = useMemo(() => new Map(options.map((o) => [o.id, o.label])), [options]);
 
   const placeholder = t('network.explorer.cityPlaceholder');

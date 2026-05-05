@@ -1,4 +1,9 @@
 import type { Language, UserProfile } from '@/types';
+import {
+  collapseGeoForDirectory,
+  isGuadalajaraZmgCanonicalGeo,
+  metroGeoSearchExtra,
+} from '@/lib/metroAreas';
 
 export type GeoKey = {
   country: string;
@@ -33,8 +38,13 @@ export type GeoIndex = {
   geoById: Map<string, GeoKey>;
 };
 
-/** Libellé pour une ligne du sélecteur « ville seule » : ville seule si unique, sinon précision état / pays. */
-export function geoPickerOptionLabel(g: GeoKey, all: GeoKey[]): string {
+export type GeoTranslateFn = (key: string, params?: Record<string, string | number>) => string;
+
+/** Libellé pour une ligne du sélecteur « ville seule » : métropoles canoniques (i18n), sinon ville / désambiguïsation. */
+export function geoPickerOptionLabel(g: GeoKey, all: GeoKey[], t: GeoTranslateFn): string {
+  if (isGuadalajaraZmgCanonicalGeo(g)) {
+    return t('network.explorer.metroGuadalajaraZmg');
+  }
   const id = geoId(g);
   const cityL = g.city.toLowerCase();
   const dupCity = all.some((x) => geoId(x) !== id && x.city.toLowerCase() === cityL);
@@ -57,16 +67,21 @@ export type GeoPickerOption = {
   geo: GeoKey;
 };
 
-export function buildGeoPickerOptions(index: GeoIndex, sortLocale: Language = 'fr'): GeoPickerOption[] {
+export function buildGeoPickerOptions(
+  index: GeoIndex,
+  sortLocale: Language = 'fr',
+  t: GeoTranslateFn
+): GeoPickerOption[] {
   const all = Array.from(index.geoById.values());
   if (all.length === 0) return [];
 
   const options: GeoPickerOption[] = all.map((geo) => {
     const id = geoId(geo);
+    const extra = metroGeoSearchExtra(geo);
     return {
       id,
-      label: geoPickerOptionLabel(geo, all),
-      search: `${geo.city} ${geo.state} ${geo.country}`.toLowerCase(),
+      label: geoPickerOptionLabel(geo, all, t),
+      search: `${geo.city} ${geo.state} ${geo.country} ${extra}`.toLowerCase(),
       geo,
     };
   });
@@ -90,8 +105,9 @@ export function buildGeoIndex(profiles: Array<Pick<UserProfile, 'country' | 'sta
   const geoById = new Map<string, GeoKey>();
 
   for (const p of profiles) {
-    const g = normalizeGeo(p);
-    if (!g) continue;
+    const raw = normalizeGeo(p);
+    if (!raw) continue;
+    const g = collapseGeoForDirectory(raw);
     countriesSet.add(g.country);
     const kCountry = g.country;
     const kState = `${g.country}||${g.state}`;

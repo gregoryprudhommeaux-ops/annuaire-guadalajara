@@ -92,6 +92,7 @@ const shell = {
       cityPlaceholder: 'Ciudad (búsqueda)',
       cityAriaLabel: 'Elegir una ciudad del directorio para filtrar miembros',
       noLocationsYet: 'Aún no hay ubicaciones en el directorio',
+      metroGuadalajaraZmg: 'Gran Guadalajara (zona metropolitana)',
     },
   },
   footer: {

@@ -95,6 +95,8 @@ const shell = {
       cityPlaceholder: 'Ville (recherche)',
       cityAriaLabel: 'Choisir une ville de l’annuaire pour filtrer les membres',
       noLocationsYet: 'Aucun lieu dans l’annuaire pour l’instant',
+      /** Zone métropolitaine regroupée (ZMG + Jalisco) — une entrée au lieu d’une ville par municipalité. */
+      metroGuadalajaraZmg: 'Grand Guadalajara (aire métropolitaine)',
     },
   },
   footer: {
