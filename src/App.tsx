@@ -196,6 +196,7 @@ import {
   formatHighlightedNeedsForText,
   needOptionLabel,
   sanitizeHighlightedNeeds,
+  sanitizeHighlightedOffers,
 } from './needOptions';
 import {
   getPassionLabel,
@@ -794,6 +795,7 @@ function ProfileCardListingFooter({
   t: (key: string) => string;
 }) {
   const ids = sanitizeHighlightedNeeds(p.highlightedNeeds);
+  const offerIds = sanitizeHighlightedOffers(p.highlightedOffers);
   return (
     <div className="mt-3 flex min-h-0 flex-1 flex-col">
       <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
@@ -815,6 +817,23 @@ function ProfileCardListingFooter({
           </div>
         )}
       </div>
+      {offerIds.length > 0 ? (
+        <div className="mt-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+            {t('profilePublicCurrentOffers')}
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {offerIds.map((id) => (
+              <span
+                key={id}
+                className="inline-flex max-w-full rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-900"
+              >
+                {needOptionLabel(id, lang)}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <div className="mt-3 border-t border-slate-100 pt-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold text-blue-700">{t('directoryMemberCardCta')}</span>
@@ -2179,6 +2198,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [highlightedNeedFilter, setHighlightedNeedFilter] = useState('');
   const [passionIdFilter, setPassionIdFilter] = useState('');
   const [highlightedNeedsDraft, setHighlightedNeedsDraft] = useState<string[]>([]);
+  const [highlightedOffersDraft, setHighlightedOffersDraft] = useState<string[]>([]);
   const [passionIdsDraft, setPassionIdsDraft] = useState<string[]>([]);
   const [workingLanguagesDraft, setWorkingLanguagesDraft] = useState<string[]>([]);
   const [communicationLanguageDraft, setCommunicationLanguageDraft] = useState<Language>(
@@ -2835,6 +2855,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const src = editingProfile ?? profile;
     if (!src) return;
     setHighlightedNeedsDraft(sanitizeHighlightedNeeds(src.highlightedNeeds));
+    setHighlightedOffersDraft(sanitizeHighlightedOffers(src.highlightedOffers));
     setPassionIdsDraft(sanitizePassionIds(src.passionIds));
     setWorkingLanguagesDraft(sanitizeWorkingLanguageCodes(src.workingLanguageCodes));
     setCommunicationLanguageDraft(
@@ -2852,6 +2873,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     publicationDraftsHydratedUidRef.current = profile.uid;
     setHighlightedNeedsDraft((prev) =>
       prev.length > 0 ? prev : sanitizeHighlightedNeeds(profile.highlightedNeeds)
+    );
+    setHighlightedOffersDraft((prev) =>
+      prev.length > 0 ? prev : sanitizeHighlightedOffers(profile.highlightedOffers)
     );
     setPassionIdsDraft((prev) =>
       prev.length > 0 ? prev : sanitizePassionIds(profile.passionIds)
@@ -2907,6 +2931,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     setProfileFormDraftOverrides({ texts: draft.texts, checks: draft.checks });
     setPassionIdsDraft(sanitizePassionIds(draft.passionIds));
     setHighlightedNeedsDraft(sanitizeHighlightedNeeds(draft.highlightedNeeds));
+    setHighlightedOffersDraft(sanitizeHighlightedOffers(draft.highlightedOffers));
     setWorkingLanguagesDraft(sanitizeWorkingLanguageCodes(draft.workingLanguageCodes));
     setCompanyActivitiesDraft(
       draft.companyActivities.length > 0 ? draft.companyActivities : [emptyCompanyActivitySlot()]
@@ -2943,6 +2968,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
         checks,
         passionIds: passionIdsDraft,
         highlightedNeeds: highlightedNeedsDraft,
+        highlightedOffers: highlightedOffersDraft,
         workingLanguageCodes: workingLanguagesDraft,
         companyActivities: companyActivitiesDraft,
         companyActivityEditCollapsed,
@@ -2957,6 +2983,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     profileFormRemountKey,
     passionIdsDraft,
     highlightedNeedsDraft,
+    highlightedOffersDraft,
     workingLanguagesDraft,
     companyActivitiesDraft,
     companyActivityEditCollapsed,
@@ -2984,6 +3011,14 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
 
   const toggleHighlightedNeedDraft = (id: string) => {
     setHighlightedNeedsDraft((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= 3) return prev;
+      return [...prev, id];
+    });
+  };
+
+  const toggleHighlightedOfferDraft = (id: string) => {
+    setHighlightedOffersDraft((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id);
       if (prev.length >= 3) return prev;
       return [...prev, id];
@@ -3055,6 +3090,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       workingLanguageCodes: workingLanguagesDraft,
       passionIds: passionIdsDraft,
       highlightedNeeds: highlightedNeedsDraft,
+      highlightedOffers: highlightedOffersDraft,
       companyActivities:
         companyActivitiesDraft.length > 0
           ? companyActivitiesDraft
@@ -3070,6 +3106,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     workingLanguagesDraft,
     passionIdsDraft,
     highlightedNeedsDraft,
+    highlightedOffersDraft,
     companyActivitiesDraft,
   ]);
 
@@ -3981,6 +4018,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       employeeCount: employeeCountVal,
       companySize: computedCompanySizeProbe,
       highlightedNeeds: sanitizeHighlightedNeeds(highlightedNeedsDraft),
+      highlightedOffers: sanitizeHighlightedOffers(highlightedOffersDraft),
       passionIds: passionIdsDraft,
       targetSectors: targetSectorListProbe,
     };
@@ -4187,6 +4225,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       bio: deleteField(),
       bioTranslations: deleteField(),
       highlightedNeeds: sanitizeHighlightedNeeds(highlightedNeedsDraft),
+      highlightedOffers: sanitizeHighlightedOffers(highlightedOffersDraft),
       passionIds: sanitizePassionIds(passionIdsDraft),
       targetSectors: parseCommaSeparatedTargetKeywords(formData.get('targetSectors') as string | null),
       helpNewcomers: helpNewcomersVal !== undefined ? helpNewcomersVal : deleteField(),
@@ -5301,6 +5340,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   ProfileMatchingSection,
                   highlightedNeedsDraft,
                   toggleHighlightedNeedDraft,
+                  highlightedOffersDraft,
+                  toggleHighlightedOfferDraft,
                   ProfileEditCompanyActivitySectionShell,
                   ProfileEditCompanyActivitySlotsBlock,
                   companyActivitiesDraft,
@@ -6688,6 +6729,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       const needLabels = sanitizeHighlightedNeeds(p.highlightedNeeds ?? []).map((id) =>
                         needOptionLabel(id, lang)
                       );
+                      const offerLabels = sanitizeHighlightedOffers(p.highlightedOffers ?? []).map((id) =>
+                        needOptionLabel(id, lang)
+                      );
                       return (
                         <React.Fragment key={p.uid}>
                           {isNetworkRoute && !guestDirectoryRestricted ? (
@@ -6699,6 +6743,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               bio={memberListingBioSource(p)}
                               photoUrl={p.photoURL}
                               needs={needLabels}
+                              offers={offerLabels}
                               onOpen={() => setSelectedProfile(p)}
                               viewerProfile={profile}
                             />

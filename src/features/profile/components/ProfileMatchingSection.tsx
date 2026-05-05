@@ -28,6 +28,8 @@ export type ProfileMatchingSectionProps = {
   profile: UserProfile | null;
   highlightedNeedsDraft: string[];
   onToggleHighlightedNeed: (id: string) => void;
+  highlightedOffersDraft: string[];
+  onToggleHighlightedOffer: (id: string) => void;
   className?: string;
 };
 
@@ -46,6 +48,8 @@ export function ProfileMatchingSection({
   profile,
   highlightedNeedsDraft,
   onToggleHighlightedNeed,
+  highlightedOffersDraft,
+  onToggleHighlightedOffer,
   className,
 }: ProfileMatchingSectionProps) {
   const bannerTitle = t('profileFormRecommendPriorityBannerTitle');
@@ -163,6 +167,50 @@ export function ProfileMatchingSection({
           </div>
           <ProfileFieldHint>
             {profileEditFrUx ? PROFILE_FIELD_HELP.currentNeeds : t('highlightedNeedsHint')}
+          </ProfileFieldHint>
+        </div>
+
+        <div id="profile-completion-highlightedOffers">
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+            {profileEditFrUx ? PROFILE_FIELD_LABELS.currentOffers : t('highlightedOffersTitle')}{' '}
+            <span className="text-[10px] font-normal normal-case text-slate-400">
+              {t('highlightedOffersOptional')}
+            </span>
+          </label>
+          <div className="space-y-2">
+            {NEED_OPTIONS.map((group) => (
+              <div key={`offer-${group.label.fr}`} className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  {group.label[lang]}
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {group.options.map((opt) => {
+                    const selected = highlightedOffersDraft.includes(opt.value);
+                    const disabled = !selected && highlightedOffersDraft.length >= 3;
+                    return (
+                      <button
+                        key={`offer-${opt.value}`}
+                        type="button"
+                        onClick={() => onToggleHighlightedOffer(opt.value)}
+                        disabled={disabled}
+                        className={cn(
+                          'w-full rounded-lg border px-2.5 py-1.5 text-left text-xs font-medium transition-all',
+                          selected
+                            ? 'border-teal-700 bg-teal-700 text-white shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300',
+                          disabled && !selected && 'cursor-not-allowed opacity-40 hover:border-slate-200'
+                        )}
+                      >
+                        {opt.label[lang]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+          <ProfileFieldHint>
+            {profileEditFrUx ? PROFILE_FIELD_HELP.currentOffers : t('highlightedOffersHint')}
           </ProfileFieldHint>
         </div>
 

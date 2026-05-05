@@ -4,7 +4,8 @@
  */
 import type { CompanyActivitySlot } from '@/types';
 
-export const PROFILE_FORM_DRAFT_SCHEMA_VERSION = 1;
+/** v2: champ `highlightedOffers` — les brouillons v1 restent lisibles. */
+export const PROFILE_FORM_DRAFT_SCHEMA_VERSION = 2;
 
 const draftKey = (uid: string) =>
   `annuaire_profile_draft_v${PROFILE_FORM_DRAFT_SCHEMA_VERSION}_${uid}`;
@@ -17,6 +18,7 @@ export type ProfileFormDraftStored = {
   checks: Record<string, boolean>;
   passionIds: string[];
   highlightedNeeds: string[];
+  highlightedOffers: string[];
   workingLanguageCodes: string[];
   companyActivities: CompanyActivitySlot[];
   companyActivityEditCollapsed: Record<string, boolean>;
@@ -31,7 +33,7 @@ export function loadProfileFormDraft(uid: string): ProfileFormDraftStored | null
     const raw = sessionStorage.getItem(draftKey(uid));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as ProfileFormDraftStored;
-    if (parsed.v !== PROFILE_FORM_DRAFT_SCHEMA_VERSION || typeof parsed.savedAt !== 'number') {
+    if (!(parsed.v === 1 || parsed.v === 2) || typeof parsed.savedAt !== 'number') {
       return null;
     }
     if (Date.now() - parsed.savedAt > MAX_DRAFT_AGE_MS) {
@@ -42,6 +44,7 @@ export function loadProfileFormDraft(uid: string): ProfileFormDraftStored | null
     if (!parsed.checks || typeof parsed.checks !== 'object') parsed.checks = {};
     if (!Array.isArray(parsed.passionIds)) parsed.passionIds = [];
     if (!Array.isArray(parsed.highlightedNeeds)) parsed.highlightedNeeds = [];
+    if (!Array.isArray(parsed.highlightedOffers)) parsed.highlightedOffers = [];
     if (!Array.isArray(parsed.workingLanguageCodes)) parsed.workingLanguageCodes = [];
     if (!Array.isArray(parsed.companyActivities)) parsed.companyActivities = [];
     if (!parsed.companyActivityEditCollapsed || typeof parsed.companyActivityEditCollapsed !== 'object') {

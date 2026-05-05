@@ -30,6 +30,7 @@ export type ProfileEditExpandedFormCtx = {
   communicationLanguageDraft: Language;
   setCommunicationLanguageDraft: React.Dispatch<React.SetStateAction<Language>>;
   highlightedNeedsDraft: string[];
+  highlightedOffersDraft: string[];
   companyActivitiesDraft: CompanyActivitySlot[];
   companyActivityEditCollapsed: Record<string, boolean | undefined>;
 
@@ -69,6 +70,7 @@ export type ProfileEditExpandedFormCtx = {
   setPassionIdsDraft: React.Dispatch<React.SetStateAction<string[]>>;
   toggleWorkingLanguageDraft: (code: string) => void;
   toggleHighlightedNeedDraft: (needId: string) => void;
+  toggleHighlightedOfferDraft: (offerId: string) => void;
   setCompanyActivitiesDraft: React.Dispatch<React.SetStateAction<CompanyActivitySlot[]>>;
   setCompanyActivityEditCollapsed: React.Dispatch<
     React.SetStateAction<Record<string, boolean | undefined>>
@@ -174,6 +176,8 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
     ProfileMatchingSection,
     highlightedNeedsDraft,
     toggleHighlightedNeedDraft,
+    highlightedOffersDraft,
+    toggleHighlightedOfferDraft,
     ProfileEditCompanyActivitySectionShell,
     ProfileEditCompanyActivitySlotsBlock,
     companyActivitiesDraft,
@@ -342,6 +346,8 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
                 profile={profile}
                 highlightedNeedsDraft={highlightedNeedsDraft}
                 onToggleHighlightedNeed={toggleHighlightedNeedDraft}
+                highlightedOffersDraft={highlightedOffersDraft}
+                onToggleHighlightedOffer={toggleHighlightedOfferDraft}
               />
 
               <ProfileEditCompanyActivitySectionShell lang={lang} t={t} pickLang={pickLang} isEditProfileRoute={isEditProfileRoute}>

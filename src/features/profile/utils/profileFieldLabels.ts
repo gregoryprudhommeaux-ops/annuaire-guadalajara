@@ -33,6 +33,7 @@ export const PROFILE_FIELD_LABELS = {
 
   lookingForText: 'Je recherche',
   currentNeeds: 'Besoins actuels',
+  currentOffers: 'Ce que je peux offrir',
   helpOfferText: 'Je peux aider sur',
   keywords: 'Mots-clés',
   openness: 'Ouvert à',

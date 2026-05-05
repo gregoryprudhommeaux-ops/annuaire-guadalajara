@@ -1553,6 +1553,10 @@ export const TRANSLATIONS: Translations = {
     fr: "Besoins actuels",
     es: "Necesidades actuales",
   },
+  profilePublicCurrentOffers: {
+    fr: "Offres / services",
+    es: "Ofertas / servicios",
+  },
   profilePublicAboutTitle: { fr: "À propos", es: "Sobre ti" },
   highlightedNeedsTitle: {
     fr: 'Besoins actuels',
@@ -1566,6 +1570,15 @@ export const TRANSLATIONS: Translations = {
   highlightedNeedsCount: {
     fr: "sélectionné(s)",
     es: "seleccionados",
+  },
+  highlightedOffersTitle: {
+    fr: 'Offres / services (0 à 3)',
+    es: 'Ofertas / servicios (0 a 3)',
+  },
+  highlightedOffersOptional: { fr: "(facultatif)", es: "(opcional)" },
+  highlightedOffersHint: {
+    fr: 'Mettez en avant jusqu’à 3 offres concrètes (même liste que les besoins) : cela améliore les recoupements avec les besoins des autres membres.',
+    es: 'Destaca hasta 3 ofertas concretas (la misma lista que las necesidades): mejora el cruce con las necesidades de otros miembros.',
   },
   typedNeedsRadar: {
     fr: "Besoins structurés (réseau)",

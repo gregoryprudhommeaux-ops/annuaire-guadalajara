@@ -48,11 +48,13 @@ const shell = {
     },
     memberCard: {
       noStructuredNeed: 'Sin necesidades estructuradas',
+      noStructuredOffer: 'Sin ofertas estructuradas',
       companyUnknown: 'Empresa no indicada',
       sectorUnknown: 'Sector no indicado',
       cardAria: 'Perfil de {name}',
       bioIncomplete: 'Presentación por completar.',
       currentNeedsLabel: 'NECESIDADES ACTUALES',
+      currentOffersLabel: 'OFERTAS / SERVICIOS',
       matchTitleStrong: 'Podrían necesitarte',
       matchTitleSoft: 'Probablemente puedas ayudar',
       matchReasonForNeeds: 'Tu perfil parece relevante para: {needs}',

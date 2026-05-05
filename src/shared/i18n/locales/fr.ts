@@ -50,11 +50,13 @@ const shell = {
     },
     memberCard: {
       noStructuredNeed: 'Aucun besoin structuré renseigné',
+      noStructuredOffer: 'Aucune offre structurée renseignée',
       companyUnknown: 'Entreprise non renseignée',
       sectorUnknown: 'Secteur non renseigné',
       cardAria: 'Profil de {name}',
       bioIncomplete: 'Présentation à compléter.',
       currentNeedsLabel: 'BESOINS ACTUELS',
+      currentOffersLabel: 'OFFRES / SERVICES',
       matchTitleStrong: 'Ils ont besoin de toi',
       matchTitleSoft: 'Tu peux probablement aider',
       matchReasonForNeeds: 'Ton profil semble pertinent pour : {needs}',

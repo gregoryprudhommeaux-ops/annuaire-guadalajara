@@ -1,7 +1,7 @@
 import type { Language, UserProfile } from '../types';
 import { getProfileAiRecommendationReadiness, normalizedTargetKeywords } from '../types';
 import { sanitizePassionIds } from './passionConfig';
-import { sanitizeHighlightedNeeds } from '../needOptions';
+import { sanitizeHighlightedNeeds, sanitizeHighlightedOffers } from '../needOptions';
 import {
   hasEmployeeInfo,
   PUBLICATION_BIO_MIN_LEN,
@@ -69,6 +69,7 @@ export function profileCoachFingerprint(p: UserProfile): string {
     p.employeeCount ?? '',
     String(p.companySize ?? ''),
     (p.highlightedNeeds ?? []).join(','),
+    (p.highlightedOffers ?? []).join(','),
     (p.passionIds ?? []).join(','),
     normalizedTargetKeywords(p).join(','),
     p.linkedin ?? '',
@@ -189,6 +190,7 @@ function summarizeProfileForPrompt(p: UserProfile): string {
     `activity_desc_len:${firstSlotActivityDescription(p).trim().length}`,
     `employee_info:${hasEmployeeInfo(p) ? 'yes' : 'no'}`,
     `highlighted_needs:${sanitizeHighlightedNeeds(p.highlightedNeeds).length}`,
+    `highlighted_offers:${sanitizeHighlightedOffers(p.highlightedOffers).length}`,
     `passions:${sanitizePassionIds(p.passionIds).length}`,
     `target_keywords:${normalizedTargetKeywords(p).length}`,
     `linkedin:${p.linkedin?.trim() ? 'yes' : 'no'}`,

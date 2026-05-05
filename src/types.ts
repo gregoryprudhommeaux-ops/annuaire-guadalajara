@@ -172,6 +172,8 @@ export interface UserProfile {
   memberBioTranslations?: Partial<Record<Language, string>>;
   /** Jusqu’à 3 codes NEED_* (voir `NEED_OPTIONS`) mis en avant sur le profil */
   highlightedNeeds?: string[];
+  /** Jusqu’à 3 codes NEED_* que vous pouvez offrir / rendre service (même vocabulaire que les besoins) */
+  highlightedOffers?: string[];
   lookingFor?: string;
   /** Mots-clés libres (industrie, zone, domaine…), saisis séparés par virgules côté UI */
   targetSectors?: string[];

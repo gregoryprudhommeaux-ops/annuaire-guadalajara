@@ -174,10 +174,18 @@ export function sanitizeHighlightedNeeds(raw: unknown): string[] {
   return out;
 }
 
+/** Même contraintes que {@link sanitizeHighlightedNeeds} — codes NEED_* connus, max 3. */
+export const sanitizeHighlightedOffers = sanitizeHighlightedNeeds;
+
 /** Phrase résumant les besoins mis en avant (ex. partage, prompts). */
 export function formatHighlightedNeedsForText(ids: string[] | undefined, lang: Language): string {
   const list = sanitizeHighlightedNeeds(ids);
   if (list.length === 0) return '';
   const sep = lang === 'fr' ? ' ; ' : '; ';
   return list.map((id) => needOptionLabel(id, lang)).join(sep);
+}
+
+/** Phrase résumant les offres / services structurés mis en avant. */
+export function formatHighlightedOffersForText(ids: string[] | undefined, lang: Language): string {
+  return formatHighlightedNeedsForText(ids, lang);
 }

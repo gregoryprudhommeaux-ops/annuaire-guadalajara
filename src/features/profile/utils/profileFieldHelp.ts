@@ -23,6 +23,8 @@ export const PROFILE_FIELD_HELP = {
     'Décrivez en une phrase le type d’opportunité, de contact ou de soutien que vous cherchez réellement dans le réseau.',
   currentNeeds:
     'Choisissez jusqu’à 3 besoins prioritaires : ce sont eux qui déclenchent les mises en relation les plus pertinentes.',
+  currentOffers:
+    'Mettez en avant jusqu’à 3 « offres » concrètes (même liste que les besoins) : cela améliore les recoupements avec les besoins des autres membres.',
   helpOfferText:
     'Expliquez concrètement ce que vous pouvez apporter à d’autres membres : expertise, réseau, accès marché, partenaires, financement, conseil.',
   keywords:

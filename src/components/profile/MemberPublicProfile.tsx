@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronRight, Linkedin } from 'lucide-react';
 import { normalizedTargetKeywords, type Language, type UserProfile } from '../../types';
 import { activityCategoryLabel, workFunctionLabel } from '../../constants';
-import { needOptionLabel, sanitizeHighlightedNeeds } from '../../needOptions';
+import { needOptionLabel, sanitizeHighlightedNeeds, sanitizeHighlightedOffers } from '../../needOptions';
 import { getPassionEmoji, getPassionLabel, sanitizePassionIds } from '../../lib/passionConfig';
 import {
   sanitizeWorkingLanguageCodes,
@@ -24,6 +24,7 @@ import AiTranslatedFreeText from '../AiTranslatedFreeText';
 import {
   profileCardClass,
   profileNeedPillClass,
+  profileOfferPillClass,
   profileNeutralPillClass,
   profileSectionTitleClass,
 } from './profileSectionStyles';
@@ -65,6 +66,7 @@ export function MemberPublicProfile({
   const metaLine = metaParts.join(' · ');
 
   const needs = sanitizeHighlightedNeeds(profile.highlightedNeeds);
+  const offers = sanitizeHighlightedOffers(profile.highlightedOffers);
   const passions = sanitizePassionIds(profile.passionIds);
   const langs = sanitizeWorkingLanguageCodes(profile.workingLanguageCodes);
   const keywords = normalizedTargetKeywords(profile);
@@ -78,6 +80,10 @@ export function MemberPublicProfile({
   const site = trimProfileWebsite(profile.website);
   const hasGoal = Boolean(profile.networkGoal?.trim());
   const hasNeeds = needs.length > 0;
+  const hasOffers = offers.length > 0;
+  const matchmakingBlocks = Number(hasGoal) + Number(hasNeeds) + Number(hasOffers);
+  const matchmakingGridClass =
+    matchmakingBlocks >= 3 ? 'grid gap-4 md:grid-cols-3' : 'grid gap-4 md:grid-cols-2';
 
   return (
     <article className="space-y-6">
@@ -151,10 +157,8 @@ export function MemberPublicProfile({
         </div>
       </header>
 
-      {(hasGoal || hasNeeds) && (
-        <section
-          className={cn('grid gap-4', hasGoal && hasNeeds ? 'md:grid-cols-2' : 'md:grid-cols-1')}
-        >
+      {matchmakingBlocks > 0 ? (
+        <section className={matchmakingGridClass}>
           {hasGoal ? (
             <div className={profileCardClass}>
               <h2 className={profileSectionTitleClass}>{t('profileNetworkGoalLabel')}</h2>
@@ -184,8 +188,21 @@ export function MemberPublicProfile({
               ) : null}
             </div>
           ) : null}
+
+          {hasOffers ? (
+            <div className={profileCardClass}>
+              <h2 className={profileSectionTitleClass}>{t('profilePublicCurrentOffers')}</h2>
+              <ul className="mt-2 flex list-none flex-wrap gap-1.5 p-0">
+                {offers.map((id) => (
+                  <li key={id} className={profileOfferPillClass}>
+                    {needOptionLabel(id, lang)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </section>
-      )}
+      ) : null}
 
       {profile.helpNewcomers?.trim() ? (
         <section className={profileCardClass}>

@@ -6,7 +6,7 @@ import {
   effectiveMemberBio,
   allActivityDescriptionTexts,
 } from './lib/companyActivities';
-import { needOptionLabel } from './needOptions';
+import { needOptionLabel, sanitizeHighlightedOffers, sanitizeHighlightedNeeds } from './needOptions';
 import { getPassionLabel, sanitizePassionIds } from './lib/passionConfig';
 
 /**
@@ -48,7 +48,13 @@ export function buildProfileSearchBlob(p: UserProfile): string {
     p.linkedin || '',
     p.website || '',
     ...normalizedTargetKeywords(p),
-    ...(p.highlightedNeeds || []).flatMap((id) => [
+    ...sanitizeHighlightedNeeds(p.highlightedNeeds).flatMap((id) => [
+      needOptionLabel(id, 'fr'),
+      needOptionLabel(id, 'es'),
+      needOptionLabel(id, 'en'),
+      id,
+    ]),
+    ...sanitizeHighlightedOffers(p.highlightedOffers).flatMap((id) => [
       needOptionLabel(id, 'fr'),
       needOptionLabel(id, 'es'),
       needOptionLabel(id, 'en'),

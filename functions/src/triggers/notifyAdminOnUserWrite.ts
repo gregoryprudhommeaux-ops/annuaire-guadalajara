@@ -38,6 +38,7 @@ const KEY_ORDER: string[] = [
   'memberBio',
   'activityDescription',
   'highlightedNeeds',
+  'highlightedOffers',
   'passionIds',
   'workingLanguages',
   'communicationLanguage',

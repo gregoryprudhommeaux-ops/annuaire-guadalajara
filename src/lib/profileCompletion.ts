@@ -2,7 +2,7 @@ import type { Language, UserProfile } from '../types';
 import { normalizedTargetKeywords } from '../types';
 import { effectiveMemberBio, firstSlotActivityDescription } from './companyActivities';
 import { sanitizePassionIds } from './passionConfig';
-import { sanitizeHighlightedNeeds } from '../needOptions';
+import { sanitizeHighlightedNeeds, sanitizeHighlightedOffers } from '../needOptions';
 import { pickLang } from './uiLocale';
 import { PUBLICATION_BIO_MIN_LEN } from './profilePublicationRules';
 
@@ -23,6 +23,7 @@ export type ProfileCompletionKey =
   | 'linkedinUrl'
   | 'passions'
   | 'highlightedNeeds'
+  | 'highlightedOffers'
   | 'keywords';
 
 export type CompletionItem = {
@@ -68,6 +69,12 @@ export function profileCompletionDefaultLabels(lang: Language): Record<ProfileCo
     linkedinUrl: pickLang('Lien LinkedIn', 'Enlace de LinkedIn', 'LinkedIn link', lang),
     passions: pickLang('Passions', 'Pasiones', 'Interests', lang),
     highlightedNeeds: pickLang('Besoins mis en avant', 'Necesidades destacadas', 'Highlighted needs', lang),
+    highlightedOffers: pickLang(
+      'Offres / services mis en avant',
+      'Ofertas / servicios destacados',
+      'Highlighted offers',
+      lang
+    ),
     keywords: pickLang('Mots-clés', 'Palabras clave', 'Keywords', lang),
   };
 }
@@ -159,6 +166,12 @@ export function getProfileCompletionItems(
       weight: 5,
     },
     {
+      key: 'highlightedOffers',
+      label: defs.highlightedOffers ?? 'Offres mis en avant',
+      done: sanitizeHighlightedOffers(p.highlightedOffers).length >= 1,
+      weight: 4,
+    },
+    {
       key: 'keywords',
       label: defs.keywords ?? 'Mots-clés',
       done: normalizedTargetKeywords(p as UserProfile).length >= 1,
@@ -196,5 +209,6 @@ export const PROFILE_COMPLETION_FOCUS_IDS: Record<ProfileCompletionKey, string> 
   linkedinUrl: 'linkedin-input',
   passions: 'profile-completion-passions',
   highlightedNeeds: 'profile-completion-highlightedNeeds',
+  highlightedOffers: 'profile-completion-highlightedOffers',
   keywords: 'targetSectors-needs',
 };

@@ -692,6 +692,12 @@
   padding-top: 8px;
 }
 
+.fn-network-page .member-card__offersBlock {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed rgb(var(--fn-border));
+}
+
 .fn-network-page .member-card__label {
   margin: 0 0 10px;
   font-size: 0.6875rem;
@@ -719,6 +725,12 @@
   color: rgb(var(--fn-fg));
   background: rgb(var(--fn-surface-2));
   border: 1px solid rgb(var(--fn-border));
+}
+
+.fn-network-page .member-card__chip--offer {
+  background: rgb(240 253 250); /* teal-50 */
+  border-color: rgb(153 246 228); /* teal-200 */
+  color: rgb(17 94 89); /* teal-900 */
 }
 
 .fn-network-page .member-card__contactPref {

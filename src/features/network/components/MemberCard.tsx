@@ -9,6 +9,7 @@ import { computeMemberMatch } from '../utils/memberSignalMatch';
 import { MemberIdentity } from './MemberIdentity';
 import { MemberDescription } from './MemberDescription';
 import { NeedsSection } from './NeedsSection';
+import { OffersSection } from './OffersSection';
 import { ProfileMatchBox } from './ProfileMatchBox';
 import { LinkToProfile } from './LinkToProfile';
 import '../network.css';
@@ -22,6 +23,7 @@ type MemberCardProps = {
   bio?: string;
   photoUrl?: string;
   needs?: string[];
+  offers?: string[];
   onOpen?: () => void;
   /** Profil session : sert au `computeMemberMatch(bio, keywords, needs)` (champ `bio` Firestore). */
   viewerProfile?: UserProfile | null;
@@ -35,6 +37,7 @@ export function MemberCard({
   bio,
   photoUrl,
   needs = [],
+  offers = [],
   onOpen,
   viewerProfile,
 }: MemberCardProps) {
@@ -102,6 +105,7 @@ export function MemberCard({
       <MemberIdentity member={member} />
       <MemberDescription member={member} />
       <NeedsSection needs={needs} />
+      <OffersSection offers={offers} />
 
       {match.isRelevant ? (
         <ProfileMatchBox

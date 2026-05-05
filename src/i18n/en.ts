@@ -474,6 +474,7 @@ export const EN_STRINGS: Record<string, string> = {
   profileFormAboutKeywordsLabel: "Keywords",
   needKeywordsPlaceholder: "e.g. automotive suppliers, Jalisco, export France",
   profilePublicCurrentNeeds: "Current needs",
+  profilePublicCurrentOffers: "Offers / services",
   profilePublicAboutTitle: "About",
   profileHelpNewcomersLabel: "I can help with",
   profileHelpNewcomersHint:
@@ -635,6 +636,10 @@ export const EN_STRINGS: Record<string, string> = {
   highlightedNeedsHint:
     "Pick up to 3 priority needs — they drive the most relevant introductions.",
   highlightedNeedsCount: "selected",
+  highlightedOffersTitle: "Offers / services (up to 3)",
+  highlightedOffersOptional: "(optional)",
+  highlightedOffersHint:
+    "Highlight up to 3 concrete offers (same list as needs) to improve overlap with other members’ needs.",
   typedNeedsRadar: "Structured needs (network)",
   typedNeedsRadarEmpty: "No structured needs yet (optional field, up to 3).",
   filterByTypedNeed: "Filtered by structured need:",
