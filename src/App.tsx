@@ -276,6 +276,8 @@ import { NetworkToolbar } from './features/network/components/NetworkToolbar';
 import { SortPanel } from './features/network/components/SortPanel';
 import { SortSelect } from './features/network/components/SortSelect';
 import { SavedMembersPanel } from './features/network/components/SavedMembersPanel';
+import { GeoCitySelector, geoValueFromKey } from './features/network/components/GeoCitySelector';
+import { buildGeoIndex, geoId, normalizeGeo } from './lib/geoDirectory';
 import {
   loadRecommendationPrefs,
   saveRecommendationPrefs,
@@ -2227,6 +2229,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     }
   });
   const [viewerExpiredModal, setViewerExpiredModal] = useState<null | 'expired' | 'revoked'>(null);
+  const [networkExplorerGeoId, setNetworkExplorerGeoId] = useState<string>('');
   const [profileSaveBusy, setProfileSaveBusy] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [profileSaveSuccess, setProfileSaveSuccess] = useState<string | null>(null);
@@ -4563,6 +4566,21 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     });
   }, [filteredProfiles, highlightedNeedFilter, passionIdFilter]);
 
+  const networkGeoIndex = useMemo(() => {
+    // "Villes représentées" : dérivé de l’annuaire existant (pas de liste produit fixe).
+    return buildGeoIndex((membersFiltered ?? []).filter((p) => p.role !== 'admin'));
+  }, [membersFiltered]);
+
+  const viewerPrimaryGeo = useMemo(() => normalizeGeo(profile ?? {}), [profile]);
+
+  useEffect(() => {
+    // Session-only: default to viewer primary city when entering /network.
+    if (!isNetworkRoute) return;
+    if (networkExplorerGeoId) return;
+    if (!viewerPrimaryGeo) return;
+    setNetworkExplorerGeoId(geoId(viewerPrimaryGeo));
+  }, [isNetworkRoute, networkExplorerGeoId, viewerPrimaryGeo]);
+
   const membersDisplayList = useMemo(() => {
     const list = [...membersFiltered];
     if (membersSortMode === 'recent') {
@@ -4685,6 +4703,21 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     }
     return membersDirectoryList.filter((p) => savedMemberUidsSet.has(p.uid));
   }, [isNetworkRoute, showSavedMembersOnly, profile?.uid, membersDirectoryList, savedMemberUidsSet]);
+
+  const membersDirectoryListGeoFiltered = useMemo(() => {
+    if (!isNetworkRoute) return membersDirectoryListDisplayed;
+    const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
+    if (!chosen) return membersDirectoryListDisplayed;
+    return membersDirectoryListDisplayed.filter((p) => {
+      const g = normalizeGeo(p);
+      if (!g) return false;
+      return (
+        g.country.toLowerCase() === chosen.country.toLowerCase() &&
+        g.state.toLowerCase() === chosen.state.toLowerCase() &&
+        g.city.toLowerCase() === chosen.city.toLowerCase()
+      );
+    });
+  }, [isNetworkRoute, membersDirectoryListDisplayed, networkExplorerGeoId, networkGeoIndex.geoById]);
 
   const openSavedMembersDirectoryView = useCallback(() => {
     if (savedMembersCount === 0) return;
@@ -5410,6 +5443,51 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   )}
 
                 <NetworkToolbar>
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-extrabold tracking-tight text-stone-900">
+                        {(() => {
+                          const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
+                          if (chosen) return `Réseau à ${chosen.city}`;
+                          return 'Réseau';
+                        })()}
+                      </p>
+                      {(() => {
+                        const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
+                        const primary = viewerPrimaryGeo;
+                        if (!chosen || !primary) return null;
+                        const out = geoId(chosen) !== geoId(primary);
+                        if (!out) return null;
+                        return (
+                          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-extrabold text-amber-900">
+                            Hors de votre communauté principale
+                          </span>
+                        );
+                      })()}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <GeoCitySelector
+                        index={networkGeoIndex}
+                        value={(() => {
+                          const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase()) ?? null;
+                          return geoValueFromKey(chosen);
+                        })()}
+                        onChange={(next) => {
+                          const id = geoId({ country: next.country, state: next.state, city: next.city });
+                          setNetworkExplorerGeoId(id);
+                        }}
+                      />
+                      {viewerPrimaryGeo ? (
+                        <button
+                          type="button"
+                          className="h-10 rounded-xl border border-stone-200 bg-white px-3 text-xs font-semibold text-stone-800 hover:bg-stone-50"
+                          onClick={() => setNetworkExplorerGeoId(geoId(viewerPrimaryGeo))}
+                        >
+                          Revenir à {viewerPrimaryGeo.city}
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
                   <SortPanel title={t('membersSortLabel')} htmlFor="members-directory-sort">
                     <SortSelect
                       id="members-directory-sort"
@@ -5433,7 +5511,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 </NetworkToolbar>
 
                 <div ref={membersDirectoryGridRef} className="member-grid">
-                  {membersDirectoryListDisplayed.map((p) => (
+                  {membersDirectoryListGeoFiltered.map((p) => (
                     <React.Fragment key={p.uid}>
                       <ProfileCard
                         variant="default"
@@ -5446,6 +5524,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         viewerIsAdmin={viewerIsAdmin}
                         guestDirectoryTeaser={guestDirectoryRestricted}
                         onGuestJoin={onGuestDirectoryJoin}
+                        networkListing
                       />
                     </React.Fragment>
                   ))}
