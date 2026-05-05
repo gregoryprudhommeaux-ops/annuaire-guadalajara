@@ -46,9 +46,9 @@ function PersonaCard({ persona, index }: CardProps) {
 export function SegmentedJoinCTA({ lang }: { lang: Language }) {
   const sj = getStatsVitrineCopy(lang).segmentedJoin;
   const personas: Persona[] = [
-    { ...sj.p1, Icon: Compass },
-    { ...sj.p2, Icon: Handshake },
-    { ...sj.p3, Icon: Radar },
+    { ...sj.p1, to: '/inscription', Icon: Compass },
+    { ...sj.p2, to: '/inscription', Icon: Handshake },
+    { ...sj.p3, to: '/inscription', Icon: Radar },
   ];
   const c = { eyebrow: sj.eyebrow, title: sj.title, lead: sj.lead, footer: sj.footer, brandCta: sj.brandCta };
   const [reveal, setReveal] = useState(false);

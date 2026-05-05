@@ -192,3 +192,7 @@ export { sendCampaignTest } from './callables/sendCampaignTest';
 export { sendAutomationTest } from './callables/sendAutomationTest';
 export { publishPublicEmailTemplate } from './callables/publishPublicEmailTemplate';
 export { publicTemplateHtml } from './http/publicTemplateHtml';
+export { createViewerMagicLink } from './callables/createViewerMagicLink';
+export { revokeViewerMagicLink } from './callables/revokeViewerMagicLink';
+export { viewerMagicLinkResolve } from './http/viewerMagicLinkResolve';
+export { viewerMagicLinkEnd } from './http/viewerMagicLinkEnd';

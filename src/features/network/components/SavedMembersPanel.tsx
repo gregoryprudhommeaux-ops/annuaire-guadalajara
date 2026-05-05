@@ -30,7 +30,7 @@ export function SavedMembersPanel({
     const apply = () => setCollapsed(mq.matches);
     apply();
     // Safari < 14 fallback
-    if ('addEventListener' in mq) {
+    if (typeof mq.addEventListener === 'function') {
       mq.addEventListener('change', apply);
       return () => mq.removeEventListener('change', apply);
     }

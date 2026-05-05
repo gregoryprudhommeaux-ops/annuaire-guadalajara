@@ -366,5 +366,17 @@ service cloud.firestore {
     match /appConfig/{document} {
       allow read, create, update, delete: if isAdmin();
     }
+
+    /**
+     * Accès temporaires "viewer" (magic links) — admin only côté Firestore.
+     * L'accès "public" se fait via Cloud Functions HTTP qui utilisent l'Admin SDK.
+     */
+    match /viewer_magic_links/{linkId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /viewer_magic_link_sessions/{sessionId} {
+      allow read, write: if isAdmin();
+    }
   }
 }

@@ -109,7 +109,7 @@ export function useVitrineStats(): VitrineStats {
         >;
 
         const memberRows = rows.filter((r) => !isAdminProfileLike(rowToUserProfile(r)));
-        let totalMembers = memberRows.length;
+        const totalMembers = memberRows.length;
         let newMembersLast30d = 0;
         let prevNewMembers30d = 0;
         let calendarNewThisMonth = 0;

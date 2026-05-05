@@ -385,6 +385,7 @@ const loadStatsPage = () => import('@/pages/StatsPage');
 const loadStatsSharePage = () => import('@/pages/StatsSharePage');
 const loadPublicTemplatePage = () => import('@/pages/PublicTemplatePage');
 const loadPublicTemplateHtmlPage = () => import('@/pages/PublicTemplateHtmlPage');
+const loadViewerMagicLinkPage = () => import('@/pages/ViewerMagicLinkPage');
 const loadAdminEvents = () => import('./components/dashboard/AdminEvents');
 const loadCommunicationAdminPage = () => import('@/pages/CommunicationAdminPage');
 const loadPublicEventPage = () => import('./components/events/PublicEventPage');
@@ -397,10 +398,27 @@ const StatsPageLazy = React.lazy(loadStatsPage);
 const StatsSharePageLazy = React.lazy(loadStatsSharePage);
 const PublicTemplatePageLazy = React.lazy(loadPublicTemplatePage);
 const PublicTemplateHtmlPageLazy = React.lazy(loadPublicTemplateHtmlPage);
+const ViewerMagicLinkPageLazy = React.lazy(loadViewerMagicLinkPage);
 const AdminEventsLazy = React.lazy(loadAdminEvents);
 const CommunicationAdminPageLazy = React.lazy(loadCommunicationAdminPage);
 const PublicEventPageLazy = React.lazy(loadPublicEventPage);
 const AdminMemberEventHistoryLazy = React.lazy(loadAdminMemberEventHistory);
+
+function inferFirebaseProjectId(): string {
+  const projectId = (import.meta as any)?.env?.VITE_FIREBASE_PROJECT_ID || undefined;
+  const inferredProjectId =
+    projectId ||
+    (typeof window !== 'undefined' && (window as any).__FIREBASE_DEFAULTS__?.config?.projectId) ||
+    undefined;
+  return inferredProjectId || 'gen-lang-client-0229891518';
+}
+
+function viewerMagicLinkEndUrl(token: string, sessionId: string): string {
+  const pid = inferFirebaseProjectId();
+  return `https://us-central1-${pid}.cloudfunctions.net/viewerMagicLinkEnd?token=${encodeURIComponent(
+    token
+  )}&sessionId=${encodeURIComponent(sessionId)}`;
+}
 
 type SocialAuthProvider = 'google' | 'microsoft' | 'apple';
 
@@ -2191,6 +2209,24 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const [memberRequestModalNonce, setMemberRequestModalNonce] = useState(0);
   const [footerLegalModal, setFooterLegalModal] = useState<null | 'privacy' | 'terms'>(null);
   const [footerContactOpen, setFooterContactOpen] = useState(false);
+  const [viewerAccess, setViewerAccess] = useState<null | { token: string; linkId: string; sessionId: string; expiresAtMs: number }>(() => {
+    try {
+      const raw = window.localStorage.getItem('fn_viewer_access:v1');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as any;
+      const expiresAtMs = Number(parsed?.expiresAtMs ?? 0);
+      if (!expiresAtMs || !Number.isFinite(expiresAtMs)) return null;
+      if (expiresAtMs <= Date.now()) return null;
+      const token = String(parsed?.token ?? '');
+      const linkId = String(parsed?.linkId ?? '');
+      const sessionId = String(parsed?.sessionId ?? '');
+      if (!token || !linkId || !sessionId) return null;
+      return { token, linkId, sessionId, expiresAtMs };
+    } catch {
+      return null;
+    }
+  });
+  const [viewerExpiredModal, setViewerExpiredModal] = useState<null | 'expired' | 'revoked'>(null);
   const [profileSaveBusy, setProfileSaveBusy] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [profileSaveSuccess, setProfileSaveSuccess] = useState<string | null>(null);
@@ -2300,10 +2336,48 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   const isAdminInternalRoute = pathnameNorm === '/admin/internal';
 
   useEffect(() => {
+    if (!viewerAccess) return;
+    if (viewerAccess.expiresAtMs > Date.now()) return;
+    try {
+      window.localStorage.removeItem('fn_viewer_access:v1');
+    } catch {
+      // ignore
+    }
+    setViewerAccess(null);
+    setViewerExpiredModal('expired');
+  }, [viewerAccess]);
+
+  useEffect(() => {
+    if (!viewerAccess) return;
+    let done = false;
+    const end = async () => {
+      if (done) return;
+      done = true;
+      try {
+        void fetch(viewerMagicLinkEndUrl(viewerAccess.token, viewerAccess.sessionId), {
+          method: 'POST',
+        });
+      } catch {
+        // ignore
+      }
+    };
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') void end();
+    };
+    window.addEventListener('beforeunload', end);
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.removeEventListener('beforeunload', end);
+      document.removeEventListener('visibilitychange', onVis);
+      void end();
+    };
+  }, [viewerAccess]);
+
+  useEffect(() => {
     if (!isNetworkRoute) setShowSavedMembersOnly(false);
   }, [isNetworkRoute]);
 
-  const role = getAppRole({ user, profile, viewerIsAdmin });
+  const role = getAppRole({ user, profile, viewerIsAdmin, viewerAccess });
 
   useEffect(() => {
     // Route guards are driven by the central role model.
@@ -7731,6 +7805,34 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         )}
       </AnimatePresence>
 
+      {viewerExpiredModal ? (
+        <div className="fixed inset-0 z-[500] flex items-center justify-center bg-stone-900/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-stone-200 bg-white p-5 shadow-2xl">
+            <p className="text-sm font-extrabold tracking-tight text-stone-900">
+              Accès démo révoqué
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-stone-700">
+              Cet accès temporaire a expiré ou a été révoqué. Si vous souhaitez une extension, merci de contacter l’admin par email.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+              <a
+                className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-800 hover:bg-stone-50"
+                href="mailto:contact@franconetwork.app?subject=Demande%20d%27extension%20acc%C3%A8s%20d%C3%A9mo"
+              >
+                Contacter l’admin
+              </a>
+              <button
+                type="button"
+                className="rounded-lg bg-stone-900 px-3 py-2 text-xs font-semibold text-white hover:bg-stone-800"
+                onClick={() => setViewerExpiredModal(null)}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Opportunités retirées du produit */}
 
       <AnimatePresence>
@@ -8249,6 +8351,20 @@ const App = () => {
             <Route path="/inscription" element={<MainApp />} />
             <Route path="/rejoindre" element={<MainApp />} />
             <Route path="/join" element={<MainApp />} />
+            <Route
+              path="/v/:token"
+              element={
+                <React.Suspense
+                  fallback={
+                    <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500 shadow-sm">
+                      Chargement…
+                    </div>
+                  }
+                >
+                  <ViewerMagicLinkPageLazy />
+                </React.Suspense>
+              }
+            />
             <Route path="/membres" element={<MainApp />} />
             <Route path="/network" element={<MainApp />} />
             <Route path="/requests" element={<MainApp />} />
