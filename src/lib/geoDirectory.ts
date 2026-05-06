@@ -1,8 +1,8 @@
 import type { Language, UserProfile } from '@/types';
 import {
   collapseGeoForDirectory,
-  isGuadalajaraZmgCanonicalGeo,
   metroGeoSearchExtra,
+  metroPickerLabelKey,
 } from '@/lib/metroAreas';
 
 export type GeoKey = {
@@ -42,9 +42,8 @@ export type GeoTranslateFn = (key: string, params?: Record<string, string | numb
 
 /** Libellé pour une ligne du sélecteur « ville seule » : métropoles canoniques (i18n), sinon ville / désambiguïsation. */
 export function geoPickerOptionLabel(g: GeoKey, all: GeoKey[], t: GeoTranslateFn): string {
-  if (isGuadalajaraZmgCanonicalGeo(g)) {
-    return t('network.explorer.metroGuadalajaraZmg');
-  }
+  const mk = metroPickerLabelKey(g);
+  if (mk) return t(mk);
   const id = geoId(g);
   const cityL = g.city.toLowerCase();
   const dupCity = all.some((x) => geoId(x) !== id && x.city.toLowerCase() === cityL);

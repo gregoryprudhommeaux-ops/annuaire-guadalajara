@@ -276,15 +276,21 @@ import OnboardingIntroBanner from './components/home/OnboardingIntroBanner';
 import { MemberCard } from './features/network/components/MemberCard';
 import { RecommendedMembersSection } from './features/network/components/RecommendedMembersSection';
 import { useCurrentCompatibilityMember } from './features/network/hooks/useCurrentCompatibilityMember';
-import { userProfileToRecommendedMember } from './features/network/utils/compatibilityFromProfile';
+import {
+  userProfileToCompatibilityMember,
+  userProfileToRecommendedMember,
+} from './features/network/utils/compatibilityFromProfile';
+import { getCompatibilityReasons } from '@/features/network/utils/memberCompatibility';
+import { localizeCompatibilityReason } from '@/features/network/utils/localizeCompatibilityReason';
 import { NetworkSidebar } from './features/network/components/NetworkSidebar';
 import { NetworkToolbar } from './features/network/components/NetworkToolbar';
 import { SortPanel } from './features/network/components/SortPanel';
 import { SortSelect } from './features/network/components/SortSelect';
 import { SavedMembersPanel } from './features/network/components/SavedMembersPanel';
+import { ResultsToolbar } from './features/network/components/ResultsToolbar';
 import { GeoCitySelector, geoValueFromKey } from './features/network/components/GeoCitySelector';
 import { buildGeoIndex, geoId, normalizeGeo } from './lib/geoDirectory';
-import { collapseGeoForDirectory, isGuadalajaraZmgCanonicalGeo } from './lib/metroAreas';
+import { collapseGeoForDirectory, metroPickerLabelKey } from './lib/metroAreas';
 import { computeSmartMatch, type MatchTier } from '@/features/network/utils/networkSmartMatch';
 import {
   loadRecommendationPrefs,
@@ -857,22 +863,30 @@ function networkRelevanceBadgeMarkup(tier: MatchTier) {
   if (tier === 'strong') {
     return {
       labelKey: 'network.memberCard.relevanceBadgeStrong',
-      starsKey: 'network.memberCard.relevanceStarsStrong',
-      className: 'border-teal-200 bg-teal-50 text-teal-900',
+      className: 'border-emerald-200 bg-emerald-50 text-emerald-900',
     };
   }
   if (tier === 'medium') {
     return {
       labelKey: 'network.memberCard.relevanceBadgeMedium',
-      starsKey: 'network.memberCard.relevanceStarsMedium',
-      className: 'border-amber-200 bg-amber-50 text-amber-900',
+      className: 'border-teal-200 bg-teal-50 text-teal-900',
     };
   }
   return {
     labelKey: 'network.memberCard.relevanceBadgeLow',
-    starsKey: 'network.memberCard.relevanceStarsLow',
     className: 'border-slate-200 bg-slate-50 text-slate-700',
   };
+}
+
+/** Puces « scan » annuaire : couleurs alignées sur le palier smart-match. */
+function networkDirectoryMatchChipClass(tier: MatchTier): string {
+  if (tier === 'strong') {
+    return 'border-emerald-200 bg-emerald-50 text-emerald-900';
+  }
+  if (tier === 'medium') {
+    return 'border-teal-200 bg-teal-50 text-teal-900';
+  }
+  return 'border-slate-200 bg-slate-50 text-slate-700';
 }
 
 const ProfileCard = ({
@@ -889,6 +903,7 @@ const ProfileCard = ({
   viewerIsAdmin = false,
   networkListing = false,
   networkMatchTier = null,
+  networkMatchReasons = [],
 }: {
   p: UserProfile;
   isOwn?: boolean;
@@ -907,6 +922,8 @@ const ProfileCard = ({
   networkListing?: boolean;
   /** Pertinence pour vous (tri intelligent) — pas de score numérique affiché. */
   networkMatchTier?: MatchTier | null;
+  /** Signaux issus du profil (besoins, secteur, ville…) — puces vertes / complémentaires. */
+  networkMatchReasons?: string[];
 }) => {
   const { lang, t } = useLanguage();
   // Désactivation volontaire : l’admin ne modifie pas les profils via l’UI (évite incohérences).
@@ -1054,21 +1071,33 @@ const ProfileCard = ({
                 </p>
                 {networkListing && networkMatchTier ? (
                   <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                    {(() => {
-                      const cfg = networkRelevanceBadgeMarkup(networkMatchTier);
-                      return (
+                    {networkMatchReasons.length > 0 ? (
+                      networkMatchReasons.map((reason) => (
                         <span
+                          key={reason}
                           className={cn(
-                            'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold',
-                            cfg.className
+                            'inline-flex max-w-full rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-tight',
+                            networkDirectoryMatchChipClass(networkMatchTier)
                           )}
-                          role="img"
-                          aria-label={t(cfg.labelKey)}
                         >
-                          <span aria-hidden>{t(cfg.starsKey)}</span>
+                          {reason}
                         </span>
-                      );
-                    })()}
+                      ))
+                    ) : (
+                      (() => {
+                        const cfg = networkRelevanceBadgeMarkup(networkMatchTier);
+                        return (
+                          <span
+                            className={cn(
+                              'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold',
+                              cfg.className
+                            )}
+                          >
+                            {t(cfg.labelKey)}
+                          </span>
+                        );
+                      })()
+                    )}
                   </div>
                 ) : null}
               </>
@@ -4854,9 +4883,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     });
   }, [isNetworkRoute, membersDirectoryListDisplayed, networkExplorerGeoId, networkGeoIndex.geoById]);
 
-  /** `/network` : tri « pertinence » + scores pour badges (une passe `computeSmartMatch` par fiche). */
+  /** `/network` : tri « pertinence » + scores + puces compatibilité (scan profils). */
   const { networkMembersListForGrid, networkMatchInfo } = useMemo(() => {
-    const emptyInfo = new Map<string, { score: number; tier: MatchTier }>();
+    const emptyInfo = new Map<string, { score: number; tier: MatchTier; reasons: string[] }>();
     if (!isNetworkRoute) {
       return { networkMembersListForGrid: membersDirectoryListGeoFiltered, networkMatchInfo: emptyInfo };
     }
@@ -4868,12 +4897,17 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       ),
       viewerPrimaryCity: viewerGeoRaw?.city,
     };
-    const matchInfo = new Map<string, { score: number; tier: MatchTier }>();
+    const matchInfo = new Map<string, { score: number; tier: MatchTier; reasons: string[] }>();
     if (profile) {
+      const viewerCm = userProfileToCompatibilityMember(profile, lang);
       for (const m of list) {
         if (m.uid === profile.uid) continue;
         const sm = computeSmartMatch(profile, m, ctx);
-        matchInfo.set(m.uid, { score: sm.score, tier: sm.tier });
+        const memberCm = userProfileToCompatibilityMember(m, lang);
+        const reasons = getCompatibilityReasons(viewerCm, memberCm).map((r) =>
+          localizeCompatibilityReason(r, t)
+        );
+        matchInfo.set(m.uid, { score: sm.score, tier: sm.tier, reasons });
       }
     }
     if (profile && membersSortMode === 'default') {
@@ -4898,6 +4932,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     viewerGeoNetwork,
     viewerGeoRaw,
     lang,
+    t,
   ]);
 
   const openSavedMembersDirectoryView = useCallback(() => {
@@ -5632,9 +5667,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       {(() => {
                         const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
                         if (!chosen) return t('network.explorer.titleDefault');
-                        const cityTitle = isGuadalajaraZmgCanonicalGeo(chosen)
-                          ? t('network.explorer.metroGuadalajaraZmg')
-                          : chosen.city;
+                        const mk = metroPickerLabelKey(chosen);
+                        const cityTitle = mk ? t(mk) : chosen.city;
                         return t('network.explorer.titleWithCity', { city: cityTitle });
                       })()}
                     </p>
@@ -5651,61 +5685,64 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       );
                     })()}
                   </div>
-                  <div className="network-toolbar__row">
-                    <div className="network-toolbar__geo flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                      <GeoCitySelector
-                        index={networkGeoIndex}
-                        value={(() => {
-                          const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase()) ?? null;
-                          return geoValueFromKey(chosen);
-                        })()}
-                        onChange={(next) => {
-                          const c = String(next.country ?? '').trim();
-                          const s = String(next.state ?? '').trim();
-                          const city = String(next.city ?? '').trim();
-                          if (!c || !s || !city) {
-                            userClearedNetworkGeoRef.current = true;
-                            setNetworkExplorerGeoId('');
-                            return;
-                          }
-                          userClearedNetworkGeoRef.current = false;
-                          setNetworkExplorerGeoId(geoId({ country: c, state: s, city }));
-                        }}
-                      />
-                      {viewerGeoRaw && viewerGeoNetwork ? (
-                        <button
-                          type="button"
-                          className="h-auto min-h-10 w-full shrink-0 rounded-xl border border-stone-200 bg-white px-3 py-2 text-center text-xs font-semibold leading-snug text-stone-800 hover:bg-stone-50 sm:w-auto sm:py-0"
-                          onClick={() => {
+                  <ResultsToolbar
+                    totalCount={networkMembersListForGrid.length}
+                    locationSlot={
+                      <div className="network-toolbar__geo flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                        <GeoCitySelector
+                          index={networkGeoIndex}
+                          value={(() => {
+                            const chosen =
+                              networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase()) ?? null;
+                            return geoValueFromKey(chosen);
+                          })()}
+                          onChange={(next) => {
+                            const c = String(next.country ?? '').trim();
+                            const s = String(next.state ?? '').trim();
+                            const city = String(next.city ?? '').trim();
+                            if (!c || !s || !city) {
+                              userClearedNetworkGeoRef.current = true;
+                              setNetworkExplorerGeoId('');
+                              return;
+                            }
                             userClearedNetworkGeoRef.current = false;
-                            setNetworkExplorerGeoId(geoId(viewerGeoNetwork));
+                            setNetworkExplorerGeoId(geoId({ country: c, state: s, city }));
                           }}
-                        >
-                          {t('network.explorer.returnToCity', { city: viewerGeoRaw.city })}
-                        </button>
-                      ) : null}
-                    </div>
-                    <SortPanel title={t('membersSortLabel')} htmlFor="members-directory-sort">
-                      <SortSelect
-                        id="members-directory-sort"
-                        value={membersSortMode}
-                        onChange={(mode) => {
-                          const sortParam =
-                            mode === 'recent' ? 'recent' : mode === 'alphabetical' ? 'alpha' : 'default';
-                          const p = new URLSearchParams(location.search);
-                          p.set('sort', sortParam);
-                          navigate({ pathname: '/network', search: `?${p.toString()}` }, { replace: true });
-                        }}
-                      />
-                    </SortPanel>
-                    <SavedMembersPanel
-                      title={t('network.savedPanel.title')}
-                      count={savedMembersCount}
-                      description={t('network.savedPanel.description')}
-                      onClick={openSavedMembersDirectoryView}
-                      active={showSavedMembersOnly}
-                    />
-                  </div>
+                        />
+                        {viewerGeoRaw && viewerGeoNetwork ? (
+                          <button
+                            type="button"
+                            className="h-auto min-h-10 w-full shrink-0 rounded-xl border border-stone-200 bg-white px-3 py-2 text-center text-xs font-semibold leading-snug text-stone-800 hover:bg-stone-50 sm:w-auto sm:py-0"
+                            onClick={() => {
+                              userClearedNetworkGeoRef.current = false;
+                              setNetworkExplorerGeoId(geoId(viewerGeoNetwork));
+                            }}
+                          >
+                            {(() => {
+                              const mk = metroPickerLabelKey(viewerGeoNetwork);
+                              return t('network.explorer.returnToCity', {
+                                city: mk ? t(mk) : viewerGeoRaw.city,
+                              });
+                            })()}
+                          </button>
+                        ) : null}
+                      </div>
+                    }
+                    sortValue={membersSortMode}
+                    onSortChange={(mode) => {
+                      const sortParam =
+                        mode === 'recent' ? 'recent' : mode === 'alphabetical' ? 'alpha' : 'default';
+                      const p = new URLSearchParams(location.search);
+                      p.set('sort', sortParam);
+                      navigate({ pathname: '/network', search: `?${p.toString()}` }, { replace: true });
+                    }}
+                    sortSelectId="members-directory-sort"
+                    savedCount={savedMembersCount}
+                    savedActive={showSavedMembersOnly}
+                    onToggleSaved={openSavedMembersDirectoryView}
+                    savedTitle={t('network.savedPanel.title')}
+                    savedDescription={t('network.savedPanel.description')}
+                  />
                 </NetworkToolbar>
 
                 <div ref={membersDirectoryGridRef} className="member-grid">
@@ -5724,6 +5761,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         onGuestJoin={onGuestDirectoryJoin}
                         networkListing
                         networkMatchTier={networkMatchInfo.get(p.uid)?.tier ?? null}
+                        networkMatchReasons={networkMatchInfo.get(p.uid)?.reasons ?? []}
                       />
                     </React.Fragment>
                   ))}

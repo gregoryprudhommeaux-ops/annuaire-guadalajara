@@ -397,10 +397,23 @@
   overflow: visible;
 }
 
-/* Liste ville : éviter que un parent en overflow:hidden coupe le dropdown (mobile). */
+/* Contenu des cartes : padding horizontal déjà porté par la barre — évite le décalage ville vs tri. */
+.fn-network-page .network-toolbar .network-sort-panel {
+  padding: 18px 0;
+}
+
+.fn-network-page .network-toolbar .network-saved-panel {
+  padding: 18px 0;
+}
+
+/* Liste ville : positionner la liste sans créer un calque au-dessus du panneau suivant. */
 .fn-network-page .network-geo-combobox {
   position: relative;
-  z-index: 2;
+  z-index: 0;
+}
+
+.fn-network-page .network-geo-combobox__list {
+  z-index: 80;
 }
 
 /* Horizontal controls (géo + tri + favoris, or tri + favoris only).
@@ -423,8 +436,42 @@
   }
 }
 
+/* Mobile : empiler sans flex-grow (évite chevauchements / alignements bizarres). */
+.fn-network-page .network-toolbar__row > .network-toolbar__geo {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.fn-network-page .network-toolbar__row > .network-toolbar__sort {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.fn-network-page .network-toolbar__row > .network-saved-panel {
+  align-self: stretch;
+  width: 100%;
+}
+
+@media (min-width: 720px) {
+  .fn-network-page .network-toolbar__row > .network-toolbar__geo {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  .fn-network-page .network-toolbar__row > .network-toolbar__sort {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  .fn-network-page .network-toolbar__row > .network-saved-panel {
+    align-self: flex-start;
+    width: auto;
+  }
+}
+
 .fn-network-page .network-toolbar__sort {
-  flex: 1 1 auto;
   min-width: 0;
 }
 

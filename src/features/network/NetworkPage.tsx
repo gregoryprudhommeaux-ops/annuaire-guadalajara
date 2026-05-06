@@ -9,9 +9,8 @@ import {
   type NetworkSidebarLaunchProgress,
 } from './components/NetworkSidebar';
 import { NetworkToolbar } from './components/NetworkToolbar';
-import { SortPanel } from './components/SortPanel';
-import { SortSelect, type NetworkSortMode } from './components/SortSelect';
-import { SavedMembersPanel } from './components/SavedMembersPanel';
+import { ResultsToolbar } from './components/ResultsToolbar';
+import type { NetworkSortMode } from './components/SortSelect';
 import { MemberCard } from './components/MemberCard';
 import { RecommendedMembersSection } from './components/RecommendedMembersSection';
 import type { UserProfile } from '@/types';
@@ -245,18 +244,16 @@ export function NetworkPage({
         ) : null}
 
         <NetworkToolbar>
-          <div className="network-toolbar__row">
-            <SortPanel title={t('membersSortLabel')}>
-              <SortSelect value={sortBy} onChange={setSortBy} />
-            </SortPanel>
-            <SavedMembersPanel
-              title={t('network.savedPanel.title')}
-              count={savedCount}
-              description={t('network.savedPanel.description')}
-              onClick={openSavedMembersView}
-              active={showSavedOnly}
-            />
-          </div>
+          <ResultsToolbar
+            totalCount={displayedMembers.length}
+            sortValue={sortBy}
+            onSortChange={setSortBy}
+            savedCount={savedCount}
+            savedActive={showSavedOnly}
+            onToggleSaved={openSavedMembersView}
+            savedTitle={t('network.savedPanel.title')}
+            savedDescription={t('network.savedPanel.description')}
+          />
         </NetworkToolbar>
 
         <div ref={memberGridRef} className="member-grid">
