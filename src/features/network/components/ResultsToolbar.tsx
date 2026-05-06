@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import type { NetworkSortMode } from './SortSelect';
 import { SortSelect } from './SortSelect';
-import './results-toolbar.css';
+import '../results-toolbar.css';
 
 export type ResultsToolbarProps = {
   /** Nombre de fiches affichées après filtres (grille). */
