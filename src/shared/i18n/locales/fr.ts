@@ -95,6 +95,7 @@ const shell = {
       cityPlaceholder: 'Ville (recherche)',
       cityAriaLabel: 'Choisir une ville de l’annuaire pour filtrer les membres',
       noLocationsYet: 'Aucun lieu dans l’annuaire pour l’instant',
+      resultsToolbarAria: 'Compteur de résultats, lieu, tri et contacts sauvegardés',
       resultsCount: '{count} résultats',
       metroAcapulco: 'Acapulco (aire métropolitaine)',
       metroAguascalientes: 'Aguascalientes (aire métropolitaine)',

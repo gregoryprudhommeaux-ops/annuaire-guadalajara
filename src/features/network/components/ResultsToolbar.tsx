@@ -43,13 +43,13 @@ export function ResultsToolbar({
 
   return (
     <div className={cn('results-toolbar', className)}>
-      <div className="results-toolbar__meta">
-        <span className="results-toolbar__count" aria-live="polite">
-          {t('network.explorer.resultsCount', { count: totalCount })}
-        </span>
-      </div>
+      <div className="results-toolbar__bar" role="region" aria-label={t('network.explorer.resultsToolbarAria')}>
+        <div className="results-toolbar__countSlot">
+          <span className="results-toolbar__count" aria-live="polite">
+            {t('network.explorer.resultsCount', { count: totalCount })}
+          </span>
+        </div>
 
-      <div className="results-toolbar__bar">
         {locationSlot ? <div className="results-toolbar__location">{locationSlot}</div> : null}
 
         <div className="results-toolbar__field results-toolbar__field--sort">

@@ -92,6 +92,7 @@ const shell = {
       cityPlaceholder: 'Ciudad (búsqueda)',
       cityAriaLabel: 'Elegir una ciudad del directorio para filtrar miembros',
       noLocationsYet: 'Aún no hay ubicaciones en el directorio',
+      resultsToolbarAria: 'Conteo de resultados, ubicación, orden y contactos guardados',
       resultsCount: '{count} resultados',
       metroAcapulco: 'Acapulco (zona metropolitana)',
       metroAguascalientes: 'Aguascalientes (zona metropolitana)',

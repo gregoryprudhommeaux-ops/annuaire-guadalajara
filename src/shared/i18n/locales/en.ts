@@ -92,6 +92,7 @@ const shell = {
       cityPlaceholder: 'City (search)',
       cityAriaLabel: 'Pick a city from the directory to filter members',
       noLocationsYet: 'No locations in the directory yet',
+      resultsToolbarAria: 'Result count, location filter, sort order, and saved contacts',
       resultsCount: '{count} results',
       metroAcapulco: 'Greater Acapulco (metropolitan area)',
       metroAguascalientes: 'Greater Aguascalientes (metropolitan area)',

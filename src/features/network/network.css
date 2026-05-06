@@ -97,6 +97,22 @@
   color: rgb(var(--fn-muted));
 }
 
+/* Réseau : ligne 1 = recherche, ligne 2 = filtres (Secteur / Profil / Lieux) */
+.fn-network-page .network-sidebar__line--search {
+  margin-bottom: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgb(var(--fn-border));
+}
+
+.fn-network-page .network-sidebar__line--filters {
+  padding-top: 2px;
+  margin-bottom: 12px;
+}
+
+.fn-network-page .network-sidebar__line--search .network-search-panel__searchRow {
+  margin-bottom: 0;
+}
+
 .fn-network-page .network-search-panel__searchRow {
   display: grid;
   grid-template-columns: 1fr;
@@ -127,6 +143,10 @@
 
 .fn-network-page .network-input::placeholder {
   color: rgb(148 163 184); /* slate-400 */
+}
+
+.fn-network-page .network-sidebar__line--filters .network-search-panel__filters {
+  margin-bottom: 0;
 }
 
 .fn-network-page .network-search-panel__filters {
@@ -389,10 +409,18 @@
   max-width: none;
 }
 
+.fn-network-page .network-toolbar__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 4px;
+}
+
 .fn-network-page .network-toolbar {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   align-items: stretch;
   overflow: visible;
 }

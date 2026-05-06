@@ -4,9 +4,6 @@
  */
 
 .fn-network-page .results-toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
   width: 100%;
   min-width: 0;
   padding: 14px 16px;
@@ -16,25 +13,11 @@
   box-shadow: var(--fn-shadow-sm);
 }
 
-.fn-network-page .results-toolbar__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-width: 0;
-}
-
-.fn-network-page .results-toolbar__count {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: rgb(var(--fn-muted));
-}
-
+/* Une seule ligne « résultats » : compteur + lieu + tri + favoris */
 .fn-network-page .results-toolbar__bar {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   align-items: stretch;
   min-width: 0;
 }
@@ -48,8 +31,29 @@
   }
 }
 
+.fn-network-page .results-toolbar__countSlot {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding-bottom: 2px;
+}
+
+@media (min-width: 720px) {
+  .fn-network-page .results-toolbar__countSlot {
+    padding-bottom: 6px;
+    margin-right: 4px;
+  }
+}
+
+.fn-network-page .results-toolbar__count {
+  display: inline-block;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: rgb(var(--fn-muted));
+}
+
 .fn-network-page .results-toolbar__location {
-  flex: 1 1 220px;
+  flex: 1 1 min(100%, 240px);
   min-width: 0;
 }
 
@@ -76,11 +80,11 @@
 }
 
 .fn-network-page .results-toolbar__label {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: rgb(var(--fn-muted-2));
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: rgb(var(--fn-muted));
 }
 
 .fn-network-page .results-toolbar__selectShell {

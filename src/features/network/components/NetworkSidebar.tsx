@@ -72,67 +72,73 @@ export function NetworkSidebar({
           <p className="network-panel__text">{t('searchBlockSubtitle')}</p>
         </div>
 
-        <form
-          className="network-search-panel__form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSubmitSearch();
-          }}
-        >
-          <div className="network-search-panel__searchRow">
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
-              className="network-input"
-              placeholder={t('searchDirectoryPlaceholderExamples')}
-              aria-label={searchAria}
-            />
-            <button type="submit" className="network-primary-btn">
-              {t('searchButton')}
-            </button>
+        {/* Ligne 1 : recherche */}
+        <div className="network-sidebar__line network-sidebar__line--search">
+          <form
+            className="network-search-panel__form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              onSubmitSearch();
+            }}
+          >
+            <div className="network-search-panel__searchRow">
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => onQueryChange(e.target.value)}
+                className="network-input"
+                placeholder={t('searchDirectoryPlaceholderExamples')}
+                aria-label={searchAria}
+              />
+              <button type="submit" className="network-primary-btn">
+                {t('searchButton')}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Ligne 2 : filtres principaux */}
+        <div className="network-sidebar__line network-sidebar__line--filters">
+          <div className="network-search-panel__filters">
+            <select
+              value={selectedSector}
+              onChange={(e) => onSectorChange(e.target.value)}
+              className="network-select"
+              aria-label={t('filterSectorLabel')}
+            >
+              {sectorOptions.map((option) => (
+                <option key={option.value || '__all-sector'} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedProfile}
+              onChange={(e) => onProfileChange(e.target.value)}
+              className="network-select"
+              aria-label={t('filterTypeLabel')}
+            >
+              {profileOptions.map((option) => (
+                <option key={option.value || '__all-profile'} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedLocation}
+              onChange={(e) => onLocationChange(e.target.value)}
+              className="network-select"
+              aria-label={t('filterLocationLabel')}
+            >
+              {locationOptions.map((option) => (
+                <option key={option.value || '__all-loc'} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
-        </form>
-
-        <div className="network-search-panel__filters">
-          <select
-            value={selectedSector}
-            onChange={(e) => onSectorChange(e.target.value)}
-            className="network-select"
-            aria-label={t('filterSectorLabel')}
-          >
-            {sectorOptions.map((option) => (
-              <option key={option.value || '__all-sector'} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedProfile}
-            onChange={(e) => onProfileChange(e.target.value)}
-            className="network-select"
-            aria-label={t('filterTypeLabel')}
-          >
-            {profileOptions.map((option) => (
-              <option key={option.value || '__all-profile'} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedLocation}
-            onChange={(e) => onLocationChange(e.target.value)}
-            className="network-select"
-            aria-label={t('filterLocationLabel')}
-          >
-            {locationOptions.map((option) => (
-              <option key={option.value || '__all-loc'} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
         </div>
 
         <p className="network-search-panel__tip">{t('searchHelperTip')}</p>

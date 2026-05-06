@@ -5662,7 +5662,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   )}
 
                 <NetworkToolbar>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="network-toolbar__heading">
                     <p className="text-sm font-extrabold tracking-tight text-stone-900">
                       {(() => {
                         const chosen = networkGeoIndex.geoById.get(String(networkExplorerGeoId ?? '').toLowerCase());
