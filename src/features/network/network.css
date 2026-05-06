@@ -418,6 +418,8 @@
 }
 
 .fn-network-page .network-toolbar {
+  position: relative;
+  z-index: 40;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -434,14 +436,14 @@
   padding: 18px 0;
 }
 
-/* Liste ville : positionner la liste sans créer un calque au-dessus du panneau suivant. */
+/* Liste ville : au-dessus de la grille de cartes (DOM après le toolbar). */
 .fn-network-page .network-geo-combobox {
   position: relative;
-  z-index: 0;
+  z-index: 1;
 }
 
 .fn-network-page .network-geo-combobox__list {
-  z-index: 80;
+  z-index: 100;
 }
 
 /* Horizontal controls (géo + tri + favoris, or tri + favoris only).

@@ -149,7 +149,7 @@ export function GeoCitySelector({ index, value, onChange, id = 'network-geo-city
         <ul
           id={listId}
           role="listbox"
-          className="network-geo-combobox__list absolute left-0 right-0 top-full z-[80] mt-1 max-h-[min(16rem,50vh)] overflow-y-auto overscroll-contain rounded-xl border border-stone-200 bg-white py-1 shadow-lg sm:max-h-60"
+          className="network-geo-combobox__list absolute left-0 right-0 top-full z-[100] mt-1 max-h-[min(16rem,50vh)] overflow-y-auto overscroll-contain rounded-xl border border-stone-200 bg-white py-1 shadow-lg sm:max-h-60"
         >
           {filtered.map((o) => (
             <li key={o.id} role="presentation">
