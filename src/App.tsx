@@ -290,6 +290,7 @@ import { SavedMembersPanel } from './features/network/components/SavedMembersPan
 import { ResultsToolbar } from './features/network/components/ResultsToolbar';
 import { GeoCitySelector, geoValueFromKey } from './features/network/components/GeoCitySelector';
 import { buildGeoIndex, geoId, normalizeGeo } from './lib/geoDirectory';
+import { directoryBrandPlaceLabel } from './lib/directoryPlaceBranding';
 import { collapseGeoForDirectory, metroPickerLabelKey } from './lib/metroAreas';
 import { computeSmartMatch, type MatchTier } from '@/features/network/utils/networkSmartMatch';
 import {
@@ -4748,6 +4749,15 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     setNetworkExplorerGeoId(geoId(viewerGeoNetwork));
   }, [isNetworkRoute, networkExplorerGeoId, viewerGeoNetwork]);
 
+  /** Zone affichée dans le header et l’accroche recherche /network (filtre géo ou profil). */
+  const networkDirectoryPlaceLabel = useMemo(() => {
+    if (!isNetworkRoute) return '';
+    const chosenId = String(networkExplorerGeoId ?? '').toLowerCase();
+    const chosen = chosenId ? networkGeoIndex.geoById.get(chosenId) ?? null : null;
+    const geo = chosen ?? viewerGeoNetwork ?? null;
+    return directoryBrandPlaceLabel(geo, t);
+  }, [isNetworkRoute, networkExplorerGeoId, networkGeoIndex.geoById, viewerGeoNetwork, t]);
+
   const membersDisplayList = useMemo(() => {
     const list = [...membersFiltered];
     if (membersSortMode === 'recent') {
@@ -5243,6 +5253,11 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
           onSignIn={openAuthModal}
           onSignOut={handleLogout}
           rightSlot={languageControlsTopRight}
+          brandSubtitle={
+            isNetworkRoute && networkDirectoryPlaceLabel
+              ? t('nav.brandSubtitleWithPlace', { place: networkDirectoryPlaceLabel })
+              : undefined
+          }
         />
       ) : null}
 
@@ -5342,6 +5357,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             onSignIn: openAuthModal,
             onSignOut: handleLogout,
             rightSlot: languageControlsTopRight,
+            brandSubtitle:
+              isNetworkRoute && networkDirectoryPlaceLabel
+                ? t('nav.brandSubtitleWithPlace', { place: networkDirectoryPlaceLabel })
+                : undefined,
           }}
           showBottomNav={Boolean(user)}
           contentClassName={cn(
@@ -5646,6 +5665,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                         }
                       : null
                   }
+                  communityPlaceLabel={networkDirectoryPlaceLabel}
                 />
               </aside>
               <section className="min-w-0 space-y-4 px-5 lg:px-0">
@@ -5871,6 +5891,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             onSignIn: openAuthModal,
             onSignOut: handleLogout,
             rightSlot: languageControlsTopRight,
+            brandSubtitle:
+              isNetworkRoute && networkDirectoryPlaceLabel
+                ? t('nav.brandSubtitleWithPlace', { place: networkDirectoryPlaceLabel })
+                : undefined,
           }}
           showBottomNav={false}
         >
@@ -6512,6 +6536,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       }
                     : null
                 }
+                communityPlaceLabel={networkDirectoryPlaceLabel}
               />
             ) : (
               <div className="space-y-4 sm:space-y-6">

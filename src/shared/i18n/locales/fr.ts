@@ -10,11 +10,15 @@ const shell = {
     myProfile: 'Mon profil',
     admin: 'Admin',
     backHome: "Retour à l'accueil",
+    /** Sous-titre header sur /network — {place} = zone consultée. */
+    brandSubtitleWithPlace: "Annuaire d'Affaires · {place}",
   },
   network: {
     search: {
       eyebrow: 'RECHERCHE',
       memberCompanyNeedAria: 'Rechercher un membre, une entreprise ou un besoin',
+      subtitleWithPlace:
+        'Recherchez un membre, une entreprise ou un besoin pour développer votre réseau à {place}.',
     },
     recommendations: {
       eyebrow: 'PROFILS RECOMMANDÉS',
@@ -97,6 +101,10 @@ const shell = {
       noLocationsYet: 'Aucun lieu dans l’annuaire pour l’instant',
       resultsToolbarAria: 'Compteur de résultats, lieu, tri et contacts sauvegardés',
       resultsCount: '{count} résultats',
+      defaultBrandPlace: 'Guadalajara',
+      brandPlaceGuadalajara: 'Guadalajara',
+      brandPlaceCdMx: 'CDMX',
+      brandPlaceMonterrey: 'Monterrey',
       metroAcapulco: 'Acapulco (aire métropolitaine)',
       metroAguascalientes: 'Aguascalientes (aire métropolitaine)',
       metroCampeche: 'Campeche (aire métropolitaine)',

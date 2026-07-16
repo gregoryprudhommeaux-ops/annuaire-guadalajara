@@ -22,5 +22,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "exclude": ["node_modules", "dist", "cypress", "cypress.config.ts"]
+  "exclude": ["node_modules", "dist", "cypress", "cypress.config.ts", "functions"]
 }

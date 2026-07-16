@@ -9,11 +9,14 @@ const shell = {
     myProfile: 'Mi perfil',
     admin: 'Admin',
     backHome: 'Volver al inicio',
+    brandSubtitleWithPlace: 'Directorio de Negocios · {place}',
   },
   network: {
     search: {
       eyebrow: 'BÚSQUEDA',
       memberCompanyNeedAria: 'Buscar un miembro, empresa o necesidad',
+      subtitleWithPlace:
+        'Busca un miembro, una empresa o una necesidad para hacer crecer tu red en {place}.',
     },
     recommendations: {
       eyebrow: 'PERFILES RECOMENDADOS',
@@ -94,6 +97,10 @@ const shell = {
       noLocationsYet: 'Aún no hay ubicaciones en el directorio',
       resultsToolbarAria: 'Conteo de resultados, ubicación, orden y contactos guardados',
       resultsCount: '{count} resultados',
+      defaultBrandPlace: 'Guadalajara',
+      brandPlaceGuadalajara: 'Guadalajara',
+      brandPlaceCdMx: 'CDMX',
+      brandPlaceMonterrey: 'Monterrey',
       metroAcapulco: 'Acapulco (zona metropolitana)',
       metroAguascalientes: 'Aguascalientes (zona metropolitana)',
       metroCampeche: 'Campeche (zona metropolitana)',

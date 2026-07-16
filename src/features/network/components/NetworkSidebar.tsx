@@ -35,6 +35,8 @@ export type NetworkSidebarProps = {
   showClearFilters?: boolean;
   onClearFilters?: () => void;
   launchProgress?: NetworkSidebarLaunchProgress;
+  /** Si défini : accroche recherche avec {place} (ex. /network). Sinon : `searchBlockSubtitle` statique. */
+  communityPlaceLabel?: string;
   className?: string;
 };
 
@@ -56,6 +58,7 @@ export function NetworkSidebar({
   showClearFilters = false,
   onClearFilters,
   launchProgress,
+  communityPlaceLabel,
   className,
 }: NetworkSidebarProps) {
   const { t } = useLanguage();
@@ -69,7 +72,11 @@ export function NetworkSidebar({
         <div className="network-panel__header">
           <p className="network-panel__eyebrow">{searchEyebrow}</p>
           <h2 className="network-panel__title">{t('searchBlockTitle')}</h2>
-          <p className="network-panel__text">{t('searchBlockSubtitle')}</p>
+          <p className="network-panel__text">
+            {communityPlaceLabel
+              ? t('network.search.subtitleWithPlace', { place: communityPlaceLabel })
+              : t('searchBlockSubtitle')}
+          </p>
         </div>
 
         {/* Ligne 1 : recherche */}
