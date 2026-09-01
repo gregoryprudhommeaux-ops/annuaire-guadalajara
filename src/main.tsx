@@ -2,6 +2,11 @@ import React, { StrictMode } from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import {
+  clearChunkReloadFlag,
+  isChunkLoadError,
+  maybeReloadOnChunkError,
+} from './lib/chunkLoadRecovery';
 
 class RootErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -10,11 +15,12 @@ class RootErrorBoundary extends React.Component<
   state = { error: null as Error | null };
 
   static getDerivedStateFromError(error: Error) {
+    if (isChunkLoadError(error)) return null;
     return { error };
   }
 
   componentDidCatch(error: Error) {
-    // Keep console visibility in production debugging scenarios.
+    if (maybeReloadOnChunkError(error)) return;
     console.error('[root] Uncaught render error', error);
   }
 
@@ -83,44 +89,6 @@ class RootErrorBoundary extends React.Component<
   }
 }
 
-function maybeReloadOnChunkError(reason: unknown) {
-  const msg = reason instanceof Error ? `${reason.name}: ${reason.message}` : String(reason ?? '');
-  const isChunkFail =
-    msg.includes('Failed to fetch dynamically imported module') ||
-    msg.includes('Importing a module script failed') ||
-    msg.includes('Loading chunk') ||
-    msg.includes('ChunkLoadError');
-
-  if (!isChunkFail) return;
-
-  // Avoid infinite reload loops if the asset truly cannot be fetched.
-  const key = 'did_reload_after_chunk_error_v1';
-  try {
-    const did = sessionStorage.getItem(key) === '1';
-    if (!did) {
-      sessionStorage.setItem(key, '1');
-      window.location.reload();
-      return;
-    }
-  } catch {
-    // Fallback if sessionStorage is unavailable (privacy modes).
-    if (!(window as any).__didReloadAfterChunkErrorV1) {
-      (window as any).__didReloadAfterChunkErrorV1 = true;
-      window.location.reload();
-      return;
-    }
-  }
-
-  // Second time: force a cache-busting navigation (common after deploy + stale chunks).
-  try {
-    const url = new URL(window.location.href);
-    url.searchParams.set('__reload', String(Date.now()));
-    window.location.replace(url.toString());
-  } catch {
-    window.location.reload();
-  }
-}
-
 // Vite-specific preload error event.
 window.addEventListener('vite:preloadError' as any, (e: any) => {
   maybeReloadOnChunkError(e?.detail ?? e);
@@ -128,7 +96,13 @@ window.addEventListener('vite:preloadError' as any, (e: any) => {
 
 // Generic: failed dynamic import usually triggers unhandledrejection.
 window.addEventListener('unhandledrejection', (e) => {
-  maybeReloadOnChunkError((e as PromiseRejectionEvent).reason);
+  if (maybeReloadOnChunkError((e as PromiseRejectionEvent).reason)) {
+    e.preventDefault();
+  }
+});
+
+window.addEventListener('load', () => {
+  clearChunkReloadFlag();
 });
 
 createRoot(document.getElementById('root')!).render(
