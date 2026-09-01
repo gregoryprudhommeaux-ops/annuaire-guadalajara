@@ -83,6 +83,8 @@ export type ProfileEditExpandedFormCtx = {
   handleSaveProfile: React.FormEventHandler<HTMLFormElement>;
   handleDeleteProfile: (uid: string) => Promise<void> | void;
 
+  scrollToProfileSave: () => void;
+
   // refs
   profileFormLayoutRef: React.Ref<HTMLDivElement>;
   directoryProfileFormRef: React.Ref<HTMLFormElement>;
@@ -176,6 +178,7 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
     ProfileEditPersonPhotoVisualBlock,
     ProfileIdentityVisual,
     setProfilePhotoUrlDraft,
+    scrollToProfileSave,
     ProfileMatchingSection,
     highlightedNeedsDraft,
     toggleHighlightedNeedDraft,
@@ -338,6 +341,7 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
                   editingProfile={editingProfile}
                   profilePhotoUrlDraft={profilePhotoUrlDraft}
                   setProfilePhotoUrlDraft={setProfilePhotoUrlDraft}
+                  onPhotoUploaded={scrollToProfileSave}
                   ProfileIdentityVisual={ProfileIdentityVisual}
                 />
               </ProfileEditPersonSectionShell>

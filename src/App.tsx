@@ -5232,6 +5232,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
    */
   const showFrancoNetworkTopHeader = !useNewPublicHome && !useAppShellNonAdmin && !useAppShellAdmin;
 
+  const scrollToProfileSave = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      const saveBtn = document.getElementById('profile-save-submit');
+      saveBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      saveBtn?.focus({ preventScroll: true });
+    });
+  }, []);
+
   const requestSubmitProfileForm = () => {
     window.requestAnimationFrame(() => {
       profileFormLayoutRef.current?.scrollIntoView({
@@ -5539,6 +5547,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   ProfileEditPersonPhotoVisualBlock,
                   ProfileIdentityVisual,
                   setProfilePhotoUrlDraft,
+                  scrollToProfileSave,
                   ProfileMatchingSection,
                   highlightedNeedsDraft,
                   toggleHighlightedNeedDraft,

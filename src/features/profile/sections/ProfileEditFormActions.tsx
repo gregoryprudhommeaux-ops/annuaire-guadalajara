@@ -35,6 +35,7 @@ export default function ProfileEditFormActions({
       </button>
       <button
         type="submit"
+        id="profile-save-submit"
         disabled={profileSaveBusy}
         className={cn(
           'min-h-[44px] w-full rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto',

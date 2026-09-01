@@ -766,9 +766,13 @@ export const TRANSLATIONS: Translations = {
     fr: 'Importez une photo depuis votre ordinateur ou téléphone (JPEG, PNG, WebP — max. 5 Mo). Vous pouvez aussi coller une URL d’image publique. Sans photo, un avatar avec vos initiales s’affiche.',
     es: 'Sube una foto desde tu ordenador o móvil (JPEG, PNG, WebP — máx. 5 MB). También puedes pegar una URL pública. Sin foto, se muestra un avatar con tus iniciales.',
   },
+  profileFormPhotoVisualIntroShort: {
+    fr: 'Ajoutez une photo pour être reconnu dans l’annuaire.',
+    es: 'Añade una foto para ser reconocido en el directorio.',
+  },
   profileFormPhotoNoHostingNote: {
-    fr: 'Les liens photo LinkedIn ne fonctionnent souvent pas en dehors de LinkedIn — préférez l’import local ci-dessous.',
-    es: 'Los enlaces de foto de LinkedIn a menudo no funcionan fuera de LinkedIn — preferible usar la subida local.',
+    fr: 'Les liens photo LinkedIn ne fonctionnent souvent pas — utilisez l’import local ou une URL publique (section Avancé).',
+    es: 'Los enlaces de foto de LinkedIn a menudo no funcionan — usa la subida local o una URL pública (sección Avanzado).',
   },
   profileFormPhotoCredibilityNote: {
     fr: 'Votre lien LinkedIn reste un signal de crédibilité. La photo est optionnelle.',
@@ -791,8 +795,8 @@ export const TRANSLATIONS: Translations = {
     es: 'Subiendo…',
   },
   profileFormPhotoUploadSuccess: {
-    fr: 'Photo importée — pensez à enregistrer le profil.',
-    es: 'Foto subida — recuerda guardar el perfil.',
+    fr: 'Photo importée — cliquez sur Enregistrer pour la publier.',
+    es: 'Foto subida — haz clic en Guardar para publicarla.',
   },
   profileFormPhotoUploadErrorInvalid: {
     fr: 'Format non pris en charge. Utilisez JPEG, PNG, WebP ou GIF.',
@@ -817,6 +821,18 @@ export const TRANSLATIONS: Translations = {
   profileFormPhotoPublicUrlLabel: {
     fr: 'URL directe de photo publique (optionnel)',
     es: 'URL directa de foto pública (opcional)',
+  },
+  profileFormPhotoUploadTapAvatar: {
+    fr: 'Ou touchez l’avatar pour choisir une image.',
+    es: 'O toca el avatar para elegir una imagen.',
+  },
+  profileFormPhotoAdvancedToggle: {
+    fr: 'Avancé — URL publique',
+    es: 'Avanzado — URL pública',
+  },
+  profileFormPhotoAdvancedHint: {
+    fr: 'Collez une URL d’image hébergée publiquement (évitez les liens LinkedIn).',
+    es: 'Pega una URL de imagen alojada públicamente (evita enlaces de LinkedIn).',
   },
   /** Regroupement formulaire profil : la personne (contact, langues, etc.). */
   profileFormSectionPerson: {
