@@ -3182,14 +3182,6 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     [companyActivitiesDraft]
   );
 
-  const scrollToProfileSave = useCallback(() => {
-    window.requestAnimationFrame(() => {
-      const saveBtn = document.getElementById('profile-save-submit');
-      saveBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      saveBtn?.focus({ preventScroll: true });
-    });
-  }, []);
-
   /** Profil fusionné + brouillons en édition — score complétude aligné sur le formulaire ouvert. */
   const profileCompletionCardSource = useMemo((): ProfileCompletionInput => {
     if (!profile) return null;
@@ -5174,6 +5166,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
     setIsProfileExpanded(true);
     window.requestAnimationFrame(() => {
       profileFormLayoutRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  const scrollToProfileSave = () => {
+    window.requestAnimationFrame(() => {
+      const saveBtn = document.getElementById('profile-save-submit');
+      saveBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      saveBtn?.focus({ preventScroll: true });
     });
   };
 

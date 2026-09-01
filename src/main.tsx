@@ -5,7 +5,9 @@ import './index.css';
 import {
   clearChunkReloadFlag,
   isChunkLoadError,
+  isReactHooksOrderError,
   maybeReloadOnChunkError,
+  maybeReloadOnReactHooksError,
 } from './lib/chunkLoadRecovery';
 
 class RootErrorBoundary extends React.Component<
@@ -15,12 +17,13 @@ class RootErrorBoundary extends React.Component<
   state = { error: null as Error | null };
 
   static getDerivedStateFromError(error: Error) {
-    if (isChunkLoadError(error)) return null;
+    if (isChunkLoadError(error) || isReactHooksOrderError(error)) return null;
     return { error };
   }
 
   componentDidCatch(error: Error) {
     if (maybeReloadOnChunkError(error)) return;
+    if (maybeReloadOnReactHooksError(error)) return;
     console.error('[root] Uncaught render error', error);
   }
 
@@ -34,7 +37,9 @@ class RootErrorBoundary extends React.Component<
           </p>
           <h1 className="mt-2 text-lg font-semibold">Le site a rencontré un problème.</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Essaie de recharger la page. Si le problème persiste, il peut s’agir d’un cache navigateur.
+            {isReactHooksOrderError(this.state.error)
+              ? 'Une mise à jour du site est en cours — rechargez pour obtenir la dernière version.'
+              : 'Essaie de recharger la page. Si le problème persiste, il peut s’agir d’un cache navigateur.'}
           </p>
           <pre className="mt-4 max-h-48 overflow-auto rounded-xl bg-slate-950 p-3 text-xs text-slate-100">
             {String(
