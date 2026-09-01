@@ -3182,6 +3182,14 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     [companyActivitiesDraft]
   );
 
+  const scrollToProfileSave = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      const saveBtn = document.getElementById('profile-save-submit');
+      saveBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      saveBtn?.focus({ preventScroll: true });
+    });
+  }, []);
+
   /** Profil fusionné + brouillons en édition — score complétude aligné sur le formulaire ouvert. */
   const profileCompletionCardSource = useMemo((): ProfileCompletionInput => {
     if (!profile) return null;
@@ -5231,14 +5239,6 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
    * - `PublicHomePage` sur `/` — en-tête propre à la vitrine, sans doubler le bandeau ici.
    */
   const showFrancoNetworkTopHeader = !useNewPublicHome && !useAppShellNonAdmin && !useAppShellAdmin;
-
-  const scrollToProfileSave = useCallback(() => {
-    window.requestAnimationFrame(() => {
-      const saveBtn = document.getElementById('profile-save-submit');
-      saveBtn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      saveBtn?.focus({ preventScroll: true });
-    });
-  }, []);
 
   const requestSubmitProfileForm = () => {
     window.requestAnimationFrame(() => {
