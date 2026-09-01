@@ -3313,82 +3313,87 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     testConnection();
 
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) setAuthError(null);
-      if (u) {
-        try {
-          sessionStorage.removeItem('oauth_redirect_pending');
-        } catch {
-          /* ignore */
-        }
-      }
-      if (u) {
-        void upsertAuthLeadFromFirebaseUser(db, u).catch((err) => {
-          console.warn('[auth_leads]', err);
-        });
-        const docRef = doc(db, 'users', u.uid);
-        const docSnap = await getDoc(docRef);
-
-        // lastSeen : seulement si la fiche existe, et pas à chaque re-déclenchement auth
-        // (évite plusieurs écritures `users/*` qui pourraient déclencher la même notification admin).
-        if (docSnap.exists()) {
-          const data = docSnap.data() as Record<string, unknown>;
-          const raw = data.lastSeen;
-          const prevLast = typeof raw === 'number' ? raw : 0;
-          const now = Date.now();
-          if (now - prevLast >= 120_000) {
-            await updateDoc(docRef, { lastSeen: now }).catch(() => {
-              /* doc supprimé entre-temps */
-            });
-          }
-        }
-
-        if (docSnap.exists()) {
-          let loadedProfile = docSnap.data() as UserProfile;
+      try {
+        setUser(u);
+        if (u) setAuthError(null);
+        if (u) {
           try {
-            const migrated = await migrateLegacyBioToMemberAndActivity(db, u.uid, loadedProfile);
-            if (migrated) loadedProfile = migrated;
-          } catch (e) {
-            console.warn('[legacy_bio_migration]', e);
+            sessionStorage.removeItem('oauth_redirect_pending');
+          } catch {
+            /* ignore */
+          }
+        }
+        if (u) {
+          void upsertAuthLeadFromFirebaseUser(db, u).catch((err) => {
+            console.warn('[auth_leads]', err);
+          });
+          const docRef = doc(db, 'users', u.uid);
+          const docSnap = await getDoc(docRef);
+
+          // lastSeen : seulement si la fiche existe, et pas à chaque re-déclenchement auth
+          // (évite plusieurs écritures `users/*` qui pourraient déclencher la même notification admin).
+          if (docSnap.exists()) {
+            const data = docSnap.data() as Record<string, unknown>;
+            const raw = data.lastSeen;
+            const prevLast = typeof raw === 'number' ? raw : 0;
+            const now = Date.now();
+            if (now - prevLast >= 120_000) {
+              await updateDoc(docRef, { lastSeen: now }).catch(() => {
+                /* doc supprimé entre-temps */
+              });
+            }
           }
 
-          // Admin: ne jamais “prendre” une fiche qui ne correspond pas au compte Auth.
-          if (isAdminEmail(u.email)) {
-            const loadedUidOk = String(loadedProfile?.uid ?? '').trim() === u.uid;
-            const loadedEmailOk =
-              String(loadedProfile?.email ?? '')
-                .trim()
-                .toLowerCase() === String(u.email ?? '').trim().toLowerCase();
-            const ok = loadedUidOk && loadedEmailOk;
-            setAdminUserDocExists(ok);
-            if (ok) {
-              setProfile({ ...loadedProfile, role: 'admin' } as UserProfile);
+          if (docSnap.exists()) {
+            let loadedProfile = docSnap.data() as UserProfile;
+            try {
+              const migrated = await migrateLegacyBioToMemberAndActivity(db, u.uid, loadedProfile);
+              if (migrated) loadedProfile = migrated;
+            } catch (e) {
+              console.warn('[legacy_bio_migration]', e);
+            }
+
+            // Admin: ne jamais “prendre” une fiche qui ne correspond pas au compte Auth.
+            if (isAdminEmail(u.email)) {
+              const loadedUidOk = String(loadedProfile?.uid ?? '').trim() === u.uid;
+              const loadedEmailOk =
+                String(loadedProfile?.email ?? '')
+                  .trim()
+                  .toLowerCase() === String(u.email ?? '').trim().toLowerCase();
+              const ok = loadedUidOk && loadedEmailOk;
+              setAdminUserDocExists(ok);
+              if (ok) {
+                setProfile({ ...loadedProfile, role: 'admin' } as UserProfile);
+              } else {
+                // Doc incohérent : on repasse en admin “sans fiche”.
+                setProfile(bootstrapAdminProfileFromAuth(u));
+                setShowOnboarding(false);
+                setAdminSelfProfileOptIn(false);
+              }
             } else {
-              // Doc incohérent : on repasse en admin “sans fiche”.
+              setProfile(loadedProfile);
+            }
+          } else {
+            if (isAdminEmail(u.email)) {
+              setAdminUserDocExists(false);
               setProfile(bootstrapAdminProfileFromAuth(u));
               setShowOnboarding(false);
               setAdminSelfProfileOptIn(false);
+            } else {
+              setProfile(null);
+              setShowOnboarding(true);
             }
-          } else {
-            setProfile(loadedProfile);
           }
         } else {
-          if (isAdminEmail(u.email)) {
-            setAdminUserDocExists(false);
-            setProfile(bootstrapAdminProfileFromAuth(u));
-            setShowOnboarding(false);
-            setAdminSelfProfileOptIn(false);
-          } else {
-            setProfile(null);
-            setShowOnboarding(true);
-          }
+          setProfile(null);
+          setAdminUserDocExists(false);
+          setAdminSelfProfileOptIn(false);
         }
-      } else {
-        setProfile(null);
-        setAdminUserDocExists(false);
-        setAdminSelfProfileOptIn(false);
+      } catch (error) {
+        console.error('[auth bootstrap]', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     const profilesQuery = query(collection(db, 'users'), orderBy('fullName', 'asc'));
