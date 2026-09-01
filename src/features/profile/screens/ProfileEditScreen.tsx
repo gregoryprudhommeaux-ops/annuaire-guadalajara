@@ -3,6 +3,7 @@ import { cn } from '@/lib/cn';
 import type { Language, UserProfile } from '@/types';
 import type { ProfileCompletionInput } from '@/lib/profileCompletion';
 import ProfileCompletionCard from '@/components/profile/ProfileCompletionCard';
+import ProfileEditSaveFeedback from '@/features/profile/components/ProfileEditSaveFeedback';
 
 type TFn = (key: string) => string;
 
@@ -16,13 +17,14 @@ export type ProfileEditScreenProps = {
   profileVisibilityBandHidden: boolean;
   profileCompletionCardSource: ProfileCompletionInput;
   profileSaveBusy: boolean;
+  profileSaveSuccess: string | null;
+  profileSaveError: string | null;
   showAdminSelfProfilePanel: boolean;
   isProfileExpanded: boolean;
   setIsProfileExpanded: (v: boolean) => void;
   setIsEditing: (v: boolean) => void;
   setProfileVisibilityBandHidden: (v: boolean) => void;
   scrollToProfileCompletionField: (fieldId: string) => void;
-  requestSubmitProfileForm: () => void;
   /** The legacy body content (form + panels) provided by App.tsx to keep behavior unchanged. */
   body: React.ReactNode;
   className?: string;
@@ -38,12 +40,10 @@ export default function ProfileEditScreen({
   profile,
   profileVisibilityBandHidden,
   profileCompletionCardSource,
-  profileSaveBusy,
-  setIsProfileExpanded,
-  setIsEditing,
+  profileSaveSuccess,
+  profileSaveError,
   setProfileVisibilityBandHidden,
   scrollToProfileCompletionField,
-  requestSubmitProfileForm,
   body,
   className,
   inAppShell = false,
@@ -63,6 +63,11 @@ export default function ProfileEditScreen({
     <div
       className={cn('min-w-0', inAppShell && 'profile-edit--in-app-shell', className)}
     >
+      <ProfileEditSaveFeedback
+        success={profileSaveSuccess}
+        error={profileSaveError}
+        inAppShell={inAppShell}
+      />
       <div className="space-y-4">
         <header className="rounded-[var(--fn-radius-md)] border border-[rgb(var(--fn-border))] bg-[rgb(var(--fn-surface))] p-4 shadow-[var(--fn-shadow-sm)]">
           <h1 className="text-lg font-semibold tracking-tight text-[rgb(var(--fn-fg))]">{t('myProfile')}</h1>
@@ -85,22 +90,6 @@ export default function ProfileEditScreen({
                   onEditField={scrollToProfileCompletionField}
                   className="border-0 bg-transparent p-0 shadow-none"
                   matchingRecommendationsNote={t('profileFormMatchingRecommendationsNote')}
-                  rightActions={
-                    <button
-                      type="button"
-                      disabled={profileSaveBusy}
-                      onClick={() => {
-                        setIsProfileExpanded(true);
-                        setIsEditing(true);
-                        requestSubmitProfileForm();
-                      }}
-                      className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-blue-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
-                    >
-                      {profileSaveBusy
-                        ? pickLang('Enregistrement...', 'Guardando...', 'Saving...')
-                        : pickLang('Enregistrer', 'Guardar', 'Save')}
-                    </button>
-                  }
                   discreetRightFooter={
                     <button
                       type="button"

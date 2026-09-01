@@ -4457,9 +4457,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       setProfileSaveSuccess(
         isSelf
           ? pickLang(
-              'Profil enregistré. Vous pouvez compléter le reste plus tard pour améliorer votre visibilité.',
-              'Perfil guardado. Puedes completar el resto más tarde para mejorar tu visibilidad.',
-              'Profile saved. You can complete the rest later to improve your visibility.',
+              'Profil enregistré avec succès.',
+              'Perfil guardado con éxito.',
+              'Profile saved successfully.',
               lang
             )
           : pickLang(
@@ -5412,13 +5412,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               profileVisibilityBandHidden={profileVisibilityBandHidden}
               profileCompletionCardSource={profileCompletionCardSource}
               profileSaveBusy={profileSaveBusy}
+              profileSaveSuccess={profileSaveSuccess}
+              profileSaveError={profileSaveError}
               showAdminSelfProfilePanel={showAdminSelfProfilePanel}
               isProfileExpanded={isProfileExpanded}
               setIsProfileExpanded={setIsProfileExpanded}
               setIsEditing={setIsEditing}
               setProfileVisibilityBandHidden={setProfileVisibilityBandHidden}
               scrollToProfileCompletionField={scrollToProfileCompletionField}
-              requestSubmitProfileForm={requestSubmitProfileForm}
               ctx={{
                 cn,
                 pageSectionPad,
@@ -5579,6 +5580,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   ProfileFieldHint,
                   ProfileEditFormActions,
                   profileSaveBusy,
+                  profileSaveSuccess,
                   setIsEditing,
                   setEditingProfile,
                   setIsProfileExpanded,

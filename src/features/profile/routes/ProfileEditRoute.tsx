@@ -17,13 +17,14 @@ export type ProfileEditRouteProps = {
   profileVisibilityBandHidden: boolean;
   profileCompletionCardSource: ProfileCompletionInput;
   profileSaveBusy: boolean;
+  profileSaveSuccess: string | null;
+  profileSaveError: string | null;
   showAdminSelfProfilePanel: boolean;
   isProfileExpanded: boolean;
   setIsProfileExpanded: (v: boolean) => void;
   setIsEditing: (v: boolean) => void;
   setProfileVisibilityBandHidden: (v: boolean) => void;
   scrollToProfileCompletionField: (fieldId: string) => void;
-  requestSubmitProfileForm: () => void;
   ctx: ProfileEditLegacyBodyCtx;
   /** True when the route is under `AppShell` (header + mobile bottom bar). Affects sticky offsets and scroll margin. */
   inAppShell?: boolean;

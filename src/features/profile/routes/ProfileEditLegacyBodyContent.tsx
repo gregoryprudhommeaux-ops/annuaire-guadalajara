@@ -39,11 +39,9 @@ export default function ProfileEditLegacyBodyContent({ ctx }: ProfileEditLegacyB
     ProfileEditValidationCallout,
     ProfileEditOptimizationCallout,
     ProfileEditCollapsedActionsBar,
-    ProfileEditSaveSuccessBanner,
     ProfileEditExpandedSection,
     Users,
     ProfileEditExpandedForm,
-    profileSaveSuccess,
   } = ctx;
 
   return (
@@ -78,8 +76,6 @@ export default function ProfileEditLegacyBodyContent({ ctx }: ProfileEditLegacyB
             onAdminCreateEventClick={collapsedActions.onAdminCreateEventClick}
             icons={collapsedActions.icons}
           />
-
-          <ProfileEditSaveSuccessBanner message={profileSaveSuccess} />
 
           <ProfileEditExpandMotion open={isProfileExpanded}>
             <ProfileEditExpandedContainer>

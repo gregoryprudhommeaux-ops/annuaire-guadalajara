@@ -20,6 +20,7 @@ export type ProfileEditExpandedFormCtx = {
   editingSomeoneElse: boolean;
   profileCompletionPct: number;
   profileSaveBusy: boolean;
+  profileSaveSuccess: string | null;
   profileSaveError: string | null;
   formDraftT: Partial<UserProfile> | null;
   formDraftC: Partial<UserProfile> | null;
@@ -216,6 +217,7 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
     ProfileFieldHint,
     ProfileEditFormActions,
     profileSaveBusy,
+    profileSaveSuccess,
     setIsEditing,
     setEditingProfile,
     setIsProfileExpanded,
@@ -471,6 +473,7 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
                 pickLang={pickLang}
                 isEditProfileRoute={isEditProfileRoute}
                 profileSaveBusy={profileSaveBusy}
+                profileSaveSuccess={profileSaveSuccess}
                 onCancel={() => {
                   setIsEditing(false);
                   setEditingProfile(null);
