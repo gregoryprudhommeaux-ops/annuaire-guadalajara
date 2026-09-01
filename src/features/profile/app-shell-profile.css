@@ -15,18 +15,18 @@
 }
 
 @layer components {
-  /* `scrollToField` / section anchors: clear sticky AppHeader + completion band (replaces fixed 100px on legacy). */
+  /* `scrollToField` / section anchors: clear sticky AppHeader (completion band scrolls with page). */
   .profile-edit--in-app-shell .form-section,
   .profile-edit--in-app-shell .profile-section,
   .profile-edit--in-app-shell section {
-    scroll-margin-top: calc(env(safe-area-inset-top, 0px) + var(--fn-header-h) + 5.5rem);
+    scroll-margin-top: calc(env(safe-area-inset-top, 0px) + var(--fn-header-h) + 1rem);
   }
   @media (min-width: 640px) {
     .profile-edit--in-app-shell .form-section,
     .profile-edit--in-app-shell .profile-section,
     .profile-edit--in-app-shell section {
       scroll-margin-top: calc(
-        env(safe-area-inset-top, 0px) + var(--fn-header-h) + var(--fn-header-subnav-h) + 3.5rem
+        env(safe-area-inset-top, 0px) + var(--fn-header-h) + var(--fn-header-subnav-h) + 1rem
       );
     }
   }

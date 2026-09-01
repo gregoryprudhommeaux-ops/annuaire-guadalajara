@@ -493,7 +493,7 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
               <ProfileEditSaveError error={profileSaveError} />
             </ProfileEditForm>
           </div>
-          {/* Profile completion card is sticky on /profile/edit */}
+          {/* Profile completion band scrolls with the page on /profile/edit */}
         </ProfileEditFormLayout>
       ) : (
         <ProfileEditNoProfilePanel t={t} PlusIcon={Plus} onRegister={() => setIsEditing(true)} />

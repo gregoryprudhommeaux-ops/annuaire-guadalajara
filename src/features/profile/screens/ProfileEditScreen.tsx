@@ -76,16 +76,8 @@ export default function ProfileEditScreen({
         </header>
 
         {isEditProfileRoute && (editingProfile?.uid ?? profile?.uid) && !profileVisibilityBandHidden ? (
-          <div
-            className={cn(
-              'sticky z-40',
-              inAppShell
-                ? 'top-[calc(env(safe-area-inset-top,0px)+var(--fn-header-h)+0.5rem)] sm:top-[calc(env(safe-area-inset-top,0px)+var(--fn-header-h)+var(--fn-header-subnav-h)+0.5rem)]'
-                : 'top-24 sm:top-16',
-            )}
-          >
-            <div className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur">
-              <div className="p-3 sm:p-4">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="p-3 sm:p-4">
                 <ProfileCompletionCard
                   profile={profileCompletionCardSource}
                   t={t}
@@ -127,7 +119,6 @@ export default function ProfileEditScreen({
                   }
                 />
               </div>
-            </div>
           </div>
         ) : null}
 
