@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useId } from 'react';
-import { ArrowDownUp, Bookmark, ChevronDown } from 'lucide-react';
+import { ArrowDownUp, Bookmark, ChevronDown, Search } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useLanguage } from '@/i18n/LanguageProvider';
 import type { NetworkSortMode } from './SortSelect';
@@ -10,6 +10,11 @@ import '../results-toolbar.css';
 export type ResultsToolbarProps = {
   /** Nombre de fiches affichées après filtres (grille). */
   totalCount: number;
+  /** Recherche membre / entreprise / besoin (barre principale). */
+  query?: string;
+  onQueryChange?: (value: string) => void;
+  searchPlaceholder?: string;
+  searchAriaLabel?: string;
   /** Ex. `GeoCitySelector` + bouton « Revenir à… » — laisser vide si absent. */
   locationSlot?: ReactNode;
   sortValue: NetworkSortMode;
@@ -25,6 +30,10 @@ export type ResultsToolbarProps = {
 
 export function ResultsToolbar({
   totalCount,
+  query = '',
+  onQueryChange,
+  searchPlaceholder,
+  searchAriaLabel,
   locationSlot,
   sortValue,
   onSortChange,
@@ -39,7 +48,9 @@ export function ResultsToolbar({
   const { t } = useLanguage();
   const genId = useId();
   const sortId = sortSelectId ?? `results-toolbar-sort-${genId}`;
+  const searchId = `results-toolbar-search-${genId}`;
   const disabledSaved = savedCount === 0;
+  const showSearch = typeof onQueryChange === 'function';
 
   return (
     <div className={cn('results-toolbar', className)}>
@@ -49,6 +60,26 @@ export function ResultsToolbar({
             {t('network.explorer.resultsCount', { count: totalCount })}
           </span>
         </div>
+
+        {showSearch ? (
+          <div className="results-toolbar__field results-toolbar__field--search">
+            <label htmlFor={searchId} className="results-toolbar__label">
+              {t('network.explorer.memberSearchLabel')}
+            </label>
+            <div className="results-toolbar__searchShell">
+              <Search className="results-toolbar__searchIcon" size={18} strokeWidth={2} aria-hidden />
+              <input
+                id={searchId}
+                type="search"
+                value={query}
+                onChange={(e) => onQueryChange(e.target.value)}
+                className="results-toolbar__searchInput"
+                placeholder={searchPlaceholder ?? t('searchDirectoryPlaceholder')}
+                aria-label={searchAriaLabel ?? t('network.explorer.memberSearchAria')}
+              />
+            </div>
+          </div>
+        ) : null}
 
         {locationSlot ? <div className="results-toolbar__location">{locationSlot}</div> : null}
 

@@ -64,8 +64,15 @@ export function buildProfileSearchBlob(p: UserProfile): string {
   return parts.join(' ').toLowerCase();
 }
 
+function foldSearchText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 export function profileMatchesSearchQuery(p: UserProfile, rawQuery: string): boolean {
-  const q = rawQuery.trim().toLowerCase();
+  const q = foldSearchText(rawQuery.trim());
   if (!q) return true;
-  return buildProfileSearchBlob(p).includes(q);
+  return foldSearchText(buildProfileSearchBlob(p)).includes(q);
 }

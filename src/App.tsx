@@ -5712,9 +5712,13 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   </div>
                   <ResultsToolbar
                     totalCount={networkMembersListForGrid.length}
+                    query={searchTerm}
+                    onQueryChange={setSearchTerm}
                     locationSlot={
-                      <div className="network-toolbar__geo flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                        <GeoCitySelector
+                      <div className="flex min-w-0 w-full flex-col gap-2">
+                        <span className="results-toolbar__label">{t('network.explorer.cityFilterLabel')}</span>
+                        <div className="network-toolbar__geo flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                          <GeoCitySelector
                           index={networkGeoIndex}
                           value={(() => {
                             const chosen =
@@ -5751,6 +5755,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                             })()}
                           </button>
                         ) : null}
+                        </div>
                       </div>
                     }
                     sortValue={membersSortMode}
