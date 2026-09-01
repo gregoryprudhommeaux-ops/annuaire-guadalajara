@@ -332,6 +332,8 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
                   profileEditFrUx={profileEditFrUx}
                   labels={{ profilePhoto: PROFILE_FIELD_LABELS.profilePhoto }}
                   userDisplayName={user?.displayName ?? null}
+                  userUid={user?.uid ?? null}
+                  canUploadPhoto={Boolean(user?.uid && !editingSomeoneElse)}
                   profile={profile}
                   editingProfile={editingProfile}
                   profilePhotoUrlDraft={profilePhotoUrlDraft}

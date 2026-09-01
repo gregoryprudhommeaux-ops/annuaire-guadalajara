@@ -763,16 +763,56 @@ export const TRANSLATIONS: Translations = {
     es: 'Foto y presencia visual',
   },
   profileFormPhotoVisualIntro: {
-    fr: 'Ajoutez votre lien LinkedIn pour renforcer la crédibilité de votre fiche. Si vous disposez d’une URL directe d’image publique, vous pouvez aussi l’utiliser comme photo. Sinon, votre profil sera affiché avec un avatar professionnel basé sur vos initiales.',
-    es: 'Añade tu enlace de LinkedIn para reforzar la credibilidad de tu ficha. Si tienes una URL directa de imagen pública, también puedes usarla como foto. Si no, tu perfil se mostrará con un avatar profesional basado en tus iniciales.',
+    fr: 'Importez une photo depuis votre ordinateur ou téléphone (JPEG, PNG, WebP — max. 5 Mo). Vous pouvez aussi coller une URL d’image publique. Sans photo, un avatar avec vos initiales s’affiche.',
+    es: 'Sube una foto desde tu ordenador o móvil (JPEG, PNG, WebP — máx. 5 MB). También puedes pegar una URL pública. Sin foto, se muestra un avatar con tus iniciales.',
   },
   profileFormPhotoNoHostingNote: {
-    fr: 'Les photos LinkedIn ne sont pas toujours accessibles en dehors de LinkedIn. La plateforme n’héberge pas d’image.',
-    es: 'Las fotos de LinkedIn no siempre son accesibles fuera de LinkedIn. La plataforma no aloja imágenes.',
+    fr: 'Les liens photo LinkedIn ne fonctionnent souvent pas en dehors de LinkedIn — préférez l’import local ci-dessous.',
+    es: 'Los enlaces de foto de LinkedIn a menudo no funcionan fuera de LinkedIn — preferible usar la subida local.',
   },
   profileFormPhotoCredibilityNote: {
-    fr: 'Votre lien LinkedIn reste le principal signal de crédibilité. La photo est optionnelle.',
-    es: 'Tu enlace de LinkedIn sigue siendo la principal señal de credibilidad. La foto es opcional.',
+    fr: 'Votre lien LinkedIn reste un signal de crédibilité. La photo est optionnelle.',
+    es: 'Tu enlace de LinkedIn sigue siendo una señal de credibilidad. La foto es opcional.',
+  },
+  profileFormPhotoUploadLabel: {
+    fr: 'Importer une photo',
+    es: 'Subir una foto',
+  },
+  profileFormPhotoUploadHint: {
+    fr: 'JPEG, PNG, WebP ou GIF — 5 Mo maximum. L’image est enregistrée sur la plateforme.',
+    es: 'JPEG, PNG, WebP o GIF — máximo 5 MB. La imagen se guarda en la plataforma.',
+  },
+  profileFormPhotoUploadButton: {
+    fr: 'Choisir une image',
+    es: 'Elegir una imagen',
+  },
+  profileFormPhotoUploading: {
+    fr: 'Import en cours…',
+    es: 'Subiendo…',
+  },
+  profileFormPhotoUploadSuccess: {
+    fr: 'Photo importée — pensez à enregistrer le profil.',
+    es: 'Foto subida — recuerda guardar el perfil.',
+  },
+  profileFormPhotoUploadErrorInvalid: {
+    fr: 'Format non pris en charge. Utilisez JPEG, PNG, WebP ou GIF.',
+    es: 'Formato no compatible. Usa JPEG, PNG, WebP o GIF.',
+  },
+  profileFormPhotoUploadErrorSize: {
+    fr: 'Image trop volumineuse (maximum 5 Mo).',
+    es: 'Imagen demasiado grande (máximo 5 MB).',
+  },
+  profileFormPhotoUploadErrorAuth: {
+    fr: 'Connectez-vous pour importer une photo.',
+    es: 'Inicia sesión para subir una foto.',
+  },
+  profileFormPhotoUploadErrorGeneric: {
+    fr: 'Import impossible. Réessayez ou utilisez une URL publique.',
+    es: 'No se pudo subir. Reintenta o usa una URL pública.',
+  },
+  profileFormPhotoOrUrlDivider: {
+    fr: 'Ou URL publique',
+    es: 'O URL pública',
   },
   profileFormPhotoPublicUrlLabel: {
     fr: 'URL directe de photo publique (optionnel)',

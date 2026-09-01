@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
+import { getStorage } from 'firebase/storage';
 
 /** Même ID que `firebase.json` / `functions/src/constants.ts` (base Firestore nommée). */
 export const DEFAULT_FIRESTORE_DATABASE_ID =
@@ -41,4 +42,5 @@ const firestoreDatabaseId = resolveFirestoreDatabaseId(
 
 export const db = getFirestore(app, firestoreDatabaseId);
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 export const functions = getFunctions(app, 'us-central1');

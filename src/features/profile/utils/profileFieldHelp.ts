@@ -12,7 +12,7 @@ export const PROFILE_FIELD_HELP = {
   nationality: 'Non affichée sur la fiche publique.',
   bio: 'Privilégiez une présentation claire, concrète et orientée business. Évitez les textes trop personnels ou trop longs.',
   profilePhoto:
-    'URL HTTPS d’image déjà publique (pas d’upload). Sinon, initiales automatiques — fiable et homogène.',
+    'Importez une image (JPEG, PNG, WebP) ou collez une URL HTTPS publique. Sinon, initiales automatiques.',
   passions: 'Centres d’intérêt hors cœur de métier : humanisent la fiche et le matching.',
   companyName: 'Raison sociale ou nom commercial principal.',
   sector: 'Secteur principal pour filtres et suggestions.',

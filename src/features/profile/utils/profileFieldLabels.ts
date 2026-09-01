@@ -13,7 +13,7 @@ export const PROFILE_FIELD_LABELS = {
   gender: 'Genre',
   nationality: 'Nationalité',
   bio: 'Bio',
-  profilePhoto: 'URL directe de photo publique (optionnel)',
+  profilePhoto: 'Importer une photo ou URL publique (optionnel)',
   passions: 'Passions',
 
   companyName: 'Nom de la société',
