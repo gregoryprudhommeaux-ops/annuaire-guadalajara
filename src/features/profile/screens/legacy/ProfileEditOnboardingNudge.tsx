@@ -1,6 +1,6 @@
 import React from 'react';
 import type { User } from 'firebase/auth';
-import type { UserProfile } from '@/types';
+import type { Language, UserProfile } from '@/types';
 
 export type ProfileEditOnboardingNudgeProps = {
   user: User | null;
@@ -8,7 +8,12 @@ export type ProfileEditOnboardingNudgeProps = {
   profileCompletionPct: number;
   editingSomeoneElse: boolean;
   isAdminEmail: (email: string | null | undefined) => boolean;
-  OnboardingIntroBanner: React.ComponentType<{ t: (key: string) => string; className?: string }>;
+  lang: Language;
+  OnboardingIntroBanner: React.ComponentType<{
+    t: (key: string) => string;
+    lang?: Language;
+    className?: string;
+  }>;
   t: (key: string) => string;
 };
 
@@ -18,6 +23,7 @@ export default function ProfileEditOnboardingNudge({
   profileCompletionPct,
   editingSomeoneElse,
   isAdminEmail,
+  lang,
   OnboardingIntroBanner,
   t,
 }: ProfileEditOnboardingNudgeProps) {
@@ -30,6 +36,6 @@ export default function ProfileEditOnboardingNudge({
     !isAdminEmail(user.email);
 
   if (!show) return null;
-  return <OnboardingIntroBanner t={t} className="w-full" />;
+  return <OnboardingIntroBanner t={t} lang={lang} className="w-full" />;
 }
 

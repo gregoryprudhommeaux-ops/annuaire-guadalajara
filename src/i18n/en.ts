@@ -454,6 +454,12 @@ export const EN_STRINGS: Record<string, string> = {
   onboardingIntroStep1: "Fill in the essential information.",
   onboardingIntroStep2: "Add what you are looking for and how you can help.",
   onboardingIntroStep3: "Complete the rest later when convenient.",
+  onboardingLaMesaEyebrow: "Thematic dinners",
+  onboardingLaMesaTitle: "LA MESA",
+  onboardingLaMesaBody:
+    "When you save your FrancoNetwork profile, you also join the LA MESA invitation pool in Guadalajara. You'll receive an invite when an edition matches your profile.",
+  onboardingLaMesaLinkLabel: "About LA MESA",
+  profileFormLaMesaFooterNote: "Saving your profile enrolls you in the invitation pool for",
   profileCompletionEyebrow: "Profile visibility",
   profileCompletionTitle: "Profile is {{percent}}% complete",
   profileCompletionDescription:

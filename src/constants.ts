@@ -1134,6 +1134,26 @@ export const TRANSLATIONS: Translations = {
     fr: 'Complète le reste plus tard selon ton temps.',
     es: 'Completa el resto más adelante según tu tiempo.',
   },
+  onboardingLaMesaEyebrow: {
+    fr: 'Dîners thématiques',
+    es: 'Cenas temáticas',
+  },
+  onboardingLaMesaTitle: {
+    fr: 'LA MESA',
+    es: 'LA MESA',
+  },
+  onboardingLaMesaBody: {
+    fr: 'En enregistrant votre profil FrancoNetwork, vous rejoignez aussi le vivier d’invitation LA MESA à Guadalajara. Une invitation vous parviendra si une soirée correspond à votre profil.',
+    es: 'Al guardar tu perfil en FrancoNetwork, también entras al pool de invitación LA MESA en Guadalajara. Recibirás una invitación cuando una noche encaje con tu perfil.',
+  },
+  onboardingLaMesaLinkLabel: {
+    fr: 'En savoir plus sur LA MESA',
+    es: 'Conocer LA MESA',
+  },
+  profileFormLaMesaFooterNote: {
+    fr: 'L’enregistrement de votre profil vous inscrit au vivier d’invitation',
+    es: 'Al guardar tu perfil entras al pool de invitación',
+  },
   profileCompletionEyebrow: { fr: 'Visibilité du profil', es: 'Visibilidad del perfil' },
   profileCompletionTitle: {
     fr: 'Profil complété à {{percent}}%',

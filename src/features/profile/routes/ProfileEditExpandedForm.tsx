@@ -242,6 +242,7 @@ export default function ProfileEditExpandedForm({ ctx }: ProfileEditExpandedForm
               profileCompletionPct={profileCompletionPct}
               editingSomeoneElse={editingSomeoneElse}
               isAdminEmail={isAdminEmail}
+              lang={lang}
               OnboardingIntroBanner={OnboardingIntroBanner}
               t={t}
             />

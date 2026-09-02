@@ -6025,7 +6025,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 inviteUrl={getSignupJoinUrl()}
                 className="w-full max-w-3xl"
               />
-              <OnboardingIntroBanner t={t} className="w-full max-w-3xl" />
+              <OnboardingIntroBanner t={t} lang={lang} className="w-full max-w-3xl" />
               <SignupInviteCard
                 lang={lang}
                 t={t}
