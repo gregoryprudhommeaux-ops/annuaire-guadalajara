@@ -1139,18 +1139,43 @@ export const TRANSLATIONS: Translations = {
     es: 'Unirse al directorio',
   },
   expressOnboardingLead: {
-    fr: 'FrancoNetwork est l’annuaire de la communauté d’affaires francophone à Guadalajara : un endroit pour se trouver et se contacter. Ceci est une inscription express, une version légère. Vos réponses créent votre fiche. Vous pourrez compléter votre profil plus tard, tranquillement.',
-    es: 'FrancoNetwork es el directorio de la comunidad de negocios francófona en Guadalajara: un lugar para encontrarse y contactarse. Esta es una inscripción express, una versión ligera. Tus respuestas crean tu ficha. Podrás completar tu perfil más tarde, con calma.',
+    fr: 'FrancoNetwork relie les entrepreneurs et professionnels francophones à Guadalajara. Cinq infos pour créer votre fiche. Le reste peut attendre.',
+    es: 'FrancoNetwork conecta a emprendedores y profesionales francófonos en Guadalajara. Cinco datos para crear tu ficha. El resto puede esperar.',
+  },
+  expressOnboardingEyebrow: { fr: 'Inscription express', es: 'Inscripción express' },
+  expressOnboardingRequiredHint: {
+    fr: '5 champs pour créer votre fiche · le reste est optionnel',
+    es: '5 campos para crear tu ficha · el resto es opcional',
+  },
+  expressOnboardingSectionIdentity: {
+    fr: 'Pour vous retrouver dans l’annuaire',
+    es: 'Para encontrarte en el directorio',
+  },
+  expressOnboardingSectionIdentityLead: {
+    fr: 'Ces cinq points suffisent pour créer une fiche identifiable.',
+    es: 'Estos cinco puntos bastan para crear una ficha identificable.',
+  },
+  expressOnboardingSectionExtra: {
+    fr: 'Pour aller plus loin (optionnel)',
+    es: 'Para ir más lejos (opcional)',
+  },
+  expressOnboardingSectionExtraLead: {
+    fr: 'Utile pour les introductions. Vous pouvez y revenir plus tard.',
+    es: 'Útil para las presentaciones. Puedes volver después.',
   },
   expressOnboardingSectionYou: { fr: 'Vous', es: 'Tú' },
   expressOnboardingSectionWork: { fr: 'Votre activité', es: 'Tu trabajo' },
   expressOnboardingFullName: { fr: 'Nom complet', es: 'Nombre completo' },
   expressOnboardingEmail: { fr: 'Email', es: 'Email' },
   expressOnboardingEmailHint: {
-    fr: 'Pour recevoir le lien qui crée votre mot de passe et vous reconnecte à votre fiche.',
-    es: 'Para recibir el enlace con el que crearás tu contraseña y volverás a tu ficha.',
+    fr: 'On vous envoie le lien pour créer votre mot de passe et revenir à votre fiche.',
+    es: 'Te enviamos el enlace para crear tu contraseña y volver a tu ficha.',
   },
   expressOnboardingWhatsapp: { fr: 'WhatsApp', es: 'WhatsApp' },
+  expressOnboardingWhatsappHint: {
+    fr: 'Le canal le plus simple pour qu’un membre vous contacte.',
+    es: 'El canal más simple para que un miembro te contacte.',
+  },
   expressOnboardingMexicoSince: {
     fr: 'Depuis quand êtes-vous au Mexique ?',
     es: '¿Cuándo llegaste a México?',
@@ -1171,6 +1196,10 @@ export const TRANSLATIONS: Translations = {
     fr: 'Que souhaitez-vous trouver ou développer dans la communauté, perso ou pro ?',
     es: '¿Qué te gustaría encontrar o desarrollar en la comunidad, a nivel personal o profesional?',
   },
+  expressOnboardingLookingForHint: {
+    fr: 'Une phrase suffit. Ça aide les bons contacts à vous trouver.',
+    es: 'Una frase basta. Ayuda a que los contactos correctos te encuentren.',
+  },
   expressOnboardingCommunityGap: {
     fr: 'Que manque-t-il à la communauté à Guadalajara ? Un projet que vous aimeriez lancer ?',
     es: '¿Qué crees que le falta a la comunidad en Guadalajara? ¿Algo que te gustaría crear?',
@@ -1179,9 +1208,10 @@ export const TRANSLATIONS: Translations = {
   expressOnboardingSubmitting: { fr: 'Enregistrement…', es: 'Guardando…' },
   expressOnboardingNeedAuth: { fr: 'Se connecter pour enregistrer', es: 'Inicia sesión para guardar' },
   expressOnboardingMissing: {
-    fr: 'Complétez les champs obligatoires.',
-    es: 'Completa los campos obligatorios.',
+    fr: 'Il manque un des 5 champs obligatoires : nom, email, WhatsApp, nationalité ou ville.',
+    es: 'Falta uno de los 5 campos obligatorios: nombre, email, WhatsApp, nacionalidad o ciudad.',
   },
+  expressOnboardingRequired: { fr: 'obligatoire', es: 'obligatorio' },
   expressOnboardingError: {
     fr: 'Enregistrement impossible. Réessayez.',
     es: 'No se pudo guardar. Reintenta.',

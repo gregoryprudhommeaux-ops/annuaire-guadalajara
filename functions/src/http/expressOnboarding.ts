@@ -130,7 +130,7 @@ export const expressOnboarding = onRequest(
         json(res, 400, { ok: false, code: 'invalid' });
         return;
       }
-      if (!mexicoSince || !city || !lookingFor || !communityGap || !/^[A-Z]{2,3}$/.test(nationality)) {
+      if (!whatsapp || !city || !/^[A-Z]{2,3}$/.test(nationality)) {
         json(res, 400, { ok: false, code: 'invalid' });
         return;
       }

@@ -1,11 +1,20 @@
 import type { Language } from '../types';
 
+export type NationalityOption = { code: string; fr: string; es: string; en: string };
+
+/** Nationalités les plus fréquentes dans la communauté — toujours en tête de liste. */
+export const PRIORITY_NATIONALITY_CODES = ['MX', 'FR', 'CH', 'BE', 'CA'] as const;
+
+const PRIORITY_INDEX = new Map(
+  PRIORITY_NATIONALITY_CODES.map((code, index) => [code, index] as const)
+);
+
 /** Codes ISO 3166-1 alpha-2 ; libellés alignés sur les formulaires européens courants. */
-export const NATIONALITY_OPTIONS: { code: string; fr: string; es: string; en: string }[] = [
+const NATIONALITY_OPTIONS_RAW: NationalityOption[] = [
   { code: 'MX', fr: 'Mexique', es: 'México', en: 'Mexico' },
   { code: 'FR', fr: 'France', es: 'Francia', en: 'France' },
-  { code: 'BE', fr: 'Belgique', es: 'Bélgica', en: 'Belgium' },
   { code: 'CH', fr: 'Suisse', es: 'Suiza', en: 'Switzerland' },
+  { code: 'BE', fr: 'Belgique', es: 'Bélgica', en: 'Belgium' },
   { code: 'CA', fr: 'Canada', es: 'Canadá', en: 'Canada' },
   { code: 'DE', fr: 'Allemagne', es: 'Alemania', en: 'Germany' },
   { code: 'ES', fr: 'Espagne', es: 'España', en: 'Spain' },
@@ -47,13 +56,36 @@ export const NATIONALITY_OPTIONS: { code: string; fr: string; es: string; en: st
   { code: 'TR', fr: 'Turquie', es: 'Turquía', en: 'Türkiye' },
   { code: 'RU', fr: 'Russie', es: 'Rusia', en: 'Russia' },
   { code: 'UA', fr: 'Ukraine', es: 'Ucrania', en: 'Ukraine' },
-].sort((a, b) => a.fr.localeCompare(b.fr, 'fr'));
+];
+
+function labelFor(option: NationalityOption, lang: Language): string {
+  if (lang === 'fr') return option.fr;
+  if (lang === 'es') return option.es;
+  return option.en;
+}
+
+/** Priorité MX / FR / CH / BE / CA, puis le reste alphabétique dans la langue demandée. */
+export function sortNationalityOptions(
+  options: NationalityOption[],
+  lang: Language = 'fr'
+): NationalityOption[] {
+  return [...options].sort((a, b) => {
+    const pa = PRIORITY_INDEX.has(a.code) ? PRIORITY_INDEX.get(a.code)! : Number.POSITIVE_INFINITY;
+    const pb = PRIORITY_INDEX.has(b.code) ? PRIORITY_INDEX.get(b.code)! : Number.POSITIVE_INFINITY;
+    if (pa !== pb) return pa - pb;
+    return labelFor(a, lang).localeCompare(labelFor(b, lang), lang);
+  });
+}
+
+/** Liste prête pour les selects : priorités en tête, reste alphabétique (FR). */
+export const NATIONALITY_OPTIONS: NationalityOption[] = sortNationalityOptions(
+  NATIONALITY_OPTIONS_RAW,
+  'fr'
+);
 
 export function nationalityLabel(code: string | undefined | null, lang: Language): string {
   if (!code?.trim()) return '';
   const row = NATIONALITY_OPTIONS.find((o) => o.code === code.trim().toUpperCase());
   if (!row) return code;
-  if (lang === 'fr') return row.fr;
-  if (lang === 'es') return row.es;
-  return row.en;
+  return labelFor(row, lang);
 }

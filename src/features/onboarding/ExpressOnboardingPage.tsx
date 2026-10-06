@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import type { User } from 'firebase/auth';
 import { useLanguage } from '@/i18n/LanguageProvider';
-import { NATIONALITY_OPTIONS, nationalityLabel } from '@/lib/nationalityOptions';
+import { NATIONALITY_OPTIONS, nationalityLabel, sortNationalityOptions } from '@/lib/nationalityOptions';
 import { Button } from '@/components/ui/Button';
 import type { UserProfile } from '@/types';
 
@@ -22,6 +22,18 @@ type Draft = {
 };
 
 type SaveState = 'created' | 'updated' | 'email_failed' | null;
+
+type Question = {
+  key: keyof Draft;
+  label: string;
+  placeholder?: string;
+  hint?: string;
+  optional?: boolean;
+  area?: boolean;
+  select?: boolean;
+  type?: string;
+  readOnly?: boolean;
+};
 
 const EMPTY: Draft = {
   fullName: '',
@@ -54,7 +66,7 @@ function expressOnboardingUrl(): string {
 }
 
 const fieldClass =
-  'w-full border-0 border-b border-[var(--border)] bg-transparent px-0 py-2.5 text-[15px] text-[var(--text)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--primary)]';
+  'w-full rounded-[12px] border border-[var(--border)] bg-[var(--surface)] px-3.5 py-3 text-[15px] leading-snug text-[var(--text)] shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] outline-none transition-[border-color,box-shadow,background-color] placeholder:text-[var(--text-muted)] focus:border-[var(--primary)] focus:bg-white focus:shadow-[0_0_0_3px_var(--primary-soft)]';
 
 export type ExpressOnboardingPageProps = {
   user: User | null;
@@ -97,13 +109,7 @@ export default function ExpressOnboardingPage({ user, profile, onNeedAuth }: Exp
     }
   }, [draft, hydrated]);
 
-  const nationalityOptions = useMemo(
-    () =>
-      [...NATIONALITY_OPTIONS].sort((a, b) =>
-        nationalityLabel(a.code, lang).localeCompare(nationalityLabel(b.code, lang), lang)
-      ),
-    [lang]
-  );
+  const nationalityOptions = useMemo(() => sortNationalityOptions(NATIONALITY_OPTIONS, lang), [lang]);
 
   const set =
     (key: keyof Draft) =>
@@ -119,12 +125,10 @@ export default function ExpressOnboardingPage({ user, profile, onNeedAuth }: Exp
     setSaved(null);
     const fullName = draft.fullName.trim();
     const email = (user?.email || draft.email).trim();
+    const whatsapp = draft.whatsapp.trim();
     const city = draft.city.trim();
-    const mexicoSince = draft.mexicoSince.trim();
-    const lookingFor = draft.lookingFor.trim();
-    const communityGap = draft.communityGap.trim();
     const nationality = draft.nationality.trim().toUpperCase();
-    if (!fullName || !email || !mexicoSince || !nationality || !city || !lookingFor || !communityGap) {
+    if (!fullName || !email || !whatsapp || !nationality || !city) {
       setError(t('expressOnboardingMissing'));
       return;
     }
@@ -145,13 +149,13 @@ export default function ExpressOnboardingPage({ user, profile, onNeedAuth }: Exp
         body: JSON.stringify({
           fullName,
           email,
-          whatsapp: draft.whatsapp.trim(),
-          mexicoSince,
+          whatsapp,
+          mexicoSince: draft.mexicoSince.trim(),
           nationality,
           city,
           companyName: draft.companyName.trim(),
-          lookingFor,
-          communityGap,
+          lookingFor: draft.lookingFor.trim(),
+          communityGap: draft.communityGap.trim(),
           lang,
           companyWebsite: honeypot,
         }),
@@ -185,17 +189,7 @@ export default function ExpressOnboardingPage({ user, profile, onNeedAuth }: Exp
   };
 
   const emailLocked = Boolean(user?.email);
-  const questions: Array<{
-    key: keyof Draft;
-    label: string;
-    placeholder?: string;
-    hint?: string;
-    optional?: boolean;
-    area?: boolean;
-    select?: boolean;
-    type?: string;
-    readOnly?: boolean;
-  }> = [
+  const identityQuestions: Question[] = [
     { key: 'fullName', label: t('expressOnboardingFullName'), placeholder: 'Juan PÉREZ' },
     {
       key: 'email',
@@ -205,21 +199,41 @@ export default function ExpressOnboardingPage({ user, profile, onNeedAuth }: Exp
       type: 'email',
       readOnly: emailLocked,
     },
-    { key: 'whatsapp', label: t('expressOnboardingWhatsapp'), placeholder: '+52 …', optional: true },
+    {
+      key: 'whatsapp',
+      label: t('expressOnboardingWhatsapp'),
+      placeholder: '+52 …',
+      hint: t('expressOnboardingWhatsappHint'),
+    },
+    { key: 'nationality', label: t('expressOnboardingNationality'), select: true },
+    { key: 'city', label: t('expressOnboardingCity'), placeholder: t('expressOnboardingCityPlaceholder') },
+  ];
+  const extraQuestions: Question[] = [
     {
       key: 'mexicoSince',
       label: t('expressOnboardingMexicoSince'),
       placeholder: t('expressOnboardingMexicoSincePlaceholder'),
+      optional: true,
     },
-    { key: 'nationality', label: t('expressOnboardingNationality'), select: true },
-    { key: 'city', label: t('expressOnboardingCity'), placeholder: t('expressOnboardingCityPlaceholder') },
     {
       key: 'companyName',
       label: t('expressOnboardingCompany'),
       placeholder: t('expressOnboardingCompanyPlaceholder'),
+      optional: true,
     },
-    { key: 'lookingFor', label: t('expressOnboardingLookingFor'), area: true },
-    { key: 'communityGap', label: t('expressOnboardingCommunityGap'), area: true },
+    {
+      key: 'lookingFor',
+      label: t('expressOnboardingLookingFor'),
+      area: true,
+      optional: true,
+      hint: t('expressOnboardingLookingForHint'),
+    },
+    {
+      key: 'communityGap',
+      label: t('expressOnboardingCommunityGap'),
+      area: true,
+      optional: true,
+    },
   ];
 
   const successText =
@@ -231,16 +245,88 @@ export default function ExpressOnboardingPage({ user, profile, onNeedAuth }: Exp
           ? t('expressOnboardingSuccessEmailFailed')
           : null;
 
+  const renderQuestion = (q: Question, index: number) => (
+    <li key={q.key} className="rounded-[16px] border border-[var(--border)]/80 bg-[var(--surface)]/70 p-4 sm:p-5">
+      <label className="block">
+        <span className="flex items-start gap-3">
+          <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--primary-soft)] text-[11px] font-semibold tabular-nums text-[var(--primary)]">
+            {String(index + 1).padStart(2, '0')}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <span className="text-[15px] font-semibold leading-snug text-[var(--text)]">{q.label}</span>
+              {q.optional ? (
+                <span className="rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-muted)]">
+                  {t('expressOnboardingOptional')}
+                </span>
+              ) : (
+                <span className="rounded-full bg-[var(--primary-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--primary)]">
+                  {t('expressOnboardingRequired')}
+                </span>
+              )}
+            </span>
+            <span className="mt-3 block">
+              {q.select ? (
+                <select className={fieldClass} required={!q.optional} value={draft.nationality} onChange={set('nationality')}>
+                  <option value="">{t('nationalitySelectPlaceholder')}</option>
+                  {nationalityOptions.map((o) => (
+                    <option key={o.code} value={o.code}>
+                      {nationalityLabel(o.code, lang)}
+                    </option>
+                  ))}
+                </select>
+              ) : q.area ? (
+                <textarea
+                  className={`${fieldClass} min-h-[104px] resize-y`}
+                  required={!q.optional}
+                  value={draft[q.key]}
+                  onChange={set(q.key)}
+                />
+              ) : (
+                <input
+                  className={fieldClass}
+                  required={!q.optional}
+                  readOnly={q.readOnly}
+                  type={q.type || 'text'}
+                  value={draft[q.key]}
+                  onChange={set(q.key)}
+                  placeholder={q.placeholder}
+                  autoComplete={
+                    q.key === 'fullName'
+                      ? 'name'
+                      : q.key === 'email'
+                        ? 'email'
+                        : q.key === 'whatsapp'
+                          ? 'tel'
+                          : q.key === 'city'
+                            ? 'address-level2'
+                            : 'off'
+                  }
+                  inputMode={q.key === 'whatsapp' ? 'tel' : q.key === 'email' ? 'email' : undefined}
+                />
+              )}
+              {q.hint ? <span className="mt-2 block text-xs leading-relaxed text-[var(--text-muted)]">{q.hint}</span> : null}
+            </span>
+          </span>
+        </span>
+      </label>
+    </li>
+  );
+
   return (
     <div className="flex-1 bg-[var(--bg)] text-[var(--text)]">
       <Helmet>
         <title>{`${t('expressOnboardingTitle')} · FrancoNetwork`}</title>
       </Helmet>
-      <main className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8 sm:py-12">
-        <h1 className="text-[1.75rem] font-semibold leading-tight tracking-tight sm:text-3xl">{t('expressOnboardingTitle')}</h1>
-        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-[var(--text-muted)]">{t('expressOnboardingLead')}</p>
+      <main className="mx-auto w-full max-w-3xl px-4 py-7 sm:px-8 sm:py-12">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--primary)]">{t('expressOnboardingEyebrow')}</p>
+        <h1 className="mt-2 text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl">{t('expressOnboardingTitle')}</h1>
+        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--text-muted)]">{t('expressOnboardingLead')}</p>
+        <p className="mt-4 inline-flex max-w-full rounded-full border border-[var(--primary)]/20 bg-[var(--primary-soft)] px-3 py-1.5 text-xs font-medium text-[var(--primary)]">
+          {t('expressOnboardingRequiredHint')}
+        </p>
 
-        <form onSubmit={(e) => void onSubmit(e)} className="mt-10">
+        <form onSubmit={(e) => void onSubmit(e)} className="mt-8 sm:mt-10">
           <input
             type="text"
             name="companyWebsite"
@@ -251,74 +337,37 @@ export default function ExpressOnboardingPage({ user, profile, onNeedAuth }: Exp
             className="hidden"
             aria-hidden
           />
-          <ol className="space-y-8">
-            {questions.map((q, i) => (
-              <li key={q.key}>
-                <label className="block">
-                  <span className="flex items-baseline gap-3">
-                    <span className="w-7 shrink-0 text-xs tabular-nums text-[var(--text-muted)]">{String(i + 1).padStart(2, '0')}</span>
-                    <span className="text-sm font-medium leading-snug">
-                      {q.label}
-                      {q.optional ? (
-                        <span className="ml-2 text-xs font-normal text-[var(--text-muted)]">{t('expressOnboardingOptional')}</span>
-                      ) : null}
-                    </span>
-                  </span>
-                  <span className="mt-2 block pl-10">
-                    {q.select ? (
-                      <select className={fieldClass} required value={draft.nationality} onChange={set('nationality')}>
-                        <option value="">{t('nationalitySelectPlaceholder')}</option>
-                        {nationalityOptions.map((o) => (
-                          <option key={o.code} value={o.code}>
-                            {nationalityLabel(o.code, lang)}
-                          </option>
-                        ))}
-                      </select>
-                    ) : q.area ? (
-                      <textarea
-                        className={`${fieldClass} min-h-[96px] resize-y`}
-                        required
-                        value={draft[q.key]}
-                        onChange={set(q.key)}
-                      />
-                    ) : (
-                      <input
-                        className={fieldClass}
-                        required={!q.optional}
-                        readOnly={q.readOnly}
-                        type={q.type || 'text'}
-                        value={draft[q.key]}
-                        onChange={set(q.key)}
-                        placeholder={q.placeholder}
-                        autoComplete={
-                          q.key === 'fullName' ? 'name' : q.key === 'email' ? 'email' : q.key === 'whatsapp' ? 'tel' : q.key === 'city' ? 'address-level2' : 'off'
-                        }
-                        inputMode={q.key === 'whatsapp' ? 'tel' : q.key === 'email' ? 'email' : undefined}
-                      />
-                    )}
-                    {q.hint ? <span className="mt-1.5 block text-xs leading-relaxed text-[var(--text-muted)]">{q.hint}</span> : null}
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ol>
+
+          <section>
+            <h2 className="text-sm font-semibold text-[var(--text)]">{t('expressOnboardingSectionIdentity')}</h2>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">{t('expressOnboardingSectionIdentityLead')}</p>
+            <ol className="mt-4 space-y-3 sm:space-y-4">{identityQuestions.map((q, i) => renderQuestion(q, i))}</ol>
+          </section>
+
+          <section className="mt-10">
+            <h2 className="text-sm font-semibold text-[var(--text)]">{t('expressOnboardingSectionExtra')}</h2>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">{t('expressOnboardingSectionExtraLead')}</p>
+            <ol className="mt-4 space-y-3 sm:space-y-4">
+              {extraQuestions.map((q, i) => renderQuestion(q, identityQuestions.length + i))}
+            </ol>
+          </section>
 
           {error ? (
-            <p className="mt-8 pl-10 text-sm text-rose-700" role="alert">
+            <p className="mt-8 text-sm text-rose-700" role="alert">
               {error}
             </p>
           ) : null}
           {successText ? (
-            <p className="mt-8 pl-10 text-sm text-[var(--success)]" role="status">
+            <p className="mt-8 text-sm text-[var(--success)]" role="status">
               {successText}
             </p>
           ) : null}
 
-          <div className="mt-10 pl-10">
-            <Button type="submit" disabled={busy}>
+          <div className="sticky bottom-0 z-10 -mx-4 mt-10 border-t border-[var(--border)] bg-[var(--bg)]/95 px-4 py-4 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
+            <Button type="submit" disabled={busy} fullWidth className="sm:w-auto">
               {busy ? t('expressOnboardingSubmitting') : t('expressOnboardingSubmit')}
             </Button>
-            <p className="mt-4 text-sm text-[var(--text-muted)]">
+            <p className="mt-3 text-sm text-[var(--text-muted)]">
               {user ? (
                 <Link to="/profile/edit" className="text-[var(--primary)] underline-offset-2 hover:underline">
                   {t('expressOnboardingLaterLink')}
