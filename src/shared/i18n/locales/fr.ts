@@ -161,6 +161,8 @@ const shell = {
     tagline:
       'Annuaire d’Affaires de Guadalajara — communauté business francophone, ouverte et internationale.',
     copyright: '© {year} FrancoNetwork. Tous droits réservés.',
+    suiteLead: 'Un projet qui fait partie de',
+    suiteName: 'NEXTSTEP SUITE',
   },
 
   marketing: {

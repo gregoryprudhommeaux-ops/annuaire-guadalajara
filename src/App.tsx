@@ -253,6 +253,7 @@ import { NetworkRequestsSection } from './components/home/NetworkRequestsSection
 import InviteNetworkModal from './components/home/InviteNetworkModal';
 import LegalInfoModal from './components/LegalInfoModal';
 import ContactFooterModal from './components/ContactFooterModal';
+import { SuiteCredit } from './components/marketing/SuiteCredit';
 import SpaRouteAnalytics from './components/SpaRouteAnalytics';
 import { trackMemberInteraction } from './utils/trackEvent';
 import { LEGAL_PRIVACY_PARAGRAPHS, LEGAL_TERMS_PARAGRAPHS } from './legal/footerLegalContent';
@@ -5239,9 +5240,10 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
    * Bandeau unique **FrancoNetwork** (design system `fn`) : toute page `MainApp` l’utilise, sauf :
    * - `AppShell` — le header `fn` est déjà fourni par le shell (membre : réseau, stats, profil, etc. ; admin : /admin, /evenements).
    * - `PublicHomePage` sur `/` — en-tête propre à la vitrine, sans doubler le bandeau ici.
+   * `/express` garde ce bandeau (logo, langues, connexion).
    */
   const showFrancoNetworkTopHeader =
-    !isExpressRoute && !useNewPublicHome && !useAppShellNonAdmin && !useAppShellAdmin;
+    isExpressRoute || (!useNewPublicHome && !useAppShellNonAdmin && !useAppShellAdmin);
 
   const requestSubmitProfileForm = () => {
     window.requestAnimationFrame(() => {
@@ -8329,6 +8331,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </button>
             </div>
           </div>
+          <SuiteCredit className="mt-2 text-center text-xs text-stone-400" />
         </footer>
       ) : null}
       {profile && (

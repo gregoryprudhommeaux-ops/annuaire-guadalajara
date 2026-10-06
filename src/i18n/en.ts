@@ -455,10 +455,13 @@ export const EN_STRINGS: Record<string, string> = {
   onboardingIntroStep2: "Add what you are looking for and how you can help.",
   onboardingIntroStep3: "Complete the rest later when convenient.",
   expressOnboardingTitle: "Join the directory",
-  expressOnboardingLead: "Eight questions. The rest of the profile can wait.",
+  expressOnboardingLead:
+    "FrancoNetwork is the directory of the French-speaking business community in Guadalajara: a place to find each other and get in touch. This is an express signup, a light version. Your answers create your profile. You can complete it later, in your own time.",
   expressOnboardingSectionYou: "You",
   expressOnboardingSectionWork: "Your work",
   expressOnboardingFullName: "Full name",
+  expressOnboardingEmail: "Email",
+  expressOnboardingEmailHint: "So we can email you the link to create a password and get back to your profile.",
   expressOnboardingWhatsapp: "WhatsApp",
   expressOnboardingMexicoSince: "When did you arrive in Mexico?",
   expressOnboardingMexicoSincePlaceholder: "6 for 6 years, or “Born here”",
@@ -471,12 +474,19 @@ export const EN_STRINGS: Record<string, string> = {
     "What would you like to find or build in the community, personally or professionally?",
   expressOnboardingCommunityGap:
     "What do you think the Guadalajara community is missing? Something you would like to start?",
-  expressOnboardingSubmit: "Save",
+  expressOnboardingSubmit: "Save my answers",
   expressOnboardingSubmitting: "Saving…",
   expressOnboardingNeedAuth: "Sign in to save",
   expressOnboardingMissing: "Please complete the required fields.",
   expressOnboardingError: "Could not save. Try again.",
-  expressOnboardingSuccess: "Saved. You can complete the full profile later.",
+  expressOnboardingSuccess:
+    "Saved. An email is on its way: it has the link to create your password and get back to your profile.",
+  expressOnboardingSuccessUpdated: "Your answers are saved on your profile.",
+  expressOnboardingSuccessEmailFailed:
+    "Your profile is saved. The email could not be sent: on the sign-in screen, use “forgot password” with this address.",
+  expressOnboardingAlreadyExists:
+    "A profile already exists with this email. Sign in to answer the questionnaire, complete the profile, or edit it.",
+  expressOnboardingSignInToEdit: "Already have a profile? Sign in to complete or edit it",
   expressOnboardingLaterLink: "Complete the detailed profile",
   expressOnboardingSignupLink: "Signup page",
   expressOnboardingOptional: "optional",

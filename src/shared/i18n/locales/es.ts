@@ -156,6 +156,8 @@ const shell = {
     tagline:
       'Directorio de Negocios de Guadalajara — comunidad empresarial francófona, abierta e internacional.',
     copyright: '© {year} FrancoNetwork. Todos los derechos reservados.',
+    suiteLead: 'Un proyecto que forma parte de',
+    suiteName: 'NEXTSTEP SUITE',
   },
 
   marketing: {

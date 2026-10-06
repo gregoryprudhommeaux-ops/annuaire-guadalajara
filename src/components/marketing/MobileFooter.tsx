@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageProvider';
+import { SuiteCredit } from '@/components/marketing/SuiteCredit';
 
 export function MobileFooter() {
   const { t } = useLanguage();
@@ -32,6 +33,10 @@ export function MobileFooter() {
         <p className="mt-4 text-[11px] text-[var(--fn-muted-2)]">
           {t('footer.copyright', { year: new Date().getFullYear() })}
         </p>
+        <SuiteCredit
+          className="mt-2 text-[11px] text-[var(--fn-muted-2)]"
+          linkClassName="font-medium underline decoration-[var(--fn-border)] underline-offset-2 transition-colors hover:text-[var(--fn-fg)]"
+        />
       </div>
     </footer>
   );

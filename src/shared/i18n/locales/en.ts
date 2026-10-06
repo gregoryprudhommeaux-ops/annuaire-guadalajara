@@ -156,6 +156,8 @@ const shell = {
     tagline:
       'Guadalajara business directory — a francophone business community, open and international.',
     copyright: '© {year} FrancoNetwork. All rights reserved.',
+    suiteLead: 'A project that is part of',
+    suiteName: 'NEXTSTEP SUITE',
   },
 
   marketing: {

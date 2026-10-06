@@ -27,6 +27,7 @@ import { RecentRequestsFeed } from '@/components/stats/RecentRequestsFeed';
 import { SegmentedJoinCTA } from '@/components/stats/SegmentedJoinCTA';
 import { SharedAffinitiesSection } from '@/components/stats/SharedAffinitiesSection';
 import { StatsPrimaryButton, StatsSecondaryButton } from '@/components/stats/ui';
+import { SuiteCredit } from '@/components/marketing/SuiteCredit';
 import { chartTheme, getChartColor } from '@/lib/chartTheme';
 import { StatsSectionHeader, StatsSectionShell } from '@/components/stats/ui';
 import francoLogoUrl from '../../favicon.svg?url';
@@ -366,6 +367,7 @@ export function StatsVitrineContent({ variant, sharePageUrl, shareTopRight }: St
           <p className="mt-3 text-center text-[11px] text-slate-400">
             {vitrine.source === 'firestore' ? tc.footerSourceFirestore : tc.footerSourceComputed}
           </p>
+          <SuiteCredit className="mt-2 text-center text-[11px] text-slate-400" />
         </div>
       </div>
     </div>

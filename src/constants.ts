@@ -1139,12 +1139,17 @@ export const TRANSLATIONS: Translations = {
     es: 'Unirse al directorio',
   },
   expressOnboardingLead: {
-    fr: 'Huit questions. Le reste du profil peut attendre.',
-    es: 'Ocho preguntas. El resto del perfil puede esperar.',
+    fr: 'FrancoNetwork est l’annuaire de la communauté d’affaires francophone à Guadalajara : un endroit pour se trouver et se contacter. Ceci est une inscription express, une version légère. Vos réponses créent votre fiche. Vous pourrez compléter votre profil plus tard, tranquillement.',
+    es: 'FrancoNetwork es el directorio de la comunidad de negocios francófona en Guadalajara: un lugar para encontrarse y contactarse. Esta es una inscripción express, una versión ligera. Tus respuestas crean tu ficha. Podrás completar tu perfil más tarde, con calma.',
   },
   expressOnboardingSectionYou: { fr: 'Vous', es: 'Tú' },
   expressOnboardingSectionWork: { fr: 'Votre activité', es: 'Tu trabajo' },
   expressOnboardingFullName: { fr: 'Nom complet', es: 'Nombre completo' },
+  expressOnboardingEmail: { fr: 'Email', es: 'Email' },
+  expressOnboardingEmailHint: {
+    fr: 'Pour recevoir le lien qui crée votre mot de passe et vous reconnecte à votre fiche.',
+    es: 'Para recibir el enlace con el que crearás tu contraseña y volverás a tu ficha.',
+  },
   expressOnboardingWhatsapp: { fr: 'WhatsApp', es: 'WhatsApp' },
   expressOnboardingMexicoSince: {
     fr: 'Depuis quand êtes-vous au Mexique ?',
@@ -1170,7 +1175,7 @@ export const TRANSLATIONS: Translations = {
     fr: 'Que manque-t-il à la communauté à Guadalajara ? Un projet que vous aimeriez lancer ?',
     es: '¿Qué crees que le falta a la comunidad en Guadalajara? ¿Algo que te gustaría crear?',
   },
-  expressOnboardingSubmit: { fr: 'Enregistrer', es: 'Guardar' },
+  expressOnboardingSubmit: { fr: 'Enregistrer mes réponses', es: 'Guardar mis respuestas' },
   expressOnboardingSubmitting: { fr: 'Enregistrement…', es: 'Guardando…' },
   expressOnboardingNeedAuth: { fr: 'Se connecter pour enregistrer', es: 'Inicia sesión para guardar' },
   expressOnboardingMissing: {
@@ -1182,8 +1187,24 @@ export const TRANSLATIONS: Translations = {
     es: 'No se pudo guardar. Reintenta.',
   },
   expressOnboardingSuccess: {
-    fr: 'C’est enregistré. Vous pouvez compléter la fiche plus tard.',
-    es: 'Listo. Puedes completar la ficha más tarde.',
+    fr: 'C’est enregistré. Un email vient de partir : il contient le lien pour créer votre mot de passe et retrouver votre fiche.',
+    es: 'Listo. Acaba de salir un email: trae el enlace para crear tu contraseña y volver a tu ficha.',
+  },
+  expressOnboardingSuccessUpdated: {
+    fr: 'Vos réponses sont enregistrées sur votre fiche.',
+    es: 'Tus respuestas quedaron guardadas en tu ficha.',
+  },
+  expressOnboardingSuccessEmailFailed: {
+    fr: 'Votre fiche est enregistrée. L’email n’a pas pu partir : sur la connexion, utilisez « mot de passe oublié » avec cette adresse.',
+    es: 'Tu ficha está registrada. El email no pudo salir: en el acceso, usa « olvidé mi contraseña » con esta dirección.',
+  },
+  expressOnboardingAlreadyExists: {
+    fr: 'Un profil existe déjà avec cet email. Connectez-vous pour répondre au questionnaire, compléter la fiche ou la modifier.',
+    es: 'Ya existe un perfil con este email. Entra para responder el cuestionario, completar la ficha o modificarla.',
+  },
+  expressOnboardingSignInToEdit: {
+    fr: 'Déjà une fiche ? Se connecter pour la compléter ou la modifier',
+    es: '¿Ya tienes una ficha? Entra para completarla o modificarla',
   },
   expressOnboardingLaterLink: {
     fr: 'Compléter le profil détaillé',
