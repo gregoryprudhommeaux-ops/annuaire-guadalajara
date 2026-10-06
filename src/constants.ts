@@ -1139,8 +1139,8 @@ export const TRANSLATIONS: Translations = {
     es: 'Unirse al directorio',
   },
   expressOnboardingLead: {
-    fr: 'FrancoNetwork relie les entrepreneurs et professionnels francophones à Guadalajara. Cinq infos pour créer votre fiche. Le reste peut attendre.',
-    es: 'FrancoNetwork conecta a emprendedores y profesionales francófonos en Guadalajara. Cinco datos para crear tu ficha. El resto puede esperar.',
+    fr: 'FrancoNetwork est l’annuaire de la communauté à Guadalajara : un endroit pour se trouver et se contacter. Ceci est une inscription express, une version légère. Vos réponses créent votre fiche. Vous pourrez la compléter plus tard, tranquillement.',
+    es: 'FrancoNetwork es el directorio de la comunidad en Guadalajara: un lugar para encontrarse y contactarse. Esta es una inscripción express, una versión ligera. Tus respuestas crean tu ficha. Podrás completarla más tarde, con calma.',
   },
   expressOnboardingEyebrow: { fr: 'Inscription express', es: 'Inscripción express' },
   expressOnboardingRequiredHint: {

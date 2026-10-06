@@ -456,7 +456,7 @@ export const EN_STRINGS: Record<string, string> = {
   onboardingIntroStep3: "Complete the rest later when convenient.",
   expressOnboardingTitle: "Join the directory",
   expressOnboardingLead:
-    "FrancoNetwork connects French-speaking entrepreneurs and professionals in Guadalajara. Five details create your profile. The rest can wait.",
+    "FrancoNetwork is the community directory in Guadalajara: a place to find each other and get in touch. This is an express signup, a light version. Your answers create your profile. You can complete it later, in your own time.",
   expressOnboardingEyebrow: "Express signup",
   expressOnboardingRequiredHint: "5 fields to create your profile · the rest is optional",
   expressOnboardingSectionIdentity: "So people can find you in the directory",

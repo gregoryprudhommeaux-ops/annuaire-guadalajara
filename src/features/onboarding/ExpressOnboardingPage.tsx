@@ -322,9 +322,6 @@ export default function ExpressOnboardingPage({ user, profile, onNeedAuth }: Exp
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--primary)]">{t('expressOnboardingEyebrow')}</p>
         <h1 className="mt-2 text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-3xl">{t('expressOnboardingTitle')}</h1>
         <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--text-muted)]">{t('expressOnboardingLead')}</p>
-        <p className="mt-4 inline-flex max-w-full rounded-full border border-[var(--primary)]/20 bg-[var(--primary-soft)] px-3 py-1.5 text-xs font-medium text-[var(--primary)]">
-          {t('expressOnboardingRequiredHint')}
-        </p>
 
         <form onSubmit={(e) => void onSubmit(e)} className="mt-8 sm:mt-10">
           <input
