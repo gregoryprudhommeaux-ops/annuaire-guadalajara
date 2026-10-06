@@ -1134,6 +1134,67 @@ export const TRANSLATIONS: Translations = {
     fr: 'Complète le reste plus tard selon ton temps.',
     es: 'Completa el resto más adelante según tu tiempo.',
   },
+  expressOnboardingTitle: {
+    fr: 'Rejoindre l’annuaire',
+    es: 'Unirse al directorio',
+  },
+  expressOnboardingLead: {
+    fr: 'Huit questions. Le reste du profil peut attendre.',
+    es: 'Ocho preguntas. El resto del perfil puede esperar.',
+  },
+  expressOnboardingSectionYou: { fr: 'Vous', es: 'Tú' },
+  expressOnboardingSectionWork: { fr: 'Votre activité', es: 'Tu trabajo' },
+  expressOnboardingFullName: { fr: 'Nom complet', es: 'Nombre completo' },
+  expressOnboardingWhatsapp: { fr: 'WhatsApp', es: 'WhatsApp' },
+  expressOnboardingMexicoSince: {
+    fr: 'Depuis quand êtes-vous au Mexique ?',
+    es: '¿Cuándo llegaste a México?',
+  },
+  expressOnboardingMexicoSincePlaceholder: {
+    fr: '6 pour 6 ans, ou « Né ici »',
+    es: '6 por 6 años, o « Nací aquí »',
+  },
+  expressOnboardingNationality: { fr: 'Nationalité', es: 'Nacionalidad' },
+  expressOnboardingCity: { fr: 'Ville où vous vivez', es: 'Ciudad donde vives' },
+  expressOnboardingCityPlaceholder: { fr: 'Guadalajara', es: 'Guadalajara' },
+  expressOnboardingCompany: { fr: 'Nom de votre entreprise', es: 'Nombre de tu empresa' },
+  expressOnboardingCompanyPlaceholder: {
+    fr: 'N/A si vous ne travaillez pas',
+    es: 'N/A si no trabajas',
+  },
+  expressOnboardingLookingFor: {
+    fr: 'Que souhaitez-vous trouver ou développer dans la communauté, perso ou pro ?',
+    es: '¿Qué te gustaría encontrar o desarrollar en la comunidad, a nivel personal o profesional?',
+  },
+  expressOnboardingCommunityGap: {
+    fr: 'Que manque-t-il à la communauté à Guadalajara ? Un projet que vous aimeriez lancer ?',
+    es: '¿Qué crees que le falta a la comunidad en Guadalajara? ¿Algo que te gustaría crear?',
+  },
+  expressOnboardingSubmit: { fr: 'Enregistrer', es: 'Guardar' },
+  expressOnboardingSubmitting: { fr: 'Enregistrement…', es: 'Guardando…' },
+  expressOnboardingNeedAuth: { fr: 'Se connecter pour enregistrer', es: 'Inicia sesión para guardar' },
+  expressOnboardingMissing: {
+    fr: 'Complétez les champs obligatoires.',
+    es: 'Completa los campos obligatorios.',
+  },
+  expressOnboardingError: {
+    fr: 'Enregistrement impossible. Réessayez.',
+    es: 'No se pudo guardar. Reintenta.',
+  },
+  expressOnboardingSuccess: {
+    fr: 'C’est enregistré. Vous pouvez compléter la fiche plus tard.',
+    es: 'Listo. Puedes completar la ficha más tarde.',
+  },
+  expressOnboardingLaterLink: {
+    fr: 'Compléter le profil détaillé',
+    es: 'Completar el perfil detallado',
+  },
+  expressOnboardingSignupLink: {
+    fr: 'Page d’inscription',
+    es: 'Página de inscripción',
+  },
+  expressOnboardingOptional: { fr: 'optionnel', es: 'opcional' },
+  expressOnboardingLangLabel: { fr: 'Langue', es: 'Idioma' },
   onboardingLaMesaEyebrow: {
     fr: 'Dîners thématiques',
     es: 'Cenas temáticas',

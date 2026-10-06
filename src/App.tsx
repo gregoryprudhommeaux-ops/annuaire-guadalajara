@@ -63,6 +63,7 @@ import ProfileEditCard from '@/features/profile/screens/legacy/ProfileEditCard';
 import ProfileEditCardHeader from '@/features/profile/screens/legacy/ProfileEditCardHeader';
 import ProfileEditCardHeaderContent from '@/features/profile/screens/legacy/ProfileEditCardHeaderContent';
 import ProfileEditRoute from '@/features/profile/routes/ProfileEditRoute';
+import ExpressOnboardingPage from '@/features/onboarding/ExpressOnboardingPage';
 import ProfileEditExpandMotion from '@/features/profile/screens/legacy/ProfileEditExpandMotion';
 import ProfileEditExpandedContainer from '@/features/profile/screens/legacy/ProfileEditExpandedContainer';
 import ProfileEditOptimizationCallout from '@/features/profile/screens/legacy/ProfileEditOptimizationCallout';
@@ -2443,6 +2444,7 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
   // Kept for naming clarity elsewhere; admin is not the same surface as the member "dashboard" route.
   const isAdminDashboard = false;
   const isEditProfileRoute = location.pathname === '/profile/edit';
+  const isExpressRoute = location.pathname === '/express';
   /** Libellés / aides FR raccourcis (patch UX) uniquement sur /profile/edit. */
   const profileEditFrUx = isEditProfileRoute && lang === 'fr';
   const isMembersDirectoryRoute = location.pathname === '/membres' || isNetworkRoute;
@@ -5238,7 +5240,8 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
    * - `AppShell` — le header `fn` est déjà fourni par le shell (membre : réseau, stats, profil, etc. ; admin : /admin, /evenements).
    * - `PublicHomePage` sur `/` — en-tête propre à la vitrine, sans doubler le bandeau ici.
    */
-  const showFrancoNetworkTopHeader = !useNewPublicHome && !useAppShellNonAdmin && !useAppShellAdmin;
+  const showFrancoNetworkTopHeader =
+    !isExpressRoute && !useNewPublicHome && !useAppShellNonAdmin && !useAppShellAdmin;
 
   const requestSubmitProfileForm = () => {
     window.requestAnimationFrame(() => {
@@ -5984,7 +5987,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       ) : null}
 
 
-      {!useNewPublicHome && !useAppShellNonAdmin && !useAppShellAdmin ? (
+      {isExpressRoute ? (
+        <ExpressOnboardingPage user={user} profile={profile} onNeedAuth={openAuthModal} />
+      ) : !useNewPublicHome && !useAppShellNonAdmin && !useAppShellAdmin ? (
       <main
         className={cn(pageMainPad, isAdminRoute || isStatsRoute ? 'max-w-none' : 'max-w-7xl')}
       >
@@ -6032,6 +6037,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 onOpenAuth={openAuthModal}
                 authBusy={authProviderBusy !== null || authEmailBusy}
               />
+              <Link to="/express" className="text-sm font-medium text-[#01696f] underline-offset-2 hover:underline">
+                {t('expressOnboardingTitle')}
+              </Link>
               <WhyJoinSection className="w-full max-w-3xl" />
             </div>
           </>
@@ -8204,7 +8212,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
       {/* Opportunités retirées du produit */}
 
       <AnimatePresence>
-        {showOnboarding && (
+        {showOnboarding && !isExpressRoute && (
           <div className="fixed inset-0 z-[160] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }}
@@ -8227,7 +8235,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
               </p>
               <div className="space-y-4">
                 <button 
-                  onClick={() => { setShowOnboarding(false); setIsEditing(true); }}
+                  onClick={() => { setShowOnboarding(false); navigate('/express'); }}
                   className="w-full bg-stone-900 text-white py-4 rounded-2xl font-bold hover:bg-stone-800 transition-all shadow-lg"
                 >
                   {t('onboardingCompleteProfile')}
@@ -8743,7 +8751,8 @@ const App = () => {
             <Route path="/admin/internal" element={<MainApp />} />
             <Route path="/requests/:id" element={<RequestsRedirect />} />
             <Route path="/network/member/:slug" element={<MemberRedirect />} />
-            <Route path="/onboarding" element={<MainApp />} />
+            <Route path="/express" element={<MainApp />} />
+            <Route path="/onboarding" element={<Navigate to="/express" replace />} />
             <Route path="/profile/edit" element={<MainApp />} />
             <Route path="/confidentialite" element={<MainApp />} />
             <Route path="/privacy" element={<MainApp />} />

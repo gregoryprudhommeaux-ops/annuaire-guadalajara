@@ -50,11 +50,11 @@ export const appRoutes: AppRoute[] = [
     primaryCta: 'Répondre à cette demande',
   },
   {
-    path: '/onboarding',
-    name: 'Onboarding',
-    access: 'private',
-    purpose: 'Collecter les données essentielles du membre',
-    primaryCta: 'Continuer',
+    path: '/express',
+    name: 'Express onboarding',
+    access: 'public',
+    purpose: 'Huit questions pour créer une fiche annuaire',
+    primaryCta: 'Enregistrer',
   },
   {
     path: '/profile/edit',

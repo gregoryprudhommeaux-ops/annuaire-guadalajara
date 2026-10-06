@@ -149,6 +149,8 @@ export interface UserProfile {
   /** Jusqu’à 10 passions « hors business » (ids stables, voir `passionConfig.ts`) */
   passionIds?: string[];
   arrivalYear?: number;
+  /** Réponse libre onboarding express (« 6 » ans, « Nací aquí », etc.). */
+  mexicoArrivalNote?: string;
   /** Fourchette (string) ou ancien nombre saisi à la main */
   employeeCount?: EmployeeCountRange | number;
   isEmailPublic?: boolean;
