@@ -253,16 +253,21 @@ export default function ExpressOnboardingPage({ user, profile, onNeedAuth }: Exp
             {String(index + 1).padStart(2, '0')}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-              <span className="text-[15px] font-semibold leading-snug text-[var(--text)]">{q.label}</span>
+            <span className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+              <span className="text-[15px] font-semibold leading-snug text-[var(--text)]">
+                {q.label}
+                {!q.optional ? (
+                  <span className="ml-0.5 font-semibold text-[var(--primary)]" aria-hidden>
+                    *
+                  </span>
+                ) : null}
+              </span>
               {q.optional ? (
-                <span className="rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-muted)]">
+                <span className="text-[11px] font-medium text-[var(--text-muted)]">
                   {t('expressOnboardingOptional')}
                 </span>
               ) : (
-                <span className="rounded-full bg-[var(--primary-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--primary)]">
-                  {t('expressOnboardingRequired')}
-                </span>
+                <span className="sr-only">{t('expressOnboardingRequired')}</span>
               )}
             </span>
             <span className="mt-3 block">
