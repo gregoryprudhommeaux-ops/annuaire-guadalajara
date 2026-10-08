@@ -46,6 +46,8 @@ export type ExpressDashboardData = {
   loading: boolean;
   error: string | null;
   totalAllTime: number;
+  /** Toutes les inscriptions EXPRESS (sans filtre période). */
+  allRows: ExpressMemberRow[];
   rows: ExpressMemberRow[];
   byCity: NameCount[];
   byNationality: NameCount[];
@@ -63,6 +65,7 @@ const EMPTY: ExpressDashboardData = {
   loading: true,
   error: null,
   totalAllTime: 0,
+  allRows: [],
   rows: [],
   byCity: [],
   byNationality: [],
@@ -183,6 +186,7 @@ export function useExpressDashboard(period: PeriodKey, lang: Language): ExpressD
       loading: false,
       error: null,
       totalAllTime: raw.length,
+      allRows: raw,
       rows,
       byCity: countBy(rows, (r) => r.city, emptyCity),
       byNationality: countBy(rows, (r) => r.nationality, emptyNat),

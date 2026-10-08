@@ -244,6 +244,14 @@ export const EN_STRINGS: Record<string, string> = {
   adminExpressEmptyLead:
     "As soon as a profile is created via /express, answers show up here with charts and quotes.",
   adminExpressOpenForm: "Open the form",
+  adminExpressCsvTitle: "CSV export (Google Sheets)",
+  adminExpressCsvLead:
+    "Download all EXPRESS answers for the selected period, ready to import into Google Sheets.",
+  adminExpressCsvPeriodLabel: "Extraction period",
+  adminExpressCsvDownload: "Download CSV · {{count}}",
+  adminExpressCsvEmpty: "No answers in this period",
+  adminExpressCsvSheetsHint:
+    "Google Sheets: File → Import → Upload. Separator: comma, UTF-8.",
   adminExpressKpiTotal: "EXPRESS sign-ups",
   adminExpressKpiLookingFor: "Said what they want",
   adminExpressKpiGap: "Flagged a community gap",

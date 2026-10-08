@@ -1846,6 +1846,17 @@
   margin: 0 0 20px;
 }
 
+.admin-dashboard-page .express-export-card .admin-period__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-dashboard-page .express-export-card .admin-pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .admin-dashboard-page .express-quote-grid {
   display: grid;
   grid-template-columns: 1fr;

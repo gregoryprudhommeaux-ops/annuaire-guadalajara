@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Area,
@@ -19,6 +19,11 @@ import { useTimePeriod } from '@/contexts/TimePeriodContext';
 import type { PeriodKey } from '@/hooks/useAdminStats';
 import { useExpressDashboard } from '@/hooks/useExpressDashboard';
 import { pickLang } from '@/lib/uiLocale';
+import { cn } from '@/lib/cn';
+import {
+  downloadExpressCsv,
+  filterExpressRowsByPeriod,
+} from '@/lib/expressCsvExport';
 
 type TFn = (key: string, params?: Record<string, string | number>) => string;
 
@@ -70,15 +75,38 @@ function QuoteGrid({
   );
 }
 
+const EXPORT_PERIODS: Array<{ key: PeriodKey; labelKey: string }> = [
+  { key: 'today', labelKey: 'adminTimePeriodToday' },
+  { key: '7d', labelKey: 'adminTimePeriod7d' },
+  { key: '30d', labelKey: 'adminTimePeriod30d' },
+  { key: '90d', labelKey: 'adminTimePeriod90d' },
+  { key: 'all', labelKey: 'adminTimePeriodAll' },
+];
+
 export default function AdminExpressInsights({ lang, t }: { lang: Language; t: TFn }) {
   const { period } = useTimePeriod();
   const data = useExpressDashboard(period as PeriodKey, lang);
+  const [exportPeriod, setExportPeriod] = useState<PeriodKey>(period as PeriodKey);
   const tick = { fontSize: 10, fill: '#78716c' };
+
+  useEffect(() => {
+    setExportPeriod(period as PeriodKey);
+  }, [period]);
+
+  const exportRows = useMemo(
+    () => filterExpressRowsByPeriod(data.allRows, exportPeriod),
+    [data.allRows, exportPeriod]
+  );
 
   const statusHint = useMemo(() => {
     if (data.rows.length === 0) return '—';
     return `${data.pendingCount} ${t('adminExpressPendingHint')}`;
   }, [data.pendingCount, data.rows.length, t]);
+
+  const handleDownloadCsv = () => {
+    if (exportRows.length === 0) return;
+    downloadExpressCsv(exportRows, exportPeriod);
+  };
 
   if (data.loading) {
     return <p className="text-sm text-[var(--fn-muted)]">{t('loading')}</p>;
@@ -113,6 +141,47 @@ export default function AdminExpressInsights({ lang, t }: { lang: Language; t: T
         <h2 className="admin-card__title">{t('adminExpressTitle')}</h2>
         <p className="admin-card__text">{t('adminExpressLead')}</p>
       </div>
+
+      <article className="admin-card express-export-card">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="admin-card__title">{t('adminExpressCsvTitle')}</h3>
+            <p className="admin-card__text">{t('adminExpressCsvLead')}</p>
+          </div>
+          <button
+            type="button"
+            className="admin-pill is-active"
+            style={{ minHeight: 36 }}
+            disabled={exportRows.length === 0}
+            onClick={handleDownloadCsv}
+            title={
+              exportRows.length === 0
+                ? t('adminExpressCsvEmpty')
+                : t('adminExpressCsvDownload', { count: exportRows.length })
+            }
+          >
+            {t('adminExpressCsvDownload', { count: exportRows.length })}
+          </button>
+        </div>
+        <div className="admin-card__body">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--fn-muted)]">
+            {t('adminExpressCsvPeriodLabel')}
+          </p>
+          <div className="admin-period__pills" role="group" aria-label={t('adminExpressCsvPeriodLabel')}>
+            {EXPORT_PERIODS.map((p) => (
+              <button
+                key={p.key}
+                type="button"
+                className={cn('admin-pill', p.key === exportPeriod && 'is-active')}
+                onClick={() => setExportPeriod(p.key)}
+              >
+                {t(p.labelKey)}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-[var(--fn-muted)]">{t('adminExpressCsvSheetsHint')}</p>
+        </div>
+      </article>
 
       <div className="admin-kpi-grid" id="admin-express-kpi">
         <Kpi

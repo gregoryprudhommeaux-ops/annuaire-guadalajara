@@ -635,6 +635,30 @@ export const TRANSLATIONS: Translations = {
     es: "En cuanto se cree un perfil vía /express, las respuestas aparecerán aquí con gráficas y citas.",
   },
   adminExpressOpenForm: { fr: "Ouvrir le formulaire", es: "Abrir el formulario" },
+  adminExpressCsvTitle: {
+    fr: "Export CSV (Google Sheets)",
+    es: "Exportar CSV (Google Sheets)",
+  },
+  adminExpressCsvLead: {
+    fr: "Téléchargez toutes les réponses EXPRESS de la période choisie, prêtes à importer dans Google Sheets.",
+    es: "Descarga todas las respuestas EXPRESS del periodo elegido, listas para importar en Google Sheets.",
+  },
+  adminExpressCsvPeriodLabel: {
+    fr: "Période d’extraction",
+    es: "Periodo de extracción",
+  },
+  adminExpressCsvDownload: {
+    fr: "Télécharger CSV · {{count}}",
+    es: "Descargar CSV · {{count}}",
+  },
+  adminExpressCsvEmpty: {
+    fr: "Aucune réponse sur cette période",
+    es: "Sin respuestas en este periodo",
+  },
+  adminExpressCsvSheetsHint: {
+    fr: "Google Sheets : Fichier → Importer → Importer un fichier → Upload. Séparateur : virgule, UTF-8.",
+    es: "Google Sheets: Archivo → Importar → Subir. Separador: coma, UTF-8.",
+  },
   adminExpressKpiTotal: { fr: "Inscriptions EXPRESS", es: "Altas EXPRESS" },
   adminExpressKpiLookingFor: { fr: "Ont dit ce qu’ils cherchent", es: "Dijeron qué buscan" },
   adminExpressKpiGap: { fr: "Ont signalé un manque", es: "Señalaron un vacío" },
