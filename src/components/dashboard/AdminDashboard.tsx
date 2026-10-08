@@ -591,27 +591,6 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
 
   return (
     <section>
-      <div className="admin-view-switch" role="tablist" aria-label={t('adminPanel')}>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={insightTab === 'overview'}
-          className={`admin-pill${insightTab === 'overview' ? ' is-active' : ''}`}
-          onClick={() => setInsightTab('overview')}
-        >
-          {t('adminTabOverview')}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={insightTab === 'express'}
-          className={`admin-pill${insightTab === 'express' ? ' is-active' : ''}`}
-          onClick={() => setInsightTab('express')}
-        >
-          {t('adminTabExpress')}
-        </button>
-      </div>
-
       {insightTab === 'express' ? <AdminExpressInsights lang={lang} t={t} /> : null}
 
       {insightTab === 'overview' && stats.loading ? (

@@ -96,7 +96,8 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
-  min-width: min(520px, 100%);
+  min-width: 0;
+  margin-left: auto;
 }
 
 .admin-dashboard-page .admin-header__toolbar {
@@ -110,6 +111,7 @@
 .admin-dashboard-page .admin-header__actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
 }
