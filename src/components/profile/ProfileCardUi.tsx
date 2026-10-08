@@ -46,6 +46,17 @@ const waIcon = (
   </svg>
 );
 
+/**
+ * Construit un `mailto:` utilisable par les clients mail.
+ * Ne pas passer l’email entier dans `encodeURIComponent` : `@` devient `%40`
+ * et beaucoup de clients ouvrent une adresse invalide (`user%40domain.com`).
+ */
+export function toMailtoHref(email: string): string {
+  const trimmed = email.trim().replace(/\s+/g, '');
+  if (!trimmed) return '#';
+  return `mailto:${trimmed}`;
+}
+
 /** Lien mailto: libellé fixe — ouvre le client mail sans afficher l’adresse dans la carte. */
 export function ProfileCardEmailContact({
   email,
@@ -69,7 +80,7 @@ export function ProfileCardEmailContact({
   }
 
   const trimmed = email.trim();
-  const mailtoHref = trimmed ? `mailto:${encodeURIComponent(trimmed)}` : '#';
+  const mailtoHref = toMailtoHref(trimmed);
 
   return (
     <a

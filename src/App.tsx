@@ -267,6 +267,7 @@ import ProfileIdentityVisual from './components/profile/ProfileIdentityVisual';
 import {
   ProfileCardEmailContact,
   ProfileCardWhatsappContactFooter,
+  toMailtoHref,
 } from './components/profile/ProfileCardUi';
 import { LanguageSwitch } from '@/components/layout/LanguageSwitch';
 import SignupInviteCard from './components/home/SignupInviteCard';
@@ -7956,9 +7957,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       (p.isWhatsappPublic || (user && profile?.isValidated))
                   );
                   if (!canEmail && !canWhatsapp) return null;
-                  const mailto = p.email?.trim()
-                    ? `mailto:${encodeURIComponent(p.email.trim())}`
-                    : '#';
+                  const mailto = p.email?.trim() ? toMailtoHref(p.email) : '#';
                   const waHref = p.whatsapp
                     ? `https://wa.me/${p.whatsapp.replace(/\D/g, '')}`
                     : '#';
