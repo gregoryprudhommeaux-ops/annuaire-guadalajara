@@ -77,7 +77,7 @@ export function First50MembersBanner({
             narrow ? 'text-[15px] sm:text-base' : 'text-base sm:text-lg'
           )}
         >
-          {t('home.first50.titleWithCount', { count: safeCurrent })}
+          {t('home.first50.titleWithCount', { count: Math.max(0, currentCount) })}
         </h2>
         <p className="text-xs leading-snug text-slate-600 text-pretty sm:text-[13px]">{tagline}</p>
       </header>
