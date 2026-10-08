@@ -151,6 +151,8 @@ export interface UserProfile {
   arrivalYear?: number;
   /** Réponse libre onboarding express (« 6 » ans, « Nací aquí », etc.). */
   mexicoArrivalNote?: string;
+  /** Source d’inscription (`express` = formulaire public `/express`). */
+  onboardingSource?: 'express' | string;
   /** Fourchette (string) ou ancien nombre saisi à la main */
   employeeCount?: EmployeeCountRange | number;
   isEmailPublic?: boolean;

@@ -36,13 +36,14 @@ import {
   adminAffinityViewMembers,
 } from '@/lib/adminDashboardLocale';
 import { FRANCO_ADMIN_KEY_AFFINITY, FRANCO_ADMIN_KEY_SCROLL } from '@/lib/adminClientBridge';
+import AdminExpressInsights from '@/components/dashboard/AdminExpressInsights';
 
 type TFn = (key: string, params?: Record<string, string | number>) => string;
 
 type AdminDashboardProps = {
   lang: Language;
   t: TFn;
-  initialTab?: 'overview' | 'profiles' | 'site' | 'events';
+  initialTab?: 'overview' | 'express' | 'profiles' | 'site' | 'events';
   /** Injected from `AdminPage` for STEP 1 priority zone. */
   priorityLeft?: React.ReactNode;
   priorityRight?: React.ReactNode;
@@ -179,7 +180,7 @@ function ChartCard({
   );
 }
 
-type AdminInsightTab = 'overview' | 'profiles' | 'site' | 'events';
+type AdminInsightTab = 'overview' | 'express' | 'profiles' | 'site' | 'events';
 type AffinityExploreKey = 'detail' | 'matrix';
 
 export default function AdminDashboard(props: AdminDashboardProps) {
@@ -583,15 +584,40 @@ function AdminDashboardInner({ lang, t, initialTab, priorityLeft, priorityRight 
       .slice(0, 10);
   }, [stats.profilesBySector, stats.profilesByCity]);
 
-  // STEP 1 (today): focus on a clean decision-oriented overview. Keep other tabs intact for later.
+  // Keep legacy analytics tabs dormant; overview + EXPRESS are the active admin views.
   useEffect(() => {
-    if (insightTab !== 'overview') setInsightTab('overview');
-  }, []);
+    if (insightTab !== 'overview' && insightTab !== 'express') setInsightTab('overview');
+  }, [insightTab]);
 
   return (
     <section>
-      {stats.loading ? <p className="text-sm text-slate-500">{loadingLabel}</p> : null}
-      {!stats.loading && stats.error ? (
+      <div className="admin-view-switch" role="tablist" aria-label={t('adminPanel')}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={insightTab === 'overview'}
+          className={`admin-pill${insightTab === 'overview' ? ' is-active' : ''}`}
+          onClick={() => setInsightTab('overview')}
+        >
+          {t('adminTabOverview')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={insightTab === 'express'}
+          className={`admin-pill${insightTab === 'express' ? ' is-active' : ''}`}
+          onClick={() => setInsightTab('express')}
+        >
+          {t('adminTabExpress')}
+        </button>
+      </div>
+
+      {insightTab === 'express' ? <AdminExpressInsights lang={lang} t={t} /> : null}
+
+      {insightTab === 'overview' && stats.loading ? (
+        <p className="text-sm text-slate-500">{loadingLabel}</p>
+      ) : null}
+      {insightTab === 'overview' && !stats.loading && stats.error ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
           {stats.error}
         </p>
