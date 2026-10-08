@@ -8,6 +8,8 @@
  * Emails Resend (nouveaux) :
  *  3) onUserCreatedSendWelcome — Firestore onDocumentCreated `users/{uid}` (base nommée).
  *  4) weeklyDigest — onSchedule lundi 9h America/Mexico_City.
+ *  4b) monthlyProfileCompletionNudge — onSchedule le 15 à 8h America/Mexico_City
+ *      (profils < 100 % ou non validés).
  *  5) dispatchScheduledCampaigns — onSchedule toutes les 5 min, envoie les campagnes
  *     `emailCampaigns/{id}` programmées par l'admin via la page /admin/internal.
  *  6) sendCampaignNow — Callable HTTPS, envoi immédiat d'une campagne (admin only).
@@ -184,7 +186,12 @@ export {
   notifyAdminOnUserCreated,
   notifyAdminOnUserUpdated,
 } from './triggers/notifyAdminOnUserWrite';
+export {
+  syncUserToLaMesaOnCreate,
+  syncUserToLaMesaOnUpdate,
+} from './triggers/syncUserToLaMesa';
 export { weeklyDigest } from './triggers/weeklyDigest';
+export { monthlyProfileCompletionNudge } from './triggers/monthlyProfileCompletionNudge';
 export { monthlyStatsDigest } from './triggers/monthlyStatsDigest';
 export { dispatchScheduledCampaigns } from './triggers/dispatchScheduledCampaigns';
 export { sendCampaignNow } from './callables/sendCampaignNow';

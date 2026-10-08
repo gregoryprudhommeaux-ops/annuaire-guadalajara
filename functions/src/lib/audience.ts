@@ -6,6 +6,8 @@ import { computeCompletionRate, pickDisplayName } from './profileCompletion';
 export type AudienceFilter =
   | { type: 'all' }
   | { type: 'incomplete'; threshold?: number }
+  /** Profil < 100 % ou fiche non validée (`isValidated === false`). */
+  | { type: 'profileNudge' }
   | { type: 'manual'; emails: string[] };
 
 export type AudienceMember = {
@@ -15,6 +17,7 @@ export type AudienceMember = {
   fullName: string;
   companyName?: string;
   completionRate: number;
+  isValidated: boolean | null;
   /** `users/{uid}.communicationLanguage` ; défaut côté serveur = `'es'`. */
   communicationLanguage: 'fr' | 'es' | 'en';
 };
@@ -54,6 +57,9 @@ export async function resolveAudience(
       activityDescription: d.activityDescription as string,
     });
 
+    const isValidated =
+      typeof d.isValidated === 'boolean' ? d.isValidated : null;
+
     out.push({
       uid: doc.id,
       email,
@@ -64,6 +70,7 @@ export async function resolveAudience(
       fullName: String(d.fullName ?? '').trim(),
       companyName: String(d.companyName ?? '').trim() || undefined,
       completionRate: completion,
+      isValidated,
       communicationLanguage: pickLanguage(d.communicationLanguage),
     });
   }
@@ -75,6 +82,10 @@ export async function resolveAudience(
       const threshold = filter.threshold ?? 80;
       return dedupe(out.filter((m) => m.completionRate < threshold));
     }
+    case 'profileNudge':
+      return dedupe(
+        out.filter((m) => m.completionRate < 100 || m.isValidated === false)
+      );
     case 'manual': {
       const allowed = new Set(
         filter.emails
@@ -92,6 +103,7 @@ export async function resolveAudience(
           displayName: 'cher membre',
           fullName: '',
           completionRate: 0,
+          isValidated: null,
           communicationLanguage: 'es',
         });
       });
