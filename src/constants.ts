@@ -614,9 +614,102 @@ export const TRANSLATIONS: Translations = {
   },
   contactFormHpLabel: { fr: "Ne pas remplir", es: "No rellenar" },
   adminTabOverview: { fr: "Synthèse", es: "Resumen" },
+  adminTabExpress: { fr: "EXPRESS", es: "EXPRESS" },
   adminTabProfiles: { fr: "Analytics profils", es: "Analítica de perfiles" },
   adminTabSite: { fr: "Analytics site", es: "Analítica del sitio" },
   adminTabEvents: { fr: "Événements", es: "Eventos" },
+  adminExpressTitle: {
+    fr: "Inscriptions EXPRESS",
+    es: "Altas EXPRESS",
+  },
+  adminExpressLead: {
+    fr: "Réponses du formulaire léger : qui arrive, ce qu’ils cherchent, et ce qui manque encore à la communauté.",
+    es: "Respuestas del formulario ligero: quién llega, qué busca, y qué le falta todavía a la comunidad.",
+  },
+  adminExpressEmptyTitle: {
+    fr: "Aucune inscription EXPRESS pour l’instant",
+    es: "Todavía no hay altas EXPRESS",
+  },
+  adminExpressEmptyLead: {
+    fr: "Dès qu’un profil est créé via /express, les réponses apparaissent ici avec graphiques et citations.",
+    es: "En cuanto se cree un perfil vía /express, las respuestas aparecerán aquí con gráficas y citas.",
+  },
+  adminExpressOpenForm: { fr: "Ouvrir le formulaire", es: "Abrir el formulario" },
+  adminExpressKpiTotal: { fr: "Inscriptions EXPRESS", es: "Altas EXPRESS" },
+  adminExpressKpiLookingFor: { fr: "Ont dit ce qu’ils cherchent", es: "Dijeron qué buscan" },
+  adminExpressKpiGap: { fr: "Ont signalé un manque", es: "Señalaron un vacío" },
+  adminExpressKpiWhatsapp: { fr: "Avec WhatsApp", es: "Con WhatsApp" },
+  adminExpressFillHint: {
+    fr: "Sur les inscriptions de la période",
+    es: "Sobre las altas del periodo",
+  },
+  adminExpressPendingHint: {
+    fr: "en attente de validation",
+    es: "en espera de validación",
+  },
+  adminExpressAllTime: { fr: "Toute la période", es: "Todo el periodo" },
+  adminExpressInPeriod: {
+    fr: "{{total}} au total (filtre période)",
+    es: "{{total}} en total (filtro periodo)",
+  },
+  adminExpressChartSignups: { fr: "Inscriptions par jour", es: "Altas por día" },
+  adminExpressChartSignupsHint: {
+    fr: "Volume EXPRESS selon le filtre de période.",
+    es: "Volumen EXPRESS según el filtro de periodo.",
+  },
+  adminExpressChartValidation: { fr: "Statut de validation", es: "Estado de validación" },
+  adminExpressChartValidationHint: {
+    fr: "Part des fiches EXPRESS déjà validées vs en revue.",
+    es: "Proporción de fichas EXPRESS validadas vs en revisión.",
+  },
+  adminExpressChartCities: { fr: "Villes", es: "Ciudades" },
+  adminExpressChartCitiesHint: {
+    fr: "Où se situent les nouveaux profils EXPRESS.",
+    es: "Dónde se ubican los nuevos perfiles EXPRESS.",
+  },
+  adminExpressChartNationality: { fr: "Nationalités", es: "Nacionalidades" },
+  adminExpressChartNationalityHint: {
+    fr: "Depuis les données admin (nationalité).",
+    es: "Desde los datos admin (nacionalidad).",
+  },
+  adminExpressNoChartData: {
+    fr: "Pas encore de données pour ce graphique.",
+    es: "Aún no hay datos para esta gráfica.",
+  },
+  adminExpressLegendSignups: { fr: "Inscriptions", es: "Altas" },
+  adminExpressLegendMembers: { fr: "Membres", es: "Miembros" },
+  adminExpressQuotesLookingTitle: {
+    fr: "Ce qu’ils cherchent",
+    es: "Qué buscan",
+  },
+  adminExpressQuotesLookingLead: {
+    fr: "Citations utiles pour intros et tables (dont LA MESA).",
+    es: "Citas útiles para intros y mesas (incluida LA MESA).",
+  },
+  adminExpressQuotesGapTitle: {
+    fr: "Ce qui manque à la communauté",
+    es: "Qué le falta a la comunidad",
+  },
+  adminExpressQuotesGapLead: {
+    fr: "Signaux terrain pour prioriser l’acquisition et les thèmes.",
+    es: "Señales de terreno para priorizar adquisición y temas.",
+  },
+  adminExpressQuotesEmpty: {
+    fr: "Aucune réponse libre sur la période.",
+    es: "Sin respuestas libres en el periodo.",
+  },
+  adminExpressTableTitle: { fr: "Dernières réponses", es: "Últimas respuestas" },
+  adminExpressTableLead: {
+    fr: "Cliquez un nom pour ouvrir la fiche.",
+    es: "Haz clic en un nombre para abrir la ficha.",
+  },
+  adminExpressColName: { fr: "Nom", es: "Nombre" },
+  adminExpressColCity: { fr: "Ville", es: "Ciudad" },
+  adminExpressColLooking: { fr: "Cherche", es: "Busca" },
+  adminExpressColGap: { fr: "Manque communauté", es: "Vacío comunidad" },
+  adminExpressColStatus: { fr: "Statut", es: "Estado" },
+  adminExpressStatusValidated: { fr: "Validé", es: "Validado" },
+  adminExpressStatusPending: { fr: "En revue", es: "En revisión" },
   adminProfileInsightsIntro: {
     fr: "Indicateurs sur les fiches membres : complétude (score interne), inscriptions, mises à jour et validation.",
     es: "Indicadores sobre las fichas: completitud (puntuación interna), altas, actualizaciones y validación.",

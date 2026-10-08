@@ -24,6 +24,7 @@ type UnansweredNeedRow = {
 };
 
 export default function AdminPage({ lang, t }: AdminPageProps) {
+  const [adminView, setAdminView] = useState<'overview' | 'express'>('overview');
   const [recentRequests, setRecentRequests] = useState<MemberNetworkRequest[] | null>(null);
   const [unansweredNeeds, setUnansweredNeeds] = useState<UnansweredNeedRow[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -328,6 +329,28 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
               <p className="admin-header__text">{t('adminPageLead')}</p>
             </div>
             <div className="admin-header__aside">
+              <div className="admin-header__actions" role="tablist" aria-label={t('adminPanel')}>
+                {adminView === 'express' ? (
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={false}
+                    className="admin-pill"
+                    onClick={() => setAdminView('overview')}
+                  >
+                    {t('adminTabOverview')}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={adminView === 'express'}
+                  className={`admin-pill${adminView === 'express' ? ' is-active' : ''}`}
+                  onClick={() => setAdminView(adminView === 'express' ? 'overview' : 'express')}
+                >
+                  {t('adminTabExpress')}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -384,6 +407,7 @@ export default function AdminPage({ lang, t }: AdminPageProps) {
           <AdminDashboard
             lang={lang}
             t={t}
+            initialTab={adminView}
             priorityLeft={
               unansweredNeeds ? (
                 unansweredNeedsUi

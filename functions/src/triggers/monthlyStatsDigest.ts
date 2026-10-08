@@ -160,6 +160,7 @@ export const monthlyStatsDigest = onSchedule(
       displayName: 'cher membre',
       fullName: '',
       completionRate: 0,
+      isValidated: null,
       communicationLanguage: 'fr',
     }));
 
