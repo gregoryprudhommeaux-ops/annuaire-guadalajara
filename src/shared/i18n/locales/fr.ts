@@ -53,7 +53,7 @@ const shell = {
       other: 'Autre',
     },
     memberCard: {
-      noStructuredNeed: 'Aucun besoin structuré renseigné',
+      noStructuredNeed: 'Aucun besoin renseigné pour le moment',
       noStructuredOffer: 'Aucune offre structurée renseignée',
       companyUnknown: 'Entreprise non renseignée',
       sectorUnknown: 'Secteur non renseigné',

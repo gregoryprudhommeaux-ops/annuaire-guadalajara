@@ -28,7 +28,7 @@ export const FR = {
 
     first50: {
       eyebrow: 'Lancement',
-      title: '50 profils de référence — on avance ensemble',
+      title: '50 profils — on avance ensemble',
       description:
         'Chaque nouveau membre renforce la valeur du réseau pour tous : recommandations, demandes ciblées, connexions et opportunités à Guadalajara.',
       subline:

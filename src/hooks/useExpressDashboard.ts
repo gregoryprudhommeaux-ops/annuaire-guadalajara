@@ -16,6 +16,7 @@ import {
   type NameCount,
   type DayCount,
 } from '@/lib/expressDashboardCompute';
+import { canonicalizeCity } from '@/lib/canonicalizeCity';
 
 function getStartDate(period: PeriodKey): Date | null {
   const now = new Date();
@@ -121,10 +122,10 @@ export function useExpressDashboard(period: PeriodKey, lang: Language): ExpressD
                 d.id,
               email: String(data.email ?? '').trim().toLowerCase(),
               whatsapp: String(data.whatsapp ?? '').trim(),
-              city: String(data.city ?? '').trim(),
+              city: canonicalizeCity(String(data.city ?? '').trim()),
               companyName: String(data.companyName ?? '').trim(),
               lookingFor: String(data.lookingFor ?? data.networkGoal ?? '').trim(),
-              communityGap: String(data.helpNewcomers ?? '').trim(),
+              communityGap: String(data.communityGap ?? data.helpNewcomers ?? '').trim(),
               mexicoArrivalNote: String(data.mexicoArrivalNote ?? '').trim(),
               nationality: nationalityCode
                 ? nationalityLabel(nationalityCode, lang) || nationalityCode

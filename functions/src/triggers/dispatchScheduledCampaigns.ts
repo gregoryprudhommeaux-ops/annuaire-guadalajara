@@ -4,6 +4,7 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { getApps } from 'firebase-admin/app';
 import { FIRESTORE_DATABASE_ID } from '../constants';
 import { sendCampaignById } from '../lib/campaign';
+import { isAutomatedEmailPaused, logEmailPauseSkip } from '../lib/emailPause';
 
 /**
  * Toutes les 5 min : récupère les campagnes status='scheduled' dont scheduledAt <= now
@@ -19,6 +20,10 @@ export const dispatchScheduledCampaigns = onSchedule(
     memory: '512MiB',
   },
   async () => {
+    if (isAutomatedEmailPaused()) {
+      logEmailPauseSkip('dispatchScheduledCampaigns');
+      return;
+    }
     const db = getFirestore(getApps()[0]!, FIRESTORE_DATABASE_ID);
     const now = Timestamp.now();
     const snap = await db

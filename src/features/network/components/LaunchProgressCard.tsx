@@ -42,9 +42,9 @@ export function LaunchProgressCard({
 
   const sectionAria = pickLang('Lancement du réseau', 'Lanzamiento de la red', 'Network launch', lang);
   const title = pickLang(
-    `${currentCount} profils de référence — on avance ensemble`,
-    `${currentCount} perfiles de referencia — avanzamos juntos`,
-    `${currentCount} reference profiles — we move forward together`,
+    `${currentCount} profils — on avance ensemble`,
+    `${currentCount} perfiles — avanzamos juntos`,
+    `${currentCount} profiles — we move forward together`,
     lang
   );
 

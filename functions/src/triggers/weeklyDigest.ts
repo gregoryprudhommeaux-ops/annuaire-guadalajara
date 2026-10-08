@@ -12,6 +12,7 @@ import {
   loadEnabledAutomations,
 } from '../lib/automations';
 import { buildVariables, interpolate } from '../lib/templateVars';
+import { isAutomatedEmailPaused, logEmailPauseSkip } from '../lib/emailPause';
 
 const BATCH_SIZE = 100;
 
@@ -32,6 +33,10 @@ export const weeklyDigest = onSchedule(
     memory: '512MiB',
   },
   async () => {
+    if (isAutomatedEmailPaused()) {
+      logEmailPauseSkip('weeklyDigest');
+      return;
+    }
     const triggerOn = await isTriggerEnabled('weeklySchedule');
     if (!triggerOn) {
       logger.info('Digest hebdo désactivé via appConfig, skip.');

@@ -183,6 +183,11 @@ export interface UserProfile {
   targetSectors?: string[];
   /** Aide concrète proposée aux nouveaux arrivants (texte libre). */
   helpNewcomers?: string;
+  /**
+   * Express (/express): ce qui manque à la communauté selon le membre.
+   * Distinct de `helpNewcomers` (offre d’aide) sur les fiches complètes.
+   */
+  communityGap?: string;
   /** Objectif réseau en une phrase (ce que le membre cherche via la communauté). */
   networkGoal?: string;
   /** @deprecated Retiré du formulaire ; effacé au prochain enregistrement. Peut subsister sur d’anciens documents. */

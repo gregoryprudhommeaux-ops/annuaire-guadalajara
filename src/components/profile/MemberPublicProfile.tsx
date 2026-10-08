@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, Linkedin } from 'lucide-react';
+import { ChevronRight, Linkedin, Mail, MessageCircle } from 'lucide-react';
 import { normalizedTargetKeywords, type Language, type UserProfile } from '../../types';
 import { activityCategoryLabel, workFunctionLabel } from '../../constants';
 import { needOptionLabel, sanitizeHighlightedNeeds, sanitizeHighlightedOffers } from '../../needOptions';
@@ -11,6 +11,13 @@ import {
 } from '../../lib/contactPreferences';
 import { pickLang } from '../../lib/uiLocale';
 import { formatPersonName } from '@/shared/utils/formatPersonName';
+import {
+  buildNeedShareEmailBody,
+  buildNeedShareEmailSubject,
+  buildNeedShareWhatsAppMessage,
+  openNeedShareEmail,
+  openNeedShareWhatsApp,
+} from '@/lib/profileNeedsDisplay';
 import {
   companyActivityNamesJoined,
   profileDistinctActivityCategories,
@@ -43,6 +50,8 @@ export type MemberPublicProfileProps = {
   t: (key: string) => string;
   canViewEmail: boolean;
   canViewWhatsapp: boolean;
+  /** Admin : bouton mailto pour partager le besoin hors base. */
+  canShareNeedEmail?: boolean;
   onViewNeed?: () => void;
 };
 
@@ -52,6 +61,7 @@ export function MemberPublicProfile({
   t,
   canViewEmail,
   canViewWhatsapp,
+  canShareNeedEmail = false,
   onViewNeed,
 }: MemberPublicProfileProps) {
   const displayName = formatPersonName(profile.fullName);
@@ -78,12 +88,21 @@ export function MemberPublicProfile({
   if (profile.openToEvents) openToLabels.push(t('contactPrefsOpenEvents'));
 
   const site = trimProfileWebsite(profile.website);
-  const hasGoal = Boolean(profile.networkGoal?.trim());
-  const hasNeeds = needs.length > 0;
+  const seekingText = (profile.networkGoal || profile.lookingFor || '').trim();
+  const isExpress = profile.onboardingSource === 'express';
+  const communityGapText = (
+    profile.communityGap ||
+    (isExpress ? profile.helpNewcomers : '') ||
+    ''
+  ).trim();
+  const helpOfferText =
+    !isExpress && !profile.communityGap ? (profile.helpNewcomers || '').trim() : '';
+  const hasSeekingOrGap = Boolean(seekingText) || Boolean(communityGapText);
+  const hasNeeds = needs.length > 0 || hasSeekingOrGap;
   const hasOffers = offers.length > 0;
-  const matchmakingBlocks = Number(hasGoal) + Number(hasNeeds) + Number(hasOffers);
+  const matchmakingBlocks = Number(hasNeeds) + Number(hasOffers);
   const matchmakingGridClass =
-    matchmakingBlocks >= 3 ? 'grid gap-4 md:grid-cols-3' : 'grid gap-4 md:grid-cols-2';
+    matchmakingBlocks >= 2 ? 'grid gap-4 md:grid-cols-2' : 'grid gap-4';
 
   return (
     <article className="space-y-6">
@@ -159,24 +178,85 @@ export function MemberPublicProfile({
 
       {matchmakingBlocks > 0 ? (
         <section className={matchmakingGridClass}>
-          {hasGoal ? (
-            <div className={profileCardClass}>
-              <h2 className={profileSectionTitleClass}>{t('profileNetworkGoalLabel')}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-stone-800">{profile.networkGoal}</p>
-            </div>
-          ) : null}
-
           {hasNeeds ? (
             <div className={profileCardClass}>
-              <h2 className={profileSectionTitleClass}>{t('profilePublicCurrentNeeds')}</h2>
-              <ul className="mt-2 flex list-none flex-wrap gap-1.5 p-0">
-                {needs.map((id) => (
-                  <li key={id} className={profileNeedPillClass}>
-                    {needOptionLabel(id, lang)}
-                  </li>
-                ))}
-              </ul>
-              {onViewNeed ? (
+              <div className="flex items-start justify-between gap-3">
+                <h2 className={profileSectionTitleClass}>{t('needsSought')}</h2>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {canShareNeedEmail ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const needLines = [
+                          ...needs.map((id) => needOptionLabel(id, lang)),
+                          ...(seekingText ? [seekingText] : []),
+                          ...(communityGapText ? [communityGapText] : []),
+                        ];
+                        openNeedShareEmail({
+                          subject: buildNeedShareEmailSubject({ profile, lang }),
+                          body: buildNeedShareEmailBody({ profile, lang, needLines }),
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-900 transition-colors hover:bg-sky-100"
+                      aria-label={t('directoryShareNeedEmail')}
+                    >
+                      <Mail size={14} aria-hidden />
+                      {t('directoryShareNeedEmailShort')}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openNeedShareWhatsApp(
+                        buildNeedShareWhatsAppMessage({
+                          profile,
+                          lang,
+                          needLines: [
+                            ...needs.map((id) => needOptionLabel(id, lang)),
+                            ...(seekingText ? [seekingText] : []),
+                            ...(communityGapText ? [communityGapText] : []),
+                          ],
+                        })
+                      )
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-900 transition-colors hover:bg-emerald-100"
+                    aria-label={t('directoryShareNeedWhatsApp')}
+                  >
+                    <MessageCircle size={14} aria-hidden />
+                    {t('directoryShareNeedWhatsAppShort')}
+                  </button>
+                </div>
+              </div>
+              {needs.length > 0 ? (
+                <ul className="mt-2 flex list-none flex-wrap gap-1.5 p-0">
+                  {needs.map((id) => (
+                    <li key={id} className={profileNeedPillClass}>
+                      {needOptionLabel(id, lang)}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {seekingText ? (
+                <div className={needs.length > 0 ? 'mt-4' : 'mt-2'}>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                    {t('profileSeekingTitle')}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm font-medium leading-relaxed text-stone-800">
+                    {seekingText}
+                  </p>
+                </div>
+              ) : null}
+              {communityGapText ? (
+                <div className={seekingText || needs.length > 0 ? 'mt-4' : 'mt-2'}>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                    {t('profileCommunityGapTitle')}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-stone-700">
+                    {communityGapText}
+                  </p>
+                </div>
+              ) : null}
+              {onViewNeed && needs.length > 0 ? (
                 <button
                   type="button"
                   onClick={onViewNeed}
@@ -204,11 +284,11 @@ export function MemberPublicProfile({
         </section>
       ) : null}
 
-      {profile.helpNewcomers?.trim() ? (
+      {helpOfferText ? (
         <section className={profileCardClass}>
           <h2 className={profileSectionTitleClass}>{t('profileHelpNewcomersLabel')}</h2>
           <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-stone-700">
-            {profile.helpNewcomers}
+            {helpOfferText}
           </p>
         </section>
       ) : null}

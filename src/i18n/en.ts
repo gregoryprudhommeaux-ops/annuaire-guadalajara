@@ -144,7 +144,11 @@ export const EN_STRINGS: Record<string, string> = {
   randomProfileEmpty: "No profile available",
   randomProfileSuggest: "🎲 Suggest a contact for me",
   directoryMemberCardCta: "View profile",
-  directoryCardNoStructuredNeeds: "No structured needs listed.",
+  directoryCardNoStructuredNeeds: "No needs listed yet.",
+  directoryShareNeedWhatsApp: "Share this need on WhatsApp",
+  directoryShareNeedWhatsAppShort: "WhatsApp",
+  directoryShareNeedEmail: "Share this need by email",
+  directoryShareNeedEmailShort: "Email",
   launchTitle: "Community launching now",
   launchSubtitle: "Be among the first French-speaking members in Guadalajara.",
   launchCta: "Create my profile now →",
@@ -578,6 +582,8 @@ export const EN_STRINGS: Record<string, string> = {
     "At least 15 characters. Personal introduction, highlighted in member search.",
   companyDescription: "Company description",
   needsSought: "Needs sought",
+  profileSeekingTitle: "What they are looking for",
+  profileCommunityGapTitle: "What’s missing in the community",
   noCompanyDescription: "No description provided.",
   noNeedsSpecified: "No specific needs for now.",
   memberCardEmptyNeeds:
@@ -835,7 +841,7 @@ export const EN = {
 
     first50: {
       eyebrow: "Launch",
-      title: "50 reference profiles — let’s grow this together",
+      title: "50 profiles — let’s grow this together",
       description:
         "Every new member increases the value of the network for everyone: recommendations, targeted requests, connections, and opportunities in Guadalajara.",
       subline:

@@ -1,0 +1,67 @@
+/**
+ * Same rules as src/lib/canonicalizeCity.ts (keep in sync).
+ * Used by expressOnboarding so free-text cities land in a stable form.
+ */
+
+function stripDiacritics(raw: string): string {
+  return raw.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+}
+
+function cityToken(raw: string): string {
+  return stripDiacritics(raw).toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+const CANONICAL_BY_TOKEN: Record<string, string> = {
+  guadalajara: 'Guadalajara',
+  gdl: 'Guadalajara',
+  zapopan: 'Zapopan',
+  tlaquepaque: 'Tlaquepaque',
+  tonala: 'Tonalá',
+  'tlajomulco de zuniga': 'Tlajomulco de Zúñiga',
+  tlajomulco: 'Tlajomulco de Zúñiga',
+  'el salto': 'El Salto',
+  jocotepec: 'Jocotepec',
+  chapala: 'Chapala',
+  ajijic: 'Ajijic',
+  autre: 'Autre',
+  other: 'Autre',
+  otro: 'Autre',
+};
+
+function titleCaseWords(raw: string): string {
+  return raw
+    .trim()
+    .replace(/\s+/g, ' ')
+    .split(' ')
+    .map((w) => {
+      if (!w) return w;
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    })
+    .join(' ')
+    .replace(/\bDe\b/g, 'de')
+    .replace(/\bDel\b/g, 'del')
+    .replace(/\bLa\b/g, 'la')
+    .replace(/^la /, 'La ')
+    .replace(/^de /, 'De ')
+    .replace(/^del /, 'Del ');
+}
+
+export function canonicalizeCity(raw: string | null | undefined): string {
+  const trimmed = String(raw ?? '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  if (!trimmed) return '';
+
+  const token = cityToken(trimmed);
+  if (CANONICAL_BY_TOKEN[token]) return CANONICAL_BY_TOKEN[token];
+
+  if (token.includes('guadalajara')) return 'Guadalajara';
+  if (token.includes('zapopan')) return 'Zapopan';
+  if (token.includes('tlaquepaque')) return 'Tlaquepaque';
+  if (token.includes('tonala')) return 'Tonalá';
+  if (token.includes('tlajomulco')) return 'Tlajomulco de Zúñiga';
+  if (token.includes('el salto')) return 'El Salto';
+  if (token.includes('jocotepec')) return 'Jocotepec';
+
+  return titleCaseWords(trimmed);
+}

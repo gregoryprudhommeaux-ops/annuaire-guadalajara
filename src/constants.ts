@@ -451,8 +451,26 @@ export const TRANSLATIONS: Translations = {
   /** Carte membre annuaire : action unique vers la fiche. */
   directoryMemberCardCta: { fr: 'Voir le profil', es: 'Ver perfil' },
   directoryCardNoStructuredNeeds: {
-    fr: 'Aucun besoin structuré renseigné.',
-    es: 'Sin necesidades estructuradas.',
+    fr: 'Aucun besoin renseigné pour le moment.',
+    es: 'Sin necesidades indicadas por ahora.',
+  },
+  /** Partage WhatsApp d’un besoin (sans contact) depuis une carte annuaire. */
+  directoryShareNeedWhatsApp: {
+    fr: 'Partager ce besoin sur WhatsApp',
+    es: 'Compartir esta necesidad por WhatsApp',
+  },
+  directoryShareNeedWhatsAppShort: {
+    fr: 'WhatsApp',
+    es: 'WhatsApp',
+  },
+  /** Admin only : partager le besoin par e-mail (lien fiche + inscription, sans contact). */
+  directoryShareNeedEmail: {
+    fr: 'Partager ce besoin par e-mail',
+    es: 'Compartir esta necesidad por correo',
+  },
+  directoryShareNeedEmailShort: {
+    fr: 'E-mail',
+    es: 'Correo',
   },
   launchTitle: {
     fr: "Communauté en cours de lancement",
@@ -1202,8 +1220,8 @@ export const TRANSLATIONS: Translations = {
   },
   first50Eyebrow: { fr: 'Communauté en lancement', es: 'Comunidad en lanzamiento' },
   first50Title: {
-    fr: 'Construisons les 50 premiers profils de référence',
-    es: 'Construyamos los primeros 50 perfiles de referencia',
+    fr: 'Construisons les 50 premiers profils',
+    es: 'Construyamos los primeros 50 perfiles',
   },
   first50Description: {
     fr: 'Chaque nouveau membre renforce la valeur du réseau pour tous : recommandations, demandes ciblées, connexions et opportunités à Guadalajara.',
@@ -1424,6 +1442,16 @@ export const TRANSLATIONS: Translations = {
   needsSought: {
     fr: "Besoins recherchés",
     es: "Necesidades que busca",
+  },
+  /** Free-text express / profile: what the member seeks (networkGoal / lookingFor). */
+  profileSeekingTitle: {
+    fr: "Ce qu’il cherche",
+    es: "Qué busca",
+  },
+  /** Free-text express: community gap (communityGap / helpNewcomers for express). */
+  profileCommunityGapTitle: {
+    fr: "Ce qui manque à la communauté",
+    es: "Qué le falta a la comunidad",
   },
   noCompanyDescription: {
     fr: "Aucune description renseignée.",

@@ -6,6 +6,7 @@ import { getApps } from 'firebase-admin/app';
 import { randomBytes } from 'crypto';
 import { FIRESTORE_DATABASE_ID } from '../constants';
 import { APP_URL_PARAM, RESEND_FROM_PARAM, getResend } from '../lib/resend';
+import { canonicalizeCity } from '../lib/canonicalizeCity';
 
 type Lang = 'fr' | 'en' | 'es';
 
@@ -120,7 +121,7 @@ export const expressOnboarding = onRequest(
       const whatsapp = clip(body.whatsapp, 40);
       const mexicoSince = clip(body.mexicoSince, 80);
       const nationality = clip(body.nationality, 3).toUpperCase();
-      const city = clip(body.city, 80);
+      const city = canonicalizeCity(clip(body.city, 80));
       const companyName = clip(body.companyName, 160) || 'N/A';
       const lookingFor = clip(body.lookingFor, 2000);
       const communityGap = clip(body.communityGap, 2000);
@@ -208,6 +209,8 @@ export const expressOnboarding = onRequest(
         whatsapp,
         lookingFor,
         networkGoal: lookingFor,
+        communityGap,
+        // Legacy mirror: older UI/admin still read helpNewcomers for express gap quotes.
         helpNewcomers: communityGap,
         mexicoArrivalNote: mexicoSince,
         companyActivities,

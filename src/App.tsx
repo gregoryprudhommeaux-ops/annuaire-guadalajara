@@ -330,6 +330,15 @@ import {
 import { profileMatchesSearchQuery } from './profileSearch';
 import { getSignupJoinUrl } from './lib/siteUrls';
 import {
+  buildNeedShareEmailBody,
+  buildNeedShareEmailSubject,
+  buildNeedShareWhatsAppMessage,
+  getProfileFreeNeedTexts,
+  hasDirectoryCardNeeds,
+  openNeedShareEmail,
+  openNeedShareWhatsApp,
+} from './lib/profileNeedsDisplay';
+import {
   GUEST_DIRECTORY_PREVIEW_LIMIT,
   isGuestDirectoryRestricted,
 } from './lib/guestDirectory';
@@ -357,6 +366,7 @@ import {
   Heart,
   Zap,
   Share2,
+  MessageCircle,
   Trophy,
   Activity,
   LayoutDashboard,
@@ -801,35 +811,77 @@ function hydrateCompanyActivitiesDraftFromProfile(src: UserProfile): CompanyActi
   });
 }
 
-/** Listing annuaire : besoins structurés + seul CTA « Voir le profil » (email / WhatsApp sur la fiche). */
+/** Listing annuaire : besoins (structurés + texte libre) + partage + CTA fiche. */
 function ProfileCardListingFooter({
   p,
   lang,
   t,
+  canShareNeedEmail = false,
 }: {
   p: UserProfile;
   lang: Language;
   t: (key: string) => string;
+  /** Admin : mailto pour solliciter quelqu’un hors base. */
+  canShareNeedEmail?: boolean;
 }) {
   const ids = sanitizeHighlightedNeeds(p.highlightedNeeds);
   const offerIds = sanitizeHighlightedOffers(p.highlightedOffers);
+  const freeNeedTexts = getProfileFreeNeedTexts(p);
+  const hasNeeds = hasDirectoryCardNeeds(p);
+  const shareNeedLines = [
+    ...ids.map((id) => needOptionLabel(id, lang)),
+    ...freeNeedTexts,
+  ];
+
+  const onShareNeedWhatsApp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!hasNeeds) return;
+    openNeedShareWhatsApp(
+      buildNeedShareWhatsAppMessage({ profile: p, lang, needLines: shareNeedLines })
+    );
+  };
+
+  const onShareNeedEmail = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!hasNeeds || !canShareNeedEmail) return;
+    openNeedShareEmail({
+      subject: buildNeedShareEmailSubject({ profile: p, lang }),
+      body: buildNeedShareEmailBody({ profile: p, lang, needLines: shareNeedLines }),
+    });
+  };
+
   return (
     <div className="mt-3 flex min-h-0 flex-1 flex-col">
       <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
         {t('profilePublicCurrentNeeds')}
       </p>
       <div className="mt-1.5 min-h-[2rem] flex-1">
-        {ids.length === 0 ? (
+        {!hasNeeds ? (
           <p className="text-xs italic text-stone-400">{t('directoryCardNoStructuredNeeds')}</p>
         ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {ids.map((id) => (
-              <span
-                key={id}
-                className="inline-flex max-w-full rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900"
+          <div className="space-y-2">
+            {ids.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {ids.map((id) => (
+                  <span
+                    key={id}
+                    className="inline-flex max-w-full rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900"
+                  >
+                    {needOptionLabel(id, lang)}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            {freeNeedTexts.map((text) => (
+              <p
+                key={text.slice(0, 48)}
+                title={text}
+                className="line-clamp-3 text-xs font-medium leading-relaxed text-stone-700"
               >
-                {needOptionLabel(id, lang)}
-              </span>
+                {text}
+              </p>
             ))}
           </div>
         )}
@@ -854,7 +906,31 @@ function ProfileCardListingFooter({
       <div className="mt-3 border-t border-slate-100 pt-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold text-blue-700">{t('directoryMemberCardCta')}</span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
+          <div className="flex shrink-0 items-center gap-1.5">
+            {hasNeeds && canShareNeedEmail ? (
+              <button
+                type="button"
+                onClick={onShareNeedEmail}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-sky-200 bg-sky-50 text-sky-800 transition-colors hover:bg-sky-100"
+                aria-label={t('directoryShareNeedEmail')}
+                title={t('directoryShareNeedEmail')}
+              >
+                <Mail className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            ) : null}
+            {hasNeeds ? (
+              <button
+                type="button"
+                onClick={onShareNeedWhatsApp}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 transition-colors hover:bg-emerald-100"
+                aria-label={t('directoryShareNeedWhatsApp')}
+                title={t('directoryShareNeedWhatsApp')}
+              >
+                <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            ) : null}
+            <ChevronRight className="h-4 w-4 shrink-0 text-blue-600" aria-hidden />
+          </div>
         </div>
       </div>
     </div>
@@ -1177,7 +1253,12 @@ const ProfileCard = ({
           </button>
         </div>
       ) : (
-        <ProfileCardListingFooter p={p} lang={lang} t={t} />
+        <ProfileCardListingFooter
+          p={p}
+          lang={lang}
+          t={t}
+          canShareNeedEmail={viewerIsAdmin}
+        />
       )}
       {!guestDirectoryTeaser ? (
         <div
@@ -1695,48 +1776,127 @@ const ProfilePage = () => {
             ) : null}
 
             <div className="profile-main-grid">
-              {profile.networkGoal?.trim() ? (
-                <section className="profile-card">
-                  <p className="profile-card__label">{t('profileNetworkGoalLabel')}</p>
-                  <p className="profile-card__text">{profile.networkGoal}</p>
-                </section>
-              ) : (
-                <section className="profile-card profile-card--soft">
-                  <p className="profile-card__label">{t('profileNetworkGoalLabel')}</p>
-                  <p className="profile-card__text">{pickLang('—', '—', '—', lang)}</p>
-                </section>
-              )}
+              {(() => {
+                const structuredNeeds = sanitizeHighlightedNeeds(profile.highlightedNeeds);
+                const seekingText = (profile.networkGoal || profile.lookingFor || '').trim();
+                const isExpress = profile.onboardingSource === 'express';
+                const communityGapText = (
+                  profile.communityGap ||
+                  (isExpress ? profile.helpNewcomers : '') ||
+                  ''
+                ).trim();
+                const hasNeedsContent =
+                  structuredNeeds.length > 0 || Boolean(seekingText) || Boolean(communityGapText);
 
-              <section className="profile-card">
-                <p className="profile-card__label">{t('profilePublicCurrentNeeds')}</p>
-                <div className="profile-chip-list">
-                  {sanitizeHighlightedNeeds(profile.highlightedNeeds).length > 0 ? (
-                    sanitizeHighlightedNeeds(profile.highlightedNeeds).map((id) => (
-                      <span key={id} className="profile-chip">
-                        {needOptionLabel(id, lang)}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="profile-chip">{pickLang('—', '—', '—', lang)}</span>
-                  )}
-                </div>
-                {sanitizeHighlightedNeeds(profile.highlightedNeeds).length > 0 ? (
-                  <a className="profile-link-inline" href={`/besoin/${encodeURIComponent(profile.uid)}`}>
-                    {pickLang('Voir le besoin', 'Ver la necesidad', 'View need', lang)} <ChevronRight size={16} />
-                  </a>
-                ) : null}
-              </section>
+                const shareNeedLines = [
+                  ...structuredNeeds.map((id) => needOptionLabel(id, lang)),
+                  ...(seekingText ? [seekingText] : []),
+                  ...(communityGapText ? [communityGapText] : []),
+                ];
+                const viewerCanShareNeedEmail =
+                  currentProfile?.role === 'admin' || isAdminEmail(currentUser?.email);
+
+                return (
+                  <section className={`profile-card profile-card--full${hasNeedsContent ? '' : ' profile-card--soft'}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="profile-card__label">{t('needsSought')}</p>
+                      {hasNeedsContent ? (
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          {viewerCanShareNeedEmail ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openNeedShareEmail({
+                                  subject: buildNeedShareEmailSubject({ profile, lang }),
+                                  body: buildNeedShareEmailBody({
+                                    profile,
+                                    lang,
+                                    needLines: shareNeedLines,
+                                  }),
+                                })
+                              }
+                              className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-900 transition-colors hover:bg-sky-100"
+                              aria-label={t('directoryShareNeedEmail')}
+                            >
+                              <Mail className="h-3.5 w-3.5" aria-hidden />
+                              {t('directoryShareNeedEmailShort')}
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openNeedShareWhatsApp(
+                                buildNeedShareWhatsAppMessage({
+                                  profile,
+                                  lang,
+                                  needLines: shareNeedLines,
+                                })
+                              )
+                            }
+                            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-900 transition-colors hover:bg-emerald-100"
+                            aria-label={t('directoryShareNeedWhatsApp')}
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+                            {t('directoryShareNeedWhatsAppShort')}
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                    {structuredNeeds.length > 0 ? (
+                      <div className="profile-chip-list">
+                        {structuredNeeds.map((id) => (
+                          <span key={id} className="profile-chip">
+                            {needOptionLabel(id, lang)}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    {seekingText ? (
+                      <div className={structuredNeeds.length > 0 ? 'mt-3' : undefined}>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                          {t('profileSeekingTitle')}
+                        </p>
+                        <p className="profile-card__text mt-1 whitespace-pre-wrap">{seekingText}</p>
+                      </div>
+                    ) : null}
+                    {communityGapText ? (
+                      <div className={seekingText || structuredNeeds.length > 0 ? 'mt-3' : undefined}>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                          {t('profileCommunityGapTitle')}
+                        </p>
+                        <p className="profile-card__text mt-1 whitespace-pre-wrap">{communityGapText}</p>
+                      </div>
+                    ) : null}
+                    {!hasNeedsContent ? (
+                      <p className="profile-card__text">{t('noNeedsSpecified')}</p>
+                    ) : null}
+                    {structuredNeeds.length > 0 ? (
+                      <a className="profile-link-inline" href={`/besoin/${encodeURIComponent(profile.uid)}`}>
+                        {pickLang('Voir le besoin', 'Ver la necesidad', 'View need', lang)} <ChevronRight size={16} />
+                      </a>
+                    ) : null}
+                  </section>
+                );
+              })()}
             </div>
 
             <div className="profile-section-stack">
-              {profile.helpNewcomers?.trim() ? (
-                <section className="profile-card profile-card--full">
-                  <p className="profile-card__label">{t('profileHelpNewcomersLabel')}</p>
-                  <div className="profile-richtext">
-                    <p className="profile-card__text whitespace-pre-wrap">{profile.helpNewcomers}</p>
-                  </div>
-                </section>
-              ) : null}
+              {(() => {
+                const isExpress = profile.onboardingSource === 'express';
+                const helpOfferText =
+                  !isExpress && !profile.communityGap
+                    ? (profile.helpNewcomers || '').trim()
+                    : '';
+                if (!helpOfferText) return null;
+                return (
+                  <section className="profile-card profile-card--full">
+                    <p className="profile-card__label">{t('profileHelpNewcomersLabel')}</p>
+                    <div className="profile-richtext">
+                      <p className="profile-card__text whitespace-pre-wrap">{helpOfferText}</p>
+                    </div>
+                  </section>
+                );
+              })()}
 
               {effectiveMemberBio(profile).trim() ? (
                 <section className="profile-card profile-card--full">
@@ -3150,7 +3310,10 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     const last10 = sortedByDate.slice(0, 10);
     
     return {
+      /** Profils visibles annuaire (hors express non validés). */
       total: validatedProfiles.length,
+      /** Tous les profils Firestore, y compris incomplets / express. Compteur lancement 50. */
+      totalAll: allProfiles.length,
       newThisWeekCount: newThisWeek.length,
       newThisWeekProfiles: newThisWeek as UserProfile[],
       last10: last10 as UserProfile[]
@@ -5360,7 +5523,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         <PublicHomePage
           user={user}
           isAdmin={viewerIsAdmin}
-          memberCount={stats.total}
+          memberCount={stats.totalAll}
           sectors={allProfiles.map((p) => p.activityCategory ?? '').filter(Boolean).slice(0, 6)}
           onRequestSignIn={openAuthModal}
           onSignOut={handleLogout}
@@ -5678,9 +5841,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   showClearFilters={showDirectoryClearFilters}
                   onClearFilters={clearDirectoryFilters}
                   launchProgress={
-                    stats.total < FIRST_50_MEMBER_TARGET
+                    stats.totalAll < FIRST_50_MEMBER_TARGET
                       ? {
-                          currentCount: stats.total,
+                          currentCount: stats.totalAll,
                           targetCount: FIRST_50_MEMBER_TARGET,
                           inviteUrl: getSignupJoinUrl(),
                           defaultOpen: false,
@@ -6028,7 +6191,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
             </Helmet>
             <div className="flex w-full flex-col items-center gap-6 sm:gap-8">
               <First50MembersBanner
-                currentCount={stats.total}
+                currentCount={stats.totalAll}
                 targetCount={FIRST_50_MEMBER_TARGET}
                 inviteUrl={getSignupJoinUrl()}
                 className="w-full max-w-3xl"
@@ -6049,7 +6212,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         ) : isHomeRoute && !isSignupLandingRoute && !isAdminDashboard ? (
           <MarketingHomePage
             isAdmin={viewerIsAdmin}
-            visibleMemberCount={stats.total}
+            visibleMemberCount={stats.totalAll}
             membersForSectors={allProfiles.map((p) => ({ id: p.uid, sector: p.activityCategory ?? null }))}
             signupHref={user ? '/profile/edit' : '/inscription'}
             onInviteClick={() => setShowInviteNetworkModal(true)}
@@ -6439,7 +6602,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   </div>
                   <div className="min-w-0 lg:col-span-4">
                     <First50MembersBanner
-                      currentCount={stats.total}
+                      currentCount={stats.totalAll}
                       targetCount={FIRST_50_MEMBER_TARGET}
                       inviteUrl={getSignupJoinUrl()}
                       className="h-full w-full"
@@ -6559,9 +6722,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 showClearFilters={showDirectoryClearFilters}
                 onClearFilters={clearDirectoryFilters}
                 launchProgress={
-                  stats.total < FIRST_50_MEMBER_TARGET
+                  stats.totalAll < FIRST_50_MEMBER_TARGET
                     ? {
-                        currentCount: stats.total,
+                        currentCount: stats.totalAll,
                         targetCount: FIRST_50_MEMBER_TARGET,
                         inviteUrl: getSignupJoinUrl(),
                         defaultOpen: false,
@@ -6590,9 +6753,9 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                   showClearFilters={showDirectoryClearFilters}
                 />
 
-                {stats.total < FIRST_50_MEMBER_TARGET ? (
+                {stats.totalAll < FIRST_50_MEMBER_TARGET ? (
                   <First50MembersBanner
-                    currentCount={stats.total}
+                    currentCount={stats.totalAll}
                     targetCount={FIRST_50_MEMBER_TARGET}
                     inviteUrl={getSignupJoinUrl()}
                     className="w-full min-w-0"
@@ -6984,6 +7147,7 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                       const needLabels = sanitizeHighlightedNeeds(p.highlightedNeeds ?? []).map((id) =>
                         needOptionLabel(id, lang)
                       );
+                      const freeNeedTexts = getProfileFreeNeedTexts(p);
                       const offerLabels = sanitizeHighlightedOffers(p.highlightedOffers ?? []).map((id) =>
                         needOptionLabel(id, lang)
                       );
@@ -6998,8 +7162,38 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                               bio={memberListingBioSource(p)}
                               photoUrl={p.photoURL}
                               needs={needLabels}
+                              freeNeedTexts={freeNeedTexts}
                               offers={offerLabels}
                               onOpen={() => setSelectedProfile(p)}
+                              onShareNeedWhatsApp={
+                                needLabels.length > 0 || freeNeedTexts.length > 0
+                                  ? () =>
+                                      openNeedShareWhatsApp(
+                                        buildNeedShareWhatsAppMessage({
+                                          profile: p,
+                                          lang,
+                                          needLines: [...needLabels, ...freeNeedTexts],
+                                        })
+                                      )
+                                  : undefined
+                              }
+                              onShareNeedEmail={
+                                viewerIsAdmin &&
+                                (needLabels.length > 0 || freeNeedTexts.length > 0)
+                                  ? () =>
+                                      openNeedShareEmail({
+                                        subject: buildNeedShareEmailSubject({
+                                          profile: p,
+                                          lang,
+                                        }),
+                                        body: buildNeedShareEmailBody({
+                                          profile: p,
+                                          lang,
+                                          needLines: [...needLabels, ...freeNeedTexts],
+                                        }),
+                                      })
+                                  : undefined
+                              }
                               viewerProfile={profile}
                             />
                           ) : (
@@ -7595,49 +7789,137 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
                 )}
 
                 <div className="space-y-4">
-                  <div className={profileCardClass}>
-                    <h3 className={profileSectionTitleClass}>{t('needsSought')}</h3>
-                    {sanitizeHighlightedNeeds(selectedProfile.highlightedNeeds).length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {sanitizeHighlightedNeeds(selectedProfile.highlightedNeeds).map((id) => (
-                          <span key={id} className={profileNeedPillClass}>
-                            {needOptionLabel(id, lang)}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {sanitizeHighlightedNeeds(selectedProfile.highlightedNeeds).length === 0 && (
-                      <p className="mt-2 text-sm text-stone-600">{t('noNeedsSpecified')}</p>
-                    )}
-                  </div>
-                  {selectedProfile.targetSectors && selectedProfile.targetSectors.length > 0 && (
-                    <div className={profileCardClass}>
-                      <p className={profileSectionTitleClass}>{t('targetSectors')}</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {selectedProfile.targetSectors.map((s) => (
-                          <span key={s} className={profileNeutralPillClass}>
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {selectedProfile.helpNewcomers?.trim() ? (
-                    <div className={profileCardClass}>
-                      <p className={profileSectionTitleClass}>{t('profileHelpNewcomersLabel')}</p>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-stone-700">
-                        {selectedProfile.helpNewcomers}
-                      </p>
-                    </div>
-                  ) : null}
-                  {selectedProfile.networkGoal?.trim() ? (
-                    <div className={profileCardClass}>
-                      <p className={profileSectionTitleClass}>{t('profileNetworkGoalLabel')}</p>
-                      <p className="mt-2 text-sm font-medium leading-relaxed text-stone-800">
-                        {selectedProfile.networkGoal}
-                      </p>
-                    </div>
-                  ) : null}
+                  {(() => {
+                    const structuredNeeds = sanitizeHighlightedNeeds(selectedProfile.highlightedNeeds);
+                    const seekingText = (
+                      selectedProfile.networkGoal ||
+                      selectedProfile.lookingFor ||
+                      ''
+                    ).trim();
+                    const isExpress = selectedProfile.onboardingSource === 'express';
+                    const communityGapText = (
+                      selectedProfile.communityGap ||
+                      (isExpress ? selectedProfile.helpNewcomers : '') ||
+                      ''
+                    ).trim();
+                    const helpOfferText =
+                      !isExpress && !selectedProfile.communityGap
+                        ? (selectedProfile.helpNewcomers || '').trim()
+                        : '';
+                    const hasNeedsContent =
+                      structuredNeeds.length > 0 || Boolean(seekingText) || Boolean(communityGapText);
+                    const shareNeedLines = [
+                      ...structuredNeeds.map((id) => needOptionLabel(id, lang)),
+                      ...(seekingText ? [seekingText] : []),
+                      ...(communityGapText ? [communityGapText] : []),
+                    ];
+
+                    return (
+                      <>
+                        <div className={profileCardClass}>
+                          <div className="flex items-start justify-between gap-3">
+                            <h3 className={profileSectionTitleClass}>{t('needsSought')}</h3>
+                            {hasNeedsContent ? (
+                              <div className="flex shrink-0 items-center gap-1.5">
+                                {viewerIsAdmin ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      openNeedShareEmail({
+                                        subject: buildNeedShareEmailSubject({
+                                          profile: selectedProfile,
+                                          lang,
+                                        }),
+                                        body: buildNeedShareEmailBody({
+                                          profile: selectedProfile,
+                                          lang,
+                                          needLines: shareNeedLines,
+                                        }),
+                                      })
+                                    }
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-900 transition-colors hover:bg-sky-100"
+                                    aria-label={t('directoryShareNeedEmail')}
+                                  >
+                                    <Mail className="h-3.5 w-3.5" aria-hidden />
+                                    {t('directoryShareNeedEmailShort')}
+                                  </button>
+                                ) : null}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    openNeedShareWhatsApp(
+                                      buildNeedShareWhatsAppMessage({
+                                        profile: selectedProfile,
+                                        lang,
+                                        needLines: shareNeedLines,
+                                      })
+                                    )
+                                  }
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-900 transition-colors hover:bg-emerald-100"
+                                  aria-label={t('directoryShareNeedWhatsApp')}
+                                >
+                                  <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+                                  {t('directoryShareNeedWhatsAppShort')}
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+                          {structuredNeeds.length > 0 ? (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {structuredNeeds.map((id) => (
+                                <span key={id} className={profileNeedPillClass}>
+                                  {needOptionLabel(id, lang)}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
+                          {seekingText ? (
+                            <div className={structuredNeeds.length > 0 ? 'mt-4' : 'mt-2'}>
+                              <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                                {t('profileSeekingTitle')}
+                              </p>
+                              <p className="mt-1 whitespace-pre-wrap text-sm font-medium leading-relaxed text-stone-800">
+                                {seekingText}
+                              </p>
+                            </div>
+                          ) : null}
+                          {communityGapText ? (
+                            <div className={seekingText || structuredNeeds.length > 0 ? 'mt-4' : 'mt-2'}>
+                              <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                                {t('profileCommunityGapTitle')}
+                              </p>
+                              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-stone-700">
+                                {communityGapText}
+                              </p>
+                            </div>
+                          ) : null}
+                          {!hasNeedsContent ? (
+                            <p className="mt-2 text-sm text-stone-600">{t('noNeedsSpecified')}</p>
+                          ) : null}
+                        </div>
+                        {selectedProfile.targetSectors && selectedProfile.targetSectors.length > 0 ? (
+                          <div className={profileCardClass}>
+                            <p className={profileSectionTitleClass}>{t('targetSectors')}</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {selectedProfile.targetSectors.map((s) => (
+                                <span key={s} className={profileNeutralPillClass}>
+                                  {s}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                        {helpOfferText ? (
+                          <div className={profileCardClass}>
+                            <p className={profileSectionTitleClass}>{t('profileHelpNewcomersLabel')}</p>
+                            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-stone-700">
+                              {helpOfferText}
+                            </p>
+                          </div>
+                        ) : null}
+                      </>
+                    );
+                  })()}
                 </div>
                 </div>
 

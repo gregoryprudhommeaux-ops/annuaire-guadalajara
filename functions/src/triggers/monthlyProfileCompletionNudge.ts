@@ -10,6 +10,7 @@ import {
   ProfileCompletionNudgeEmail,
   profileCompletionNudgeSubject,
 } from '../emails/ProfileCompletionNudgeEmail';
+import { isAutomatedEmailPaused, logEmailPauseSkip } from '../lib/emailPause';
 
 const BATCH_SIZE = 80;
 const CONFIG_DOC = 'appConfig/profileCompletionNudge';
@@ -41,6 +42,10 @@ export const monthlyProfileCompletionNudge = onSchedule(
     memory: '512MiB',
   },
   async () => {
+    if (isAutomatedEmailPaused()) {
+      logEmailPauseSkip('monthlyProfileCompletionNudge');
+      return;
+    }
     const ym = mexicoYmNow();
     const db = getFirestore(getApps()[0]!, FIRESTORE_DATABASE_ID);
     const configRef = db.doc(CONFIG_DOC);

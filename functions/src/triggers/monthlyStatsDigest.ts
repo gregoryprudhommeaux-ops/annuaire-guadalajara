@@ -14,6 +14,7 @@ import {
   loadEnabledAutomations,
 } from '../lib/automations';
 import { buildVariables, interpolate } from '../lib/templateVars';
+import { isAutomatedEmailPaused, logEmailPauseSkip } from '../lib/emailPause';
 
 const BATCH_SIZE = 100;
 const TZ = 'America/Mexico_City';
@@ -120,6 +121,10 @@ export const monthlyStatsDigest = onSchedule(
     memory: '512MiB',
   },
   async () => {
+    if (isAutomatedEmailPaused()) {
+      logEmailPauseSkip('monthlyStatsDigest');
+      return;
+    }
     const triggerOn = await isTriggerEnabled('monthlySchedule');
     if (!triggerOn) {
       logger.info('Monthly stats digest disabled via appConfig, skip.');

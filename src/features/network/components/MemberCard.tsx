@@ -23,8 +23,14 @@ type MemberCardProps = {
   bio?: string;
   photoUrl?: string;
   needs?: string[];
+  /** Textes libres (lookingFor / networkGoal / communityGap). */
+  freeNeedTexts?: string[];
   offers?: string[];
   onOpen?: () => void;
+  /** Partage WhatsApp besoin + lien fiche (sans contact). */
+  onShareNeedWhatsApp?: () => void;
+  /** Admin : partage e-mail (mailto) besoin + lien fiche. */
+  onShareNeedEmail?: () => void;
   /** Profil session : sert au `computeMemberMatch(bio, keywords, needs)` (champ `bio` Firestore). */
   viewerProfile?: UserProfile | null;
 };
@@ -37,8 +43,11 @@ export function MemberCard({
   bio,
   photoUrl,
   needs = [],
+  freeNeedTexts = [],
   offers = [],
   onOpen,
+  onShareNeedWhatsApp,
+  onShareNeedEmail,
   viewerProfile,
 }: MemberCardProps) {
   const { t } = useLanguage();
@@ -104,7 +113,12 @@ export function MemberCard({
     >
       <MemberIdentity member={member} />
       <MemberDescription member={member} />
-      <NeedsSection needs={needs} />
+      <NeedsSection
+        needs={needs}
+        freeNeedTexts={freeNeedTexts}
+        onShareWhatsApp={onShareNeedWhatsApp}
+        onShareEmail={onShareNeedEmail}
+      />
       <OffersSection offers={offers} />
 
       {match.isRelevant ? (

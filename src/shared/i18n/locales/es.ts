@@ -50,7 +50,7 @@ const shell = {
       other: 'Otro',
     },
     memberCard: {
-      noStructuredNeed: 'Sin necesidades estructuradas',
+      noStructuredNeed: 'Sin necesidades indicadas por ahora',
       noStructuredOffer: 'Sin ofertas estructuradas',
       companyUnknown: 'Empresa no indicada',
       sectorUnknown: 'Sector no indicado',

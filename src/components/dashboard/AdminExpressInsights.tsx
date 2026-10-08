@@ -98,11 +98,6 @@ export default function AdminExpressInsights({ lang, t }: { lang: Language; t: T
     [data.allRows, exportPeriod]
   );
 
-  const statusHint = useMemo(() => {
-    if (data.rows.length === 0) return '—';
-    return `${data.pendingCount} ${t('adminExpressPendingHint')}`;
-  }, [data.pendingCount, data.rows.length, t]);
-
   const handleDownloadCsv = () => {
     if (exportRows.length === 0) return;
     downloadExpressCsv(exportRows, exportPeriod);
@@ -203,7 +198,6 @@ export default function AdminExpressInsights({ lang, t }: { lang: Language; t: T
           value={`${data.communityGapFillPct}%`}
           hint={t('adminExpressFillHint')}
         />
-        <Kpi label={t('adminExpressKpiWhatsapp')} value={data.withWhatsapp} hint={statusHint} />
       </div>
 
       <div className="admin-analytics-grid">
