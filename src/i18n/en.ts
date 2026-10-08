@@ -842,6 +842,7 @@ export const EN = {
     first50: {
       eyebrow: "Launch",
       title: "50 profiles — let’s grow this together",
+      titleWithCount: "{count} profiles — let’s grow this together",
       description:
         "Every new member increases the value of the network for everyone: recommendations, targeted requests, connections, and opportunities in Guadalajara.",
       subline:

@@ -29,6 +29,8 @@ export const FR = {
     first50: {
       eyebrow: 'Lancement',
       title: '50 profils — on avance ensemble',
+      /** Compteur dynamique (tous profils, y compris express / incomplets). */
+      titleWithCount: '{count} profils — on avance ensemble',
       description:
         'Chaque nouveau membre renforce la valeur du réseau pour tous : recommandations, demandes ciblées, connexions et opportunités à Guadalajara.',
       subline:

@@ -29,6 +29,7 @@ export const ES = {
     first50: {
       eyebrow: 'Lanzamiento',
       title: '50 perfiles — sumamos entre todos',
+      titleWithCount: '{count} perfiles — sumamos entre todos',
       description:
         'Cada nuevo miembro refuerza el valor de la red para todos: recomendaciones, solicitudes específicas, conexiones y oportunidades en Guadalajara.',
       subline:
