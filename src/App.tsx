@@ -5167,7 +5167,12 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
     try {
       await setDoc(
         doc(db, 'users', uid),
-        { isValidated: isValid, needsAdminReview: false },
+        {
+          isValidated: isValid,
+          needsAdminReview: false,
+          /** Marque une écriture admin → pas d’email « Profil modifié » (Cloud Function). */
+          adminWriteAt: Date.now(),
+        },
         { merge: true }
       );
     } catch (error) {

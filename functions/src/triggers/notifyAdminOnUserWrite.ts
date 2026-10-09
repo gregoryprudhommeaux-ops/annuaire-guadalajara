@@ -20,6 +20,18 @@ const IGNORED_KEYS = new Set<string>([
   'publicProfileViewCount',
   'contactClickCount',
   'publicContactClickCount',
+  /** Tampon client / admin — pas un champ métier à afficher. */
+  'adminWriteAt',
+]);
+
+/**
+ * Écritures typiques de modération admin (validation EXPRESS, etc.).
+ * Si seuls ces champs changent → pas d’email « Profil modifié » (bruit inutile).
+ */
+const ADMIN_MODERATION_KEYS = new Set<string>([
+  'isValidated',
+  'needsAdminReview',
+  'adminWriteAt',
 ]);
 
 // Champs "métier" surveillés (si un champ non listé change, on le remonte quand même,
@@ -187,6 +199,21 @@ export const notifyAdminOnUserUpdated = onDocumentUpdated(
 
     const changes = diffUserDoc(before, after);
     if (changes.length === 0) return; // éviter le bruit (lastSeen/updatedAt etc.)
+
+    // Validation / rejet admin : pas d’email à l’admin sur sa propre action.
+    const moderationOnly = changes.every((c) => ADMIN_MODERATION_KEYS.has(c.key));
+    const stampedAdminWrite =
+      safeStr((before as { adminWriteAt?: unknown }).adminWriteAt) !==
+      safeStr((after as { adminWriteAt?: unknown }).adminWriteAt);
+    if (moderationOnly || stampedAdminWrite) {
+      logger.info('Skip admin notify (admin moderation write)', {
+        uid,
+        moderationOnly,
+        stampedAdminWrite,
+        keys: changes.map((c) => c.key),
+      });
+      return;
+    }
 
     const name = displayNameFromDoc(uid, after);
     const link = profileLink(uid);
