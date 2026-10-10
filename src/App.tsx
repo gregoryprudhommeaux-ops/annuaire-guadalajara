@@ -4562,7 +4562,14 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
       formAdminPrivateReady && formData.get('openToEventSponsoring') === 'on';
 
     try {
-      await setDoc(doc(db, 'users', targetUid), sanitizedProfile as Partial<UserProfile>, {
+      const profileWritePayload: Record<string, unknown> = {
+        ...(sanitizedProfile as Record<string, unknown>),
+      };
+      // Admin (chinois2001) : tampon pour ne pas recevoir d’email « Profil modifié » sur ses propres écritures.
+      if (viewerIsAdmin || isAdminEmail(user.email)) {
+        profileWritePayload.adminWriteAt = Date.now();
+      }
+      await setDoc(doc(db, 'users', targetUid), profileWritePayload as Partial<UserProfile>, {
         merge: true,
       });
       if (isSelf) clearPendingCommunicationLanguage();
@@ -4599,6 +4606,9 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
                 latitude: coords.lat,
                 longitude: coords.lng,
                 geocodedAt: serverTimestamp(),
+                ...(viewerIsAdmin || isAdminEmail(user.email)
+                  ? { adminWriteAt: Date.now() }
+                  : {}),
               }).catch(() => {});
             }
           }
@@ -5218,7 +5228,14 @@ const MainApp = ({ initialViewMode = 'members' }: MainAppProps) => {
             Array.isArray(out.summary) &&
             out.summary.length > 0
           ) {
-            await setDoc(doc(db, 'users', targetProfile.uid), { optimizationSuggestion: out }, { merge: true });
+            await setDoc(
+              doc(db, 'users', targetProfile.uid),
+              {
+                optimizationSuggestion: out,
+                ...(viewerIsAdmin ? { adminWriteAt: Date.now() } : {}),
+              },
+              { merge: true }
+            );
             setSelectedProfile((prev) =>
               prev && prev.uid === targetProfile.uid ? { ...prev, optimizationSuggestion: out } : prev
             );
@@ -5271,7 +5288,14 @@ Besoins mis en avant (codes): ${(targetProfile.highlightedNeeds ?? []).join(', '
         throw new Error('invalid-ai-suggestion');
       }
 
-      await setDoc(doc(db, 'users', targetProfile.uid), { optimizationSuggestion: suggestion }, { merge: true });
+      await setDoc(
+        doc(db, 'users', targetProfile.uid),
+        {
+          optimizationSuggestion: suggestion,
+          ...(viewerIsAdmin ? { adminWriteAt: Date.now() } : {}),
+        },
+        { merge: true }
+      );
       setSelectedProfile((prev) => prev && prev.uid === targetProfile.uid ? { ...prev, optimizationSuggestion: suggestion } : prev);
       setAllProfiles((prev) => prev.map(p => p.uid === targetProfile.uid ? { ...p, optimizationSuggestion: suggestion } : p));
 

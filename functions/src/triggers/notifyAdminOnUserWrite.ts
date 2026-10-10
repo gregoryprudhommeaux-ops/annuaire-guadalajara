@@ -22,6 +22,15 @@ const IGNORED_KEYS = new Set<string>([
   'publicContactClickCount',
   /** Tampon client / admin — pas un champ métier à afficher. */
   'adminWriteAt',
+  /**
+   * Écritures serveur (sync Perso / LA MESA) juste après une validation admin.
+   * Sans ça, chaque validation envoie encore 1–2 mails « Profil modifié ».
+   */
+  'databasePersoContacterSyncedAt',
+  'databasePersoContactId',
+  'laMesaWaitlistSyncedAt',
+  'optimizationSuggestion',
+  'geocodedAt',
 ]);
 
 /**
